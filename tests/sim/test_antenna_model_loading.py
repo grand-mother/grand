@@ -168,13 +168,10 @@ def test_the_z_arm_is_not_a_scaled_copy_of_the_horizontal_arms(models):
 
 
 def test_an_unknown_du_type_does_not_silently_give_an_empty_model():
-    r"""Asking for a model that does not exist must not return a usable object.
+    r"""Asking for a model that does not exist is refused, naming the choices.
 
-    The loader is a chain of ``if``/``elif`` with no ``else``, so an unknown
-    name falls through.  This records what actually happens, which is that the
-    arms are never assigned and attribute access fails -- unhelpful, but not
-    silent.
+    The loader is a chain of ``if``/``elif``; an unknown name used to fall
+    through and fail later with ``AttributeError: ... no attribute 'leff_sn'``.
     """
-    with pytest.raises((AttributeError, KeyError, UnboundLocalError, NameError)):
-        model = AntennaModel(du_type='no_such_antenna')
-        _ = model.d_leff['sn'].frequency
+    with pytest.raises(ValueError, match="GRANDlib: AntennaModel: 'du_type' must be one of"):
+        AntennaModel(du_type='no_such_antenna')

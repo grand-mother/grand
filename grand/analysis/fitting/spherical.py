@@ -4,6 +4,8 @@ import numpy as np
 import grand.analysis.physics as phy
 import grand.analysis.constants as cons
 from scipy.optimize import differential_evolution
+from grand.analysis import _checks
+from grand.basis import validate as _validate
 
 
 def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_light):
@@ -48,10 +50,11 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
     sp = np.sin(phi)
     K = np.array([-st*cp,-st*sp,-ct])
     Xmax = -r_xmax * K + np.array([0.,0.,cons.groundAltitude]) # Xmax is in the opposite direction to shower propagation.
-    # Make sure Xants and tants are compatible
-    if (Xants.shape[0] != nants):
-        print("Shapes of tants and Xants are incompatible",tants.shape, Xants.shape)
-        return None
+    # Make sure Xants and tants are compatible (it used to print and return None)
+    if Xants.ndim != 2 or Xants.shape[1] != 3 or Xants.shape[0] != nants:
+        raise ValueError(_validate.message(
+            "SWF_loss", "'Xants' must have shape (N, 3) with one row per arrival time (%d), "
+            "got %s" % (nants, Xants.shape)))
     tmp = 0.
     for i in range(nants):
         # Compute average refraction index between emission and observer
@@ -97,6 +100,11 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tuple
         (theta_swf, phi_swf, r_xmax_swf, t_s_swf)
     """
+    where = "recons_swf"
+    _checks.angles(where, theta_pwf=theta_pwf, phi_pwf=phi_pwf)
+    Xants = _checks.antennas(Xants, where, min_ants=4)
+    tants = _checks.per_antenna(tants, Xants, "tants", where)
+    sigma = _checks.sigma(sigma, where)
     # Parameter bounds for the differential evolution
     bounds = [[theta_pwf-5*np.pi/180,theta_pwf+5*np.pi/180],
                 [phi_pwf-5*np.pi/180,phi_pwf+5*np.pi/180], 

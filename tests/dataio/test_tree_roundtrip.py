@@ -163,7 +163,8 @@ def _value_for(kind, element_type, shape):
             return [['a', 'b']]
         if inner in INTEGER_TYPES:
             return [[1, 2], [3, 4]]
-        return [[1.5, 2.5], [3.5, 4.5]]
+        # Three values per row: positions such as du_xyz must be (x, y, z)
+        return [[1.5, 2.5, 3.5], [4.5, 5.5, 6.5]]
 
     if inner == 'bool':
         return [True, False]

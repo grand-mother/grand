@@ -11,6 +11,46 @@ Most of these are not exceptions.  GRANDlib's characteristic failure is a
 ``nan`` or a silently wrong number that stays plausible for several steps, so
 the entries below are grouped by what you *see*, not by what raised.
 
+Errors and warnings that start with ``GRANDlib:``
+-------------------------------------------------
+
+Since 2026-10 the public functions check their input, and say what is wrong
+in a message that starts with ``GRANDlib:``, names the function and the
+argument, gives what was expected and shows what was given::
+
+    ValueError: GRANDlib: Geodetic: 'latitude' must be between -90 and 90 degrees, got 200.0
+    TypeError: GRANDlib: TRun.run_number: must be an integer, got 1.7
+    FileNotFoundError: GRANDlib: EventList: no such file or directory: /data/run_1
+
+The exceptions are the standard ones, so ``except ValueError`` and the like
+work as usual:
+
+- ``TypeError``: the wrong kind of value (a string where a number is
+  expected, a fraction for an integer field);
+- ``ValueError``: the right kind but out of range, or the wrong shape or
+  length (antenna positions that are not (N, 3), fewer antennas than a fit
+  needs);
+- ``FileNotFoundError``, ``OSError``: a missing file or directory, or a file
+  that is not a ROOT file.
+
+Values that are suspicious but usable give a :class:`~grand.basis.validate.GRANDlibWarning`
+instead, and are used as given.  A tree field outside its physical range is
+one: reading a file goes through the same code as writing one, and existing
+files hold placeholders such as ``xmax_grams = -201``, which must stay
+readable.  ``NaN`` in a coordinate is another.  To find where they come from,
+turn them into errors::
+
+    import warnings
+    from grand.basis.validate import GRANDlibWarning
+    warnings.simplefilter("error", GRANDlibWarning)
+
+Two things are deliberately *not* errors.  Opening a tree on a file that does
+not exist creates it, because that is how trees are written, so a mistyped
+file name gives an empty tree; only a directory that does not exist is
+refused.  And an empty directory is a valid :class:`~grand.dataio.DataDirectory`
+for the same reason; :class:`~grand.aoi.event_list.EventList`, which only
+reads, refuses it.
+
 Nothing raised, but the answer is ``nan``
 -----------------------------------------
 

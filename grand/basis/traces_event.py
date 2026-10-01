@@ -5,6 +5,8 @@ from logging import getLogger
 import copy
 
 import numpy as np
+
+from grand.basis import validate as _validate
 import scipy.signal as ssig
 import matplotlib.pyplot as plt
 from matplotlib import colors
@@ -134,9 +136,14 @@ class Handling3dTraces:
         f_samp_mhz : float or ndarray, optional
             Sampling frequency, in MHz.
         """
-        assert isinstance(self.traces, np.ndarray)
-        assert traces.ndim == 3
-        assert traces.shape[1] == 3
+        where = "Handling3dTraces.init_traces"
+        if not isinstance(traces, np.ndarray):
+            raise TypeError(_validate.message(
+                where, "'traces' must be a NumPy array, got %s" % type(traces).__name__))
+        if traces.ndim != 3 or traces.shape[1] != 3:
+            raise ValueError(_validate.message(
+                where, "'traces' must have shape (n_du, 3, n_samples), one row per unit and "
+                "axis, got %s" % (traces.shape,)))
         self.traces = traces
         if du_id is None:
             du_id = list(range(traces.shape[0]))
@@ -144,14 +151,17 @@ class Handling3dTraces:
             t_start_ns = np.zeros(traces.shape[0], dtype=np.float64)
         self.idx2idt = du_id
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.idx2idt)}
+        t_start_ns = _validate.as_array(t_start_ns, "t_start_ns", where, ndim=1)
         self.t_start_ns = t_start_ns.astype(np.float64)
         if isinstance(f_samp_mhz, (int, float)):
             self.f_samp_mhz = np.ones(len(du_id)) * f_samp_mhz
         else:
             self.f_samp_mhz = f_samp_mhz
-        assert isinstance(self.t_start_ns, np.ndarray)
-        assert traces.shape[0] == len(du_id)
-        assert len(du_id) == t_start_ns.shape[0]
+        _validate.positive(self.f_samp_mhz, "f_samp_mhz", where, "MHz")
+        if not traces.shape[0] == len(du_id) == t_start_ns.shape[0]:
+            raise ValueError(_validate.message(
+                where, "'traces', 'du_id' and 't_start_ns' must describe the same units, got "
+                "%d, %d and %d" % (traces.shape[0], len(du_id), t_start_ns.shape[0])))
         self._define_t_samples()
 
     def init_network(self, du_pos):
@@ -177,9 +187,11 @@ class Handling3dTraces:
         type_tr : str, optional
             Kind of trace, used in plot titles.
         """
-        assert isinstance(str_unit, str)
-        assert isinstance(axis_name, str)
-        assert isinstance(type_tr, str)
+        for _name, _value in (("str_unit", str_unit), ("axis_name", axis_name), ("type_tr", type_tr)):
+            if not isinstance(_value, str):
+                raise TypeError(_validate.message(
+                    "Handling3dTraces.set_unit_axis", "'%s' must be a string, got %s"
+                    % (_name, type(_value).__name__)))
         self.type_trace = type_tr
         self.unit_trace = str_unit
         self.axis_name = self._d_axis_val[axis_name]
@@ -192,7 +204,7 @@ class Handling3dTraces:
         size : int
             Segment length used when computing spectra.
         """
-        assert size > 0
+        _validate.as_integer(size, "size", "Handling3dTraces.set_periodogram", minimum=1)
         self.nperseg = size
 
     ### OPERATIONS
@@ -283,8 +295,8 @@ class Handling3dTraces:
         new_nb_du : int
             Number of traces to keep, taken from the start.
         """
-        assert new_nb_du > 0
-        assert new_nb_du <= self.get_nb_trace()
+        _validate.as_integer(new_nb_du, "new_nb_du", "Handling3dTraces.reduce_nb_trace",
+                             minimum=1, maximum=self.get_nb_trace())
         self.idx2idt = self.idx2idt[:new_nb_du]
         self.traces = self.traces[:new_nb_du, :, :]
         self.t_start_ns = self.t_start_ns[:new_nb_du]

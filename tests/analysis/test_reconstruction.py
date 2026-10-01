@@ -11,13 +11,14 @@ pins GRAND's "comes from" angle convention in the reconstruction, which
 It does not check the models against nature -- that needs simulated or
 measured events with a known answer, which is future work.
 
-Two defects are pinned as behaviour rather than fixed, because the code is
+One defect is pinned as behaviour rather than fixed, because the code is
 the author's physics and changing it is her call:
 
 - ``recons_swf`` accepts ``sigma`` and ignores it in both branches.  It does
   not change the fit, since a uniform scale does not move a minimum.
-- ``recons_energy_from_voltage`` documents "float or array-like" but calls
-  the builtin ``max``, so an array raises.
+
+A second one, ``recons_energy_from_voltage`` raising on arrays although
+documented as array-like, was fixed in 2026-10 (it used the builtin ``max``).
 """
 
 import numpy as np
@@ -147,17 +148,19 @@ def test_the_voltage_energy_proxy():
     assert recons_energy_from_voltage(1.0, 0.8) == 0.0
 
 
-def test_the_energy_proxy_does_not_take_arrays_yet():
-    r"""Pinned defect: documented as array-like, raises on an array.
+def test_the_energy_proxy_takes_arrays_as_documented():
+    r"""Documented as array-like: an array gives one energy per element.
 
-    ``max(energy, 0.0)`` is the builtin, which cannot compare an array.  When
-    this is fixed (``np.maximum``), this test fails and should be replaced by
-    one that checks the array result.
+    It used the builtin ``max``, which cannot compare an array; it now uses
+    ``np.maximum``.  Scalars still give a float, and negative energies 0.
     """
     from grand.analysis.energy_reco.voltage import recons_energy_from_voltage
 
-    with pytest.raises(ValueError):
-        recons_energy_from_voltage(np.array([3.0e7, 1.0]), 0.8)
+    energies = recons_energy_from_voltage(np.array([3.0e7, 1.0]), 0.8)
+    assert energies.shape == (2,)
+    assert energies[0] == pytest.approx(recons_energy_from_voltage(3.0e7, 0.8))
+    assert energies[1] == 0.0
+    assert isinstance(recons_energy_from_voltage(3.0e7, 0.8), float)
 
 
 def test_the_cherenkov_solver_runs_under_numpy_2():

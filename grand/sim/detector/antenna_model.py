@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from typing import Union
 from numbers import Number
 import numpy as np
+
+from grand.basis import validate as _validate
 import os
 
 logger = getLogger(__name__)
@@ -173,6 +175,10 @@ class AntennaModel:
             self.leff_sn = tabulated_antenna_model(path_ant)
             path_ant = grand_add_path_data("detector/HorizonAntenna_Zarm_leff_loaded.npy")
             self.leff_z = tabulated_antenna_model(path_ant)
+
+        else:
+            _validate.one_of(du_type, ("GP300", "GP300_nec", "GP300_mat", "Horizon"),
+                             "du_type", "AntennaModel")
 
         self.d_leff = {"sn": self.leff_sn, "ew": self.leff_ew, "z": self.leff_z}
 

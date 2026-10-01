@@ -9,6 +9,7 @@ import datetime
 from datetime import date
 
 from grand import grand_get_path_root_pkg
+from grand.basis import validate as _validate
 from grand.geo.coordinates import CartesianRepresentation, GeodeticRepresentation
 from grand.geo.coordinates import ECEF, Geodetic, GRANDCS, LTP, _cartesian_to_horizontal
 from .gull import Snapshot as _Snapshot
@@ -137,11 +138,9 @@ class Geomagnet:
         elif isinstance(obstime, (str, datetime.date)):
             pass
         else:
-            raise TypeError(
-                "obstime given is of type %s. Provide obstime in string or datetime.date type.\
-                Example: '2020-01-19' or datetime.date(2020, 1, 19)."
-                % type(obstime)
-            )
+            raise TypeError(_validate.message(
+                "Geomagnet", "'obstime' must be a date string such as '2020-01-19' or a "
+                "datetime.date, got %s" % type(obstime).__name__))
 
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRAND cs. OR latitude=deg, longitude=deg, height=meter.
@@ -151,11 +150,9 @@ class Geomagnet:
         elif isinstance(location, (ECEF, Geodetic, GeodeticRepresentation, LTP, GRANDCS)):
             geodetic_loc = Geodetic(location)
         else:
-            raise TypeError(
-                "Provide location in ECEF, Geodetic, or GRAND coordinate system instead of type %s.\n \
-                            Location can also be given as latitude=deg, longitude=deg, height=meter."
-                % type(location)
-            )
+            raise TypeError(_validate.message(
+                "Geomagnet", "'location' must be a position in ECEF, Geodetic, LTP or GRANDCS, or "
+                "be given as latitude=deg, longitude=deg, height=m; got %s" % type(location).__name__))
 
         self.model = model  # type: str
         self.obstime = obstime

@@ -370,6 +370,47 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- **Public functions check their input, with messages that start with
+  `GRANDlib:`.** A review found that only 18 % of the 328 public functions
+  checked their input at all; of 60 bad inputs, 27 were accepted silently,
+  13 failed deep inside with an unrelated exception, and one called
+  `exit()`. Now 50 of the 60 are refused with a message naming the function,
+  the argument, what was expected and what was given, for example
+  `ValueError: GRANDlib: Geodetic: 'latitude' must be between -90 and 90
+  degrees, got 200.0`. The exceptions are the standard `TypeError`,
+  `ValueError` and `FileNotFoundError`. Suspicious but usable values give a
+  `GRANDlibWarning` instead. The helpers are in the new
+  `grand.basis.validate`; the convention is in the contributing guide and
+  the troubleshooting page. In particular:
+  - coordinates: latitude within ±90°, all of latitude, longitude and height
+    given, arrays of equal length; NaN warns. `Geodetic` no longer shifts a
+    negative longitude inside the caller's own array;
+  - data-tree fields: no silent change on storage (`run_number = 1.7` was
+    stored as 1, `-1` as 4294967295, a numeric string converted); fixed
+    shapes enforced; `du_xyz` rows must be (x, y, z). Physical ranges
+    (zenith, energies, Xmax depth, time-bin size) warn rather than raise,
+    because existing files hold placeholders such as `xmax_grams = -201`;
+  - files: a missing file or directory, or a file that is not ROOT, is named
+    as such; `pathlib.Path` is accepted. Creating a new file by opening a
+    tree on it still works; only a missing directory is refused;
+  - `EventList` raises instead of calling `exit()`, accepts `os.PathLike`,
+    and refuses an empty directory; `Event.write` likewise;
+  - reconstruction (`grand.analysis`, which had no checks): antenna positions
+    must be (N, 3) and finite, with enough antennas for the fit (3 for the
+    plane wave, 4 for the spherical and ADF fits); times and amplitudes one
+    per antenna; uncertainties positive. `PWF_semianalytical` and the loss
+    functions raised instead of printing and returning `None`. The Cramér-Rao
+    bounds warn when the antennas barely constrain the parameters (2
+    antennas used to give bounds of 10^5 rad). `recons_energy_from_voltage`
+    now takes arrays, as documented, and refuses `sin_alpha = 0`;
+  - simulation: `AntennaModel` and `galactic_noise` refuse an unknown
+    `du_type`; the VGA gain must be one of the four tabulated values;
+    frequencies must not be negative; `assert`s on user input became errors;
+  - two `raise` of a plain string (itself a `TypeError`) fixed.
+  The CoREAS converter passed its event number as the string `"004100"`; it
+  now converts it explicitly. `tests/test_input_validation.py` (28 tests)
+  keeps all this.
+
 - **The Handbook's "Directory Structure" page is maintained by hand.**
   `docs/dev/build_handbook.py` rewrote every Handbook page from the LaTeX
   source, and in September 2026 a regeneration silently undid the 2026-09-08

@@ -6,6 +6,8 @@ import os
 
 import numpy as np
 
+from grand.basis import validate as _validate
+
 # Load the C++ macros for vector filling from numpy arrays
 ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
 
@@ -17,6 +19,78 @@ cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q
 
 # Conversion between C++ type and numpy typecodes
 cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype('uint64'), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
+
+
+def _check_limits(values, where, minimum=None, maximum=None, positive=False, unit=""):
+    r"""Warns when values of a field lie outside its physical limits.
+
+    A warning, not an error: reading a file goes through the same setters,
+    and existing files do hold such values (a 2024 shower file stores
+    ``xmax_grams = -201`` as a placeholder).  Refusing them would make those
+    files unreadable.  The value is stored as given.  NaN passes: in GRANDlib
+    files it means "unknown".
+
+    Warns
+    -----
+    GRANDlibWarning
+    """
+    if minimum is None and maximum is None and not positive:
+        return
+    array = np.asarray(values, dtype=float).ravel()
+    array = array[np.isfinite(array)]
+    if not array.size:
+        return
+    unit_text = " %s" % unit if unit else ""
+    if positive and np.any(array <= 0):
+        bad, expected = array[array <= 0][0], "positive"
+    else:
+        low = array < minimum if minimum is not None else np.zeros(array.shape, bool)
+        high = array > maximum if maximum is not None else np.zeros(array.shape, bool)
+        if not np.any(low | high):
+            return
+        bad = array[low | high][0]
+        expected = ("between %s and %s%s" % (minimum, maximum, unit_text) if minimum is not None
+                    and maximum is not None else ">= %s%s" % (minimum, unit_text) if minimum is not None
+                    else "<= %s%s" % (maximum, unit_text))
+    _validate.warn(where, "should be %s, got %s; stored as given" % (expected, bad), stacklevel=4)
+
+
+def _checked_vector_value(value, basic_vec_type, ndim, where):
+    r"""Checks the elements of a value for a ``std::vector`` field.
+
+    Refuses what would otherwise be changed silently on storage: a fraction
+    in an integer field (``1.7`` stored as 1), a negative or too large value
+    for its integer type, and anything that is not a number in a numeric
+    field.
+
+    Parameters
+    ----------
+    value : list, numpy.ndarray or StdVectorList
+        As given to the field.
+    basic_vec_type : str
+        The C++ element type, for example ``"float"`` or ``"unsigned short"``.
+    ndim : int
+        1 for ``vector<T>``, 2 for ``vector<vector<T>>``, and so on.
+    where : str
+        The field, for messages, for example ``"TRun.du_id"``.
+
+    Returns
+    -------
+    list, numpy.ndarray or StdVectorList
+        `value` itself, unchanged: only checked.  Storing it is left to the
+        existing conversion, which expects the original container.
+    """
+    dtype = cpp_to_numpy_typecodes.get(basic_vec_type)
+    if dtype is None or dtype.kind not in "iuf" or isinstance(value, StdVectorList):
+        return value
+    if ndim <= 1:
+        _validate.coerce_to_dtype(value, dtype, where)
+        return value
+    if isinstance(value, (str, bytes)):
+        raise TypeError(_validate.message(where, "must be a list of lists of numbers, got a string"))
+    for i, row in enumerate(value):
+        _checked_vector_value(row, basic_vec_type, ndim - 1, "%s[%d]" % (where, i))
+    return value
 
 
 high_root_version = ROOT.gROOT.GetVersionInt()>=63600
@@ -377,7 +451,8 @@ class StdVectorList(MutableSequence):
 
 class StdVectorListDesc:
     """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
-    def __init__(self, vec_type, sec_vec_type=None):
+    def __init__(self, vec_type, sec_vec_type=None, inner_length=None, minimum=None, maximum=None,
+                 positive=False, unit=""):
         r"""Declares a branch holding a ``std::vector``.
 
         Parameters
@@ -388,6 +463,8 @@ class StdVectorListDesc:
         sec_vec_type : str, optional
             Element type of the inner vector, for nested vectors.
         """
+        self.inner_length = inner_length
+        self.limits = dict(minimum=minimum, maximum=maximum, positive=positive, unit=unit)
         self.factory = lambda: StdVectorList(vec_type, sec_vec_type=sec_vec_type)
 
     def __set_name__(self, type, name):
@@ -458,6 +535,18 @@ class StdVectorListDesc:
         vector = inst._vector
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+            where = "%s.%s" % (type(obj).__name__, self.name)
+            value = _checked_vector_value(value, inst.basic_vec_type, inst.ndim, where)
+            if getattr(self, "inner_length", None) is not None and not isinstance(value, StdVectorList):
+                for i, row in enumerate(value):
+                    if len(row) != self.inner_length:
+                        raise ValueError(_validate.message(
+                            where, "each entry must have %d values, entry %d has %d"
+                            % (self.inner_length, i, len(row))))
+            if any(getattr(self, "limits", {}).values()) and not isinstance(value, StdVectorList) \
+                    and cpp_to_numpy_typecodes.get(inst.basic_vec_type, np.dtype("U")).kind in "iuf":
+                for row in (value if inst.ndim > 1 else [value]):
+                    _check_limits(row, where, **self.limits)
             # Clear the vector before setting
             vector.clear()
             inst += value
@@ -466,18 +555,19 @@ class StdVectorListDesc:
             inst._vector = value
         else:
             if "vector" in inst.vec_type:
-                raise ValueError(
-                    f"Incorrect type for {self.name} {type(value)}. Either a list of lists, a list of arrays or a ROOT.vector of vectors required."
-                )
+                raise TypeError(_validate.message(
+                    "%s.%s" % (type(obj).__name__, self.name),
+                    "must be a list of lists, a list of arrays or a ROOT vector of vectors, got %s"
+                    % type(value).__name__))
             else:
-                raise ValueError(
-                    f"Incorrect type for {self.name} {type(value)}. Either a list, an array or a ROOT.vector required."
-                )
+                raise TypeError(_validate.message(
+                    "%s.%s" % (type(obj).__name__, self.name),
+                    "must be a list, an array or a ROOT vector, got %s" % type(value).__name__))
 
 
 class TTreeScalarDesc:
     """A descriptor for scalars assigned to TTrees as numpy arrays of size 1 - makes use of it possible in dataclasses without setting property and setter"""
-    def __init__(self, dtype):
+    def __init__(self, dtype, minimum=None, maximum=None, positive=False, unit=""):
         r"""Declares a branch holding a single number.
 
         Parameters
@@ -485,6 +575,7 @@ class TTreeScalarDesc:
         dtype : type or str
             NumPy dtype of the scalar, for example ``np.uint32``.
         """
+        self.limits = dict(minimum=minimum, maximum=maximum, positive=positive, unit=unit)
         self.factory = lambda: np.zeros(1, dtype)
 
     def __set_name__(self, type, name):
@@ -562,16 +653,23 @@ class TTreeScalarDesc:
             return
         inst = getattr(obj, self.attrname)
 
+        where = "%s.%s" % (type(obj).__name__, self.name)
         # Newer python gives a list, while older a scalar. Need to handle both for compatibility
-        arr = np.asarray(value)
+        if isinstance(value, (str, bytes)):
+            arr = np.asarray(value, dtype=object)
+        else:
+            arr = np.asarray(value)
         if arr.ndim == 0:
             scalar = arr.item()
         elif arr.size == 1:
             scalar = arr.reshape(-1)[0].item()
         else:
-            raise ValueError(f"{self.name} expects a scalar or length-1 value, got shape {arr.shape}")
+            raise ValueError(_validate.message(
+                where, "must be a single value, got an array of shape %s" % (arr.shape,)))
 
-        inst[0] = scalar
+        converted = _validate.coerce_to_dtype(scalar, inst.dtype, where)
+        _check_limits(converted, where, **getattr(self, "limits", {}))
+        inst[0] = converted
 
 
 class TTreeArrayDesc:
@@ -652,8 +750,17 @@ class TTreeArrayDesc:
         if isinstance(value, TTreeArrayDesc):
             value = getattr(obj, self.attrname)
         inst = getattr(obj, self.attrname)
-
-        inst[:] = np.array(value).astype(self.dtype)
+        where = "%s.%s" % (type(obj).__name__, self.name)
+        if isinstance(value, (str, bytes)):
+            raise TypeError(_validate.message(where, "must be an array of numbers, got a string"))
+        given = np.asarray(value)
+        # Same number of values in another layout, e.g. [[x, y, z]], was
+        # always stored: keep accepting it.
+        if given.size != inst.size:
+            raise ValueError(_validate.message(
+                where, "must have %d values (shape %s), got shape %s"
+                % (inst.size, inst.shape, given.shape)))
+        inst[:] = _validate.coerce_to_dtype(given.reshape(inst.shape), self.dtype, where)
 
 
 class StdString:

@@ -2,6 +2,8 @@
 Master module for the ADC in GRAND
 """
 import numpy as np
+
+from grand.basis import validate as _validate
 import logging
 import scipy.fft as sf
 logger = logging.getLogger(__name__)
@@ -172,16 +174,28 @@ class ADC:
                       % (amplitude, int(np.abs(np.asarray(adc.process(trace))).max())))
         '''
 
-        assert isinstance(voltage_trace,np.ndarray)       
+        if not isinstance(voltage_trace, np.ndarray):
+            raise TypeError(_validate.message(
+                "ADC.process", "'voltage_trace' must be a NumPy array, got %s"
+                % type(voltage_trace).__name__))
           
 
         adc_trace = self._digitize(voltage_trace)
 
         # Add measured noise to the trace if requested
         if noise_trace is not None:
-            assert isinstance(noise_trace,np.ndarray)
-            assert noise_trace.shape == adc_trace.shape
-            assert noise_trace.dtype == adc_trace.dtype
+            if not isinstance(noise_trace, np.ndarray):
+                raise TypeError(_validate.message(
+                    "ADC.process", "'noise_trace' must be a NumPy array, got %s"
+                    % type(noise_trace).__name__))
+            if noise_trace.shape != adc_trace.shape:
+                raise ValueError(_validate.message(
+                    "ADC.process", "'noise_trace' must have the shape of the digitized trace, "
+                    "%s, got %s" % (adc_trace.shape, noise_trace.shape)))
+            if noise_trace.dtype != adc_trace.dtype:
+                raise TypeError(_validate.message(
+                    "ADC.process", "'noise_trace' must be in ADC counts (%s), got %s"
+                    % (adc_trace.dtype, noise_trace.dtype)))
             adc_trace += noise_trace
             logger.info('Noise added to ADC trace')
 

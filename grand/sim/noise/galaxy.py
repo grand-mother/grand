@@ -4,6 +4,8 @@ Simulation of Galactic radio noise.
 
 import numpy as np
 
+from grand.basis import validate as _validate
+
 from grand import grand_add_path_data
 
 
@@ -94,11 +96,15 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     # The Galactic-noise tables sample LST every 20 minutes (72 bins/24 h).
     # Select the nearest available bin. Integer-hour values map exactly, e.g.
     # f_lst=18.0 -> bin 54 -> LST 18:00.
-    f_lst = float(f_lst)
-    if not np.isfinite(f_lst):
-        raise ValueError("f_lst must be finite.")
+    where = "galactic_noise"
+    f_lst = _validate.as_real(f_lst, "f_lst", where)
     if not 0.0 <= f_lst < 24.0:
-        raise ValueError("f_lst must satisfy 0 <= f_lst < 24 hours.")
+        raise ValueError(_validate.message(
+            where, "'f_lst' (local sidereal time) must satisfy 0 <= f_lst < 24 hours, got %s" % f_lst))
+    size_out = _validate.as_integer(size_out, "size_out", where, minimum=1)
+    nb_ant = _validate.as_integer(nb_ant, "nb_ant", where, minimum=0)
+    freqs_mhz = _validate.as_array(freqs_mhz, "freqs_mhz", where, ndim=1, min_length=2, finite=True)
+    _validate.non_negative(freqs_mhz, "freqs_mhz", where, "MHz")
     lst_bin = int(np.floor(3.0 * f_lst + 0.5)) % 72
 
     # Available-power spectral-density tables, P_L [W/Hz].
@@ -109,11 +115,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         "GP300_mat": "noise/galactic_PL_per_Hz_gp13_GP300_mat.npy",
     }
 
-    if du_type not in gala_files:
-        raise ValueError(
-            f"Unsupported du_type '{du_type}'. "
-            f"Expected one of {tuple(gala_files)}."
-        )
+    _validate.one_of(du_type, tuple(gala_files), "du_type", where)
 
     gala_file = grand_add_path_data(gala_files[du_type])
     zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")

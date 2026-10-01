@@ -31,6 +31,8 @@ import os
 from numbers import Number
 from logging import getLogger
 import warnings
+
+from grand.basis import validate as _validate
 import numpy as np
 try:
     from scipy.spatial.transform import Rotation as _Rotation
@@ -444,11 +446,7 @@ class Coordinates(np.ndarray):
         if isinstance(n, int):
             return super().__new__(cls, (3, n), dtype="f8")
         else:
-            raise TypeError(
-                "Input number of coordinates point is type",
-                type(n),
-                "Integer is required.",
-            )
+            raise TypeError(_validate.message(cls.__name__, "'n' must be an integer, got %s" % type(n).__name__))
 
 
 # --------------Representation---------------
@@ -494,18 +492,9 @@ class CartesianRepresentation(Coordinates):
             n = 1
         elif isinstance(x, np.ndarray) and isinstance(y, np.ndarray) and isinstance(z, np.ndarray):
             n = len(x)
-            assert n == len(y), (
-                "Length of x and y array must be the same. \
-				x: %i, y: %i"
-                % (len(x), len(y))
-            )
-            assert n == len(z), (
-                "Length of x and z array must be the same. \
-							   x: %i, z: %i"
-                % (len(x), len(z))
-            )
+            _validate.same_length(cls.__name__, x=x, y=y, z=z)
         else:
-            raise TypeError(type(x))
+            raise TypeError(_validate.message(cls.__name__, "'x', 'y' and 'z' must be numbers or NumPy arrays, got %s" % type(x).__name__))
 
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
@@ -707,18 +696,9 @@ class SphericalRepresentation(Coordinates):
             and isinstance(r, np.ndarray)
         ):
             n = len(theta)
-            assert n == len(phi), (
-                "Length of theta and phi array must be the same. \
-								 theta: %i, phi: %i"
-                % (n, len(phi))
-            )
-            assert n == len(r), (
-                "Length of theta and r array must be the same. \
-							   theta: %i, r: %i"
-                % (n, len(r))
-            )
+            _validate.same_length(cls.__name__, theta=theta, phi=phi, r=r)
         else:
-            raise TypeError(type(theta))
+            raise TypeError(_validate.message(cls.__name__, "'theta', 'phi' and 'r' must be numbers or NumPy arrays, got %s" % type(theta).__name__))
 
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
@@ -891,13 +871,9 @@ class HorizontalRepresentation(Coordinates):
             and isinstance(norm, np.ndarray)
         ):
             n = len(azimuth)
-            assert n == len(elevation), (
-                "Length of azimuth and elevation array must be the same. \
-									   azimuth: %i, elevation: %i"
-                % (n, len(elevation))
-            )
+            _validate.same_length(cls.__name__, azimuth=azimuth, elevation=elevation)
         else:
-            raise TypeError(type(azimuth))
+            raise TypeError(_validate.message(cls.__name__, "'azimuth', 'elevation' and 'norm' must be numbers or NumPy arrays, got %s" % type(azimuth).__name__))
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
         # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
@@ -1074,11 +1050,10 @@ class GeodeticRepresentation(Coordinates):
             and isinstance(height, np.ndarray)
         ):
             n = len(latitude)
-            assert n == len(longitude)
-            assert n == len(height)
+            _validate.same_length(cls.__name__, latitude=latitude, longitude=longitude, height=height)
 
         else:
-            raise TypeError(type(latitude))
+            raise TypeError(_validate.message(cls.__name__, "'latitude', 'longitude' and 'height' must be numbers or NumPy arrays, got %s" % type(latitude).__name__))
 
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
@@ -1174,6 +1149,49 @@ class GeodeticRepresentation(Coordinates):
 
 
 # ------------------Frame---------------------
+def _check_geodetic(latitude, longitude, height, where):
+    r"""Checks the components a user gives to a geodetic position.
+
+    Parameters
+    ----------
+    latitude, longitude, height : float, int or numpy.ndarray
+        As given.
+    where : str
+        The class, for messages.
+
+    Raises
+    ------
+    TypeError
+        If a component is missing or not a number or array.
+    ValueError
+        If arrays differ in length, or a latitude lies outside [-90, 90].
+    """
+    given = dict(latitude=latitude, longitude=longitude, height=height)
+    missing = [name for name, value in given.items() if value is None]
+    if missing:
+        raise TypeError(_validate.message(
+            where, "'latitude', 'longitude' and 'height' must all be given; missing %s"
+            % ", ".join("'%s'" % name for name in missing)))
+    for name, value in given.items():
+        if isinstance(value, (bool, np.bool_)) or not isinstance(value, (Number, np.ndarray)):
+            raise TypeError(_validate.message(
+                where, "'%s' must be a number or a NumPy array, got %r (%s)"
+                % (name, value, type(value).__name__)))
+    arrays = [v for v in given.values() if isinstance(v, np.ndarray)]
+    if arrays and len(arrays) != 3:
+        raise TypeError(_validate.message(
+            where, "give 'latitude', 'longitude' and 'height' all as numbers or all as arrays"))
+    if arrays:
+        _validate.same_length(where, **given)
+    lat = np.asarray(latitude, dtype=float)
+    _validate.in_range(lat[np.isfinite(lat)] if lat.ndim else (lat if np.isfinite(lat) else 0.0),
+                       "latitude", where, -90, 90, "degrees")
+    for name, value in given.items():
+        if not np.all(np.isfinite(np.asarray(value, dtype=float))):
+            _validate.warn(where, "'%s' contains NaN or infinity; positions computed from it "
+                           "will be NaN" % name, stacklevel=4)
+
+
 class Geodetic(GeodeticRepresentation):
     """
     Generic container for Geodetic coordinate system. Center of this frame.
@@ -1266,6 +1284,8 @@ class Geodetic(GeodeticRepresentation):
             site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
             print(np.round(np.asarray(Geodetic(ECEF(site))).ravel(), 6))
         """
+        if arg is None and any(v is not None for v in (latitude, longitude, height)):
+            _check_geodetic(latitude, longitude, height, cls.__name__)
         if isinstance(latitude, (float, np.ndarray)):
             return super().__new__(cls, latitude=latitude, longitude=longitude, height=height)
         elif not isinstance(arg, type(None)):
@@ -1275,11 +1295,7 @@ class Geodetic(GeodeticRepresentation):
                     cls, latitude=placeholder, longitude=placeholder, height=placeholder
                 )
             else:
-                raise TypeError(
-                    type(arg),
-                    "Argument type must be either \
-						   ECEF, Geodetic, LTP, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
         else:
             # TODO: This part maynot be required.
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -1342,9 +1358,7 @@ class Geodetic(GeodeticRepresentation):
                     elif arg.reference == "ELLIPSOID":
                         height = arg.height
                 else:
-                    raise TypeError(
-                        "Provide reference as GEOID or ELLIPSOID istead of %s" % str(reference)
-                    )
+                    raise TypeError(_validate.message(type(self).__name__, "'reference' must be 'GEOID' or 'ELLIPSOID', got %r" % (reference,)))
 
             elif isinstance(arg, Horizontal):
                 # TO DO: write proper transformation.
@@ -1359,9 +1373,7 @@ class Geodetic(GeodeticRepresentation):
                 elif reference == "ELLIPSOID":
                     pass
                 else:
-                    raise TypeError(
-                        "Provide reference as GEOID or ELLIPSOID istead of %s" % str(reference)
-                    )
+                    raise TypeError(_validate.message(type(self).__name__, "'reference' must be 'GEOID' or 'ELLIPSOID', got %r" % (reference,)))
             elif isinstance(arg, (LTP, GRANDCS)):
                 ecef = ECEF(arg)
                 geodetic = Geodetic(ecef, reference=reference)
@@ -1371,12 +1383,7 @@ class Geodetic(GeodeticRepresentation):
                     geodetic.height,
                 )
             else:
-                raise TypeError(
-                    type(arg),
-                    type(latitude),
-                    "Argument type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'latitude', 'longitude' and 'height' as numbers or arrays; got %s" % type(arg if arg is not None else latitude).__name__))
 
         if isinstance(latitude, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
@@ -1385,17 +1392,14 @@ class Geodetic(GeodeticRepresentation):
             if isinstance(latitude, Number):
                 longitude = 360+longitude if longitude<0 else longitude
             else:
-                longitude[longitude < 0] += 360
+                # A new array: shifting in place changed the caller's array
+                longitude = np.where(longitude < 0, longitude + 360, longitude)
 
             self.latitude = latitude
             self.longitude = longitude
             self.height = height
         else:
-            raise TypeError(
-                type(latitude),
-                "latitude, longitude, and height type must be either \
-					   int, float, np.ndarray.",
-            )
+            raise TypeError(_validate.message(type(self).__name__, "'latitude', 'longitude' and 'height' must be numbers or NumPy arrays, got %s" % type(latitude).__name__))
 
     def geodetic_to_horizontal(self):
         r"""Returns this position in horizontal coordinates.
@@ -1526,11 +1530,7 @@ class ECEF(CartesianRepresentation):
                 placeholder = np.nan * np.ones(len(arg[0]))
                 return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
             else:
-                raise TypeError(
-                    type(arg),
-                    "Argument type must be either \
-						   ECEF, Geodetic, LTP, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
         else:
             # TODO: This part maynot be required.
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -1593,12 +1593,7 @@ class ECEF(CartesianRepresentation):
                 ecef = np.matmul(basis.T, arg) + origin
                 x, y, z = ecef.x, ecef.y, ecef.z
             else:
-                raise TypeError(
-                    type(arg),
-                    type(x),
-                    "Type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'x', 'y' and 'z' as numbers or arrays; got %s" % type(arg if arg is not None else x).__name__))
 
         if isinstance(x, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
@@ -1606,7 +1601,7 @@ class ECEF(CartesianRepresentation):
             self.y = y
             self.z = z
         else:
-            raise TypeError(type(x), "x, y, and z type must be either int, float, np.ndarray.")
+            raise TypeError(_validate.message(type(self).__name__, "'x', 'y' and 'z' must be numbers or NumPy arrays, got %s" % type(x).__name__))
 
     def ecef_to_geodetic(self, reference="GEOID"):
         r"""Returns this position as latitude, longitude and height.
@@ -1774,19 +1769,9 @@ class Horizontal(HorizontalRepresentation):
                 elevation = np.rad2deg(np.arcsin(z / r))
                 norm = r
             else:
-                raise TypeError(
-                    type(arg),
-                    type(azimuth),
-                    "Type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(cls.__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'azimuth', 'elevation' and 'norm' as numbers or arrays; got %s" % type(arg if arg is not None else azimuth).__name__))
         else:
-            raise TypeError(
-                type(arg),
-                type(azimuth),
-                "Type must be either int, float, np.ndarray, \
-						ECEF, Geodetic, GRANDCS or Horizontal.",
-            )
+            raise TypeError(_validate.message(cls.__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'azimuth', 'elevation' and 'norm' as numbers or arrays; got %s" % type(arg if arg is not None else azimuth).__name__))
 
         return super().__new__(cls, azimuth, elevation, norm)
 
@@ -1901,11 +1886,7 @@ class LTP(CartesianRepresentation):
                 placeholder = np.nan * np.ones(len(ecef.x))
                 return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
             else:
-                raise TypeError(
-                    type(arg),
-                    "Argument type must be either \
-						   ECEF, Geodetic, LTP, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
         else:
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
             # without giving any coordinates. Can also use np.empty((1,1)) instead of np.array([nan]).
@@ -1989,20 +1970,12 @@ class LTP(CartesianRepresentation):
         elif isinstance(location, (LTP, ECEF, GeodeticRepresentation, GRANDCS)):
             geodetic_loc = Geodetic(location)  # default GEOID reference is used.
         else:
-            raise TypeError(
-                "Provide location of LTP in ECEF, Geodetic, or GRANDCS coordinate system instead of type %s.\n \
-							Location can also be given as latitude=deg, longitude=deg, height=meter."
-                % type(location)
-            )
+            raise TypeError(_validate.message(type(self).__name__, "'location' must be a position in ECEF, Geodetic or GRANDCS, or be given as latitude=deg, longitude=deg, height=m; got %s" % type(location).__name__))
         # Make sure orientation is given as string.
         if isinstance(orientation, str):
             pass
         else:
-            raise TypeError(
-                "Provide orientaion. \
-				Orientation must be string instead of %s. Example: ENU, NWU etc."
-                % type(orientation)
-            )
+            raise TypeError(_validate.message(type(self).__name__, "'orientation' must be a string such as 'ENU' or 'NWU', got %s" % type(orientation).__name__))
 
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude
@@ -2272,16 +2245,12 @@ class GRANDCS(LTP):
             if isinstance(arg, (ECEF, Horizontal, Geodetic, LTP, GRANDCS)):
                 pass
             else:
-                raise TypeError(
-                    type(arg),
-                    "Argument type must be \
-							ECEF, Geodetic, LTP, GRANDCS or Horizontal.",
-                )
+                raise TypeError(_validate.message(type(self).__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
         if x is not None:
             if isinstance(x, (Number, np.ndarray)):
                 pass
             else:
-                raise TypeError(type(x), "x type must be int, float or np.ndarray.")
+                raise TypeError(_validate.message(type(self).__name__, "'x', 'y' and 'z' must be numbers or NumPy arrays, got %s" % type(x).__name__))
 
         super().__init__(
             arg=arg,  # input coordinate instance to convert to LTP

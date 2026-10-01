@@ -22,6 +22,8 @@ import logging
 
 import numpy as np
 
+from grand.basis import validate as _validate
+
 logger = logging.getLogger(__name__)
 
 #: How closely the core-to-Xmax vector must follow the stored direction, in
@@ -31,6 +33,23 @@ TOLERANCE_DEG = 0.05
 GROUND = "ground"
 SEA_LEVEL = "sea-level"
 UNDETERMINED = "undetermined"
+
+
+def _angles(zenith, azimuth, where):
+    r"""Checks a shower direction in degrees; returns it as two floats."""
+    zenith = _validate.as_real(zenith, "zenith", where)
+    azimuth = _validate.as_real(azimuth, "azimuth", where)
+    _validate.in_range(zenith, "zenith", where, 0, 180, "degrees")
+    return zenith, azimuth
+
+
+def _vector3(value, name, where):
+    r"""Checks a position is three numbers, x, y and z (NaN allowed: it means unknown)."""
+    array = _validate.as_array(value, name, where)
+    if array.size != 3:
+        raise ValueError(_validate.message(
+            where, "'%s' must be three numbers (x, y, z), got shape %s" % (name, array.shape)))
+    return array.reshape(3)
 
 
 def arrival_direction(zenith, azimuth):
@@ -47,7 +66,8 @@ def arrival_direction(zenith, azimuth):
     numpy.ndarray
         Shape (3,), x North, y West, z Up.  Upwards for a downgoing shower.
     """
-    theta, phi = np.deg2rad(float(zenith)), np.deg2rad(float(azimuth))
+    zenith, azimuth = _angles(zenith, azimuth, "arrival_direction")
+    theta, phi = np.deg2rad(zenith), np.deg2rad(azimuth)
     return np.array([np.sin(theta) * np.cos(phi),
                      np.sin(theta) * np.sin(phi),
                      np.cos(theta)])
@@ -108,7 +128,9 @@ def xmax_above_ground(xmax_pos_shc, zenith, azimuth, ground_altitude):
     A shower straight down cannot be told apart: both readings point up.
     Then, and whenever both match, the stored value is kept as it is.
     """
-    stored = np.asarray(xmax_pos_shc, dtype=float).reshape(3)
+    zenith, azimuth = _angles(zenith, azimuth, "xmax_above_ground")
+    _validate.as_real(ground_altitude, "ground_altitude", "xmax_above_ground")
+    stored = _vector3(xmax_pos_shc, "xmax_pos_shc", "xmax_above_ground")
     shifted = stored - np.array([0.0, 0.0, float(ground_altitude)])
     as_stored = _angle_to_direction(stored, zenith, azimuth)
     as_shifted = _angle_to_direction(shifted, zenith, azimuth)
@@ -154,8 +176,8 @@ def xmax_in_site_frame(xmax_pos_shc, zenith, azimuth, ground_altitude, shower_co
         The frame ``xmax_pos_shc`` was found in, as :func:`xmax_above_ground`
         reports it; ``"undetermined"`` for a non-finite input.
     """
-    stored = np.asarray(xmax_pos_shc, dtype=float).reshape(3)
-    core = np.asarray(shower_core_pos, dtype=float).reshape(3)
+    stored = _vector3(xmax_pos_shc, "xmax_pos_shc", "xmax_in_site_frame")
+    core = _vector3(shower_core_pos, "shower_core_pos", "xmax_in_site_frame")
     if not np.all(np.isfinite(stored)):
         return np.full(3, np.nan), UNDETERMINED
     above_ground, frame = xmax_above_ground(stored, zenith, azimuth, ground_altitude)

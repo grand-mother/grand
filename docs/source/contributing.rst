@@ -66,6 +66,29 @@ If your change makes a listed file clean of a listed rule, delete that rule
 from its line in the same commit.  That is the mechanism by which the list
 empties.
 
+Checking input
+--------------
+
+A public function checks what it is given, using :mod:`grand.basis.validate`,
+and refuses bad input at the door rather than failing deep inside or, worse,
+returning a plausible wrong number.  The helpers convert and check in one line
+and write the message, which starts with ``GRANDlib:`` and names the function
+and the argument::
+
+    from grand.basis import validate as _validate
+
+    def fit(Xants, tants, sigma=None):
+        where = "fit"
+        Xants = _validate.as_array(Xants, "Xants", where, shape=(None, 3), finite=True)
+        sigma = _validate.positive(_validate.as_real(sigma, "sigma", where), "sigma", where, "s")
+
+Raise ``TypeError`` for the wrong kind of value and ``ValueError`` for a value
+of the right kind but out of range or shape; warn with
+:func:`grand.basis.validate.warn` for input that is suspicious but usable.
+Never ``print`` and return ``None``, never call ``exit()``, and do not use
+``assert`` for user input: Python skips asserts under ``-O``, and their message
+says nothing.  Asserts remain fine for internal invariants.
+
 Docstrings
 ----------
 
