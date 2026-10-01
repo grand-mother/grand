@@ -25,6 +25,8 @@ has been deleted, so rollback stays trivial.
 | **Old pull requests and issues** | 8 pull requests closed and 1 ported by hand. 12 old issues triaged, 7 fixed, 5 left with their owners |
 | **CI** | Lint, tests on two ROOT versions, notebooks and the documentation all run and are green. A gate stops a skipped test job from reading as a pass. `dev-next` is protected against force-push and deletion |
 | **Tests** | 841 passed, 0 failed (it was 640 on 2026-09-28) |
+| **Code coverage** | Measured in CI on every run, for `grand/` and `granddb/` separately: 73 % and 20 % (63 % together) when last measured, on 2026-09-08. `granddb/` was not measured at all before |
+| **Docstrings** | Numpydoc docstrings across `grand/`: 657 of its 666 functions (99 %) now have one, 61 % document their parameters and 58 % their returns. A lint ratchet enforces them: the list of exempt modules may shrink but never grow |
 | **Documentation** | Published at <https://grand-mother.github.io/grand/>. 23 written pages, the API reference, a Handbook (also as a PDF) and 12 tutorial notebooks. The docs build with zero warnings |
 | **Input validation** | Bad input is now refused with a clear `GRANDlib:` message in 50 of 60 test cases, up from 7. No crashes, and no silent `exit()` |
 | **Beta test** | 3 waves (using, checking, breaking), 24 independent testers. Every finding was reproduced before it was logged |
@@ -62,15 +64,10 @@ Examples of what the Critical fixes corrected:
 
 1. **Fix the 33 High issues**, starting with `dataio`. Then run wave 4 of the
    beta test, which checks for regressions.
-2. **Promote `dev-next` to `main`.** Two exit criteria remain:
-   - a clean-machine install;
-   - announcing the freeze of `dev`.
-3. **Decisions for the collaboration:**
-   - a reprocessing policy for simulated voltages made before the
-     galactic-noise fix of 2026-09-07 (a factor of √2);
-   - whether to provide a Docker image;
-   - whether to store the sampling rate in voltage files, so that resampled
-     voltages can be saved.
+2. **Audit the documentation.**
+3. **A decision for the collaboration:** whether to provide a Docker image.
 4. **Access to SPS data** to test the `aoi` part of the code.
-5. **Archive the retired branches and tag the release**, once the software team
+5. **Promote `dev-next` to `main`.** One exit criterion remains: a
+   clean-machine install.
+6. **Archive the retired branches and tag the release**, once the software team
    gives the green light.
