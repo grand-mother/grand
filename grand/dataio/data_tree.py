@@ -1,4 +1,5 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import atexit
 import datetime
 import glob
 import os
@@ -85,6 +86,39 @@ def _close_with_trees(f, extra=()):
     _forget_opened_file(f)
     for inst in gone:
         inst._tree = None
+
+
+def _close_everything_at_exit():
+    r"""Closes the open ROOT files and detaches the trees before ROOT's own cleanup.
+
+    At exit ROOT deletes every tree it still holds, after Python has begun
+    freeing the buffers the trees' branches point to, and a script that only
+    read an event crashed or hung there about a third of the time (#234).
+    Registered with ``atexit`` after ROOT is imported, so it runs first, while
+    every buffer is still alive.
+    """
+    try:
+        files = [f for f in ROOT.gROOT.GetListOfFiles()]
+    except Exception:
+        return
+    for f in files:
+        try:
+            if f.IsOpen():
+                _close_with_trees(f)
+        except Exception:
+            pass
+    for inst in list(grand_tree_list):
+        tree = inst._tree
+        if tree is None:
+            continue
+        try:
+            # Trees with no file: forget the Python-owned branch buffers now
+            tree.ResetBranchAddresses()
+        except Exception:
+            pass
+
+
+atexit.register(_close_everything_at_exit)
 
 
 def _register_opened_file(f):

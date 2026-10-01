@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Reading events no longer changes input files or crashes at exit (#234).**
+  `Event.close_files()` wrote every tree, including those only read, so the
+  input files grew a new key cycle each time (and the call could hang); it now
+  writes only trees the event filled for writing (with the `Event.write`
+  rewrite, #212). And a script that only read an event crashed or hung at exit
+  in about a third of the runs (exit 129/139, in ROOT's `EndOfProcessCleanups`):
+  ROOT deleted the trees after Python had begun freeing the buffers their
+  branches point to. The open files are now closed and the trees detached at
+  exit, before ROOT's own cleanup; 20 of 20 runs exit cleanly.
+
 - **Using a tree after its file was closed raises instead of crashing (#274).**
   `close_file()`, `DataFile.close()` and `DataDirectory.close()` delete the
   trees stored in the file, and any later use of one -- through the object

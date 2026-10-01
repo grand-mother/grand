@@ -162,3 +162,35 @@ def test_unusable_inputs_say_what_is_wrong(tmp_path):
     e = Event()
     e.file = AOI / "run_00000_L0_0000.root"          # a path object is accepted
     assert "run_00000_L0_0000.root" in e.file
+
+
+@pytest.mark.skipif(not AOI.is_dir(), reason="needs examples/analysis")
+def test_close_files_leaves_the_input_alone(tmp_path):
+    r"""#234: close_files() wrote every tree, including those only read, changing the
+    input files (and could hang)."""
+    import hashlib
+
+    from grand.aoi import EventList
+
+    data = tmp_path / "aoi"
+    shutil.copytree(AOI, data)
+    before = {p.name: hashlib.md5(p.read_bytes()).hexdigest() for p in data.glob("*.root")}
+    event = EventList(str(data), use_trawvoltage=True).get_event(entry_number=0)
+    event.close_files()
+    after = {p.name: hashlib.md5(p.read_bytes()).hexdigest() for p in data.glob("*.root")}
+    assert after == before
+
+
+@pytest.mark.skipif(not AOI.is_dir(), reason="needs examples/analysis")
+def test_reading_an_event_exits_cleanly():
+    r"""#234: a script that only read an event crashed or hung at exit in about a third of
+    the runs (exit 129/139, in ROOT's cleanup)."""
+    import subprocess
+    import sys
+
+    code = ("from grand.aoi import EventList\n"
+            "EventList(%r, use_trawvoltage=True, trawvoltage_channels=[1, 2, 3])"
+            ".get_event(entry_number=0)\n" % str(AOI))
+    codes = [subprocess.run([sys.executable, "-c", code], capture_output=True,
+                            timeout=120).returncode for _ in range(8)]
+    assert codes == [0] * 8
