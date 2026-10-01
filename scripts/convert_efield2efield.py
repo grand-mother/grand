@@ -306,6 +306,23 @@ if __name__ == "__main__":
     # NotUniqueEvent, and a file still open in the DataDirectory is reused
     # by name when reopened (#231).
     input_files = sorted(glob.glob(os.path.join(args.directory, "efield_*_L0_*.root")))
+    if not input_files:
+        raise SystemExit("GRANDlib: convert_efield2efield: %s has no efield file (efield_*_L0_*.root)"
+                         % args.directory)
+    # The trees must exist and agree before anything is computed or removed:
+    # they failed deep inside, or were accepted silently (#249)
+    from grand.dataio.consistency import check_event_trees
+    checked = grand.dataio.DataDirectory(args.directory)
+    try:
+        if checked.tshower_l0 is None:
+            raise SystemExit("GRANDlib: convert_efield2efield: %s has no shower file "
+                             "(shower_*_L0_*.root)" % args.directory)
+        check_event_trees(checked.tefield_l0, checked.trun_l0, "convert_efield2efield", args.directory)
+    except (ValueError, FileNotFoundError) as error:
+        raise SystemExit(str(error))
+    finally:
+        checked.close()
+
     outputs = [efield_output(f) for f in input_files]
     run_outputs = [level1_name(f, output_directory)
                    for pattern in ("run_*_L0_*.root", "runefieldsim_*_L0_*.root")

@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The conversion scripts check that the run and event trees agree before
+  computing (#249): `grand.dataio.consistency.check_event_trees`, used by
+  `Efield2Voltage`, `convert_efield2efield.py` and `convert_voltage2adc.py`,
+  refuses events of a run the run file does not hold, a unit listed twice
+  or missing from the run, and a `t_bin_size` that is not one positive value
+  per run, and names a missing run, efield or shower file. These crashed
+  deep inside ("could not be broadcast", `IndexError`, `KeyError`, `None`)
+  or were accepted silently. A missing input path raises `FileNotFoundError`
+  with the `GRANDlib:` prefix.
+
 - A folder holding several runs converts (#241): the run chain was indexed
   by (run, event), which found no run, so `get_run()` failed for every run
   and `convert_efield2voltage` crashed. `convert_voltage2adc

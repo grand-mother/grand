@@ -37,6 +37,7 @@ import numpy as np
 
 from grand import ADC, manage_log
 import grand.dataio
+from grand.dataio.consistency import check_event_trees
 from grand.dataio.data_tree import partial_name, replace_output
 from grand.sim.detector.trigger import DEFAULT_T1_CONFIG, t1_config_from_params, t1_trigger_flags  # noqa: F401
 
@@ -427,6 +428,11 @@ if __name__ == '__main__':
         trun = getattr(df, "trun_l%s" % level.group(1), None) if level else None
         if trun is None:
             trun = df.trun
+        # The run file must exist and agree with the voltages (#249)
+        try:
+            check_event_trees(tvoltage, trun, "convert_voltage2adc", f_input_dir, event_kind="voltage")
+        except (ValueError, FileNotFoundError) as error:
+            raise SystemExit(str(error))
         logger.info(f'Reading {f_input_file} with the run file {getattr(trun, "file_name", "?")}')
 
         logger.info(f'Converting {entries} voltage traces from {f_input_file} to ADC traces')

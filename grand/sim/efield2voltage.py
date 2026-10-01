@@ -17,6 +17,7 @@ from pathlib import Path
 
 import grand.geo.coordinates as coord
 import grand.dataio as groot
+from grand.dataio.consistency import check_event_trees
 from grand.basis.type_trace import ElectricField
 
 from .detector.antenna_model import AntennaModel
@@ -258,20 +259,24 @@ class Efield2Voltage:
             self.d_input = groot.DataFile(d_input)
             self.f_input = d_input
         else:
-            raise IOError("Input file/directory does not exist")
+            raise FileNotFoundError(_validate.message(
+                "Efield2Voltage", "no such file or directory: %s" % d_input))
         # A single e-field file has no run or shower tree: it failed with
         # "'DataFile' object has no attribute 'trun'" (#185, #265)
-        missing = [name for name in ("trun", "tshower", "tefield") if getattr(self.d_input, name, None) is None]
+        files = {"trun": "run", "tshower": "shower", "tefield": "efield"}
+        missing = [files[name] for name in files if getattr(self.d_input, name, None) is None]
         if missing:
             raise ValueError(_validate.message(
-                "Efield2Voltage", "%s holds no %s tree; give the folder sim2root.py wrote, with its "
-                "efield_*, run_* and shower_* files" % (d_input, ", ".join(missing))))
+                "Efield2Voltage", "%s holds no %s file; give the folder sim2root.py wrote, with its "
+                "efield_*, run_* and shower_* files" % (d_input, " or ".join(missing))))
 
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
         if isinstance(self.d_input, groot.DataDirectory):
             f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input, efield_level)
+        # Runs, units and sampling times agree, before anything is computed (#249)
+        check_event_trees(f_input_TEfield, f_input_TRun, "Efield2Voltage", d_input)
 
         self.f_output = f_output
 
