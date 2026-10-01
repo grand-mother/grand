@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Sim and reader docstrings match the code (#261, part 4): `Efield2Voltage`
+  lists every `params` key with its default, its constructor's Raises/Notes
+  render as sections, `du_type` lists its values (`'Horizon'`'s files are
+  not shipped, #232), `add()` no longer claims to broadcast, and
+  `compute_voltage_du` lists its five stages; the RF chains say the VGA gain
+  has no effect at present and which gain files ship, `vout_f` takes one
+  unit's `(3, n_freq)` and raises `ValueError` otherwise (a bare `assert`),
+  and the stage constructors no longer document parameters they do not
+  take; `galactic_noise` explains `size_out` against `freqs_mhz`;
+  `get_simu_parameters` lists where each key comes from, and `FileAdc` no
+  longer says it reads voltages.
+
 - Tree fields state their units (#261, part 3): `TShower.azimuth`
   (degrees, from north towards west, "comes from"), `magnetic_field`
   (degrees, degrees, and µT from ZHAireS but mT from CoREAS, #232),

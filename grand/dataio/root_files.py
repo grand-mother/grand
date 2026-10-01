@@ -319,11 +319,16 @@ class _FileEventBase:
     def get_simu_parameters(self):
         """Return dictionary of simulation parameters
 
-        Parameters returned from TRun (same name) without transformation
-          * xmax_pos_shc
-          * azimuth
-          * zenith
-          * energy_primary
+        Read without transformation, from ``TShower`` unless noted:
+          * azimuth, zenith (degrees), energy_primary (GeV)
+          * shower_core_pos, xmax_pos_shc, xmax_pos (m), magnetic_field
+          * origin_geoid, from ``TRun``
+
+        Derived (#261):
+          * FIX_xmax_pos_grandlib: xmax_pos_shc + shower_core_pos
+          * FIX_xmax_pos: Xmax in the site frame, from the file's own geometry
+          * xmax_frame: which frame xmax_pos_shc was found to be in (see
+            :func:`grand.dataio.xmax_frame.xmax_above_ground`)
 
         Returns
         -------
@@ -422,11 +427,9 @@ def get_handling3dtraces(f_name, idx_evt=0):
 def get_simu_parameters(f_name, idx_evt=0):
     """Return dictionary of simulation parameters
 
-    Parameters returned from TRun (same name) without transformation
-      * xmax_pos_shc
-      * azimuth
-      * zenith
-      * energy_primary
+    The keys of :meth:`_FileEventBase.get_simu_parameters`: values from
+    ``TShower`` (and ``origin_geoid`` from ``TRun``), plus the derived
+    ``FIX_xmax_pos_grandlib``, ``FIX_xmax_pos`` and ``xmax_frame``.
 
     Parameters
     ----------
@@ -517,9 +520,7 @@ class FileVoltage(_FileEventBase):
 
 class FileAdc(_FileEventBase):
     """
-    Goals of the class:
-
-      * Event type is voltage
+    Reader for an ADC event file (``tadc``), with its run and shower trees.
     """
 
     def __init__(self, f_name):

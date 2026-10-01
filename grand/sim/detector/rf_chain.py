@@ -472,9 +472,10 @@ class MatchingNetwork(GenericProcessingDU):
 
     """
     def __init__(self):
-        """
+        """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        :param size_sig: size of the trace after
+        Takes no parameters (the ``size_sig`` it documented does not exist,
+        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -632,9 +633,10 @@ class gaa_frontend0db(GenericProcessingDU):
 
     """
     def __init__(self):
-        """
+        """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        :param size_sig: size of the trace after
+        Takes no parameters (the ``size_sig`` it documented does not exist,
+        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -778,9 +780,10 @@ class LowNoiseAmplifier(GenericProcessingDU):
     """
 
     def __init__(self):
-        """
+        """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        :param size_sig: size of the trace after
+        Takes no parameters (the ``size_sig`` it documented does not exist,
+        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -1261,11 +1264,11 @@ class BalunBeforeADC(GenericProcessingDU):
     """
 
     def __init__(self):
-        """ 
-        :param sparams: S-parameters data for x, y, and z ports. Same data is used for x, y, and z ports.
-        :param freqs_in: frequencies corresponding to the S-parameters data for x, y, and z ports.
-        :param s11, s21, s12, s22: S-parameters for x, y, and z ports. shape (3, nb_freqs).
-        :param ABCD_matrix: not normalized ABCD matrix corresponding to S-parameters. shape (2, 2, nb_ports, nb_freqs)
+        """Loads the balun's measured S-parameters, used for all three arms.
+
+        Takes no parameters (#261).  After :meth:`compute_for_freqs`, it holds
+        ``s11``, ``s21``, ``s12``, ``s22`` (shape ``(3, n_freq)``) and the
+        unnormalised ``ABCD_matrix`` (shape ``(2, 2, 3, n_freq)``).
         """
         super().__init__()
         self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
@@ -1823,12 +1826,12 @@ class Zload(GenericProcessingDU):
     """
 
     def __init__(self):
-        """Reflection coefficient (self.s) is measured using VNA.
-        Same value is used for all ports.
-        :param sparams: S-parameters data to compute Zload for x, y, and z ports. Same Zload is used for x, y, and z ports.
-        :param freqs_in: frequencies corresponding to the S-parameters data for x, y, and z ports.
-        :param s: reflection coefficient for x, y, and z ports. shape (nb_freqs,).
-        :param Z_load: total impedance of the load that includes balun, 200 ohm resistor and AD chip.
+        """Loads the load's reflection coefficient, measured with a VNA.
+
+        Takes no parameters (#261).  The same load is used for all three
+        arms.  After :meth:`compute_for_freqs`, it holds the reflection
+        coefficient ``s`` and ``Z_load``, the total impedance of the balun,
+        200 ohm resistor and ADC chip, each of shape ``(n_freq,)``.
         """
         super().__init__()
         self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
@@ -1903,8 +1906,11 @@ class RFChain(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Notes
         -----
@@ -2004,15 +2010,19 @@ class RFChain(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2074,8 +2084,11 @@ class RFChainNut(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Notes
         -----
@@ -2173,15 +2186,19 @@ class RFChainNut(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2227,8 +2244,11 @@ class RFChain_gaa(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Notes
         -----
@@ -2303,15 +2323,19 @@ class RFChain_gaa(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2362,8 +2386,11 @@ class RFChain_Balun1(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2462,15 +2489,19 @@ class RFChain_Balun1(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2517,8 +2548,11 @@ class RFChain_Match_net(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2617,15 +2651,19 @@ class RFChain_Match_net(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2671,8 +2709,11 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2773,15 +2814,19 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2827,8 +2872,11 @@ class RFChain_VGA(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2925,15 +2973,19 @@ class RFChain_VGA(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2978,8 +3030,11 @@ class RFChain_in_Balun1(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -3078,15 +3133,19 @@ class RFChain_in_Balun1(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in

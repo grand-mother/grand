@@ -200,14 +200,37 @@ PARAM_DEFAULTS = {
 
 class Efield2Voltage:
     """
-    Class to compute voltage with GRANDROOT IO
+    Computes the voltage at each detection unit from simulated electric fields.
 
-    Goals:
-      * Call simulator of detector units with ROOT data
-      * Call on more than one event
-      * Call on some stations of some event (not tested, not sure it would work as is) #TODO:
-      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
-      * Save output in ROOT format
+    Reads the folder ``sim2root.py`` wrote (efield, run and shower trees),
+    computes the voltage of every event or of one, and writes a voltage
+    file.  See :meth:`compute_voltage` for the steps.
+
+    Attributes
+    ----------
+    params : dict
+        The processing switches, with these keys and defaults (#261):
+
+        ``add_noise`` (True)
+            Add Galactic noise.
+        ``lst`` (18.0)
+            Local sidereal time for the Galactic noise, in hours, 0 to 24.
+        ``add_rf_chain`` (True)
+            Apply the GP300 RF chain.
+        ``add_rf_chain_nut`` (False), ``add_rf_chain_gaa`` (False)
+            Apply the RF chain up to the LNA output, or the G@Auger chain.
+        ``resample_to_mhz`` (0)
+            Resample to this rate; 0 keeps the input rate.  Other rates stay
+            in memory: :meth:`save_voltage` refuses them (#229).
+        ``extend_to_us`` (0)
+            Extend the traces to this duration, in µs; 0 keeps their length.
+        ``calibration_smearing_sigma`` (0)
+            Relative Gaussian smearing of each unit's amplitude calibration.
+        ``add_jitter_ns`` (0)
+            Gaussian jitter of the trigger times, in ns.
+
+        Unknown keys and invalid values are refused when the computation
+        starts.
     """
 
     def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300',
@@ -236,20 +259,25 @@ class Efield2Voltage:
             Zero-padding applied before the transform, which improves the
             frequency resolution.
         du_type : str, optional
-            Which antenna model to use.
+            The antenna model: ``'GP300'`` (HFSS simulation, the default),
+            ``'GP300_nec'`` (NEC) or ``'GP300_mat'`` (Matlab).  ``'Horizon'``
+            is accepted but its model files are not shipped, so it fails
+            when loading (#232).
         efield_level : int, optional
             For a folder holding efield files at several levels, the one to
             read; the highest by default, with a warning (#231).
 
-                Raises
-                ------
-                IOError
-                    If `d_input` is neither a file nor a directory.
+        Raises
+        ------
+        FileNotFoundError
+            If `d_input` does not exist, or lacks a run, shower or efield file.
+        ValueError
+            If the trees do not agree (#249), or an argument is invalid.
 
-                Notes
-                -----
-                Construction reads the input file, so this object cannot be built
-                without one.
+        Notes
+        -----
+        Construction reads the input, so this object cannot be built without
+        one.
         """
         if os.path.isdir(d_input):
             self.d_input = groot.DataDirectory(d_input)
@@ -672,11 +700,10 @@ class Efield2Voltage:
         Parameters
         ----------
         addend : ndarray
-            A frequency-domain quantity that broadcasts against ``vout_f``,
-            whose shape is ``(n_du, 3, n_freqs)``.  It must already be
-            evaluated on ``self.freqs_mhz``: nothing here interpolates it,
-            and a mismatched axis will broadcast silently into the wrong
-            frequencies.
+            A frequency-domain quantity of exactly the shape of ``vout_f``,
+            ``(n_du, 3, n_freqs)`` -- it is not broadcast; another shape
+            raises ``ValueError``.  It must already be evaluated on
+            ``self.freqs_mhz``: nothing here interpolates it.
         """
         if np.shape(addend) != self.vout_f.shape:   # an assert, gone under python -O (#259)
             raise ValueError(_validate.message("Efield2Voltage.add", "addend must have the shape of vout_f, %s, got %s" % (self.vout_f.shape, np.shape(addend))))
@@ -707,8 +734,12 @@ class Efield2Voltage:
     #    self.vout[:] = sf.irfft(self.vout_f)
 
     def final_resample(self):
-        """
-        after everything is done, change the sampling rate if needded and adjust to the desired target lenght:
+        """Brings the voltage back to the time domain, resampled and cut as requested.
+
+        Called last: resamples to ``params["resample_to_mhz"]`` if set (by
+        Fourier interpolation), otherwise inverts the spectrum if noise or an
+        RF chain changed it, then truncates the traces to the target length.
+        The result is in ``self.vout``.
         """
         self._require_event("final_resample")     # (#277)
         # No antenna in this event (issue #91): the empty output stays as it is
@@ -849,7 +880,9 @@ class Efield2Voltage:
 
         1. the open-circuit voltage from the antenna response,
         2. Galactic noise, if ``params["add_noise"]``,
-        3. the RF chain, if ``params["add_rf_chain"]``.
+        3. the GP300 RF chain, if ``params["add_rf_chain"]``,
+        4. the RF chain up to the LNA output, if ``params["add_rf_chain_nut"]``,
+        5. the G@Auger RF chain, if ``params["add_rf_chain_gaa"]``.
 
         Parameters
         ----------

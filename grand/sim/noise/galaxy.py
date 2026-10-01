@@ -69,9 +69,13 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     f_lst : float
         Local sidereal time in hours. Must satisfy ``0 <= f_lst < 24``.
     size_out : int
-        Length of the corresponding time-domain inverse FFT.
+        Length, in samples, of the time trace the spectrum belongs to.  It
+        sets the normalisation, so it must be the length the spectrum will be
+        inverted to, whatever part of the frequency axis `freqs_mhz` covers.
     freqs_mhz : ndarray, shape (nb_freq,)
-        Uniformly spaced output-frequency grid, in MHz.
+        Uniformly spaced output-frequency grid, in MHz: the full rFFT axis
+        of `size_out` samples (``size_out // 2 + 1`` points), or a band of it.
+        It is not checked against `size_out` (#261).
     nb_ant : int
         Number of detector units for which independent noise is generated.
     seed : int or None, optional
