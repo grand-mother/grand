@@ -283,6 +283,18 @@ class Efield2Voltage:
         if self.previous_run != self.run_number:                      # load only for new run.
             self.run.get_run(self.run_number)                         # update run info to get site latitude and longitude.
             self.previous_run = self.run_number
+        # A lookup that finds nothing leaves the previous entry loaded: the
+        # antenna response was then computed for another event's shower
+        # (issue #247).  Refuse instead.
+        if (int(self.shower.event_number), int(self.shower.run_number)) != (self.event_number, self.run_number):
+            raise KeyError(_validate.message(
+                "Efield2Voltage.get_event", "the shower tree has no entry for event %d of run %d; "
+                "the efield and shower files of the input do not match" % (self.event_number, self.run_number)))
+        if int(self.run.run_number) != self.run_number:
+            self.previous_run = None
+            raise KeyError(_validate.message(
+                "Efield2Voltage.get_event", "the run tree has no entry for run %d; the efield and "
+                "run files of the input do not match" % self.run_number))
 
         # stack efield traces
         #self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins

@@ -328,6 +328,14 @@ if __name__ == "__main__":
                 trun.get_run(run_number)                         # update run info to get site latitude and longitude.
                 trunefieldsim.get_run(run_number)
                 previous_run = run_number
+           # A lookup that finds nothing leaves the previous entry loaded:
+           # the event would get another event's shower or run (issue #247).
+           if (int(tshower.event_number), int(tshower.run_number)) != (event_number, run_number):
+                raise KeyError(f"GRANDlib: convert_efield2efield: the shower tree has no entry for event "
+                               f"{event_number} of run {run_number}; the efield and shower files do not match")
+           if int(trun.run_number) != run_number:
+                raise KeyError(f"GRANDlib: convert_efield2efield: the run tree has no entry for run "
+                               f"{run_number}; the efield and run files do not match")
 
             # stack efield traces
            trace_shape = np.asarray(tefield.trace).shape  # (nb_du, 3, tbins of a trace)

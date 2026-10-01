@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The voltage and e-field conversions refuse an input whose shower or run
+  tree lacks the event (#247).** A failed shower lookup left the previous
+  event's shower loaded, so the antenna response was computed for the wrong
+  zenith, azimuth and Xmax, exit 0. `Efield2Voltage.get_event` and
+  `convert_efield2efield.py` now check that the loaded shower and run entries
+  are the requested ones and raise `KeyError` otherwise.
 - **`Efield2Voltage` refuses an event the input does not hold (#238).** A
   missing `(event_number, run_number)` used to leave the previously loaded event
   in place and write it, with an empty trace, under the requested numbers,

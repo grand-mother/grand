@@ -69,3 +69,40 @@ def test_an_event_the_input_does_not_hold_is_refused(level0_sample, tmp_path):
     # NumPy integers are integers
     signal.compute_voltage(event_number=np.int64(1618), run_number=np.uint32(1))
     assert (tmp_path / "out.root").exists()
+
+
+def _set_shower_run_number(sample, run_number):
+    r"""Rewrites the shower file of `sample` with every entry in `run_number`."""
+    from grand.dataio import TShower
+
+    path = next(sample.glob("shower_*_L0_*.root"))
+    source = TShower(str(path))
+    rows = []
+    for entry in range(source.get_number_of_entries()):
+        source.get_entry(entry)
+        rows.append({name: getattr(source, name) for name in ("event_number", "zenith", "azimuth",
+                                                                "energy_primary", "xmax_grams",
+                                                                "xmax_pos_shc", "xmax_pos", "core_alt",
+                                                                "shower_core_pos", "primary_type",
+                                                                "magnetic_field", "direction")})
+    source.stop_using()
+    path.unlink()
+    target = TShower(str(path))
+    for row in rows:
+        for name, value in row.items():
+            setattr(target, name, value)
+        target.run_number = run_number
+        target.fill()
+    target.write()
+    target.stop_using()
+
+
+def test_a_shower_tree_without_the_event_is_refused(level0_sample, tmp_path):
+    r"""#247: a missing shower entry silently reused the previous event's shower."""
+    from grand import Efield2Voltage
+
+    _set_shower_run_number(level0_sample, 2)
+    signal = Efield2Voltage(str(level0_sample), "out.root", output_directory=str(tmp_path), seed=1)
+    signal.params["add_noise"] = False
+    with pytest.raises(KeyError, match="shower tree has no entry for event"):
+        signal.compute_voltage(event_number=13790, run_number=1)
