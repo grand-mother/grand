@@ -282,8 +282,11 @@ class Efield2Voltage:
                 "Efield2Voltage", "'seed' must be None or a non-negative integer, got %r" % (seed,)))
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
         # 0, negative, NaN or text failed later with a message about extend_to_us (#265)
-        _validate.positive(_validate.as_real(padding_factor, "padding_factor", "Efield2Voltage"),
-                           "padding_factor", "Efield2Voltage")
+        # Below 1 it read as "'extend_to_us' = 0 us is shorter than the traces" (#233)
+        if not _validate.as_real(padding_factor, "padding_factor", "Efield2Voltage") >= 1:
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "'padding_factor' must be at least 1 (the output cannot be shorter "
+                "than the input), got %r" % (padding_factor,)))
         self.padding_factor = padding_factor               #
         self.events = f_input_TEfield        # traces and du_pos are stored here
         self.run = f_input_TRun                 # site_long, site_lat info is stored here. Used to define shower frame.

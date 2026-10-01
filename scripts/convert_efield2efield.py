@@ -242,27 +242,33 @@ if __name__ == "__main__":
     logger.info(f"seed used for random number generator is {seed}.")
 
     noise = args.add_noise_uVm
-    assert noise >=0    
+    if not noise >= 0:    # a bare AssertionError before (#233)
+        raise SystemExit("GRANDlib: convert_efield2efield: --add_noise_uVm must be >= 0, got %s" % noise)
     if(noise>0):
       logger.info(f"We are going to apply gaussian noise of {noise} uV/m.")   
  
     jitter= args.add_jitter_ns
-    assert jitter >=0
+    if not jitter >= 0:    # a bare AssertionError before (#233)
+        raise SystemExit("GRANDlib: convert_efield2efield: --add_jitter_ns must be >= 0, got %s" % jitter)
     if(jitter>0):
       logger.info(f"We are going to apply a gaussian time jitter of {jitter} ns")   
  
     calsigma=args.calibration_smearing_sigma
-    assert calsigma>= 0
+    if not calsigma >= 0:    # a bare AssertionError before (#233)
+        raise SystemExit("GRANDlib: convert_efield2efield: --calibration_smearing_sigma must be >= 0, got %s" % calsigma)
     if(calsigma>0):
       logger.info(f"We are going to apply a gaussian calibration error of {calsigma} ")   
     
  
     padding_factor=1
-    assert padding_factor >=1
     target_sampling_rate_mhz = args.target_sampling_rate_mhz   # if different from 0, will resample  
-    assert  target_sampling_rate_mhz >= 0
+    if not target_sampling_rate_mhz >= 0:
+        raise SystemExit("GRANDlib: convert_efield2efield: --target_sampling_rate_mhz must be >= 0, got %s"
+                         % target_sampling_rate_mhz)
     target_duration_us = args.target_duration_us       # if different from 0, will adjust padding factor to get a trace of this lenght in us        
-    assert target_duration_us >= 0
+    if not target_duration_us >= 0:
+        raise SystemExit("GRANDlib: convert_efield2efield: --target_duration_us must be >= 0, got %s"
+                         % target_duration_us)
     
     filter = args.no_filter
     f_output=args.out_file
@@ -391,7 +397,10 @@ if __name__ == "__main__":
               target_lenght=int(padding_factor * sig_size + 0.5) #add 0.5 to avoid any rounding error for the int conversion
               target_duration_us = target_lenght/f_samp_mhz[0]
 
-           assert padding_factor >= 1
+           if not padding_factor >= 1:      # a bare AssertionError before (#233)
+              raise SystemExit("GRANDlib: convert_efield2efield: --target_duration_us %s is shorter than the "
+                               "traces (%.4g us); the output cannot be shorter than the input"
+                               % (args.target_duration_us, sig_size / f_samp_mhz[0]))
 
 
            # common frequencies for all processing in Fourier domain. Fourier transform algorithms work better if the lenght of the trace is a multiple of 2,3 or 5

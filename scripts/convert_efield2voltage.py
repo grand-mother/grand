@@ -52,7 +52,7 @@ Feb 2024 modified by SN to add antenna model selection.
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
     if f_hour < 0 or f_hour > 24:
-        raise argparse.ArgumentTypeError(f"lts must be > 0h and < 24h.")
+        raise argparse.ArgumentTypeError("--lst must be from 0 to 24 h, got %s" % s_hour)
     return f_hour
 
 

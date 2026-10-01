@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Argument messages in the conversion scripts (#233, items 1–2).**
+  `convert_efield2efield.py` failed with a bare `AssertionError` for a
+  negative noise, jitter or smearing, a negative rate or duration, and a
+  `--target_duration_us` shorter than the traces; each now says what is
+  wrong. `--padding_factor 0.5` was reported as "'extend_to_us' = 0 us is
+  shorter than the traces"; `Efield2Voltage` now names `padding_factor`.
+  The `--lst` message said "> 0h and < 24h" while accepting 0 and 24. (Item
+  3, the T1 trigger passing no unit on clean simulations, is for the trigger
+  group.)
+
 - **`T1_trigger_offline.py` parses its arguments (#183).** It read
   `sys.argv[1]` directly, so `-h` was opened as a file and no argument gave
   `IndexError`. It now has a usage message, `-o` for where the list goes, and
