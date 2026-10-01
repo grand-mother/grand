@@ -339,7 +339,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#226](https://github.com/grand-mother/grand/issues/226) | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics | Low | 3a | open | | |
 | [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | open | | |
 | [#228](https://github.com/grand-mother/grand/issues/228) | CoREAS Xmax NaN or ~1 cm: efield2voltage crashes or outputs ~1e-13 µV | Critical | 3b | open | | |
-| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size` | High | 3b | open | | |
+| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | open | | |
 | [#230](https://github.com/grand-mother/grand/issues/230) | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded | High | 3b | open | | |
 | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
 | [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
@@ -347,6 +347,11 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#234](https://github.com/grand-mother/grand/issues/234) | `Event.close_files()` rewrites input files and can hang; EventList scripts crash at exit | High | 4a | open | | |
 | [#235](https://github.com/grand-mother/grand/issues/235) | EventList and DataFile crash deep, with unclear errors, on plausible input | High | 4a | open | | |
 | [#236](https://github.com/grand-mother/grand/issues/236) | dataio returns stale or zeroed data: reopened files, missing branches, unrecognised names, use after close | Medium | 4a | open | | |
+| [#237](https://github.com/grand-mother/grand/issues/237) | efield2voltage pairs an L0 e-field with an L1 run tree: 2× amplitude, no warning | Critical | 4b-B | open | | |
+| [#238](https://github.com/grand-mother/grand/issues/238) | `compute_voltage` for a missing event writes another event with an empty trace | Critical | 4b-B | open | | |
+| [#239](https://github.com/grand-mother/grand/issues/239) | NaN/inf voltages become INT64_MIN in the ADC; saturation never reported | High | 4b-B | open | | |
+| [#240](https://github.com/grand-mother/grand/issues/240) | Re-running conversions: voltage2adc deletes old output then crashes; failed runs leave blocking stubs | High | 4b-B | open | | |
+| [#241](https://github.com/grand-mother/grand/issues/241) | Multi-run folders crash; measured noise reused across antennas silently; raw noise errors | Medium | 4b-B | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -362,6 +367,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | 4b-B in: logged #237–#241 (2 more Critical: #237 L0/L1 mix doubles amplitudes, #238 missing event writes the wrong one); #229 raised to Critical. Still running: 4b-A, 4c. |
 | 2026-10-01 | Reports in from 3a, 1b, 2b, 4a, 3b: confirmed and logged as #207–#236 (4 Critical: #209 CoREAS azimuth mirrored, #220 sim2root `du_geoid`, #227 nut/GAA chains ignored, #228 CoREAS Xmax → zero voltage). #207 is a regression from #179 (validation), fixed in PR #208. Batch 3 running: 4b ×2, 4c. |
 | 2026-10-01 | Batch 1 reports in from 1a-A, 1a-B and 2a: all findings confirmed by the coordinator (re-run where marked) and logged as #185–#206; five High (silent data loss or wrong values in `grand.dataio`). Batch 2 started: 1b, 2b, 3b. |
 | 2026-10-01 | Validation merged (PR #179). Wave 1 started on `dev-next` at `91d30a1b`: batch 1 (1a ×2, 2a, 3a, 4a). Five problems found by the coordinator during the pre-PR check logged as #180–#184. |
