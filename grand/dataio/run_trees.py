@@ -173,13 +173,13 @@ class TRun(MotherRunTree):
     """Run's first event"""
     ## First event time
     first_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """First event time"""
+    """Time of the first event, in Unix seconds"""
     ## Run's last event
     last_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """Run's last event"""
     ## Last event time
     last_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Last event time"""
+    """Time of the last event, in Unix seconds"""
 
     # These are not from the hardware
     ## Data source: detector, sim, other
@@ -206,14 +206,14 @@ class TRun(MotherRunTree):
     """Site layout"""
     ## Origin of the coordinate system used for the array
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Origin of the coordinate system used for the array"""
+    """Origin of the array frame: (latitude in degrees, longitude in degrees, height in metres).  du_xyz is relative to it"""
 
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Detector unit (antenna) (lat,lon,alt) position"""
+    """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in metres) per DU"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
     du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>", inner_length=3))
     """Detector unit (antenna) (x,y,z) position in site's referential"""
@@ -420,10 +420,10 @@ class TRunEfieldSim(MotherRunTree):
     refractivity_model_parameters: StdVectorListDesc = field(default=StdVectorListDesc("double"))
     ## Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)
     t_pre: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)"""
+    """Start of the antenna data window before the trigger, in ns (it can be shorter than the voltage trace, so this can differ from the voltage's)"""
     ## Finishing time of antenna data collection time window
     t_post: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Finishing time of antenna data collection time window"""
+    """End of the antenna data window after the trigger, in ns"""
 
     ## Site for which the efield simulation was done
     site: StdStringDesc = field(default=StdStringDesc())
@@ -523,10 +523,10 @@ class TRunNoise(MotherRunTree):
     """Info to retrieve the map of galactic noise"""
     ## LST time when we generate the noise
     gal_noise_LST: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """LST time when we generate the noise"""
+    """Local sidereal time, in hours (0 to 24), at which the galactic noise was generated"""
     ## Noise std dev for each arm of each antenna
     gal_noise_sigma: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Noise std dev for each arm of each antenna"""
+    """Galactic-noise standard deviation for each arm of each antenna, in µV"""
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.

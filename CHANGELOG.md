@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Tree fields state their units (#261, part 3): `TShower.azimuth`
+  (degrees, from north towards west, "comes from"), `magnetic_field`
+  (degrees, degrees, and µT from ZHAireS but mT from CoREAS, #232),
+  `core_time_ns` (it repeated `core_time_s`'s text), `TVoltage.trace` (µV),
+  `TEfield.trace` (µV/m), `time_max` and `t_pre`/`t_post` (ns),
+  `TRun.origin_geoid`/`du_geoid` (degrees, degrees, metres),
+  `first`/`last_event_time` (Unix seconds), `gal_noise_LST` (hours) and
+  `gal_noise_sigma` (µV).
+
 - `grand.basis` functions do what they document (#261, part 2):
   `DetectorUnitNetwork.get_surface` works under NumPy 2 (its 2-D
   `np.cross` failed; two tests were marked as expected failures for it) and

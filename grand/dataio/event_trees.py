@@ -866,7 +866,7 @@ class TVoltage(MotherEventTree):
 
     ## Voltage traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
-    """Voltage traces for antenna arms (x,y,z)"""
+    """Voltage traces for the antenna arms (x, y, z), in µV, one row per DU"""
     # _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     ## Peak2peak amplitude (muV)
@@ -874,7 +874,7 @@ class TVoltage(MotherEventTree):
     """Peak2peak amplitude (muV)"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """(Computed) peak time"""
+    """(Computed) peak time, in ns"""
 
     ## Version of GRANDlib that produced this file
     grandlib_version: StdStringDesc = field(default=StdStringDesc())
@@ -935,7 +935,7 @@ class TEfield(MotherEventTree):
 
     ## Efield traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
-    """Efield traces for antenna arms (x,y,z)"""
+    """Electric-field traces (x, y, z), in µV/m, one row per DU"""
     ## FFT magnitude for antenna arms (x,y,z)
     fft_mag: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
     """FFT magnitude for antenna arms (x,y,z)"""
@@ -951,7 +951,7 @@ class TEfield(MotherEventTree):
     """Efield polarisation info"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """(Computed) peak time"""
+    """(Computed) peak time, in ns"""
 
 
 @dataclass
@@ -974,7 +974,7 @@ class TShower(MotherEventTree):
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
     ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
     azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Shower azimuth  (coordinates system = NWU + origin = core, "comes from")"""
+    """Shower azimuth, in degrees, measured from north towards west (NWU frame, origin at the core); the direction the shower *comes from*"""
     ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=180, unit="degrees"))
     """Shower zenith  (coordinates system = NWU + origin = core, "comes from")"""
@@ -996,7 +996,7 @@ class TShower(MotherEventTree):
     """Atmospheric model parameters"""
     ## Magnetic field parameters: Inclination, Declination, modulus
     magnetic_field: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Magnetic field parameters: Inclination, Declination, modulus"""
+    """Magnetic field: inclination (degrees), declination (degrees), strength.  The strength is in µT from ZHAireS and in mT from CoREAS (#232)"""
     ## Ground Altitude at core position (m asl)
     core_alt: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Ground Altitude at core position (m asl)"""
@@ -1018,7 +1018,7 @@ class TShower(MotherEventTree):
     """Unix time when the shower was at the core position (seconds after epoch)"""
     ## Unix time when the shower was at the core position (seconds after epoch)
     core_time_ns: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float64))
-    """Unix time when the shower was at the core position (seconds after epoch)"""
+    """Nanoseconds part of the time the shower was at the core position (added to core_time_s)"""
 
 
 @dataclass
