@@ -452,6 +452,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | **Wave 3 started** on `dev-next` at `89622823` (PR #208 merged): breakers 11 (misuse), 12 (numerical edges), 13 (scale and stress, capped at 3 GB disk and ~4 GB RAM), 14 (environment, on private copies of the data model), 15 (unsafe input, harmless marker-file proofs only). |
 | 2026-10-01 | PR #208 merged into `dev-next` (8962282). Its 16 issues closed: all 11 Critical (#209, #220, #227, #228, #229, #237, #238, #242, #243, #247, #250) and 5 High (#207, #262, #263, #264, #268). Follow-ups recorded on #229 (TVoltage sampling rate), #242 (damaged `.t*` tables), #250 (productions with geoid heights), #268 (noise-table RA convention). Next: wave 3. |
 | 2026-10-01 | Critical fixes in PR #208, continued: #209, #228, #243 (CoREAS), #242 (ZHAireS), #250 (geoid). All 10 wave-1 Criticals and #250 now have a fix in PR #208. **Wave 2 complete:** testers 8, 9 and 10 in, logged #262–#271 (5 High, 5 Medium; #263 is a regression from #179). Tester 8: 15 deliberate bugs, 10 caught. |
 | 2026-10-01 | Critical fixes in PR #208 (one commit each, with a failing-first test): #227, #238, #247, #237, #229, #220. Wave 2 batch 1 in (5a, 5b, 6a, 6b, 7): logged #250–#261, one more Critical (#250 geoid mirrored, confirmed at the poles and Tokyo). Wave 2 batch 2 running: 8, 9, 10. |
