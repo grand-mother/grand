@@ -269,7 +269,7 @@ class Efield2Voltage:
             "add_rf_chain": True,
             "add_rf_chain_nut": False,
             "add_rf_chain_gaa": False,
-            "resample_to_mhz": 0,            # 0: keep the input sampling rate
+            "resample_to_mhz": 0,            # 0: keep the input rate; other rates: in memory only, save_voltage refuses them (#229)
             "extend_to_us": 0,               # 0: keep the input trace length
             "calibration_smearing_sigma": 0, # 0: no calibration smearing
             "add_jitter_ns": 0,              # 0: no trigger-time jitter
@@ -997,6 +997,21 @@ class Efield2Voltage:
         The destination is ``self.f_output``, fixed when the object was
         constructed.
         """
+        # A resampled voltage cannot be saved: TVoltage has no sampling-rate
+        # field and this class writes no run tree, so every later step (such as
+        # convert_voltage2adc.py) would read the input's t_bin_size and treat
+        # the trace at the wrong rate, silently (issue #229).  Refused before
+        # anything is written.  Resample the e-field instead, with
+        # convert_efield2efield.py, which records the new rate in its run tree.
+        if self.target_sampling_rate_mhz > 0:
+            raise ValueError(_validate.message(
+                "Efield2Voltage.save_voltage",
+                "the voltage was resampled to %s MHz (params['resample_to_mhz']), but the "
+                "voltage file cannot record a new sampling rate, so later steps would use the "
+                "input's rate. Set resample_to_mhz to 0 and resample the e-field first "
+                "(convert_efield2efield.py --target_sampling_rate_mhz), which writes the new "
+                "rate to its run tree" % self.target_sampling_rate_mhz))
+
         # delete file can take time => start with this action
         # File name for DataDirecory
         if self.f_output is None and self.f_input is None:
@@ -1045,21 +1060,9 @@ class Efield2Voltage:
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
 
 
-        #modify the trigger position if needed
-        # Rescale by input rate / output rate.  This compared the input rate
-        # with itself (f_samp_mhz is 1e3/dt_ns), so the ratio was always 1 and
-        # a resampled trace kept the input's trigger sample (issue #229).
-        if(self.target_sampling_rate_mhz>0):
-          originalsampling=1e3/np.asarray(self.dt_ns)
-          newsampling=self.target_sampling_rate_mhz
-          ratio=originalsampling/newsampling
-          logger.warning("the voltage is resampled to %s MHz, but the run tree still gives the input "
-                         "sampling (t_bin_size); a later step that reads the run tree, such as "
-                         "convert_voltage2adc.py, will assume the input rate" % newsampling)
-        else:
-          ratio=1.0
-
-        self.tt_volt.trigger_position=np.ushort(np.asarray(self.events.trigger_position)/ratio)
+        # The trigger sample keeps the input's rate: a resampled voltage is
+        # refused above (issue #229).
+        self.tt_volt.trigger_position=np.ushort(np.asarray(self.events.trigger_position))
 
         #apply time jitter
         jitter= self.params["add_jitter_ns"]

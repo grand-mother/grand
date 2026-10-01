@@ -125,26 +125,30 @@ def test_the_run_tree_is_read_at_the_level_of_the_efield(level0_sample):
         Efield2Voltage(str(level0_sample))
 
 
-def test_resampling_rescales_the_trigger_position_and_the_script_refuses_it(level0_sample, tmp_path):
-    r"""#229: the trigger sample was not rescaled, and convert_voltage2adc then used the input rate."""
+def test_a_resampled_voltage_is_not_saved_and_the_script_refuses_it(level0_sample, tmp_path):
+    r"""#229: a resampled voltage was saved with the input's t_bin_size, so convert_voltage2adc
+    resampled it a second time (all zeros at 250 MHz).  The voltage file cannot record a new
+    rate, so saving is refused, by the Python API as by the script; in memory it still works."""
     import subprocess
     import sys
 
     from grand import Efield2Voltage
-    from grand.dataio import TEfield, TVoltage
-
-    efield = TEfield(str(next(level0_sample.glob("efield_*_L0_*.root"))))
-    efield.get_event(1618, 1)
-    trigger_in = np.asarray(efield.trigger_position).copy()   # sampled at 2 GHz
-    efield.stop_using()
 
     signal = Efield2Voltage(str(level0_sample), "out.root", output_directory=str(tmp_path), seed=1)
     signal.params.update(add_noise=False, add_rf_chain=False, resample_to_mhz=500)
+    with pytest.raises(ValueError, match="GRANDlib: Efield2Voltage.save_voltage: .*resampled to 500"):
+        signal.compute_voltage(event_number=1618, run_number=1)
+    assert not (tmp_path / "out.root").exists()
+
+    full = _voltage(level0_sample, 1618, add_noise=False, add_rf_chain=False)
+    resampled = _voltage(level0_sample, 1618, add_noise=False, add_rf_chain=False, resample_to_mhz=500)
+    assert resampled.shape[-1] * 4 == full.shape[-1]     # 2 GHz -> 500 MHz, in memory
+
+    # The input's own rate is not a resampling: saved as usual
+    signal = Efield2Voltage(str(level0_sample), "same.root", output_directory=str(tmp_path), seed=1)
+    signal.params.update(add_noise=False, add_rf_chain=False, resample_to_mhz=2000)
     signal.compute_voltage(event_number=1618, run_number=1)
-    voltage = TVoltage(str(tmp_path / "out.root"))
-    voltage.get_event(1618, 1)
-    assert np.array_equal(np.asarray(voltage.trigger_position), (trigger_in / 4).astype(np.ushort))
-    voltage.stop_using()
+    assert (tmp_path / "same.root").exists()
 
     done = subprocess.run([sys.executable, str(ROOT / "scripts" / "convert_efield2voltage.py"),
                            str(level0_sample), "--target_sampling_rate_mhz", "500"],

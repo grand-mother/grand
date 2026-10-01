@@ -93,11 +93,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   resampling (the ratio compared the input rate with itself), and left the run
   tree's `t_bin_size` at the input rate, so `convert_voltage2adc.py` processed a
   resampled trace as if it were at the input rate (at 750 MHz: 12288 samples
-  written as 500 MHz ADC data, exit 0). The trigger position is now rescaled,
-  and `convert_efield2voltage.py --target_sampling_rate_mhz` is refused, since
-  the voltage file cannot record the new rate; resample the e-field with
-  `convert_efield2efield.py`, which writes the rate to its run file. The
-  library option (`params["resample_to_mhz"]`) still works and warns.
+  written as 500 MHz ADC data, exit 0). `convert_efield2voltage.py
+  --target_sampling_rate_mhz` is refused, since the voltage file cannot record
+  the new rate; resample the e-field with `convert_efield2efield.py`, which
+  writes the rate to its run file. The Python API did the same until wave 3
+  found it (at 250 MHz the ADC traces came out all zeros):
+  `Efield2Voltage.save_voltage` now refuses a voltage resampled with
+  `params["resample_to_mhz"]`, before writing anything. Resampling in memory
+  (`compute_voltage_event` and `final_resample`) still works, and a value equal
+  to the input rate is not a resampling.
 - **`Efield2Voltage` reads the run tree at the efield's level (#237).**
   `DataDirectory` picks the highest level of each tree type on its own, so a
   folder with an L0 efield file and an L1 run file (as `convert_efield2efield
