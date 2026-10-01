@@ -364,3 +364,31 @@ def test_trace_lengths_and_units_of_the_current_entry(tmp_path):
     a.trace_ch = [[[1, 2], [3, 4], [5, 6], [7, 8]]]
     assert a.get_traces_lengths() == [[2, 2, 2, 2]]
     a.stop_using()
+
+
+def test_data_directory_recursive_and_odd_names(tmp_path):
+    r"""#204: recursive=True found nothing; one oddly named file aborted the folder."""
+    import shutil
+    import warnings
+
+    import pytest
+
+    from grand.basis.validate import GRANDlibWarning
+    from grand.dataio import DataDirectory, TShower
+
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    t = TShower(str(sub / "shower_1_L0_0000.root"))
+    t.run_number, t.event_number = 1, 1
+    t.fill()
+    t.write()
+    t.stop_using()
+    assert DataDirectory(str(tmp_path), recursive=True).file_list == [str(sub / "shower_1_L0_0000.root")]
+
+    shutil.copy(sub / "shower_1_L0_0000.root", sub / "shower_copy.root")
+    with pytest.warns(GRANDlibWarning, match="shower_copy.root"):
+        d = DataDirectory(str(sub))
+    assert d.tshower.get_list_of_events() == [(1, 1)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        d.close()

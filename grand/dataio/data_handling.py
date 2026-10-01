@@ -7,8 +7,10 @@ from pathlib import Path
 import numpy as np
 
 from grand.basis import validate as _validate
+from grand.basis.validate import GRANDlibWarning
 import ROOT
 import datetime
+import warnings
 
 from grand.dataio import logger, DataTree, MotherEventTree
 from grand.dataio.data_tree import _to_unix
@@ -108,7 +110,10 @@ class DataDirectory:
         list of str
             Paths of the ROOT files found.
         """
-        return sorted(glob.glob(os.path.join(self.dir_name, "*.root"), recursive=recursive))
+        # "**" is what makes glob recurse; without it recursive=True found
+        # nothing below the top folder (#204)
+        pattern = os.path.join(self.dir_name, "**", "*.root") if recursive else os.path.join(self.dir_name, "*.root")
+        return sorted(glob.glob(pattern, recursive=recursive))
 
     def get_list_of_files_handles(self):
         """Go through the list of files in the directory and open all of them
@@ -181,6 +186,28 @@ class DataDirectory:
 
         return file_handle_list
 
+    def _files_by_level(self, flistname):
+        r"""Returns ``{level: DataFile}`` for the files of one tree type.
+
+        The level is read from ``_L<n>_<serial>.root``.  A file of the type
+        whose name does not end that way (``efield_copy.root``) is skipped
+        with a warning naming it: the level was taken from a fixed position
+        with ``int()``, and one such file aborted the whole folder (#204).
+        """
+        prefix = flistname[2:-1] + "_"
+        files = {}
+        for el in self.file_handle_list:
+            name = Path(el.filename).name
+            if not name.startswith(prefix):
+                continue
+            level = re.search(r"_L(\d+)_[^_]*\.root$", name)
+            if level is None:
+                warnings.warn("GRANDlib: DataDirectory: %s does not end in _L<level>_<serial>.root; "
+                              "skipped" % el.filename, GRANDlibWarning, stacklevel=3)
+                continue
+            files[int(level.group(1))] = el
+        return files
+
     # Init the instance with sim2root structure files
     def init_structure(self):
         r"""Detects the directory layout and indexes the files it holds.
@@ -191,7 +218,7 @@ class DataDirectory:
         for flistname in self.tree_file_types:
             # Assign the list of files with specific tree type to the class instance
             # setattr(self, flistname, {int(Path(el).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, self._files_by_level(flistname))
 
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
@@ -218,7 +245,7 @@ class DataDirectory:
         for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
             # setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, self._files_by_level(flistname))
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
@@ -245,7 +272,7 @@ class DataDirectory:
         for flistname in ["ftruns", "ftrunrawvoltages", "ftadcs", "ftrawvoltages"]:
         # for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, self._files_by_level(flistname))
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance

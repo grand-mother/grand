@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`DataDirectory`: recursive scan and oddly named files (#204).**
+  `recursive=True` found nothing below the top folder, because the pattern
+  had no `**`. A file of a known type whose name does not end in
+  `_L<level>_<serial>.root` (`efield_copy.root`) aborted the whole folder
+  with `ValueError: invalid literal for int()`; it is now skipped with a
+  warning that names it.
+
 - **CoREAS converter appended to an existing output (#181).** The trees open
   their file for appending, so converting a shower a second time -- or once,
   next to the committed sample -- failed with `NotUniqueEvent`. An existing
