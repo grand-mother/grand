@@ -255,3 +255,30 @@ def test_the_option_changes_only_trigger_flag(tmp_path):
         row_default.pop("trigger_flag")
         row_t1.pop("trigger_flag")
         assert row_default == row_t1
+
+
+def _t1_script(*args, cwd):
+    env = dict(os.environ, PYTHONPATH=str(ROOT))
+    return subprocess.run([sys.executable, str(ROOT / "scripts" / "T1_trigger_offline.py"), *map(str, args)],
+                          cwd=cwd, env=env, capture_output=True, text=True, timeout=300)
+
+
+def test_t1_script_parses_its_arguments(tmp_path):
+    r"""#183: -h was opened as a file, and no argument gave IndexError."""
+    helped = _t1_script("-h", cwd=tmp_path)
+    assert helped.returncode == 0 and "adc_file" in helped.stdout
+    bare = _t1_script(cwd=tmp_path)
+    assert bare.returncode == 2 and "usage" in bare.stderr
+    bad = _t1_script(ROOT / "nothing.root", "--t1_param", "th9=1", cwd=tmp_path)
+    assert bad.returncode != 0 and "GRANDlib: T1_trigger_offline" in bad.stderr
+
+    adc = next((ROOT / "sim2root" / "Common").glob("sim_*/adc_*_L1_*.root"), None)
+    if adc is None:
+        pytest.skip("no committed ADC file")
+    out = tmp_path / "list.txt"
+    ran = _t1_script(adc, "-o", out, "--t1_param", "th1=1", "--t1_param", "th2=1", "--t1_param", "nc_min=1",
+                     cwd=tmp_path)
+    assert ran.returncode == 0, ran.stderr[-2000:]
+    assert "triggered" in ran.stdout
+    if out.exists():
+        assert "'th1': 1" in out.read_text().splitlines()[0]

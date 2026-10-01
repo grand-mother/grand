@@ -249,3 +249,36 @@ def t1_trigger_flags(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     """
     passed = t1_du_triggers(traces, trigger_config, channels, baseline)
     return np.where(passed, T1_TRIGGER_FLAG, 0).astype(np.ushort)
+
+
+def t1_config_from_params(params):
+    r"""The T1 trigger parameters, from ``KEY=VALUE`` strings.
+
+    Parameters
+    ----------
+    params : list of str or None
+        Overrides of :data:`grand.sim.detector.trigger.DEFAULT_T1_CONFIG`,
+        e.g. ``['th1=120', 'nc_max=10']``.  The values are integers.
+
+    Returns
+    -------
+    dict
+        The full set of trigger parameters.
+
+    Raises
+    ------
+    ValueError
+        For a string that is not ``KEY=VALUE`` with an integer value, or an
+        unknown key.
+    """
+    config = dict(DEFAULT_T1_CONFIG)
+    for param in params or []:
+        key, sep, value = param.partition('=')
+        key = key.strip()
+        if not sep or key not in DEFAULT_T1_CONFIG:
+            raise ValueError(f'Bad --t1_param {param!r}: expected KEY=VALUE with KEY in {sorted(DEFAULT_T1_CONFIG)}')
+        try:
+            config[key] = int(value)
+        except ValueError:
+            raise ValueError(f'Bad --t1_param {param!r}: the value must be an integer') from None
+    return config

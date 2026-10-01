@@ -37,7 +37,7 @@ import numpy as np
 from grand import ADC, manage_log
 import grand.dataio
 from grand.dataio.data_tree import partial_name, replace_output
-from grand.sim.detector.trigger import DEFAULT_T1_CONFIG, t1_trigger_flags
+from grand.sim.detector.trigger import DEFAULT_T1_CONFIG, t1_config_from_params, t1_trigger_flags  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -255,39 +255,6 @@ def get_noise_trace(data_dir,
         df.close()
         # print(f"mem8: {process.memory_info().rss / 1024 ** 2:.2f} MB")
     return noise_trace
-
-
-def t1_config_from_params(params):
-    r"""The T1 trigger parameters, from ``KEY=VALUE`` strings.
-
-    Parameters
-    ----------
-    params : list of str or None
-        Overrides of :data:`grand.sim.detector.trigger.DEFAULT_T1_CONFIG`,
-        e.g. ``['th1=120', 'nc_max=10']``.  The values are integers.
-
-    Returns
-    -------
-    dict
-        The full set of trigger parameters.
-
-    Raises
-    ------
-    ValueError
-        For a string that is not ``KEY=VALUE`` with an integer value, or an
-        unknown key.
-    """
-    config = dict(DEFAULT_T1_CONFIG)
-    for param in params or []:
-        key, sep, value = param.partition('=')
-        key = key.strip()
-        if not sep or key not in DEFAULT_T1_CONFIG:
-            raise ValueError(f'Bad --t1_param {param!r}: expected KEY=VALUE with KEY in {sorted(DEFAULT_T1_CONFIG)}')
-        try:
-            config[key] = int(value)
-        except ValueError:
-            raise ValueError(f'Bad --t1_param {param!r}: the value must be an integer') from None
-    return config
 
 
 def apply_t1_trigger(tadc, adc_trace, t1_config):

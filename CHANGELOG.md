@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`T1_trigger_offline.py` parses its arguments (#183).** It read
+  `sys.argv[1]` directly, so `-h` was opened as a file and no argument gave
+  `IndexError`. It now has a usage message, `-o` for where the list goes, and
+  `--t1_param KEY=VALUE` as `convert_voltage2adc.py` has; the parser for those
+  moved to `grand.sim.detector.trigger.t1_config_from_params`, so both scripts
+  share it.
+
 - **Class access to a tree field (#191).** `TShower.zenith`, and so
   `help(TShower.zenith)`, failed with `'NoneType' object has no attribute
   '_zenith'`: the field descriptors did not handle class access. They now
