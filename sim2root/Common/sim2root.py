@@ -3,6 +3,7 @@
 ## by Lech Wiktor Piotrowski
 
 import os
+import sys
 import argparse
 from types import SimpleNamespace
 import time
@@ -243,6 +244,67 @@ def convert_date(date_str):
     return formatted_date
 
 
+def desired_window(t_pre, t_post, trigger_time_ns=None, target_duration_us=None):
+    r"""Returns the ``(t_pre, t_post)``, in ns, a trace is written with.
+
+    ``--trigger_time_ns`` sets t_pre and keeps the duration; with
+    ``--target_duration_us`` too, the duration is set as well.
+    """
+    if trigger_time_ns is not None:
+        t_post = t_pre + t_post - trigger_time_ns
+        t_pre = trigger_time_ns
+    if target_duration_us is not None:
+        t_post = target_duration_us * 1000 - t_pre
+    return t_pre, t_post
+
+
+def check_windows(file_list, trigger_time_ns=None, target_duration_us=None, star_shape=False):
+    r"""Exits with a message if the requested windows cannot be written (#222).
+
+    Checked before anything is written: the options must be positive, the
+    trigger must fall inside the trace, and all the events of one run (one
+    file with ``-ss``) must share one window, since the run tree stores only
+    one.  Events that hit no antenna carry no trace and are not checked.
+    """
+    def fail(message):
+        sys.exit("GRANDlib: sim2root: " + message)
+
+    if trigger_time_ns is not None and not trigger_time_ns > 0:
+        fail("--trigger_time_ns must be > 0, got %s" % trigger_time_ns)
+    if target_duration_us is not None and not target_duration_us > 0:
+        fail("--target_duration_us must be > 0, got %s" % target_duration_us)
+    if (trigger_time_ns is not None and target_duration_us is not None
+            and not trigger_time_ns < target_duration_us * 1000):
+        fail("--trigger_time_ns (%s ns) must be shorter than --target_duration_us (%s ns)"
+             % (trigger_time_ns, target_duration_us * 1000))
+
+    run_window = None
+    for filename in file_list:
+        if star_shape:
+            run_window = None
+        try:
+            trawefield = RawTrees.RawEfieldTree(filename)
+        except OSError:
+            continue
+        for i in range(trawefield.get_entries()):
+            trawefield.get_entry(i)
+            if is_no_antenna_event(trawefield):
+                continue
+            window = desired_window(trawefield.t_pre, trawefield.t_post, trigger_time_ns, target_duration_us)
+            where = "%s entry %d (t_pre %s ns, t_post %s ns)" % (filename, i, trawefield.t_pre, trawefield.t_post)
+            if not window[1] > 0:
+                fail("%s: the requested window ends %s ns before the trigger; give a longer "
+                     "--target_duration_us or a shorter --trigger_time_ns" % (where, -window[1]))
+            if run_window is None:
+                run_window = window
+            elif not np.allclose(window, run_window):
+                fail("%s: its window (t_pre %s, t_post %s ns) differs from the run's (t_pre %s, "
+                     "t_post %s ns), and the run stores only one.  Give --trigger_time_ns and "
+                     "--target_duration_us to write every event with the same window%s"
+                     % ((where,) + tuple(window) + tuple(run_window)
+                        + ("" if star_shape else ", or convert the files separately with -ss",)))
+
+
 def main():
 
     # Check if the site layout is defined
@@ -283,6 +345,9 @@ def main():
     if len(file_list)==0:
         print("No RawRoot files found in the input directory. Exiting.")
         exit(0)
+
+    # Before anything is written: one window per run, and a valid one (#222)
+    check_windows(file_list, clargs.trigger_time_ns, clargs.target_duration_us, clargs.star_shape)
 
     # How many events were stored in current files
     events_in_file = 1
@@ -327,17 +392,9 @@ def main():
 
             OriginalTpre=trawefield.t_pre
             OriginalTpost=trawefield.t_post
-            DesiredTpre=trawefield.t_pre
-            DesiredTpost=trawefield.t_post
-
-            if clargs.trigger_time_ns is not None:
-              DesiredTpre=clargs.trigger_time_ns
-              assert DesiredTpre > 0
-              OriginalDuration= OriginalTpre+OriginalTpost
-              DesiredTpost= OriginalDuration-DesiredTpre
-
-            if clargs.target_duration_us is not None:
-              DesiredTpost=clargs.target_duration_us*1000-DesiredTpre
+            # Checked by check_windows before the loop (#222)
+            DesiredTpre, DesiredTpost = desired_window(OriginalTpre, OriginalTpost,
+                                                       clargs.trigger_time_ns, clargs.target_duration_us)
             #we modify this becouse it needs to be stored in the run file on the first event.
             trawefield.t_pre=DesiredTpre
             trawefield.t_post=DesiredTpost

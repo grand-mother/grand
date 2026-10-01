@@ -70,6 +70,11 @@ i.e.
 
 (`-sl`, the site layout, is required.)
 
+A run stores one trace window (`t_pre`, `t_post`) for all its events. If the
+input events have different windows, `sim2root.py` stops before writing and
+asks for `--trigger_time_ns` and `--target_duration_us`, which give every
+event the same window (or use `-ss`, one run per file).
+
 additional options are available on command line, see sim2root --help for more information
 
 ## 3) Simulation Pipe example (in the Common directory)

@@ -84,3 +84,47 @@ def test_star_shape_runs_have_their_own_du_geoid_and_first_event(tmp_path):
         first_events.append(int(run.first_event))
     assert len(set(first_events)) == 2
     run.stop_using()
+
+
+def _sim2root_fails(tmp_path, *args):
+    out = tmp_path / "out"
+    out.mkdir(exist_ok=True)
+    done = subprocess.run([sys.executable, str(SIM2ROOT), *args, "-sl", "GP300", "-o", str(out)],
+                          cwd=tmp_path, capture_output=True, text=True, timeout=900)
+    assert done.returncode != 0
+    assert not list(out.rglob("*.root")), "files were written before the check"
+    return done.stderr
+
+
+@pytest.mark.parametrize("options, message", [
+    (("--target_duration_us", "0.1"), "ends"),
+    (("--trigger_time_ns", "3000", "--target_duration_us", "2"), "shorter than"),
+    (("--target_duration_us", "0"), "must be > 0"),
+    (("--trigger_time_ns", "0"), "must be > 0"),
+])
+def test_window_options_are_checked_before_writing(tmp_path, options, message):
+    r"""#222: impossible windows wrote all-zero traces, or failed with a bare error."""
+    raw = shutil.copy(ZHAIRES / (RUN_13790 + ".rawroot"), tmp_path)
+    stderr = _sim2root_fails(tmp_path, pathlib.Path(raw).name, *options)
+    assert "GRANDlib: sim2root:" in stderr and message in stderr, stderr[-2000:]
+
+
+def test_events_with_different_windows_need_one_window(tmp_path):
+    r"""#222: a run of events with different windows stored the first event's window."""
+    from grand.dataio import TEfield, TRunEfieldSim
+
+    raws = [pathlib.Path(shutil.copy(p, tmp_path)).name for p in sorted(ZHAIRES.glob("*.rawroot"))]
+    assert "differs from the run's" in _sim2root_fails(tmp_path, *raws)
+    assert "differs from the run's" in _sim2root_fails(tmp_path, *raws, "--trigger_time_ns", "500")
+
+    out = _run_sim2root(tmp_path, *raws, "--trigger_time_ns", "500", "--target_duration_us", "2")
+    run = TRunEfieldSim(str(next(out.glob("*/runefieldsim_*.root"))))
+    run.get_entry(0)
+    assert (run.t_pre, run.t_post) == (500, 1500)
+    run.stop_using()
+    efield = TEfield(str(next(out.glob("*/efield_*.root"))))
+    for entry in range(efield.get_entries()):
+        efield.get_entry(entry)
+        assert np.asarray(efield.trace).shape[-1] == 4000
+        assert set(np.asarray(efield.trigger_position)) == {1000}
+    efield.stop_using()

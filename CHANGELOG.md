@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`sim2root.py`: one trace window per run, and checked options (#222).**
+  A run stores one `t_pre`/`t_post`; events with different windows were
+  written under the first event's, with traces of different lengths and no
+  warning. `sim2root.py` now checks every input before writing and stops,
+  asking for `--trigger_time_ns` and `--target_duration_us` (or `-ss`). The
+  window options are checked too: a duration of 0, a trigger at 0, or a
+  trigger after the end of the trace wrote all-zero traces or failed with a
+  bare error, and now stop with a `GRANDlib: sim2root:` message.
+
 - **`topography.distance` read a local direction as ECEF (#210).** TURTLE
   needs an ECEF direction, the docstrings did not say so, and notebook 07
   passed an (east, north, up) vector: straight down from 1500 m came out as
