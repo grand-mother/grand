@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`get_dus_indices_in_run` follows the event's order (#199).** It returned
+  the matching indices in the run's order, so whenever an event listed its
+  units in another order than the run, antenna positions and sampling times
+  (in `Efield2Voltage`, `convert_voltage2adc.py`, `convert_efield2efield.py`
+  and `grand.aoi`) were paired with the wrong traces; units missing from the run
+  were dropped silently. It now returns the indices in the event's order and
+  raises for a unit the run does not hold. Every committed sim2root sample
+  lists units in run order, so existing simulation outputs were not affected.
+
 - **`write("other.root")` on a tree stored in a file writes a full copy
   (#198).** It moved the tree to the new file with `SetDirectory()`, which left
   the data already written behind: the new file referenced baskets it did not

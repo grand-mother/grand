@@ -6,6 +6,7 @@ import ROOT
 
 from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, grand_tree_list, TRun, logger, StdVectorListDesc, StdStringDesc, TTreeArrayDesc
 from grand.dataio import file_lock as _file_lock
+from grand.basis import validate as _validate
 
 
 @dataclass
@@ -385,10 +386,27 @@ class MotherEventTree(DataTree):
         Returns
         -------
         ndarray
-            Index of each unit of this event within the run unit list.
-        """
+            Index of each unit of this event within the run unit list, in the
+            event's order, so that ``run_array[indices]`` lines up with this
+            event's traces.
 
-        return np.nonzero(np.isin(np.asarray(trun.du_id), np.asarray(self.du_id)))[0]
+        Raises
+        ------
+        ValueError
+            If a unit of this event is not in the run.
+        """
+        # In the event's order: this returned the matches in the run's order,
+        # pairing positions and sampling times with the wrong traces whenever
+        # the two orders differ, and dropped units missing from the run (#199)
+        index = {int(du): i for i, du in enumerate(trun.du_id)}
+        event_dus = [int(du) for du in self.du_id]
+        missing = [du for du in event_dus if du not in index]
+        if missing:
+            raise ValueError(_validate.message(
+                "%s.get_dus_indices_in_run" % type(self).__name__,
+                "units %s of event %s (run %s) are not in the run's du_id"
+                % (missing, self.event_number, self.run_number)))
+        return np.array([index[du] for du in event_dus], dtype=int)
 
 
 @dataclass

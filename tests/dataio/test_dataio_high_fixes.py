@@ -114,3 +114,21 @@ def test_writing_to_another_file_copies_the_tree(tmp_path):
         s.get_entry(2)
         assert s.zenith == 43.0
         s.stop_using()
+
+
+def test_du_indices_follow_the_event_order():
+    r"""#199: the indices came in the run's order, pairing positions with the wrong traces."""
+    import pytest
+
+    from grand.dataio import TEfield, TRun
+
+    r = TRun()
+    r.du_id = [60003, 60000, 60002, 60001, 60009]
+    e = TEfield()
+    e.du_id = [60000, 60001, 60002]
+    assert e.get_dus_indices_in_run(r).tolist() == [1, 3, 2]
+    e.du_id = [60001, 60004]
+    with pytest.raises(ValueError, match=r"units \[60004\]"):
+        e.get_dus_indices_in_run(r)
+    r.stop_using()
+    e.stop_using()
