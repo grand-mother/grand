@@ -150,27 +150,35 @@ class DetectorUnitNetwork:
         if self.area_km2 >= 0:
             return self.area_km2
         if self.du_pos.shape[0] < 3:
+            # It went on to triangulate, and failed
             self.area_km2 = 0
+            return self.area_km2
         pts = self.du_pos[:, :2].astype(np.float64)
-        self.delaunay = Delaunay(self.du_pos[:, :2])
+        self.delaunay = Delaunay(pts)
         triangle = self.delaunay.simplices
-        a_area = np.abs(
-            np.cross(
-                pts[triangle[:, 1], :] - pts[triangle[:, 0], :],
-                pts[triangle[:, 2], :] - pts[triangle[:, 0], :],
-            )
-        )
-        a_area /= 2
+        # The z of the 2-D cross product, written out: np.cross on 2-D vectors
+        # fails under NumPy 2 (#261)
+        u = pts[triangle[:, 1], :] - pts[triangle[:, 0], :]
+        v = pts[triangle[:, 2], :] - pts[triangle[:, 0], :]
+        a_area = np.abs(u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]) / 2
         self.area_km2 = np.sum(a_area) / 1e6
         return self.area_km2
 
     def get_max_dist_du(self):
-        """TODO
-        :return: [km] distance max between two DU of network
-        :rtype: float
+        """Return the largest distance between two DUs of the network.
+
+        It raised NotImplementedError while documenting a return value (#261).
+
+        Returns
+        -------
+        float
+            The distance, in kilometres; 0 for fewer than two DUs.
         """
-        # TODO:
-        raise NotImplementedError
+        pos = np.asarray(self.du_pos, dtype=np.float64)
+        if pos.shape[0] < 2:
+            return 0.0
+        dist = np.linalg.norm(pos[:, np.newaxis, :] - pos[np.newaxis, :, :], axis=-1)
+        return float(dist.max()) / 1e3
 
     ### PLOT
 

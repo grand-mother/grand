@@ -530,8 +530,13 @@ class Handling3dTraces:
 
         Returns
         -------
-        tuple of ndarray
-            Signal-to-noise ratio and noise level of each trace.
+        snr : ndarray
+            Signal-to-noise ratio of each trace.
+        v_max : ndarray
+            Peak of each trace's Hilbert envelope, in the traces' unit.
+        noise : ndarray
+            Noise level of each trace (largest standard deviation over the
+            three axes of the trace's last samples), in the same unit.
         """
         size_noise = np.min([100, int(self.get_size_trace() / 20)])
         noise = np.max(np.std(self.traces[:, :, -size_noise:], axis=-1), axis=-1)

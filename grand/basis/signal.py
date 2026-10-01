@@ -252,8 +252,10 @@ def get_peakamptime_norm_hilbert(a2_time, a3_trace):
 
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
-    """
-    #RK: This function is copied to grand/simu/master_simu.py where it is used. Remove it from here if it is not used anywhere else.
+    """Returns an FFT-friendly transform length and its frequency axis.
+
+    The same as :func:`grand.sim.efield2voltage.get_fastest_size_fft`, whose
+    padding argument is named ``padding_factor``.
 
     Parameters
     ----------

@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `grand.basis` functions do what they document (#261, part 2):
+  `DetectorUnitNetwork.get_surface` works under NumPy 2 (its 2-D
+  `np.cross` failed; two tests were marked as expected failures for it) and
+  returns 0 for fewer than three units; `get_max_dist_du` is implemented
+  (it raised `NotImplementedError`); `get_snr_and_noise` documents its three
+  returns; the `get_fastest_size_fft` docstrings give a real summary and the
+  right exception (`ValueError`).
+
 - Geo docstrings that misled (#261, part 1): `Geomagnet` and
   `geomagnet.field` state the unit (tesla) and frame (east-north-up at the
   location, whatever frame the location is given in; GRAND data use

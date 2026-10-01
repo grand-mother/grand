@@ -63,7 +63,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
 
     Raises
     ------
-    AssertionError
+    ValueError
         If ``padding_factor`` is less than 1.
 
     Examples

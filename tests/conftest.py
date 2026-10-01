@@ -35,12 +35,6 @@ KNOWN_FAILURES = {
         'rebuilt on the new interface or dropped.',
 
     # --- numerical / library behaviour ----------------------------------
-    'test_du_network.py::test_get_surface':
-        'Cross product rejects 2-dimensional vectors: NumPy 2 removed '
-        'support for 2-vector cross products. The fix is a genuine choice '
-        'about what a 2D detector layout means here.',
-    'test_du_network.py::test_keep_only_du_with_index':
-        'Same 2-vector cross product as test_get_surface.',
     'test_topography.py::TopographyTest::test_topography_cache':
         'Cache directory assertion depends on where the data model was '
         'downloaded; fails when GRAND_DATA_PATH differs from the default.',
