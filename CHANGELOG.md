@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Notebook 05's sky maps show right ascension correctly (#268).** The shipped
+  LFMap grid's first axis runs 12 h ahead of right ascension, so the maps put
+  the Galactic Centre at 5.8 h instead of 17.8 h. The notebook now shifts the
+  maps by 12 h, says why, and marks the Galactic Centre, Cygnus A and
+  Cassiopeia A, which land on their bright pixels. The data and
+  `galactic_noise` are unchanged.
 - **`Handling3dTraces.init_traces` accepts a NumPy sampling rate (#264).** A
   rate given as a NumPy scalar (as read from a tree) was kept as a scalar, and
   `apply_bandpass` then failed with `IndexError: invalid index to scalar

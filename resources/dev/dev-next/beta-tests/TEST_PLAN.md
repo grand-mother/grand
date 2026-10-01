@@ -378,7 +378,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#265](https://github.com/grand-mother/grand/issues/265) | `Efield2Voltage.params` ignores unknown keys; flags read by truthiness | Medium | 9 | open | | |
 | [#266](https://github.com/grand-mother/grand/issues/266) | Values in the wrong unit (Hz/MHz, s/ns, degrees/radians) accepted silently | Medium | 9 | open | | |
 | [#267](https://github.com/grand-mother/grand/issues/267) | Modules the validation work did not reach (geo reps, turtle, aoi, ShowerEvent, trigger, basis.signal, du_network) | Medium | 9 | open | | |
-| [#268](https://github.com/grand-mother/grand/issues/268) | Notebook 05 sky maps put right ascension 12 h out | High | 10 | open | | |
+| [#268](https://github.com/grand-mother/grand/issues/268) | Notebook 05 sky maps put right ascension 12 h out | High | 10 | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | maps shifted by 12 h, sources marked; noise-table convention still to confirm with owners |
 | [#269](https://github.com/grand-mother/grand/issues/269) | Notebook prose, second pass: 14 statements the outputs contradict | Medium | 10 | open | | |
 | [#270](https://github.com/grand-mother/grand/issues/270) | Deliberate bugs no test catches (Horizontal azimuth, `get_dus_indices_in_run`, `final_resample`, ADC rounding) | High | 8 | open | | |
 | [#271](https://github.com/grand-mother/grand/issues/271) | Tests that cannot fail, non-strict xfails, tests depending on untracked `data/` files | Medium | 8 | open | | |
