@@ -1,6 +1,6 @@
 # `dev-next` beta test: plan and tracker
 
-**Status:** planned; validation review before wave 1 · **Last updated:** 2026-10-01 · **Branch under test:** `dev-next` at `b25d0521`
+**Status:** wave 1 running · **Last updated:** 2026-10-01 · **Branch under test:** `dev-next` at `91d30a1b`
 
 This page is both the plan and the live record of the beta test of GRANDlib's
 `dev-next` branch. It is updated as the test runs: every confirmed problem
@@ -291,7 +291,11 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 
 | Issue | Title | Severity | Found by | Status | Fixed in | How |
 |---|---|---|---|---|---|---|
-| — | *none yet* | | | | | |
+| [#180](https://github.com/grand-mother/grand/issues/180) | `convert_voltage2adc.py` takes a directory, but its help says it takes a file | Medium | coordinator (pre-wave) | open | | |
+| [#181](https://github.com/grand-mother/grand/issues/181) | CoREAS converter appends to an existing output and fails with `NotUniqueEvent` | Medium | coordinator (pre-wave) | open | | |
+| [#182](https://github.com/grand-mother/grand/issues/182) | `-od/--out_directory` fails when the folder does not exist yet | Medium | coordinator (pre-wave) | open | | |
+| [#183](https://github.com/grand-mother/grand/issues/183) | `T1_trigger_offline.py` has no argument parsing; `-h` is opened as a file | Low | coordinator (pre-wave) | open | | |
+| [#184](https://github.com/grand-mother/grand/issues/184) | `open_grand_file.py` / `open_grand_directory.py` run the file name as Python code | Medium | coordinator (pre-wave) | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -307,6 +311,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Validation merged (PR #179). Wave 1 started on `dev-next` at `91d30a1b`: batch 1 (1a ×2, 2a, 3a, 4a). Five problems found by the coordinator during the pre-PR check logged as #180–#184. |
 | 2026-10-01 | Validation work double-checked before its PR, against `dev-next`: full pipeline (sim2root, the three converters, T1, CoREAS) gives identical output (676 branches in 21 files); the 12 notebooks give the same results; reading and writing speed unchanged. Found and fixed 3 checks that refused input which used to work: a covariance matrix as `sigma`, `channels` as a slice, a `(1, 3)` source position (and `[[x, y, z]]` for 3-value tree fields). |
 | 2026-10-01 | Validation PR: 50 of 60 bad inputs now refused with a `GRANDlib:` message, 0 crashes, 0 `exit()` (§4.1). |
 | 2026-10-01 | Input validation review: 18 % of public functions check input; 27 of 60 bad inputs accepted silently (§4.1). |
