@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`write("other.root")` on a tree stored in a file writes a full copy
+  (#198).** It moved the tree to the new file with `SetDirectory()`, which left
+  the data already written behind: the new file referenced baskets it did not
+  hold, and read back as zeros with zlib errors. The tree is now copied, every
+  entry including those filled but not yet written, and the tree object stays
+  attached to its own file.
+
 - **`write()` no longer replaces a tree silently (#197).** Writing a new tree
   object into a file that already held a tree of the same name replaced it,
   with `overwrite=False` as with `overwrite=True`, so earlier events were lost;

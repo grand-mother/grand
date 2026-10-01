@@ -706,6 +706,11 @@ class DataTree:
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
         creating_file = False
+        # A tree that already lives in another file is copied, not moved:
+        # SetDirectory() would leave the baskets already written behind, and
+        # the new file referenced data it did not hold (#198)
+        if len(args) > 0 and ".root" in args[0][-5:] and self._lives_elsewhere(args[0]):
+            return self._write_copy(args[0], overwrite)
         if len(args) > 0 and ".root" in args[0][-5:]:
             self._file_name = args[0]
             # The TFile object is already in memory, just use it
@@ -754,6 +759,68 @@ class DataTree:
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
             _forget_opened_file(self._file)
+
+    def _lives_elsewhere(self, name):
+        r"""Whether the tree is stored in a file other than ``name``.
+
+        Parameters
+        ----------
+        name : str
+            The file about to be written.
+
+        Returns
+        -------
+        bool
+            True if the tree already has a file on disk and it is not ``name``.
+        """
+        if self.is_tchain:
+            return False
+        current = self._tree.GetCurrentFile()
+        if not current:
+            return False
+        return os.path.realpath(current.GetName()) != os.path.realpath(name)
+
+    def _write_copy(self, name, overwrite):
+        r"""Writes a full copy of the tree into another file (#198).
+
+        The tree object stays attached to its own file; ``name`` receives every
+        entry, those already written and those only filled.
+
+        Parameters
+        ----------
+        name : str
+            The file to write the copy into.
+        overwrite : bool
+            Replace a tree of the same name already in ``name``.
+        """
+        where = type(self).__name__
+        if os.path.isfile(name):
+            _file_lock.lock_for_writing(name, where, fresh=True)
+        target = ROOT.TFile(name, "update")
+        _file_lock.lock_for_writing(name, where, fresh=True)
+        try:
+            if target.GetListOfKeys().FindObject(self._tree_name):
+                if not overwrite:
+                    raise FileExistsError(_validate.message(
+                        "%s.write" % where,
+                        "%s already holds a %s tree; pass overwrite=True to replace it"
+                        % (name, self._tree_name)))
+                target.Delete(self._tree_name + ";*")
+            branches = " ".join(b.GetName() for b in self._tree.GetListOfBranches())
+            # CloneTree reads every entry through this object's buffers
+            with self._kept_buffers(branches):
+                target.cd()
+                copy = self._tree.CloneTree(-1)
+                copy.SetDirectory(target)
+                copy.Write("", ROOT.TObject.kWriteDelete)
+            target.Close()
+        finally:
+            if target.IsOpen():
+                target.Close()
+            _file_lock.release(name)
+            # The copy shares this object's branch addresses; give them back
+            self._tree.SetBranchStatus("*", 1)
+            self.create_branches()
 
     def _check_tree_slot(self, f, overwrite, opened_here):
         r"""Refuses to replace another tree of this name in ``f`` unless asked.

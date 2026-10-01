@@ -89,3 +89,28 @@ def test_write_does_not_silently_replace_a_tree(tmp_path):
     f = ROOT.TFile(path)
     assert sorted(k.GetName() for k in f.GetListOfKeys()) == ["trun", "tshower"]
     f.Close()
+
+
+def test_writing_to_another_file_copies_the_tree(tmp_path):
+    r"""#198: write("other.root") on a tree stored in a file wrote a corrupt copy."""
+    from grand.dataio import TShower
+
+    first, second = str(tmp_path / "w1.root"), str(tmp_path / "w2.root")
+    t = TShower(first)
+    for ev in (1, 2, 3):
+        t.run_number = 1
+        t.event_number = ev
+        t.zenith = 40.0 + ev
+        t.fill()
+        if ev == 2:
+            t.write()                 # event 3 is filled but not yet written
+    t.write(second)
+    assert t.event_number == 3
+    t.write()
+    t.stop_using()
+    for name in (first, second):
+        s = TShower(name)
+        assert s.get_list_of_events() == [(1, 1), (2, 1), (3, 1)]
+        s.get_entry(2)
+        assert s.zenith == 43.0
+        s.stop_using()
