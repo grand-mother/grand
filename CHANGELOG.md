@@ -29,8 +29,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   rewrite, #212). And a script that only read an event crashed or hung at exit
   in about a third of the runs (exit 129/139, in ROOT's `EndOfProcessCleanups`):
   ROOT deleted the trees after Python had begun freeing the buffers their
-  branches point to. The open files are now closed and the trees detached at
-  exit, before ROOT's own cleanup; 20 of 20 runs exit cleanly.
+  branches point to. A tree object now detaches its buffers from the tree when
+  it is released, and at exit, before ROOT's own cleanup, every tree ROOT still
+  holds is detached; nothing is closed there, and no tree that may already be
+  gone is touched. 30 of 30 runs exit cleanly.
 
 - **Using a tree after its file was closed raises instead of crashing (#274).**
   `close_file()`, `DataFile.close()` and `DataDirectory.close()` delete the

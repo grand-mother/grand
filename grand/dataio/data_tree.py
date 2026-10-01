@@ -95,37 +95,69 @@ def _close_with_trees(f, extra=()):
 _branch_owner = {}
 
 
-def _close_everything_at_exit():
-    r"""Closes the open ROOT files and detaches the trees before ROOT's own cleanup.
+def _tree_alive(inst):
+    r"""Whether ``inst``'s ROOT tree certainly still exists.
+
+    It must be listed by ROOT itself -- in its open file, or in memory -- with
+    the same address: a handle can outlive its tree (deleted with its file),
+    and only the address is compared, never the tree touched.
+    """
+    if inst._tree is None or inst.is_tchain:
+        return False
+    try:
+        key = ROOT.addressof(inst._tree)
+        places = [ROOT.gROOT]
+        if inst._file is not None and inst._file.IsOpen():
+            places.insert(0, inst._file)
+        for place in places:
+            for obj in place.GetList():
+                if ROOT.addressof(obj) == key:
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def _detach_buffers(inst):
+    r"""Makes ROOT forget the Python-owned buffers ``inst`` bound to its tree."""
+    if not _tree_alive(inst):
+        return
+    try:
+        key = ROOT.addressof(inst._tree)
+        if _branch_owner.get(key) == id(inst):
+            inst._tree.ResetBranchAddresses()
+            del _branch_owner[key]
+    except Exception:
+        pass
+
+
+def _detach_everything_at_exit():
+    r"""Detaches the trees from Python's buffers before ROOT's own cleanup.
 
     At exit ROOT deletes every tree it still holds, after Python has begun
     freeing the buffers the trees' branches point to, and a script that only
     read an event crashed or hung there about a third of the time (#234).
     Registered with ``atexit`` after ROOT is imported, so it runs first, while
     every buffer is still alive.
+
+    Only trees ROOT itself still lists -- in an open file, or in memory -- are
+    touched: a tree object's handle may point at a tree already deleted with
+    its file, and touching that crashes.
     """
     try:
-        files = [f for f in ROOT.gROOT.GetListOfFiles()]
+        places = [ROOT.gROOT] + [f for f in ROOT.gROOT.GetListOfFiles() if f.IsOpen()]
     except Exception:
         return
-    for f in files:
+    for place in places:
         try:
-            if f.IsOpen():
-                _close_with_trees(f)
-        except Exception:
-            pass
-    for inst in list(grand_tree_list):
-        tree = inst._tree
-        if tree is None:
-            continue
-        try:
-            # Trees with no file: forget the Python-owned branch buffers now
-            tree.ResetBranchAddresses()
+            for obj in list(place.GetList()):
+                if obj.InheritsFrom("TTree"):
+                    obj.ResetBranchAddresses()
         except Exception:
             pass
 
 
-atexit.register(_close_everything_at_exit)
+atexit.register(_detach_everything_at_exit)
 
 
 def _register_opened_file(f):
@@ -1646,6 +1678,10 @@ class DataTree:
                 "%d entries were filled but not written, and are discarded; call write() "
                 "first to keep them" % pending), _validate.GRANDlibWarning, stacklevel=2)
         _written_entries.pop(id(self), None)
+        # The tree may outlive this object (another object, or a file the
+        # caller keeps open): it must not keep pointing at this object's
+        # buffers once Python frees them (#234)
+        _detach_buffers(self)
 
         # Remove by identity: the dataclass __eq__ compares field values and could match another instance
         for i, inst in enumerate(grand_tree_list):
