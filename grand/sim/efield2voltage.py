@@ -272,6 +272,12 @@ class Efield2Voltage:
             self.output_directory = output_directory
             # A folder not yet made failed when writing (#182)
             Path(output_directory).mkdir(parents=True, exist_ok=True)
+        # A read-only folder failed only after the whole computation (#280)
+        for folder in {Path(self.output_directory or "."),
+                       Path(f_output).parent if f_output else Path(".")}:
+            if folder.is_dir() and not os.access(folder, os.W_OK):
+                raise PermissionError(_validate.message(
+                    "Efield2Voltage", "cannot write in the output folder %s" % folder))
             # self.f_output = output_directory + "/" + Path(self.f_output).name
 
 

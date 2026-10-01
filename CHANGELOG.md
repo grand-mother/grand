@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Environment problems now name their remedy (#280): a missing compiled core
+  says to run `source env/setup.sh`; a missing `iminuit` or event-viewer
+  package names the `pip install -e ".[analysis]"` / `".[viewer]"` extra;
+  `topography.elevation` warns when points fall outside the downloaded tiles
+  (it returned NaN silently); `Efield2Voltage` refuses a read-only output
+  folder before computing instead of failing at the write.
+
 - **Utility scripts parse their arguments (#246).** `plot_tmax_vmax.py` and
   `extract_rf_chain.py` read `sys.argv` or nothing: `-h` was a file name or
   ran the whole computation, a bad index became 0, and output went into the

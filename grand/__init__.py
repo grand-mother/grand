@@ -56,6 +56,13 @@ def grand_add_path_data(s_file):
     return os.path.join(GRAND_DATA_PATH, s_file)
 
 
+#: Said when the compiled core cannot be loaded: a raw ImportError named no
+#: remedy (#280).
+CORE_MISSING = ("GRANDlib: the compiled core (grand/_core, with TURTLE and GULL in lib/) is "
+                "missing or cannot be loaded; build it with `source env/setup.sh` from the "
+                "repository root")
+
+
 # The public names below are loaded on first use, not at import.
 #
 # They used to be imported here eagerly, so *any* import from the package --

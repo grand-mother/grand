@@ -8,7 +8,11 @@ import grand.analysis.physics as che
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom.angles as an
 #print(sys.path)
-from iminuit import minimize
+try:
+    from iminuit import minimize
+except ImportError as _error:          # a bare ModuleNotFoundError named no remedy (#280)
+    raise ImportError("GRANDlib: grand.analysis needs the optional package iminuit: "
+                      "pip install -e \".[analysis]\" (it is in the conda environment)") from _error
 from grand.analysis import _checks
 from grand.basis import validate as _validate
 

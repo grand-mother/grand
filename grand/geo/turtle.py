@@ -11,7 +11,11 @@ import warnings
 
 import numpy
 
-from .._core import ffi, lib
+try:
+    from .._core import ffi, lib
+except ImportError as _error:          # (#280)
+    from grand import CORE_MISSING
+    raise ImportError(CORE_MISSING) from _error
 from ..basis import validate as _validate
 
 

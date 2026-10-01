@@ -27,12 +27,16 @@ SOFTWARE.
 import argparse
 import os
 import numpy as np
-import pandas as pd
-# http://holoviews.org/getting_started/index.html
-import panel as pn
-import holoviews as hv
-from bokeh.models import TapTool
-from holoviews import opts, dim
+try:
+    import pandas as pd
+    # http://holoviews.org/getting_started/index.html
+    import panel as pn
+    import holoviews as hv
+    from bokeh.models import TapTool
+    from holoviews import opts, dim
+except ImportError as _error:          # a bare ModuleNotFoundError named no remedy (#280)
+    raise ImportError("GRANDlib: the event viewer needs its plotting packages (%s): "
+                      "pip install -e \".[viewer]\"" % _error.name) from _error
 
 from scipy.signal import hilbert
 import scipy.interpolate as scipolate

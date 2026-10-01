@@ -7,7 +7,11 @@ import datetime
 import numpy
 
 #from . import DATADIR
-from .._core import ffi, lib
+try:
+    from .._core import ffi, lib
+except ImportError as _error:          # (#280)
+    from grand import CORE_MISSING
+    raise ImportError(CORE_MISSING) from _error
 
 
 __all__ = ["LibraryError", "Snapshot"]

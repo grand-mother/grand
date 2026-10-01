@@ -26,7 +26,11 @@ from grand.geo.coordinates import (
 
 from .turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
 import grand.dataio.protocol as store
-from .._core import ffi, lib
+try:
+    from .._core import ffi, lib
+except ImportError as _error:          # (#280)
+    from grand import CORE_MISSING
+    raise ImportError(CORE_MISSING) from _error
 
 __all__ = [
     "elevation",
@@ -169,6 +173,39 @@ def _finite_points(a, b, frame_finite, where):
                                         "their elevation is NaN" % ((~finite).sum(), finite.size)),
                       _validate.GRANDlibWarning, stacklevel=4)
     return finite
+
+
+def _fill_elevation(n, finite, values):
+    r"""Puts the computed elevations back among the skipped points.
+
+    A point with a finite position that comes back NaN lies outside every
+    loaded tile. That used to be silent (#280): the warning says how many and
+    how to get the tiles.
+
+    Parameters
+    ----------
+    n : int
+        Total number of points.
+    finite : ndarray of bool
+        Which points were computed.
+    values : ndarray
+        Elevations of the computed points.
+
+    Returns
+    -------
+    ndarray
+        The `n` elevations, NaN where none could be computed.
+    """
+    missing = int(np.isnan(values).sum())
+    if missing:
+        warnings.warn(_validate.message(
+            "Topography.elevation", "%d of %d points are outside the loaded topography tiles; "
+            "their elevation is NaN. Download the tiles around them with "
+            "grand.topography.update_data(coordinates, radius=...)"
+            % (missing, values.size)), _validate.GRANDlibWarning, stacklevel=4)
+    elevation = np.full(n, np.nan)
+    elevation[finite] = values
+    return elevation
 
 
 def _get_geoid():
@@ -499,9 +536,7 @@ class Topography:
             x.size,
         )
 
-        elevation = np.full(n, np.nan)
-        elevation[finite] = values
-        return elevation
+        return _fill_elevation(n, finite, values)
 
     def _global_elevation(self, coordinates, reference: str):
         """Get the topography elevation w.r.t. sea level or w.r.t. the
@@ -551,9 +586,7 @@ class Topography:
             latitude.size,
         )
 
-        elevation = np.full(n, np.nan)
-        elevation[finite] = values
-        return elevation
+        return _fill_elevation(n, finite, values)
 
     def distance(
         self,
