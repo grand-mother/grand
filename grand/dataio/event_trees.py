@@ -181,11 +181,7 @@ class MotherEventTree(DataTree):
     ## List events in the tree together with runs
     def print_list_of_events(self):
         """List events in the tree together with runs"""
-        self._reset_read_cache(self._tree)
-        count = self._tree.Draw("event_number:run_number", "", "goff")
-        # Remove the Draw() generated histogram from current file to prevent saving
-        if tmph := ROOT.gDirectory.Get("htemp"):
-            tmph.SetDirectory(0)
+        count = self.draw("event_number:run_number", "", "goff")
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
         print("List of events in the tree:")
@@ -202,11 +198,7 @@ class MotherEventTree(DataTree):
         list of tuple
             Every ``(event number, run number)`` in the tree.
         """
-        self._reset_read_cache(self._tree)
-        count = self._tree.Draw("event_number:run_number", "", "goff")
-        # Remove the Draw() generated histogram from current file to prevent saving
-        if tmph := ROOT.gDirectory.Get("htemp"):
-            tmph.SetDirectory(0)
+        count = self.draw("event_number:run_number", "", "goff")
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
         return [(int(events[i]), int(runs[i])) for i in range(count)]
@@ -295,7 +287,9 @@ class MotherEventTree(DataTree):
         # cache reset matters here: this runs on a tree that is being
         # appended to, every time it is reopened (issue #89).
         self._reset_read_cache(tree)
-        if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
+        with self._kept_buffers("run_number:event_number"):
+            count = tree.Draw("run_number:event_number", "", "goff")
+        if count > 0:
             v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count)).astype(int)
             v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count)).astype(int)
             self._entry_list = [(int(el[0]), int(el[1])) for el in zip(v1, v2)]
@@ -344,12 +338,8 @@ class MotherEventTree(DataTree):
 
         # Get sizes of each traces
         for i in traces_suffixes:
-            self._reset_read_cache(self._tree)
-            cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
+            cnt = self.draw(f"@trace_{i}.size()", "", "goff")
             traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
-            # Remove the Draw() generated histogram from current file to prevent saving
-            if tmph := ROOT.gDirectory.Get("htemp"):
-                tmph.SetDirectory(0)
 
         return traces_lengths
 
@@ -366,25 +356,9 @@ class MotherEventTree(DataTree):
         if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
 
-        # Try to store the currently read entry
-        try:
-            current_entry = self._tree.GetReadEntry()
-        # if failed, store None
-        except:
-            current_entry = None
-
+        # draw() keeps the loaded entry's du_id (#196)
         count = self.draw("du_id", "", "goff")
-        detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
-
-        # Get the detector units branch
-        # It has to be here, not before the draw(), due to a bug in PyROOT
-        du_br = self._tree.GetBranch("du_id")
-
-        # If there was an entry read before this action, come back to this entry
-        if current_entry is not None:
-            du_br.GetEntry(current_entry)
-
-        return detector_units
+        return np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
 
     def get_list_of_all_used_dus(self):
         """Compiles the list of all detector units used in the events of the tree

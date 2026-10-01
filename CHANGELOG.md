@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Listing and drawing a tree no longer change the values it holds (#196).**
+  `TTree::Draw()` reads every entry into the buffers the tree object is bound
+  to, so after `get_list_of_events()`, `draw()`, `get_traces_lengths()` or the
+  duplicate check in `fill()`, some fields held the last entry's values and
+  others the loaded entry's (`event_number` 3 with entry 1's zenith).
+  Worse, values just set for the next `fill()` were replaced too, so the
+  wrong event could be written. The fields a draw touches are now saved
+  before it and restored after it.
+
 - **`DataDirectory` keeps every file of a level (#195).** Files were grouped
   by a fixed field of their name, so names of different lengths
   (`shower_<date>_<time>_0-0_L1_0000.root` and

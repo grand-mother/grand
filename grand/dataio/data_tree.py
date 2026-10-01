@@ -819,6 +819,51 @@ class DataTree:
         if cache:
             cache.ResetCache()
 
+    def _kept_buffers(self, *expressions):
+        r"""Saves the values held for the branches named in ``expressions``.
+
+        ``TTree::Draw()`` reads every entry into the branch buffers this
+        instance is bound to, so afterwards the fields it touched held the last
+        entry's values while the others kept theirs -- whether those came from
+        ``get_entry()`` or had just been set for the next ``fill()`` (#196).
+        Use as ``with self._kept_buffers(varexp, selection): ...Draw(...)``.
+
+        Parameters
+        ----------
+        *expressions : str
+            The ROOT expressions the draw evaluates.
+
+        Returns
+        -------
+        contextlib.AbstractContextManager
+            Restores the saved values on exit.
+        """
+        import contextlib
+        import re
+
+        names = set(re.findall(r"[A-Za-z_]\w*", " ".join(e for e in expressions if e)))
+        saved = []
+        for name in names:
+            store = self.__dict__.get("_" + name)
+            if isinstance(store, np.ndarray):
+                saved.append((store, store.copy()))
+            elif isinstance(store, StdVectorList):
+                saved.append((store._vector, type(store._vector)(store._vector)))
+            elif isinstance(store, StdString):
+                saved.append((store.string, ROOT.string(store.string)))
+
+        @contextlib.contextmanager
+        def keep():
+            try:
+                yield
+            finally:
+                for target, copy in saved:
+                    if isinstance(target, np.ndarray):
+                        target[...] = copy
+                    else:
+                        target.swap(copy)       # std::vector / std::string, in place
+        return keep()
+
     def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0, delete_temp_histogram=True):
         """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX().
 
@@ -844,7 +889,9 @@ class DataTree:
         """
 
         self._reset_read_cache(self._tree)
-        count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
+        # The values of the loaded or about-to-be-filled entry are kept (#196)
+        with self._kept_buffers(varexp, selection):
+            count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
 
         # Delete the temporary histogram created by draw, so it is not saved in a file
         if delete_temp_histogram:
