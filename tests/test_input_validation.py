@@ -307,3 +307,26 @@ def test_checks_keep_accepting_what_the_functions_always_accepted():
     amplitudes = rng.uniform(50, 100, 8)
     assert np.allclose(fit.recons_ADF(1.2, 0.5, amplitudes, antennas, source),
                        fit.recons_ADF(1.2, 0.5, amplitudes, antennas, source[0]))
+
+
+def test_text_that_reads_as_a_number_is_converted_with_a_warning():
+    r"""``"1618"`` was always stored as 1618 (sim2root passes values read from
+    file names and the command line); refusing it broke the ZHAireS converter's
+    one-argument mode and ``sim2root.py -la``.  Other text is still refused."""
+    from grand.dataio import TRun, TShower
+
+    with pytest.warns(GRANDlibWarning, match="stored as the number it reads as"):
+        assert validate.coerce_to_dtype("1618", np.uint32, "T.n") == 1618
+    with pytest.warns(GRANDlibWarning):
+        shower = TShower()
+        shower.event_number = "1618"
+    assert shower.event_number == 1618
+    with pytest.warns(GRANDlibWarning):
+        run = TRun()
+        run.origin_geoid = ["41.5", "93.94", "1264.0"]
+    assert np.allclose(run.origin_geoid, [41.5, 93.94, 1264.0])
+    with pytest.raises(TypeError, match="must be an integer"):
+        with pytest.warns(GRANDlibWarning):
+            validate.coerce_to_dtype("1.7", np.uint32, "T.n")
+    with pytest.raises(TypeError, match="must be a number"):
+        validate.coerce_to_dtype(["1", "x"], np.float32, "T.x")

@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 
+import numpy as np
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -56,3 +57,39 @@ def test_the_converter_runs_from_its_own_folder_as_documented(tmp_path):
         cwd=ZHAIRES, env=env, capture_output=True, text=True, timeout=900)
     assert done.returncode == 0, done.stderr[-2000:]
     assert out.is_file()
+
+
+def test_the_converter_takes_the_event_number_from_the_file_name(tmp_path):
+    r"""``python ZHAireSRawToRawROOT.py <run>``: the README's one-argument form.
+
+    The event number comes from the ``.sry`` name, as text; after input
+    checks were added (PR #179) storing that text raised ``TypeError``.  The
+    converter exits 0 even then, so the test checks the output and stderr.
+    """
+    from sim2root.Common.raw_root_trees import RawShowerTree
+
+    run = "GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618"
+    shutil.copytree(ZHAIRES / run, tmp_path / run)
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    done = subprocess.run(
+        [sys.executable, str(ZHAIRES / "ZHAireSRawToRawROOT.py"), run],
+        cwd=tmp_path, env=env, capture_output=True, text=True, timeout=900)
+    assert "Error" not in done.stderr, done.stderr[-2000:]
+    raw = next(tmp_path.glob("sim_*/*.rawroot"))
+    shower = RawShowerTree(str(raw))
+    assert shower.get_list_of_events() == [(1618, 1)]
+
+
+def test_sim2root_site_options_are_numbers(tmp_path):
+    r"""``-la``/``-lo``/``-al`` set the site, and 0 is a value, not "absent"."""
+    from grand.dataio import TRun
+
+    raw = next(p for p in RAWROOTS if "1618" in p.name)
+    shutil.copy(raw, tmp_path)
+    done = subprocess.run(
+        [sys.executable, str(SIM2ROOT), raw.name, "-sl", "GP300", "-la", "41.5", "-lo", "94.0", "-al", "0"],
+        cwd=tmp_path, capture_output=True, text=True, timeout=900)
+    assert done.returncode == 0, done.stderr[-2000:]
+    run = TRun(str(next(tmp_path.glob("*/run_*_L0_*.root"))))
+    run.get_entry(0)
+    assert np.allclose(run.origin_geoid, [41.5, 94.0, 0.0])

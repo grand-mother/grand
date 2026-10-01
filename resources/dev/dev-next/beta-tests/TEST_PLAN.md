@@ -318,6 +318,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#204](https://github.com/grand-mother/grand/issues/204) | `DataDirectory`: `recursive=True` finds nothing; one oddly named file aborts the directory | Medium | 2a | open | | |
 | [#205](https://github.com/grand-mother/grand/issues/205) | Tree wildcards: no match creates a file named with '*'; wildcard chains cannot look up events | Medium | 2a | open | | |
 | [#206](https://github.com/grand-mother/grand/issues/206) | Smaller dataio inconsistencies (argument order, silent failed lookups, TRecons units) | Low | 2a | open | | |
+| [#207](https://github.com/grand-mother/grand/issues/207) | Regression from #179: numbers given as text refused; ZHAireS one-argument form and `sim2root.py -la/-lo/-al` crash | High | 3a | fix in PR | | Text that reads as a number converted again, with a warning; callers pass numbers |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 

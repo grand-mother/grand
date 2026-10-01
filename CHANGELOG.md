@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Numbers given as text are accepted again in tree fields (#207, a regression
+  from #179).** The input checks refused `"1618"` in a numeric field, which broke
+  `ZHAireSRawToRawROOT.py <run>` (the README's one-argument form takes the event
+  number from the file name) and `sim2root.py -la/-lo/-al`. Text that reads as a
+  number is converted again, now with a `GRANDlibWarning` naming the field; other
+  text is still refused. Both callers now pass numbers: `extract_event_number`
+  returns an `int`, and the three options are `type=float`. `-al 0` was always
+  ignored (the code tested `if clargs.altitude:`) and is now honoured. Tests in
+  `tests/sim2root/test_committed_samples.py` run both commands.
+
 - **`EventList` reads a file, an open `TFile` or a `DataDirectory`, not only a
   directory name.** Given a file name, `get_number_of_events()` raised
   `TypeError`, and `get_event()` raised `AttributeError` when the file held no

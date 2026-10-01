@@ -41,9 +41,9 @@ clparser.add_argument("-t", "--sim_time", help="The time of the simulation", def
 clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
 clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
 # clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
-clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=None)
-clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=None)
-clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=None)
+clparser.add_argument("-la", "--latitude", help="Latitude of the site (deg)", default=None, type=float)
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site (deg)", default=None, type=float)
+clparser.add_argument("-al", "--altitude", help="Altitude of the site (m)", default=None, type=float)
 clparser.add_argument("-ru", "--run", help="Run number", default=None)
 clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
 clparser.add_argument("--target_duration_us",type=float,default=None,help="Adujust the trace lenght to the given duration, in us") 
@@ -988,9 +988,10 @@ def rawmeta2grandroot(trawmeta, gt):
 
 ## Get origin geoid
 def get_origin_geoid(clargs, trawshower):
-    lat = clargs.latitude if clargs.latitude else trawshower.site_lat
-    lon = clargs.longitude if clargs.longitude else trawshower.site_lon
-    alt = clargs.altitude if clargs.altitude else trawshower.site_alt
+    # "is not None": 0 is a valid latitude, longitude or altitude
+    lat = clargs.latitude if clargs.latitude is not None else trawshower.site_lat
+    lon = clargs.longitude if clargs.longitude is not None else trawshower.site_lon
+    alt = clargs.altitude if clargs.altitude is not None else trawshower.site_alt
     return [lat, lon, alt]
 
 # Form the proper output directory name from command line arguments

@@ -983,8 +983,13 @@ def extract_event_number(file_path):
     # Split the file name using underscores
     parts = file_name.split('_')
 
-    # The EventNumber is the last part of the split
-    event_number = parts[-1]
+    # The EventNumber is the last part of the split; it is stored as a number
+    try:
+        event_number = int(parts[-1])
+    except ValueError:
+        raise ValueError("GRANDlib: ZHAireSRawToRawROOT: cannot take the event number from "
+                         "%s: its name must end in _<number>.sry; give the event number "
+                         "explicitly instead" % file_path) from None
 
     return event_number
 
