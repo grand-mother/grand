@@ -665,8 +665,9 @@ fig.suptitle(r'effective length at $\phi=45^\circ$, $\theta=60^\circ$')
 fig.tight_layout()'''),
     md(r'''Two things to read off this figure.
 
-First, the resonance near 100–150 MHz: that is where the arms are electrically
-a useful fraction of a wavelength.
+First, the resonances: near 100–150 MHz for the horizontal arms and near
+50 MHz for the Z arm, where each is electrically a useful fraction of a
+wavelength.
 
 Second, **the Z arm is not a scaled copy of the horizontal arms**. It has a
 different shape entirely, and it carries almost all of its response in
@@ -792,10 +793,11 @@ import matplotlib.pyplot as plt
 
 from grand.sim.detector.rf_chain import RFChain
 
-# The GRAND band, in MHz and on a 1 MHz grid.  Everything in rf_chain.py takes
-# and returns MHz -- unlike the antenna model of notebook 03, which stores Hz.
-# Mixing the two up is the most common mistake in this module.
-freqs_mhz = np.arange(30.0, 251.0)
+# 10-400 MHz on a 1 MHz grid: wider than the GRAND band (30-250 MHz), so that
+# its edges show.  Everything in rf_chain.py takes and returns MHz -- unlike the
+# antenna model of notebook 03, which stores Hz.  Mixing the two up is the most
+# common mistake in this module.
+freqs_mhz = np.arange(10.0, 401.0)
 
 # 20 dB is the GRANDProto300 default.  Section 5 shows that this argument is
 # currently ignored, so every chain built here is a 20 dB chain regardless.
@@ -878,9 +880,10 @@ M = getattr(chain, order[0]).ABCD_matrix
 for name in order[1:]:
     M = matmul(M, getattr(chain, name).ABCD_matrix)
 
-# Index [0, 0, 0, 70] is the A element, arm X, at 30 + 70 = 100 MHz.
-print("hand-cascaded  A(100 MHz), arm X:", M[0, 0, 0, 70])
-print("chain.total_ABCD_matrix         :", chain.total_ABCD_matrix[0, 0, 0, 70])
+# Index [0, 0, 0, i100] is the A element, arm X, at 100 MHz.
+i100 = int(np.argmin(np.abs(freqs_mhz - 100.0)))
+print("hand-cascaded  A(100 MHz), arm X:", M[0, 0, 0, i100])
+print("chain.total_ABCD_matrix         :", chain.total_ABCD_matrix[0, 0, 0, i100])
 print("agree:", np.allclose(M, chain.total_ABCD_matrix, rtol=1e-4))'''),
     md(r'''## 4. The total transfer function
 
@@ -890,7 +893,10 @@ factor by which the chain multiplies $V_{\rm oc}$.'''),
 for i, arm in enumerate('XYZ'):
     ax[0].plot(freqs_mhz, np.abs(tf[i]), label=arm)
     # Unwrapped so the delay shows as a straight line rather than a sawtooth.
-    ax[1].plot(freqs_mhz, np.degrees(np.unwrap(np.angle(tf[i]))), label=arm)
+    # Phase over the band only: outside it the gain is -50 dB or less and the
+    # phase is noise
+    band = (freqs_mhz >= 30) & (freqs_mhz <= 250)
+    ax[1].plot(freqs_mhz[band], np.degrees(np.unwrap(np.angle(tf[i][band]))), label=arm)
 
 ax[0].set_ylabel(r'$|V_{\rm out}/V_{\rm oc}|$')
 ax[1].set_ylabel('phase [deg]')
@@ -1138,16 +1144,23 @@ anything.
 ## 5. What the simulation returns
 
 `galactic_noise` draws one realisation: complex Fourier coefficients whose
-magnitudes follow the table and whose phases are random.'''),
+magnitudes follow the table and whose phases are random. Its first argument is
+the local sidereal time, here 18 h; the frequencies must be those of the FFT
+bins the coefficients go into.'''),
     code(r'''from grand.sim.noise.galaxy import galactic_noise
 
-FREQS = np.arange(30.0, 251.0)
-SIZE = 2048
+SIZE = 2048                                   # samples of 0.5 ns: 2 GHz
+# The frequencies of the FFT bins themselves: 2000/2048 = 0.977 MHz apart, not
+# 1 MHz.  Placing a 1 MHz grid into these bins shifts the band 2 % low (#190).
+freqs = np.fft.rfftfreq(SIZE, d=0.5e-9) / 1e6     # MHz
+band = (freqs >= 30) & (freqs <= 250)
+FREQS = freqs[band]
 
+# The first argument is the local sidereal time, in hours.
 spectrum = galactic_noise(18.0, SIZE, FREQS, nb_ant=200, seed=1,
                           du_type="GP300")
 full = np.zeros((200, 3, SIZE // 2 + 1), dtype=complex)
-full[:, :, 30:251] = spectrum
+full[:, :, band] = spectrum
 traces = np.fft.irfft(full, n=SIZE, axis=-1)
 
 print("spectrum", spectrum.shape, "  traces", traces.shape)
@@ -1256,6 +1269,7 @@ import matplotlib.pyplot as plt
 from grand import Efield2Voltage
 from grand.dataio.event_trees import TEfield, TShower, TVoltage
 from grand.dataio.run_trees import TRun
+from grand.dataio.xmax_frame import arrival_direction
 
 # Everything this notebook writes goes into a temporary directory that the last
 # cell removes.  Nothing is left in the repository.
@@ -1313,10 +1327,13 @@ efield.fill(); efield.write()
 # --- TShower: the geometry the antenna response is evaluated for -------------
 shower = TShower(path)
 shower.run_number, shower.event_number = 0, 0
-shower.zenith, shower.azimuth = 85.0, 0.0      # a very inclined shower
+shower.zenith, shower.azimuth = 85.0, 135.0    # a very inclined shower, from the south-west
 shower.energy_primary = 3.98e9                 # GeV
 shower.shower_core_pos = [0., 0., 1200.]
-shower.xmax_pos_shc = [0., 0., 10000.]         # shower-core frame, not the site frame
+# Xmax on the shower axis, 50 km up it from the core, in the shower-core frame
+# (not the site frame).  Off the axis, the reader warns that the geometry is
+# inconsistent.
+shower.xmax_pos_shc = list(50e3 * arrival_direction(85.0, 135.0))
 shower.fill(); shower.write()
 
 print("wrote %s  (%.1f kB)" % (path, os.path.getsize(path) / 1e3))
@@ -1398,21 +1415,22 @@ survive it. The ringing is real and appears in data; it is also why you cannot
 estimate the noise from "the part of the trace away from the pulse".
 
 **Amplitude decides everything.** At 500 µV/m the X arm has a signal-to-noise
-near 10 and is comfortably detectable. Drop the input to 1 µV/m and
-$V_{\rm oc}$ falls to 0.3 µV against a noise RMS of several hundred — a
-signal-to-noise of 0.03, invisible. GRAND's sensitivity is set by exactly this
+of about 5 and the Y arm about 3.4: detectable, not comfortably. Drop the input
+to 1 µV/m and everything scales down by 500 — $V_{\rm oc}$ on X falls to
+0.23 µV and its signal-to-noise to about 0.01, invisible. GRAND's sensitivity is set by exactly this
 ratio, which is why the $\sqrt2$ normalisation settled on 2026-09-07 was not a
 detail: it moved every voltage below by that factor.
 
-**The Z arm output is tiny — and not for the reason you would guess.**'''),
+**The Z arm output is the smallest — and not for the reason you would guess.**'''),
     md(r'''## 4. A trap: arm X is not "the X component of E"
 
-The input field has components in the ratio 1.0 : 0.6 : 0.2, but the output
-arms come out closer to 600 : 400 : 1. The Z arm is not receiving 0.2 of the
-signal; it is receiving almost none.
+The input field has components in the ratio 1.0 : 0.6 : 0.2, but the
+open-circuit voltages come out about 117 : 115 : 35 µV: X and Y nearly equal,
+Z a third of them. Neither ratio follows the field's.
 
-The reason is *not* that the Z arm is insensitive at this zenith angle. It is
-the most sensitive of the three:'''),
+The reason is *not* that the Z arm is insensitive at this zenith angle. It has
+by far the largest $|\ell_\theta|$ of the three; the horizontal arms respond
+almost only through $|\ell_\phi|$:'''),
     code(r'''from grand.sim.detector.antenna_model import AntennaModel
 
 model = AntennaModel()

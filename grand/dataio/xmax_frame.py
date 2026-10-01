@@ -139,11 +139,12 @@ def xmax_above_ground(xmax_pos_shc, zenith, azimuth, ground_altitude):
         return stored, GROUND
     if as_shifted <= TOLERANCE_DEG:
         return shifted, SEA_LEVEL
+    # The two angles read like zeniths; they are offsets from the axis (#188)
     logger.warning(
-        "xmax_pos_shc %s follows neither reading of the shower direction "
-        "(zenith %.2f, azimuth %.2f): %.2f deg as stored, %.2f deg with the "
-        "ground altitude %.1f m removed. Using it as stored.",
-        stored, zenith, azimuth, as_stored, as_shifted, ground_altitude)
+        "xmax_pos_shc %s is not on the shower axis (zenith %.2f, azimuth %.2f deg): it is "
+        "%.2f deg off the axis as stored, and %.2f deg off with the ground altitude %.1f m "
+        "removed (tolerance %.2f deg). Using it as stored.",
+        stored, zenith, azimuth, as_stored, as_shifted, ground_altitude, TOLERANCE_DEG)
     return stored, UNDETERMINED
 
 

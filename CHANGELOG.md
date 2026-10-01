@@ -15,6 +15,22 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Notebooks 03–06: fixture, frequency grid and prose (#188, #189, #190).**
+  - Notebook 06's fixture put Xmax straight above the core for an 85°
+    shower, so every run warned that the geometry was inconsistent; Xmax is
+    now on the shower axis. The warning itself now says its angles are
+    offsets from the axis, not zeniths.
+  - With a consistent geometry the per-arm numbers change, and the prose is
+    rewritten from them: signal-to-noise about 5 on X and 3.4 on Y, about
+    0.01 at 1 µV/m, open-circuit voltages 117 : 115 : 35 µV for a field of
+    1.0 : 0.6 : 0.2, and the Z arm "largest |ℓθ|", not "most sensitive".
+  - Notebook 05 placed 1 MHz-spaced noise into FFT bins 0.977 MHz wide,
+    shifting the band 2 % low; it now uses the bins' own frequencies, and
+    names the first argument as the local sidereal time.
+  - Notebook 03 gave one resonance for all arms; the Z arm's is near 50 MHz.
+    Notebook 04 evaluated the chain only on 30–250 MHz, so the band edges its
+    text describes could not be seen; it now runs 10–400 MHz.
+
 - **Conversion script options checked (#277, item 5).**
   `convert_efield2voltage.py --target_duration_us 1e9` tried to allocate
   terabytes; `--padding_factor nan` and `--calibration_smearing_sigma -1`
