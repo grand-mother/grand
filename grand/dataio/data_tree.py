@@ -12,6 +12,7 @@ import numpy as np
 from grand.basis import validate as _validate
 
 from grand.dataio import StdVectorList, StdVectorListDesc, StdString
+from grand.dataio import file_lock as _file_lock
 
 logger = getLogger(__name__)
 
@@ -38,6 +39,8 @@ def _forget_opened_file(f):
     """Remove a TFile from the record of files the trees opened themselves"""
     if f is not None:
         _files_opened_by_trees.pop(ROOT.addressof(f), None)
+        # Closed: another process may write it now (issue #281)
+        _file_lock.release(f.GetName())
 
 @dataclass
 class DataTree:
@@ -572,9 +575,14 @@ class DataTree:
                     # If file exists, initially open in the read-only mode (changed during write())
                     where = type(self).__name__
                     if os.path.isfile(self._file_name):
+                        # Not while another process writes it, and remember its
+                        # state, to refuse a stale write later (#281)
                         try:
-                            self._file = ROOT.TFile(self._file_name, "read")
-                        except OSError:
+                            with _file_lock.opening(self._file_name, where):
+                                self._file = ROOT.TFile(self._file_name, "read")
+                        except OSError as error:
+                            if "another process" in str(error):
+                                raise
                             raise OSError(_validate.message(
                                 where, "cannot open %s: it is not a ROOT file, or it is "
                                 "damaged" % self._file_name)) from None
@@ -592,6 +600,8 @@ class DataTree:
                                 where, "no such file: %s, and its directory %s does not exist "
                                 "either, so it cannot be created" % (self._file_name, parent)))
                         self._file = ROOT.TFile(self._file_name, "create")
+                        # Created to be written: no other process may write it meanwhile (#281)
+                        _file_lock.lock_for_writing(self._file_name, where, fresh=True)
                     # Opened here, so stop_using() may close it
                     _register_opened_file(self._file)
         else:
@@ -691,11 +701,16 @@ class DataTree:
             # The TFile object is already in memory, just use it
             if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
+                # One writer at a time, with an up-to-date view of the file (#281)
+                _file_lock.lock_for_writing(self._file_name, type(self).__name__)
                 # File exists, but reopen the file in the update mode in case it was read only
                 self._file.ReOpen("update")
             # Create a new TFile object
             else:
                 creating_file = True
+                # One writer at a time (#281); opened afresh, so no stale view
+                if os.path.isfile(args[0]):
+                    _file_lock.lock_for_writing(args[0], type(self).__name__, fresh=True)
                 # Overwrite requested
                 # ToDo: this does not really seem to work now
                 if overwrite:
@@ -703,6 +718,7 @@ class DataTree:
                 else:
                     # By default append
                     self._file = ROOT.TFile(args[0], "update")
+                _file_lock.lock_for_writing(args[0], type(self).__name__, fresh=True)
                 # Opened here, so stop_using() may close it if it is not closed below
                 _register_opened_file(self._file)
             # Make the tree save itself in this file
@@ -711,6 +727,8 @@ class DataTree:
             args = args[1:]
         # File exists, so reopen the file in the update mode in case it was read only
         else:
+            # One writer at a time, with an up-to-date view of the file (#281)
+            _file_lock.lock_for_writing(self._file.GetName(), type(self).__name__)
             ret = self._file.ReOpen("update")
 
         # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
@@ -1338,6 +1356,7 @@ class DataTree:
         if f.IsOpen():
             # Closing deletes the TTree that lives in the file, so drop the handle to it
             f.Close()
+        _file_lock.release(f.GetName())
         self._tree = None
 
     def __enter__(self):

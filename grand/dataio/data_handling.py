@@ -11,6 +11,7 @@ import datetime
 
 from grand.dataio import logger, DataTree, MotherEventTree
 import grand.dataio
+from grand.dataio import file_lock as _file_lock
 
 # ToDo: Ignore the warning about branches (and all the other ROOT errors :( ) for TChain until an answer in the ROOT forum
 ROOT.gErrorIgnoreLevel = ROOT.kFatal
@@ -702,6 +703,7 @@ class DataFile:
         for t in self.tree_instances:
             t.stop_using()
         self.f.Close()
+        _file_lock.release(self.f.GetName())
 
     def get_max_list_of_events(self):
         """Gets the max list of event,run from all the trees

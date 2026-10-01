@@ -15,6 +15,21 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Several processes writing one ROOT file no longer lose events or
+  corrupt it (#281).** Two batch jobs with the same output, or a resubmitted
+  job, interleaved their writes: with three processes appending to one file,
+  40 events were reported written and 21 were in the file, or the file was left
+  unreadable, while some processes reported success. A process that writes a
+  file now holds an exclusive lock on it (`flock` on the file itself, in the new
+  `grand.dataio.file_lock`) from the moment it opens it for writing (`fill()`,
+  `write()`, or creating the file) until it closes it. Another process that
+  tries to write meanwhile, or to open the half-written file, is refused with
+  a clear message; one that opened the file before someone else wrote it is
+  refused when it tries to write, since its view is out of date. Everything
+  reported as written is in the file (checked over 10 runs of 4 writers).
+  Reading takes no lasting lock, and one process writing a file is unchanged.
+  Where `flock` is unavailable the old behaviour remains.
+
 - **No antenna response from below the antenna's horizon (#285).** The
   effective-length lookup took the zenith row modulo the table size, so a
   source at 91° read the 0° (zenith) row, 95° the 4° row, and so on, at full
