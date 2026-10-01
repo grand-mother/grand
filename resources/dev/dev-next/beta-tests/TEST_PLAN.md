@@ -363,6 +363,60 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
+## 7a. Wave 1 results (2026-10-01)
+
+All 11 wave-1 testers (Claude Sonnet, each in its own copy of the repository) ran on
+`dev-next` at `91d30a1b`. The coordinator reproduced every finding marked
+"confirmed" in its issue before logging it; findings taken on the tester's word
+are marked as such in the issue. Overlapping reports went into one issue, with
+the extra detail added as comments.
+
+### By severity
+
+| Severity | Count | Examples |
+|---|---|---|
+| Critical (wrong physics or data, silently) | 10 | #209 CoREAS converter mirrors the azimuth (older input files); #220 sim2root writes wrong antenna lat/lon (up to ~8 km) for several events per file; #227 `--rf_chain_nut`/`--rf_chain_gaa` ignored without noise or chain; #228 CoREAS events with no usable Xmax give near-zero voltages or crash; #229 resampling in the voltage step leaves the ADC step at the wrong rate; #237 an L0 e-field paired with an L1 run tree doubles amplitudes; #238 a missing event writes another event with an empty trace; #242, #243 ZHAireS and CoREAS converters accept damaged simulations; #247 a missing shower entry reuses the previous event's shower |
+| High | 22 | data loss in `write()`, `Event.write(overwrite=True)`, `extract_events -ow` and re-runs; documented commands that crash (README quickstart, `RunSimPipe.py`); `DataDirectory` dropping files |
+| Medium | 26 | brittle input handling; misleading errors and documentation; notebooks whose prose contradicts their output |
+| Low | 11 | cosmetic; wording; minor inconsistencies |
+| **Total** | **69** | #180–#249 (#208 is a PR) |
+
+### By tester
+
+| Tester | Role and area | Issues (first reporter or co-reporter) | Severity |
+|---|---|---|---|
+| 1a-A | Beginner: setup, notebooks 01–06 | #185 #186 #187 #188 #189 #190 #193 #194 | 1 High, 5 Medium, 2 Low |
+| 1a-B | Beginner: setup, notebooks 01–06, three small tasks from the docs | #185 #186 #187 #188 #191 #192 #193 #194 | 1 High, 4 Medium, 3 Low |
+| 1b | Beginner: notebooks 07–12, examples/ | #210 #217 #218 #219 | 1 High, 2 Medium, 1 Low |
+| 2a | Expert: `grand.dataio` | #195 #196 #197 #198 #199 #200 #201 #202 #203 #204 #205 #206 | 5 High, 6 Medium, 1 Low |
+| 2b | Expert: `grand.aoi`, `grand.analysis`, event viewer | #209 #211 #212 #213 #214 #215 #216 | 1 Critical, 3 High, 2 Medium, 1 Low |
+| 3a | Pipeline: ZHAireS → `.rawroot` → sim2root | #207 #220 #221 #222 #223 #224 #225 #226 | 1 Critical, 3 High, 3 Medium, 1 Low |
+| 3b | Pipeline: CoREAS, conversion scripts | #209 #221 #227 #228 #229 #230 #231 #232 #233 | 4 Critical, 2 High, 1 Medium, 2 Low |
+| 4a | Input fuzzer: readers | #213 #234 #235 #236 | 3 High, 1 Medium |
+| 4b-A | Input fuzzer: conversion scripts | #247 #248 #249 | 1 Critical, 1 High, 1 Medium |
+| 4b-B | Input fuzzer: conversion scripts and simulation classes | #229 #237 #238 #239 #240 #241 | 3 Critical, 2 High, 1 Medium |
+| 4c | Input fuzzer: utility scripts, malformed simulation input | #242 #243 #244 #245 #246 | 2 Critical, 2 High, 1 Low |
+| coordinator (pre-wave) | Coordinator, while double-checking the validation PR (#179) | #180 #181 #182 #183 #184 | 1 High, 3 Medium, 1 Low |
+
+An issue appears under every tester who reported it. The two pairs that ran the
+same mission independently (1a-A/1a-B and 4b-A/4b-B) agreed on their main
+findings but each also found problems the other missed, so coverage of those
+areas is not yet saturated (§4): the input-fuzzing areas get another pass in
+wave 3.
+
+### Notes
+
+- **One regression from this recovery work:** #207 was introduced by the
+  validation PR #179 (numbers given as text refused). It is fixed in PR #208.
+- **Tester environment:** testers' copies started on the default branch
+  (`0cc99804`); every tester switched to `91d30a1b` before testing, and the
+  coordinator checked each copy's commit. One tester's example run downloaded two
+  terrain tiles into the shared `data/topography/`; they were removed (#218, item 2).
+- **Proposed order from here:** fix the 10 Critical issues first, in a few PRs
+  grouped by area (CoREAS converter, sim2root, voltage chain, dataio), with
+  wave 2 (physics and documentation checks) running in parallel; wave 3 (breakers)
+  after the Critical fixes merge; wave 4 (regression) at the end.
+
 ## 8. Findings not logged
 
 Reports that were not confirmed, with the reason.
