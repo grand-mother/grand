@@ -12,6 +12,7 @@ import socket
 import grand.manage_log as mlg
 import copy
 import getpass
+import shlex
 import grand.dataio
 
 # specific logger definition for script because __mane__ is "__main__" !
@@ -53,6 +54,15 @@ logger = mlg.get_logger_for_script(__name__)
 # @endverbatim
 #  @author Fleg
 #  @date Sept 2022
+def _plain_name(name):
+    r"""Whether ``name`` is a bare file or directory name: no path, not . or ..
+
+    Names come from the database or from the user; a name with a path in it
+    would place a download outside the incoming directory.
+    """
+    return bool(name) and os.path.basename(name) == name and name not in (".", "..")
+
+
 class DataManager:
     _file: str
     _directories: list = []
@@ -686,7 +696,12 @@ class DatasourceSsh(Datasource):
             try:
                 # Initialize SSH client
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Only known hosts: accepting any key would hand the
+                # credentials to whoever answers in the server's place. A new
+                # server is added once, by hand, after checking its key
+                # (e.g. `ssh <server>` and comparing the fingerprint).
+                client.load_system_host_keys()
+                client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
                 # Connect with credentials
                 client.connect(
@@ -714,11 +729,16 @@ class DatasourceSsh(Datasource):
 
             except paramiko.SSHException as e:
                 logger.error(f"SSH error: {e} during connection to {self.server()}. Aborting.")
+                if "not found in known_hosts" in str(e):
+                    logger.error(f"The host key of {self.server()} is not known. Connect once "
+                                 f"with `ssh {self.server()}`, check the fingerprint, and accept it.")
                 break
 
             finally:
                 # Ensure cleanup on failure
-                if client and not client.get_transport().is_active():
+                # a failed connection has no transport at all
+                transport = client.get_transport() if client else None
+                if client and (transport is None or not transport.is_active()):
                     client.close()
 
         return None  # Return None if all attempts fail
@@ -809,7 +829,12 @@ class DatasourceSsh(Datasource):
         #stdin, stdout, stderr = client.exec_command('ls ' + path + file)
         #lines = list(map(lambda s: s.strip(), stdout.readlines()))
 
-        stdin, stdout, stderr = client.exec_command('find ' + path + " -type f -name " + file)
+        if not _plain_name(file):
+            logger.error(f"refusing to fetch {file!r}: not a plain file name")
+            return None
+        # Arguments quoted: the remote side runs this through its shell
+        stdin, stdout, stderr = client.exec_command(
+            "find " + shlex.quote(path) + " -type f -name " + shlex.quote(file))
         lines = sorted(list(map(lambda s: s.strip(), stdout.readlines())), key=len)
         if len(lines) >= 1:
         #if len(lines) == 1:
@@ -826,7 +851,11 @@ class DatasourceSsh(Datasource):
     def get_dir(self, client, path, dataset):
         localfile = None
         # Search directory on remote server
-        stdin, stdout, stderr = client.exec_command('find ' + path + " -type d -name " + dataset)
+        if not _plain_name(dataset):
+            logger.error(f"refusing to fetch {dataset!r}: not a plain directory name")
+            return None
+        stdin, stdout, stderr = client.exec_command(
+            "find " + shlex.quote(path) + " -type d -name " + shlex.quote(dataset))
         lines = sorted(list(map(lambda s: s.strip(), stdout.readlines())), key=len)
         if len(lines) >= 1:
             logger.debug(f"directory found in repository {self.name()}  @ " + lines[0].strip('\n'))
@@ -835,7 +864,8 @@ class DatasourceSsh(Datasource):
                 logger.debug(f"create local dir {self.incoming()}/{dataset}")
                 os.mkdir(self.incoming() + dataset)
             # Search all files in dataset on remote server
-            stdin, stdout, stderr = client.exec_command('find ' + path + "/" + dataset + " -type f")
+            stdin, stdout, stderr = client.exec_command(
+                "find " + shlex.quote(path + "/" + dataset) + " -type f")
             files = sorted(list(map(lambda s: s.strip(), stdout.readlines())), key=len)
             scpp = scp.SCPClient(client.get_transport(), sanitize=lambda x: x)
             # Get all files if not already present
@@ -857,15 +887,17 @@ class DatasourceSsh(Datasource):
             newname = destfile
         client = self.set_client()
         # search if original file exists remotely
-        stdin, stdout, stderr = client.exec_command('ls ' + self.incoming() + os.path.basename(pathfile))
+        stdin, stdout, stderr = client.exec_command(
+            "ls " + shlex.quote(self.incoming() + os.path.basename(pathfile)))
         lines = list(map(lambda s: s.strip(), stdout.readlines()))
         if len(lines) == 1:
             #original file exists... we rename it.
-            client.exec_command('mv ' + self.incoming() + os.path.basename(pathfile) + ' ' + newname)
+            client.exec_command("mv " + shlex.quote(self.incoming() + os.path.basename(pathfile))
+                                + " " + shlex.quote(newname))
 
         else:
             # search if dest files already there
-            stdin, stdout, stderr = client.exec_command('ls ' + newname)
+            stdin, stdout, stderr = client.exec_command("ls " + shlex.quote(newname))
             lines = list(map(lambda s: s.strip(), stdout.readlines()))
             if len(lines) != 1:
                 # if newfile is not there we copy it
@@ -904,6 +936,11 @@ class DatasourceHttp(Datasource):
         localfile = None
         try:
             #TODO check grab and test url
+            # The name comes from the database: keep the download inside
+            # the incoming directory (no "../", no absolute path).
+            if not _plain_name(file):
+                logger.error(f"refusing to download {file!r}: not a plain file name")
+                return None
             local_path = os.path.join(self.incoming(), file)
             urllib.request.urlretrieve(url, local_path)
             #urllib.request.urlretrieve(url, self.incoming() + file)
