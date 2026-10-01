@@ -15,6 +15,21 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Notebook prose the outputs contradicted, second pass (#269).** Each
+  statement was checked against its own cell output and rewritten from it:
+  the per-bin noise spectrum does not fall steeply (05); the sky-temperature
+  ratio is 183 by median, 124 by extremes, and the LST swing 1.33–1.49 by arm
+  (05); only the 0, 5 and 20 dB VGA tables exist, and the gain comes from the
+  LNA and the VGA stage, not the cable (04); notebook 08's input is weak, so
+  its "peak" is noise and the swap is of field components (08); the 9 µs is
+  the spread of trace starts, and the epoch is sim2root's placeholder date
+  (09); the zenith/azimuth precision ratio is 1/cos θ, and the sky plot is a
+  map seen from above (11); ENU's φ runs from East (07); the viewer's band
+  and the Cherenkov-ring peak (12); angles in degrees for the trees, radians
+  in `grand.analysis` (06); an empty `grandlib_version` dates only
+  `Efield2Voltage` files (02, 05); the layout is two rings, both panels have
+  East to the right, and `GRANDCS` x is magnetic north (01).
+
 - **Notebook 08's own tolerance (#217).** It claimed "exactly zero, bit for
   bit" and judged its table with a 10⁻⁹ tolerance, so on a machine where the
   rerun differed by one float32 step its unchanged control row read "caught".
