@@ -1,6 +1,6 @@
 # `dev-next` beta test: plan and tracker
 
-**Status:** wave 1 running · **Last updated:** 2026-10-01 · **Branch under test:** `dev-next` at `91d30a1b`
+**Status:** wave 1 done (69 issues, #180–#249); waves 2–4 pending · **Last updated:** 2026-10-01 · **Branch under test:** `dev-next` at `91d30a1b`
 
 This page is both the plan and the live record of the beta test of GRANDlib's
 `dev-next` branch. It is updated as the test runs: every confirmed problem
@@ -357,6 +357,9 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#244](https://github.com/grand-mother/grand/issues/244) | `extract_events.py`: `-ow` deletes everything in the target (even "."); duplicates leave a broken target | High | 4c | open | | |
 | [#245](https://github.com/grand-mother/grand/issues/245) | `pipeline/get_files_from_db.py` moves small files while listing | High | 4c | open | | |
 | [#246](https://github.com/grand-mother/grand/issues/246) | Utility scripts: no argparse, wrong option lists, files in cwd, version 0.0.0 | Low | 4c | open | | |
+| [#247](https://github.com/grand-mother/grand/issues/247) | efield2voltage / efield2efield use the previous event's shower when the shower tree lacks the event | Critical | 4b-A | open | | |
+| [#248](https://github.com/grand-mother/grand/issues/248) | `convert_efield2efield` writes `du_count` 0, ignores the `-o` folder, crashes on zero-antenna events | High | 4b-A | open | | |
+| [#249](https://github.com/grand-mother/grand/issues/249) | Conversion scripts don't check that run, e-field and shower trees match | Medium | 4b-A | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -372,6 +375,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | **Wave 1 complete.** 4b-A in: logged #247–#249 (1 more Critical). Totals: 69 issues (#180–#249; #208 is a PR): 10 Critical, 22 High, 26 Medium, 11 Low. The two ×2 pairs (1a-A/1a-B, 4b-A/4b-B) overlapped heavily but each found things the other missed, so the input-fuzzing area gets another pass in wave 3. |
 | 2026-10-01 | 4c in: logged #242–#246 (2 more Critical: converters accept damaged simulations); #184 extended to `open_grand_analysis_prompt.py` and raised to High. Still running: 4b-A. |
 | 2026-10-01 | 4b-B in: logged #237–#241 (2 more Critical: #237 L0/L1 mix doubles amplitudes, #238 missing event writes the wrong one); #229 raised to Critical. Still running: 4b-A, 4c. |
 | 2026-10-01 | Reports in from 3a, 1b, 2b, 4a, 3b: confirmed and logged as #207–#236 (4 Critical: #209 CoREAS azimuth mirrored, #220 sim2root `du_geoid`, #227 nut/GAA chains ignored, #228 CoREAS Xmax → zero voltage). #207 is a regression from #179 (validation), fixed in PR #208. Batch 3 running: 4b ×2, 4c. |
