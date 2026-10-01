@@ -7,6 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 from logging import getLogger
+
+from grand.basis import validate as _validate
 from typing import Union, Any
 
 import numpy as np
@@ -152,8 +154,9 @@ class AntennaProcessing:
         a_freq : ndarray
             Output frequency axis, in MHz.
         """
-        assert isinstance(a_freq, np.ndarray)
-        assert a_freq[0] == 0
+        # Asserts, gone under python -O (#259)
+        if not isinstance(a_freq, np.ndarray) or a_freq.size == 0 or a_freq[0] != 0:
+            raise ValueError(_validate.message("AntennaProcessing.set_out_freq_mhz", "expected an array of frequencies starting at 0 MHz, as scipy.fft.rfftfreq gives"))
         self.freqs_out_hz = a_freq * 1e6
         # we used rfreqfft
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftfreq.html

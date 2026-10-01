@@ -347,7 +347,8 @@ class Handling3dTraces:
         if norm_traces is None:
             norm_traces = self.get_max_norm()
         else:
-            assert norm_traces.shape[0] == self.get_nb_trace()
+            if norm_traces.shape[0] != self.get_nb_trace():   # (#259)
+                raise ValueError(_validate.message("Handling3dTraces", "norm_traces has %d values for %d traces" % (norm_traces.shape[0], self.get_nb_trace())))
         idx_ok = np.squeeze(np.argwhere(norm_traces > threshold))
         self.keep_only_trace_with_index(idx_ok)
         return idx_ok
@@ -382,7 +383,8 @@ class Handling3dTraces:
             my_copy = copy.copy(self)
         if new_traces is not None:
             if isinstance(new_traces, np.ndarray):
-                assert self.traces.shape == new_traces.shape
+                if self.traces.shape != new_traces.shape:   # (#259)
+                    raise ValueError(_validate.message("Handling3dTraces.copy", "new_traces must have shape %s, got %s" % (self.traces.shape, new_traces.shape)))
             elif new_traces == 0:
                 new_traces = np.zeros_like(self.traces)
             my_copy.traces = new_traces

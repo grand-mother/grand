@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from logging import getLogger
+
+from grand.basis import validate as _validate
 from typing import Union
 
 import numpy as np
@@ -47,7 +49,8 @@ class ElectricField:
 
         """
         self.fft_e_3d = np.zeros((3, 0))
-        assert self.a_time.shape[0] == self.e_xyz.shape[1]
+        if self.a_time.shape[0] != self.e_xyz.shape[1]:   # an assert, gone under python -O (#259)
+            raise ValueError(_validate.message("ElectricField", "a_time has %d samples but e_xyz has %d" % (self.a_time.shape[0], self.e_xyz.shape[1])))
 
     def get_fft(self, size_sig_pad):
         """

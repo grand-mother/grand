@@ -629,7 +629,8 @@ class Efield2Voltage:
             and a mismatched axis will broadcast silently into the wrong
             frequencies.
         """
-        assert self.vout_f.shape==addend.shape
+        if np.shape(addend) != self.vout_f.shape:   # an assert, gone under python -O (#259)
+            raise ValueError(_validate.message("Efield2Voltage.add", "addend must have the shape of vout_f, %s, got %s" % (self.vout_f.shape, np.shape(addend))))
         self.vout_f += addend
 
     def multiply(self, multiplier):
@@ -645,7 +646,8 @@ class Efield2Voltage:
             whose shape is ``(n_du, 3, n_freqs)``, already evaluated on
             ``self.freqs_mhz``.
         """
-        assert self.vout_f.shape[-1]==multiplier.shape[-1]
+        if np.shape(multiplier)[-1:] != self.vout_f.shape[-1:]:   # (#259)
+            raise ValueError(_validate.message("Efield2Voltage.multiply", "multiplier must have %d frequencies, as vout_f, got shape %s" % (self.vout_f.shape[-1], np.shape(multiplier))))
         self.vout_f *= multiplier
 
     #def final_voltage(self):
@@ -702,8 +704,11 @@ class Efield2Voltage:
         Stores the result on the instance rather than returning it: ``voc``
         in the time domain and ``voc_f`` in the frequency domain.
         """
+        # Any integer, NumPy ones too; an assert refused np.int64 and vanished under -O (#259)
+        if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):
+            raise TypeError(_validate.message("Efield2Voltage.compute_voc_du", "du_idx must be an integer, got %r" % (du_idx,)))
+        du_idx = int(du_idx)
         logger.debug(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
-        assert isinstance(du_idx, int)
 
         self.get_leff(du_idx)
         #logger.debug(self.ant_leff_sn.model_leff)
@@ -805,7 +810,9 @@ class Efield2Voltage:
         -----
         Which stages run is taken from ``self.params``, not from arguments.
         """
-        assert isinstance(du_idx, int)
+        if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):   # (#259)
+            raise TypeError(_validate.message("Efield2Voltage.compute_voltage_du", "du_idx must be an integer, got %r" % (du_idx,)))
+        du_idx = int(du_idx)
         self.compute_voc_du(du_idx)
 
         # ----- Add galactic noise -----

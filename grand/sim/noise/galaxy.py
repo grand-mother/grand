@@ -29,7 +29,8 @@ def interpol_at_new_x(a_x, a_y, new_x):
     """
     from scipy import interpolate
 
-    assert a_x.shape[0] > 0
+    if a_x.shape[0] == 0:   # an assert, gone under python -O (#259)
+        raise ValueError(_validate.message("galaxy.interpol_at_new_x", "no sample positions to interpolate from"))
     func_interpol = interpolate.interp1d(
         a_x,
         a_y,

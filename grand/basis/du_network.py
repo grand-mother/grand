@@ -3,6 +3,8 @@ Handling Detector Unit (DU) network, footprint plots
 """
 from logging import getLogger
 
+from grand.basis import validate as _validate
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -79,10 +81,11 @@ class DetectorUnitNetwork:
         self.du_pos = du_pos
         self.area_km2 = -1
         self.idx2idt = du_id
-        assert isinstance(self.du_pos, np.ndarray)
-        assert isinstance(self.idx2idt, (list, np.ndarray))
-        assert du_pos.shape[0] == len(du_id)
-        assert du_pos.shape[1] == 3
+        # Asserts, gone under python -O (#259)
+        if not isinstance(self.du_pos, np.ndarray) or self.du_pos.ndim != 2 or self.du_pos.shape[1] != 3:
+            raise ValueError(_validate.message("DetectorUnitNetwork.init_pos_id", "du_pos must be an array of shape (n_du, 3), got %s" % (np.shape(du_pos),)))
+        if not isinstance(self.idx2idt, (list, np.ndarray)) or len(du_id) != du_pos.shape[0]:
+            raise ValueError(_validate.message("DetectorUnitNetwork.init_pos_id", "du_id must be a list or array with one identifier per unit (%d), got %r" % (du_pos.shape[0], du_id)))
 
     def keep_only_du_with_index(self, l_idx):
         """Keep DU at index defined in list <l_idx>
@@ -403,7 +406,8 @@ class DetectorUnitNetwork:
             Draws the figure.
         """
         # same number of sample
-        assert a_time.shape[0] == a3_values.shape[2]
+        if a_time.shape[0] != a3_values.shape[2]:   # (#259)
+            raise ValueError(_validate.message("DetectorUnitNetwork", "a_time has %d samples, a3_values %d" % (a_time.shape[0], a3_values.shape[2])))
         # we plot norm of 3D vector
         a_norm_val = np.linalg.norm(a3_values, axis=1)
         val_min = a_norm_val.min()

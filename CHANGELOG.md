@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Input checks that vanished under `python -O` (#259).** Sixteen checks on
+  user input were `assert` statements: gone under `-O`, and otherwise an
+  empty `AssertionError`. They now raise `TypeError`/`ValueError` with a
+  `GRANDlib:` message: `Efield2Voltage.add`/`multiply` shapes and `du_idx`
+  (which now also accepts NumPy integers), `DetectorUnitNetwork` positions
+  and identifiers, `AntennaProcessing.set_out_freq_mhz`, the two
+  `interpol_at_new_x`, `Handling3dTraces`, `ElectricField` and
+  `get_fastest_size_fft`'s padding. Internal invariants stay asserts.
+
 - **sim2root cosmetics with consequences (#226, items 1–3).**
   `IllustrateSimPipe.py --savefig` failed unless a `plots/` folder already
   existed; it is now created. Without `-e` the output folder name had a double
