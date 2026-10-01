@@ -121,13 +121,22 @@ class EventList:
         Returns
         -------
         Event
-            The event, or ``None`` when it was not found.
+            The event.
+
+        Raises
+        ------
+        ValueError
+            If both an entry and an event/run number are given, or a run
+            number without an event number.
+        LookupError
+            If the input holds no such event.  (These used to be printed, and
+            ``None`` returned into the caller's loop, #256.)
         """
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?
         if entry_number is not None and (run_number is not None or event_number is not None):
-            print("Please provide only entry_number or event/run_number!")
-            return None
+            raise ValueError(_validate.message(
+                "EventList.get_event", "give entry_number, or event_number and run_number, not both"))
 
         e = self.event
 
@@ -170,16 +179,15 @@ class EventList:
                 if (self.event_list is not None
                         and (event_number, run_number) not in
                         {(int(ev), int(run)) for ev, run in self.event_list}):
-                    print("No event with event number %s and run number %s; "
-                          "this input holds %d events: %s"
-                          % (event_number, run_number, len(self.event_list),
-                             self.event_list[:10]))
-                    return None
+                    raise LookupError(_validate.message(
+                        "EventList.get_event", "no event with event number %s and run number %s; "
+                        "this input holds %d events: %s"
+                        % (event_number, run_number, len(self.event_list), self.event_list[:10])))
                 e.run_number=run_number
                 e.event_number=event_number
             else:
-                print("Please provide event_number and run_number, or entry_number")
-                return None
+                raise ValueError(_validate.message(
+                    "EventList.get_event", "give event_number with run_number, or entry_number"))
 
         # Fill the event
         if fill_event:

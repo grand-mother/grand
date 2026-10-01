@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional, Union
 from logging import getLogger
@@ -303,10 +304,11 @@ class Map(object):
             The opened map.
         """
 
-        if path in Map.cache.keys():
-            return cls.cache[path]
-        else:
-            return object.__new__(cls)
+        # Keyed by the resolved path: "map" and Path("map") loaded it twice (#256)
+        key = os.path.realpath(os.fspath(path))
+        if key in Map.cache:
+            return cls.cache[key]
+        return object.__new__(cls)
 
     def __init__(self, path: Union[Path, str]):
         """Initialise a map object from a data file
@@ -333,20 +335,21 @@ class Map(object):
             raise LibraryError(r)
         else:
             self._map = map_
-            self._path = path
+            self._path = os.fspath(path)  # one spelling for every caller of the cached map
         # add object in cache
         logger.info(f"Map constructor add map {path} in cache memory ")
-        Map.cache[path] = self
+        Map.cache[os.path.realpath(os.fspath(path))] = self
 
     def __del__(self):
         r"""Releases the underlying TURTLE map.
 
         """
-        if self in Map.cache:
-            logger.debug(f"Map : remove {self._path} from the cache")
-            del Map.cache[self._path]
-            # free C memory allocation
+        # "self in Map.cache" compared the object with the keys, so it was
+        # always False and the C map was never freed (#256).  A cached map is
+        # only deleted at exit, when the cache goes; free what was loaded.
+        if getattr(self, "_map", None) is not None:
             lib.turtle_map_destroy(self._map)
+            self._map = None
 
     def elevation(self, x, y):
         """Get the elevation at the given map coordinates

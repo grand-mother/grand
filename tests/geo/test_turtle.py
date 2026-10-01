@@ -154,7 +154,8 @@ class TurtleTest(TestCase):
         path = self.get_map_data()
         map_ = turtle.Map(path)
         self.assertNotEqual(map_._map, None)
-        self.assertEqual(map_.path, path)
+        # One cached map per file, whatever spelling loaded it first (#256)
+        self.assertEqual(os.fspath(map_.path), os.fspath(path))
 
         # Check the elevation getter for a single entry
         elevation = map_.elevation(0, 0)

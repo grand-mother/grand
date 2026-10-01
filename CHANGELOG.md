@@ -15,6 +15,27 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Silent failures and global side effects (#256, in part).**
+  - The Newton solver behind the Cherenkov angle returned whatever iterate it
+    had reached when it did not converge (-610961.3 for x² + 1), without a
+    word, and divided by zero when started at 0. It now warns and returns NaN,
+    and handles a zero start.
+  - `DataFile` raised a string when it could not index a chain, which is
+    itself a `TypeError` that lost the message; and a read error was taken
+    for an absent tree. Both now raise proper errors.
+  - `EventList.get_event` and `Event.fill_event_from_trees` printed their
+    errors and returned `None` or `False`, which callers and iteration passed
+    on; they now raise `ValueError`, `LookupError` or `FileNotFoundError`.
+  - `import grand` turned every `ComplexWarning` in the user's own code into
+    an error; the filter now applies to `grand.geo.coordinates` only.
+  - The `turtle.Map` cache loaded one file twice under two spellings and
+    never freed its C maps; `create_output_for_logger` added handlers on
+    every call (each message printed once per call), changed the caller's
+    list and truncated its log file each time; `logger.exception` was used
+    outside `except` blocks, logging "NoneType: None". All fixed.
+  Still open in #256: the fallback chains in `descriptors.py`, and the
+  remaining informational prints in `grand.aoi`.
+
 - **RF-chain configuration errors are raised, not printed (#255).** A
   component missing from `rf_chain_config.xml` printed "ERROR: ..." and then
   failed with `NameError: name 'Nonec' is not defined`; an invalid axis

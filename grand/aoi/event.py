@@ -382,8 +382,10 @@ class Event:
         """
         # Check if any of the files exist
         if not self._file and not self.file_trun and not self.file_trunrawvoltage and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
-            print("No files provided to init from. Aborting.")
-            return False
+            # Printed "Aborting." and returned False, which callers ignored,
+            # leaving a half-initialised Event (#256)
+            raise FileNotFoundError(_validate.message(
+                "Event.fill_event_from_trees", "no file or directory to read the event from"))
 
         # *** Set the run/event/entry number if requested.
 
@@ -395,7 +397,9 @@ class Event:
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?
         if entry_number is not None and (run_number is not None or event_number is not None):
-            print("Please provide only entry_number or event/run_number!")
+            raise ValueError(_validate.message(
+                "Event.fill_event_from_trees",
+                "give entry_number, or event_number and run_number, not both"))
         if entry_number is not None:
             self._entry_number = entry_number
             # ToDo: this should be run number from an even tree with entry_number...

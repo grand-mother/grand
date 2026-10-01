@@ -321,7 +321,7 @@ class Efield2Voltage:
             message = f"Provide positive integer of either event_idx or both event_number and run_number. If event_idx is given, it must\
             be less than {len(self.events_list)}. If event_number and run_number are given, they must be from the list of (event_number, run_number)\
             {self.events_list}. Provided values are: event_idx={event_idx}, event_number={event_number}, run_number={run_number}."
-            logger.exception(message)
+            logger.error(message)  # not in an except block: .exception logged 'NoneType: None' (#256)
             raise Exception(message)
 
         # The pair must be one the input holds: otherwise the trees below
@@ -1020,7 +1020,7 @@ class Efield2Voltage:
             else:
                 message = f"Provide positive integer or list of either event_idx or both event_number and run_number. \
                 Provided values are: event_idx={event_idx}, event_number={event_number}, run_number={run_number}."
-                logger.exception(message)
+                logger.error(message)  # not in an except block: .exception logged 'NoneType: None' (#256)
                 raise Exception(message)
 
         # Compute voltage of one DU of a given event. Note that this can be only done for one event.
@@ -1050,7 +1050,7 @@ class Efield2Voltage:
         else:
             message = f"Provide positive integer or list of either event_idx or both event_number and run_number. \
             Provided values are: event_idx={event_idx}, event_number={event_number}, run_number={run_number}."
-            logger.exception(message)
+            logger.error(message)  # not in an except block: .exception logged 'NoneType: None' (#256)
             raise Exception(message)
 
     def save_voltage(self, append_file=True):

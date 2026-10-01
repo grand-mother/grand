@@ -1,6 +1,9 @@
 """Cherenkov angle from a two-emission-point model around the source."""
 
+import warnings
+
 import numpy as np
+from grand.basis import validate as _validate
 import grand.analysis.physics as atm
 
 
@@ -174,13 +177,21 @@ def newton(func,x0,tol=1e-7,nstep_max = 100, args = [], verbose=False):
     rel_error = np.inf
     xold = x0
     nstep = 0
+    x = xold
     while ((rel_error > tol) and (nstep<nstep_max)):
         x = xold - func(xold,*args)/der(func,xold,args=args)
         nstep += 1
         if verbose:
             print ("x at iteration",nstep, 'is ',x)
-        rel_error = np.abs((x-xold)/xold)
+        # Relative to the previous iterate, or absolute when it is 0 (it
+        # divided by zero there)
+        rel_error = np.abs(x-xold) / (np.abs(xold) if xold != 0 else 1.0)
         xold = x
-#    if (nstep == nstep_max):
-#        print ("Convergence not achieved in %d iterations"%nstep_max)
+    # Non-convergence returned whatever the last iterate was, silently: for
+    # x**2 + 1, -610961.3 after 5 steps.  It is reported and NaN returned (#256)
+    if not rel_error <= tol:
+        warnings.warn(_validate.message(
+            "newton", "no convergence in %d iterations (relative change %.3g, tolerance %.3g); "
+            "returning NaN" % (nstep, rel_error, tol)), _validate.GRANDlibWarning, stacklevel=2)
+        return np.nan
     return(x)

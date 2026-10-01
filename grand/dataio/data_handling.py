@@ -459,11 +459,15 @@ class DataFile:
                     # Assuming en Event tree
                     t.BuildIndex("run_number", "event_number")
                 # If failed, try as a run tree
-                except:
+                except Exception:
                     try:
                         t.BuildIndex("run_number")
-                    except:
-                        raise("Unable to build index for the tree")
+                    except Exception as error:
+                        # Raising a string is itself a TypeError, which lost
+                        # the message (#256)
+                        raise RuntimeError(_validate.message(
+                            "DataFile", "unable to build an index for the tree %s"
+                            % t.GetName())) from error
 
                 # Set metadata from the first TTree in the TChain
                 temp_metadata = self.get_tree_info(t).keys()
@@ -752,8 +756,8 @@ class DataFile:
         # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
         for level in range(10):
             for tree in trees_to_check:
-                try:
-                    if tree_inst := getattr(self, f"{tree}_l{level}"):
-                            return tree_inst.get_list_of_events()
-                except:
-                    pass
+                # Only an absent tree is skipped: a read error was taken for an
+                # absent tree too, and the caller then got None (#256)
+                tree_inst = getattr(self, f"{tree}_l{level}", None)
+                if tree_inst:
+                    return tree_inst.get_list_of_events()
