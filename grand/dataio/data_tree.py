@@ -4,6 +4,7 @@ import glob
 import os
 from dataclasses import dataclass, field
 from logging import getLogger
+import warnings
 import weakref
 import ROOT
 
@@ -28,6 +29,27 @@ _files_opened_by_trees = {}
 A ``ROOT.TFile`` handed in by the caller is never listed, so the caller keeps control of it.
 This is needed because PyROOT stops owning a TFile once ``TTree.SetDirectory(file)`` is called
 with it, so dropping the last Python reference does not close it (GitHub issue #71)."""
+
+
+#: Entries each tree object had on disk at its last write (or when it was
+#: opened), keyed by id(tree): entries beyond it were filled but not written.
+#: Kept outside the instance because every instance attribute is taken for a
+#: branch.
+_written_entries = {}
+
+
+def _unwritten(tree):
+    r"""Number of entries ``tree`` filled since it was opened or last written."""
+    t = tree._tree
+    if t is None or tree.is_tchain:
+        return 0
+    written = _written_entries.get(id(tree))
+    if written is None:                 # already released, or never tracked
+        return 0
+    try:
+        return max(0, int(t.GetEntries()) - written)
+    except (ReferenceError, TypeError):
+        return 0
 
 
 def _register_opened_file(f):
@@ -529,6 +551,9 @@ class DataTree:
             if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
                 print("not set for", field)
 
+        # What is already on disk does not need writing (#275)
+        _written_entries[id(self)] = int(self._tree.GetEntries()) if self._tree else 0
+
         self.__setattr__ = weakref.proxy(self.mod_setattr)
         # self.__setattr__ = self.mod_setattr
 
@@ -752,6 +777,7 @@ class DataTree:
         # ToDo: make sure that the tree has different name than the trees existing in the file!
         # self._tree.Write(*args)
         self._tree.GetCurrentFile().Write(*args)
+        _written_entries[id(self)] = int(self._tree.GetEntries())
 
         # If TFile was created here, close it
         if (creating_file and close_file) or force_close_file:
@@ -1481,6 +1507,14 @@ class DataTree:
             Close the ROOT file the tree opened, if no other tree uses it.
             Pass ``False`` to only remove the instance from ``grand_tree_list``.
         """
+        # Filled entries were dropped here without a word (#275)
+        if (pending := _unwritten(self)):
+            warnings.warn(_validate.message(
+                "%s.stop_using" % type(self).__name__,
+                "%d entries were filled but not written, and are discarded; call write() "
+                "first to keep them" % pending), _validate.GRANDlibWarning, stacklevel=2)
+        _written_entries.pop(id(self), None)
+
         # Remove by identity: the dataclass __eq__ compares field values and could match another instance
         for i, inst in enumerate(grand_tree_list):
             if inst is self:
@@ -1529,7 +1563,11 @@ class DataTree:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Call ``stop_using()`` when leaving the ``with`` block
+        """Write what was filled, then call ``stop_using()``, when leaving the ``with`` block
+
+        Entries filled but not written are written when the block ends
+        normally; if it ends with an exception they are discarded, with a
+        warning.
 
         Parameters
         ----------
@@ -1545,5 +1583,10 @@ class DataTree:
         bool
             ``False``, so an exception raised in the block propagates.
         """
+        # Leaving the block normally writes what was filled, as leaving a
+        # ``with open(...)`` block flushes; after an exception nothing is
+        # written, and stop_using() warns about what is discarded (#275)
+        if exc_type is None and _unwritten(self):
+            self.write()
         self.stop_using()
         return False

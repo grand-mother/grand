@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Filled entries are no longer dropped silently (#275).** Entries filled but
+  not written were discarded without a word when a `with` block ended or
+  `stop_using()` was called. Leaving a `with` block normally now writes them,
+  as leaving `with open(...)` flushes a file; if the block ends with an
+  exception, or `stop_using()` is called with entries pending, they are
+  discarded with a `GRANDlibWarning` giving the count.
+
 - **`EventList` and `DataFile` say what is wrong with an input (#235).**
   Plausible inputs failed deep inside with errors that named nothing useful.
   Now:

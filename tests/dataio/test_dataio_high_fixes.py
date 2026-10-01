@@ -132,3 +132,38 @@ def test_du_indices_follow_the_event_order():
         e.get_dus_indices_in_run(r)
     r.stop_using()
     e.stop_using()
+
+
+def test_filled_entries_are_written_or_reported(tmp_path):
+    r"""#275: entries filled but not written were dropped silently at the end of a with
+    block or at stop_using()."""
+    import warnings
+
+    import pytest
+
+    from grand.basis.validate import GRANDlibWarning
+    from grand.dataio import TADC
+
+    path = str(tmp_path / "w.root")
+    with TADC(path) as t:
+        t.run_number = 1
+        t.event_number = 1
+        t.fill()
+    t = TADC(path)
+    assert t.get_number_of_entries() == 1
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        t.stop_using()                       # nothing pending: no warning
+    t = TADC(str(tmp_path / "x.root"))
+    t.run_number = 1
+    t.event_number = 1
+    t.fill()
+    with pytest.warns(GRANDlibWarning, match="1 entries were filled but not written"):
+        t.stop_using()
+    with pytest.warns(GRANDlibWarning, match="filled but not written"):
+        with pytest.raises(RuntimeError):
+            with TADC(str(tmp_path / "y.root")) as t:
+                t.run_number = 1
+                t.event_number = 1
+                t.fill()
+                raise RuntimeError("stop")
