@@ -356,6 +356,13 @@ class Efield2Voltage:
         self.traces = self.events.trace.asnumpy().astype(np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)        
         trace_shape = self.traces.shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
+        # A NaN or inf sample spread through the FFT to the whole voltage trace,
+        # and the ADC step then wrote it as the most negative integer (#239)
+        if self.traces.size and not np.all(np.isfinite(self.traces)):
+            bad = sorted({int(self.du_id[i]) for i in np.nonzero(~np.isfinite(self.traces))[0]})
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "the e-field of event %s (run %s) has NaN or infinite samples, "
+                "for units %s" % (self.event_number, self.run_number, bad)))
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]

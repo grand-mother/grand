@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The ADC step no longer turns NaN or huge voltages into the most negative
+  count (#239).** Casting a NaN, an inf or a voltage beyond the int64 range to
+  an integer gave -9223372036854775808, whose absolute value is negative too,
+  so saturation never clipped it: a large positive voltage came out as the
+  most negative count, and the failure surfaced only later, as an int16 range
+  error from the tree. `ADC.process` now refuses NaN and inf, naming the first
+  (unit, channel, sample) index; bounds the value before the integer cast, so
+  huge voltages saturate with the right sign; and logs how many samples
+  saturated, per unit. `Efield2Voltage` refuses an e-field with NaN or inf
+  samples, naming the event and the units.
+
 - **`extract_events.py` no longer deletes the target directory (#244).**
   `-ow` removed the whole target directory with whatever else was in it (with
   target `.`, the current directory). It now replaces only the GRAND files the

@@ -92,6 +92,13 @@ class ADC:
         # Convert voltage to ADC
         adc_trace = voltage_trace * self.max_bit_value / self.max_voltage
 
+        # Bounded in floating point before the integer cast: a value beyond the
+        # int64 range became its most negative value, whose absolute value is
+        # negative too, so saturation never caught it (#239).  The bound is far
+        # beyond saturation, which _saturate() applies after any added noise.
+        bound = float(2 ** 40)
+        adc_trace = np.clip(adc_trace, -bound, bound)
+
         # Quantize the trace
         adc_trace = np.trunc(adc_trace).astype(int)
 
@@ -121,6 +128,15 @@ class ADC:
         saturated_adc_trace = np.where(np.abs(adc_trace)<self.max_bit_value,
                                        adc_trace,
                                        np.sign(adc_trace)*self.max_bit_value)
+
+        # Saturation is reported, not applied silently (#239)
+        clipped = np.abs(adc_trace) >= self.max_bit_value
+        if clipped.any():
+            per_du = clipped.reshape(clipped.shape[0], -1).sum(axis=1) if clipped.ndim > 1 else [clipped.sum()]
+            logger.warning("ADC saturation: %d samples clipped at +/-%d counts, in %d of %d units "
+                           "(per unit: %s)", int(clipped.sum()), self.max_bit_value,
+                           int(np.count_nonzero(per_du)), len(per_du),
+                           [int(n) for n in per_du][:20])
 
         return saturated_adc_trace
     
@@ -178,7 +194,13 @@ class ADC:
             raise TypeError(_validate.message(
                 "ADC.process", "'voltage_trace' must be a NumPy array, got %s"
                 % type(voltage_trace).__name__))
-          
+        # NaN or inf cannot be digitized: it was written as the most negative
+        # integer, and the error came only later, from the tree (#239)
+        if not np.all(np.isfinite(voltage_trace)):
+            where = np.argwhere(~np.isfinite(voltage_trace))
+            raise ValueError(_validate.message(
+                "ADC.process", "'voltage_trace' has %d NaN or infinite samples, first at "
+                "(unit, channel, sample) index %s" % (len(where), tuple(int(i) for i in where[0]))))
 
         adc_trace = self._digitize(voltage_trace)
 
