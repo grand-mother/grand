@@ -167,3 +167,30 @@ def test_an_event_without_a_usable_xmax_is_refused(level0_sample, tmp_path, xmax
     signal.params["add_noise"] = False
     with pytest.raises(ValueError, match="no usable Xmax position"):
         signal.compute_voltage(event_number=13790, run_number=1)
+
+
+def test_compute_voltage_writes_once_and_keeps_every_event(level0_sample, tmp_path, monkeypatch):
+    r"""#283: the output file was reopened and rewritten for every event, each slower
+    than the last; with append_file=False it was deleted before every event, so only
+    the last event was kept."""
+    from grand import Efield2Voltage
+    from grand.dataio import TVoltage
+
+    writes = []
+    original = TVoltage.write
+
+    def counting(self, *args, **kwargs):
+        writes.append(1)
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(TVoltage, "write", counting)
+    for append in (True, False):
+        writes.clear()
+        signal = Efield2Voltage(str(level0_sample), "out_%s.root" % append,
+                                output_directory=str(tmp_path), seed=1)
+        signal.params["add_noise"] = False
+        signal.compute_voltage(append_file=append)
+        assert len(writes) == 1
+        out = TVoltage(str(tmp_path / ("out_%s.root" % append)))
+        assert sorted(out.get_list_of_events()) == [(1618, 1), (13790, 1)]
+        out.stop_using()

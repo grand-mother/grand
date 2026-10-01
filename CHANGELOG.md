@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Appending events slows down less (#283, in part).** Every time a tree was
+  opened it listed all run and event numbers, reading the whole tree, and
+  `Efield2Voltage` reopened and rewrote its output file for every event, so
+  each event was slower than the last (about 16 ms per event at 400 events,
+  40 ms at 2000). Opening a tree no longer lists its events: that is done when
+  a `fill()` first needs it for the duplicate check. `compute_voltage()` keeps
+  its output tree open and writes it once at the end. That also fixes
+  `append_file=False`, which deleted the file before every event, so only the
+  last event was kept, and crashed when the output directory was a string.
+  Still open in #283: `DataDirectory` on thousands of files.
+
 - **Two objects on one tree keep their own values (#273).** Two tree objects
   opened on one file wrapped the same ROOT tree, whose branches read into and
   fill from the buffers of whichever object bound them last: one object's

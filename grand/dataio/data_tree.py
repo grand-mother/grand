@@ -792,8 +792,10 @@ class DataTree:
 
         self.assign_metadata()
 
-        # Fill the runs/events numbers from the tree (important if it already existed)
-        self.fill_entry_list()
+        # The run/event numbers already in the tree are listed when a fill()
+        # first needs them for its duplicate check, not on every open: listing
+        # reads the whole tree, and opening a file once per appended event made
+        # each append slower than the last (#283)
 
     ## Create the tree
     def _create_tree(self, tree_name=""):

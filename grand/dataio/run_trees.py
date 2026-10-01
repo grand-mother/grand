@@ -146,6 +146,9 @@ class MotherRunTree(DataTree):
         bool
             True when no run number appears twice.
         """
+        # Listed on first use, not when the tree is opened (#283)
+        if not self._entry_list:
+            self.fill_entry_list()
         # If the entry list does not exist, the event is unique
         if self._entry_list and self.run_number in self._entry_list:
             return False

@@ -228,3 +228,26 @@ def test_two_objects_on_one_tree_keep_their_own_values(tmp_path):
     r1.get_entry(0)
     assert (int(r1.event_number), int(r2.event_number)) == (13790, 1618)
     assert len(r2.du_id) == 5
+
+
+def test_opening_a_tree_does_not_read_all_its_events(tmp_path, monkeypatch):
+    r"""#283: every open listed all run/event numbers, reading the whole tree, so
+    reopening a file per appended event made each append slower than the last.
+    The list is now made only when a fill() needs it for its duplicate check."""
+    import pytest
+
+    from grand.dataio import NotUniqueEvent, TShower
+
+    path = str(tmp_path / "s.root")
+    _three_showers(path).stop_using()
+    calls = []
+    original = TShower.fill_entry_list
+    monkeypatch.setattr(TShower, "fill_entry_list",
+                        lambda self, *a, **k: (calls.append(1), original(self, *a, **k))[1])
+    t = TShower(path)
+    assert calls == []
+    t.run_number, t.event_number = 1, 2
+    with pytest.raises(NotUniqueEvent):           # the duplicate check still works
+        t.fill()
+    assert calls == [1]
+    t.stop_using()

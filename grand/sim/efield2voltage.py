@@ -874,13 +874,17 @@ class Efield2Voltage:
         
     # Primary method to compute voltage. 
     # Compute voltage in any one antennas of any one event. If None, voltage for all DUs of all events is computed.
-    def compute_voltage(self, 
-        event_idx=None, 
-        du_idx=None, 
-        event_number=None, 
-        run_number=None, 
-        append_file=True
-        ):
+    def _flush_voltage(self):
+        r"""Writes and releases the output tree kept open by compute_voltage()."""
+        batch = getattr(self, "_batch_volt", None)
+        if batch and batch.get("tree") is not None:
+            tree = batch["tree"]
+            batch["tree"] = None
+            tree.write()
+            tree.stop_using()
+
+    def compute_voltage(self, event_idx=None, du_idx=None, event_number=None, run_number=None,
+                        append_file=True):
         r"""Computes voltages for any or all events, and saves them.
 
         The primary entry point.  With no arguments it processes every event
@@ -909,6 +913,24 @@ class Efield2Voltage:
         The result is written to ``self.f_output`` as a side effect; the
         method returns nothing.
         """
+        self._batch_volt = {}
+        try:
+            self._compute_voltage(event_idx=event_idx, du_idx=du_idx, event_number=event_number,
+                                  run_number=run_number, append_file=append_file)
+        finally:
+            try:
+                self._flush_voltage()
+            finally:
+                self._batch_volt = None
+
+    def _compute_voltage(self, 
+        event_idx=None, 
+        du_idx=None, 
+        event_number=None, 
+        run_number=None, 
+        append_file=True
+        ):
+        r"""Body of :meth:`compute_voltage`."""
         # NumPy integer scalars (from arrays, events_list...) are integers too
         def _plain(value):
             return int(value) if isinstance(value, np.integer) else value
@@ -1022,20 +1044,33 @@ class Efield2Voltage:
         # File name change in other cases
         elif self.f_output is None:
             split_file = os.path.splitext(self.f_input)
-            self.f_output  = str(self.output_directory / split_file[0]+"_voltage.root")
+            self.f_output  = str(Path(self.output_directory) / (split_file[0]+"_voltage.root"))
             cur_f_output = self.f_output
             logger.info(f"No output file was defined. Output file is automatically defined as {cur_f_output}")
         else:
             cur_f_output = str(self.output_directory / Path(self.f_output))
 
-        if not append_file and os.path.exists(self.output_directory / self.f_output):
-            cur_f_output = str(self.output_directory / self.f_output)
-            logger.info(f"save on a new file and remove existing file {cur_f_output}")
-            os.remove(cur_f_output)
-            time.sleep(1)
+        # Within compute_voltage() the output tree stays open across events and
+        # is written once at the end: reopening and rewriting the file for every
+        # event made each event slower than the last (#283), and with
+        # append_file=False the file was deleted before every event, so only
+        # the last one was kept
+        batch = getattr(self, "_batch_volt", None)
+        if batch is not None and batch.get("name") == cur_f_output and batch.get("tree") is not None:
+            self.tt_volt = batch["tree"]
+        else:
+            self._flush_voltage()
+            # Path(): output_directory may be a string, which crashed here
+            if not append_file and os.path.exists(Path(self.output_directory) / self.f_output):
+                cur_f_output = str(Path(self.output_directory) / self.f_output)
+                logger.info(f"save on a new file and remove existing file {cur_f_output}")
+                os.remove(cur_f_output)
+                time.sleep(1)
 
-        logger.info(f"save result in {cur_f_output}")
-        self.tt_volt = groot.TVoltage(cur_f_output)
+            logger.info(f"save result in {cur_f_output}")
+            self.tt_volt = groot.TVoltage(cur_f_output)
+            if batch is not None:
+                batch.update(name=cur_f_output, tree=self.tt_volt)
 
         # Fill voltage object. d_root = events
         self.tt_volt.du_count     = self.nb_du
@@ -1100,5 +1135,6 @@ class Efield2Voltage:
         self.tt_volt.trace = self.vout
 
         self.tt_volt.fill()
-        self.tt_volt.write()
+        if batch is None:
+            self.tt_volt.write()
 
