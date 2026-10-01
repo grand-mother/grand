@@ -458,6 +458,19 @@ class Event:
                 print("No RunRawVoltage tree. RunRawVoltage information will not be available.")
 
         if self.file_tvoltage:
+            # With a directory the trees are opened once, so the voltage tree
+            # must be chosen on every call: a use_trawvoltage=True call left
+            # TRawVoltage in place, and the next default call failed on its
+            # missing 'trace' (#213)
+            if not init_trees and self.directory is not None:
+                if use_trawvoltage and self.directory.ftrawvoltages:
+                    self.tvoltage = self.directory.trawvoltage
+                elif not use_trawvoltage and self.directory.ftvoltages:
+                    self.tvoltage = self.directory.tvoltage
+            # Raw voltages are all the data holds: read them as such rather
+            # than fail on TRawVoltage's missing 'trace' (#213, #235)
+            if not use_trawvoltage and isinstance(self.tvoltage, TRawVoltage):
+                use_trawvoltage = True
             # Use standard voltage tree
             if not use_trawvoltage:
                 # If initialising trees requested
@@ -507,21 +520,26 @@ class Event:
 
         # Check the Efield file existence
         if self.file_tefield:
+            # The analysis level is not part of the tree name: every file
+            # stores its tree as "tefield" and records the level in the
+            # tree's UserInfo. Selecting a level therefore means selecting
+            # a file, which only the DataDirectory knows how to do.  This is
+            # done on every call: it used to happen only when the trees were
+            # first opened, so a per-call level was ignored (#213).
+            if tefield_level is not None and self.directory is not None:
+                self.tefield = getattr(self.directory, f"tefield_l{tefield_level}", None)
+                if self.tefield is None:
+                    raise ValueError(_validate.message(
+                        "Event", f"no Efield tree of analysis level {tefield_level} in "
+                        f"{self.directory.dir_name}"))
+                self.tefield_level = tefield_level
+            # No level asked: the directory's default, not the last one asked for
+            elif self.directory is not None and not init_trees:
+                self.tefield = self.directory.tefield
             # If initialising trees requested
-            if init_trees:
-                # The analysis level is not part of the tree name: every file
-                # stores its tree as "tefield" and records the level in the
-                # tree's UserInfo. Selecting a level therefore means selecting
-                # a file, which only the DataDirectory knows how to do.
-                if tefield_level is not None and self.directory is not None:
-                    self.tefield = getattr(self.directory, f"tefield_l{tefield_level}", None)
-                    if self.tefield is None:
-                        raise ValueError(
-                            f"No Efield tree of analysis level {tefield_level} in "
-                            f"{self.directory.dir_name}.")
-                    self.tefield_level = tefield_level
+            elif init_trees:
                 # Check the Efield tree existence
-                elif tefield := self.file_tefield.Get("tefield"):
+                if tefield := self.file_tefield.Get("tefield"):
                     self.tefield = TEfield(_tree=tefield)
                     # Without a directory there is no choice of file, so the
                     # level is whatever the open one holds. Read it back rather
@@ -857,6 +875,15 @@ class Event:
         bool
             True when traces were found.
         """
+        # A voltage has three components, so three channels are read; fewer
+        # crashed with IndexError (#213)
+        if use_trawvoltage:
+            channels = list(trawvoltage_channels)
+            if len(channels) != 3 or not all(isinstance(c, (int, np.integer)) and not isinstance(c, bool)
+                                             for c in channels):
+                raise ValueError(_validate.message(
+                    "Event", "'trawvoltage_channels' must name exactly 3 channels (the x, y "
+                    "and z of the voltage), got %r" % (trawvoltage_channels,)))
         ret = 1
         if self._entry_number is not None:
             ret = self.tvoltage.get_entry(self._entry_number)

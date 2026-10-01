@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`EventList` options take effect (#213).** `start_event` and `start_entry`
+  were stored but ignored by iteration; they now set where it starts, and
+  refuse values the input does not hold. A per-call `tefield_level` was
+  ignored for directories (level 1 came back when level 0 was asked for) and
+  stuck to later calls once used; it now applies to that call only, and a
+  level the data does not hold raises `ValueError` instead of giving
+  `efields=None`. `trawvoltage_channels` must name exactly three channels (it
+  crashed with `IndexError` on fewer), and after a `use_trawvoltage=True` call
+  the next default call no longer fails: the voltage tree is chosen on every
+  call, and data holding only raw voltages is read as such. The docstrings
+  now say that every event returned is the same, refilled `Event` object.
+
 - **`Event.write` (#212).** `overwrite=True` with `out_dir` deleted the whole
   output directory, with anything else the user kept there; it now replaces
   only the files of the tree kinds it writes. `write()` with no destination

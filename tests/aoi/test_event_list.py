@@ -115,9 +115,9 @@ def test_iterates_over_event_list_and_passes_event_run_numbers(tmp_path):
         collected.append((ev.event_number, ev.run_number, dict(ev.fill_args)))
 
     assert collected == [
-        (11, 101, {'init_trees': False, 'event_number': 11, 'run_number': 101}),
-        (22, 202, {'init_trees': False, 'event_number': 22, 'run_number': 202}),
-        (33, 303, {'init_trees': False, 'event_number': 33, 'run_number': 303}),
+        (11, 101, {'init_trees': False, 'event_number': 11, 'run_number': 101, 'tefield_level': None}),
+        (22, 202, {'init_trees': False, 'event_number': 22, 'run_number': 202, 'tefield_level': None}),
+        (33, 303, {'init_trees': False, 'event_number': 33, 'run_number': 303, 'tefield_level': None}),
     ]
 
 

@@ -67,3 +67,45 @@ def test_write_to_a_common_file_keeps_the_event_list_usable(sample, tmp_path):
     t.stop_using()
     again = events.get_event(event_number=13790, run_number=1)
     assert len(again.efields) == 44
+
+
+AOI = pathlib.Path(__file__).resolve().parents[2] / "examples" / "analysis" / "reconstructed_events_AOI"
+
+
+def test_iteration_honours_start_event_and_start_entry(sample):
+    r"""#213: start_event and start_entry were stored but ignored."""
+    from grand.aoi import EventList
+
+    assert [int(e.event_number) for e in EventList(str(sample))] == [13790, 1618]
+    assert [int(e.event_number) for e in EventList(str(sample), start_event=1618)] == [1618]
+    assert [int(e.event_number) for e in EventList(str(sample), start_entry=1)] == [1618]
+    with pytest.raises(ValueError, match="start_event 7 is not in the input"):
+        list(EventList(str(sample), start_event=7))
+
+
+def test_tefield_level_per_call(sample):
+    r"""#213: a per-call tefield_level was ignored for directories, and a missing level
+    gave efields=None instead of an error."""
+    from grand.aoi import EventList
+
+    events = EventList(str(sample))
+    assert events.get_event(event_number=13790, run_number=1).efields[0].n_points == 2048
+    assert events.get_event(event_number=13790, run_number=1,
+                            tefield_level=0).efields[0].n_points == 8192
+    assert events.get_event(event_number=13790, run_number=1).efields[0].n_points == 2048
+    with pytest.raises(ValueError, match="no Efield tree of analysis level 2"):
+        events.get_event(event_number=13790, run_number=1, tefield_level=2)
+
+
+@pytest.mark.skipif(not AOI.is_dir(), reason="needs examples/analysis")
+def test_raw_voltage_channels_and_tree_choice():
+    r"""#213: two channels crashed with IndexError; after a use_trawvoltage call the next
+    default call failed on TRawVoltage's missing 'trace'."""
+    from grand.aoi import EventList
+
+    events = EventList(str(AOI))
+    with pytest.raises(ValueError, match="exactly 3 channels"):
+        events.get_event(entry_number=0, use_trawvoltage=True, trawvoltage_channels=[0, 2])
+    raw = events.get_event(entry_number=0, use_trawvoltage=True, trawvoltage_channels=[1, 2, 3])
+    assert len(raw.voltages) == 5
+    assert len(events.get_event(entry_number=0).voltages) == 5

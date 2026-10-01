@@ -9,7 +9,13 @@ from grand.basis import validate as _validate
 
 
 class EventList:
-    """A class giving access/iteration over multiple events"""
+    """A class giving access/iteration over multiple events
+
+    Every call to :meth:`get_event`, and every step of an iteration, fills and
+    returns the *same* :class:`Event` object, so ``list(EventList(d))`` holds
+    that one object several times, showing the last event. Copy what you need
+    from each event before reading the next.
+    """
 
     ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
     file: ROOT.TFile = None
@@ -30,6 +36,9 @@ class EventList:
             Event number to begin at.
         start_entry : int, optional
             Entry index to begin at, used instead of `start_event`.
+        tefield_level : int, optional
+            Analysis level of the electric field to read, for every event
+            unless a call to :meth:`get_event` asks for another.
         """
         self.event_list = None
 
@@ -80,6 +89,7 @@ class EventList:
                 "EventList", "give 'start_event' or 'start_entry', not both"))
         self.start_event = start_event
         self.start_entry = start_entry
+        self.tefield_level = tefield_level
 
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
@@ -158,10 +168,11 @@ class EventList:
         # Fill the event
         if fill_event:
             # Overwrite the init kwargs with kwargs given here
-            if len(kwargs)>0:
-                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **kwargs)
-            else:
-                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **self.init_kwargs)
+            options = dict(kwargs) if len(kwargs) > 0 else dict(self.init_kwargs)
+            # The level is passed on every call, so a per-call level is used
+            # and does not stick to later calls (#213)
+            options.setdefault("tefield_level", self.tefield_level)
+            e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **options)
 
             # Don't init trees anymore
             self.init_trees = False
@@ -205,14 +216,36 @@ class EventList:
 
     ## Return the iterable over self
     def __iter__(self):
-        r"""Yields each event in turn.
+        r"""Yields each event in turn, from `start_event` or `start_entry` if given.
 
         Yields
         ------
         Event
-            The next event, fully populated.
+            The next event, fully populated.  It is the same object each time,
+            refilled: see the class description.
+
+        Raises
+        ------
+        ValueError
+            If `start_event` or `start_entry` is not in the input.
         """
-        for event_num, run_num in self.event_list:
+        # start_event and start_entry were stored but ignored (#213)
+        events = list(self.event_list)
+        first = 0
+        if self.start_entry is not None:
+            if not 0 <= self.start_entry < len(events):
+                raise ValueError(_validate.message(
+                    "EventList", "start_entry %s is out of range: the input holds %d events"
+                    % (self.start_entry, len(events))))
+            first = self.start_entry
+        elif self.start_event is not None:
+            numbers = [int(ev) for ev, _ in events]
+            if self.start_event not in numbers:
+                raise ValueError(_validate.message(
+                    "EventList", "start_event %s is not in the input; it holds %s"
+                    % (self.start_event, numbers[:10])))
+            first = numbers.index(self.start_event)
+        for event_num, run_num in events[first:]:
             yield self.get_event(event_number=event_num, run_number=run_num)
 
         # # If this is the first event, and start_entry was specified
