@@ -1,28 +1,38 @@
 #!/usr/bin/env python
 """GRANDlib status: content. GRAND Weekly Meeting, 1 October 2026.
 
-Same machinery and carrier as the GNN Board deck (build_deck.py, unchanged);
-only the output name and title differ.
+Same machinery as the GNN Board deck (build_deck.py); only the output name and
+title differ. One text size per role, as in that deck: titles 28 pt, body 18 pt,
+tables 15 pt, sources 11 pt.
 
     python make_figures_grandlib.py
-    python deck_grandlib.py
+    DECK_TEMPLATE=<carrier.odp> python deck_grandlib.py
 
 Numbers: resources/dev/dev-next/RECOVERY_PLAN.md, BRANCHES.md and
-beta-tests/TEST_PLAN.md on dev-next-ipfxhh (PR #208), 1 October 2026, 11:40.
+beta-tests/TEST_PLAN.md on dev-next-ipfxhh (PR #208), 1 October 2026. The
+recovery-plan figures are the plan's own (docs/dev/make_*_diagram.py), rendered
+from resources/dev/dev-next/*.svg into figures/recovery/.
 """
 
 import build_deck as bd
 from build_deck import (
-    FIGS, MARGIN, BLUE, DARKRED, GREY, GREEN,
-    build, fit, picture, section, slide, table, textbox, title_slide,
+    FIGS, MARGIN, W, BODY_W,
+    build, fit, full_figure, picture, section, slide, table, textbox,
+    title_slide,
 )
-from make_figures_grandlib import FIG_SEVERITY, FIG_VALIDATION
+from make_figures_grandlib import FIG_SEVERITY, FIG_VALIDATION, FIG_TIMELINE
 
 bd.OUT = bd.HERE / "2026-10-01-Bustamante-GRAND_Weekly_Meeting.odp"
 bd.TITLE = "GRANDlib: merged, cleaned, validated, beta-tested"
 
 UCPH = "1000000100000AC8000004049F3C1DF5.png"
 VILLUM = "10000001000003280000010A710211B6.png"
+RECOVERY = FIGS / "recovery"
+
+BODY = 18          # body text
+TABLE = 15         # every table
+PLAN = "Recovery plan: resources/dev/dev-next/ on dev-next"
+TRACKER = "Beta test: resources/dev/dev-next/beta-tests/TEST_PLAN.md"
 
 
 def fig(name, size, x, y):
@@ -30,230 +40,256 @@ def fig(name, size, x, y):
     return picture(href, x, y, iw, ih)
 
 
-def note(x, y, w, lines, size=16, color=None):
-    frame, _ = textbox(x, y, w, lines, size=size, color=color or bd.BLACK,
-                       line_height=125, space_after=0.25)
-    return frame
+def body(y, lines, w=BODY_W, x=MARGIN):
+    frame, h = textbox(x, y, w, lines, size=BODY, line_height=125,
+                       space_after=0.3)
+    return frame, h
+
+
+def plan_figure(name, lead, notes=""):
+    href, iw, ih = fit(RECOVERY / f"{name}.png", 25.4, 11.9, max_px=3000)
+    full_figure(href, iw, ih, lead=lead, ref=PLAN, notes=notes)
 
 
 def deck():
     # ------------------------------------------------------------------ 1
     title_slide(
         ["GRANDlib:", "merged, cleaned, validated, beta-tested"],
-        "++Mauricio Bustamante++",
+        "Mauricio Bustamante",
         "Niels Bohr Institute, University of Copenhagen",
         ["GRAND Weekly Meeting", "October 1, 2026"],
         [(UCPH, 21.137, 10.32, 6.286, 2.326),
          (VILLUM, 20.779, 12.628, 7.567, 2.413)],
         notes=(
-            "About 12 minutes. Four parts: branches and issues cleaned up,\n"
-            "input validation, the beta test, and what we need from you.\n"
-            "The message: dev-next is close to becoming the default branch;\n"
-            "every Critical bug found is fixed; the owners' answers are now\n"
-            "the bottleneck."),
+            "About 15 minutes. Four parts: the cleanup, input validation,\n"
+            "the beta test in three waves, and the timeline. One request:\n"
+            "access to the SPS data to test the aoi part of the code."),
     )
 
     # ------------------------------------------------------------------ 2
     rows = [
-        ["", "Done", "Status"],
-        ["**Branches**", "All 39 branches decided: 24 merged into `dev-next`, "
-         "13 decided against or content taken", "%%done%%"],
-        ["**Old PRs and issues**", "8 PRs closed or ported; 12 issues closed in "
-         "triage, 7 more fixed in one PR", "%%done%%"],
-        ["**Input validation**", "Bad input now refused with a clear "
-         "`GRANDlib:` message: 50 of 60, up from 7", "%%merged (#179)%%"],
-        ["**Beta test**", "13 testers in 2 waves; 91 issues filed; all 11 "
-         "Critical ones fixed", "^^PR #208, CI green^^"],
+        ["", "What", "Status"],
+        ["**Branches**", "All 40 branches decided; dev-next holds everything "
+         "kept", "done"],
+        ["**Old PRs and issues**", "8 pull requests closed, 1 ported; 12 issues "
+         "closed in triage, 7 fixed", "done"],
+        ["**Input validation**", "Bad input refused with a clear message: 50 of "
+         "60 cases, up from 7", "merged, PR #179"],
+        ["**Beta test**", "Two waves, 19 testers, 91 issues; all 11 Critical "
+         "issues fixed", "PR #208, CI green"],
     ]
-    parts, _ = table(MARGIN, 2.45, [0.0, 6.0, 20.6], rows, size=16,
-                     row_h=[0.86] + [1.55] * 4, width=25.45,
+    parts, _ = table(MARGIN, 2.6, [0.0, 6.2, 20.4], rows, size=TABLE,
+                     row_h="auto", width=BODY_W,
                      aligns=["left", "left", "center"])
     slide(lead="Since the last update", extras=parts,
-          notes="One minute. Each row is a section of the talk.")
+          notes="One minute. Each row is a part of the talk.")
 
     # ================================================================== A
     section(["Cleaning up"])
 
-    # ------------------------------------------------------------------ 4
+    plan_figure("recovery", "The recovery plan: 65 of 90 items done",
+                notes="Phases 2, 4 and 7 are done. Phase 5 waits on two "
+                      "collaboration decisions: Docker, and reprocessing.")
+    plan_figure("branches", "Every branch decided: 40 branches",
+                notes="Green: in dev-next. Red: decided against. Purple: "
+                      "content taken. Nothing deleted yet: archiving to tags "
+                      "waits for the software team.")
+    plan_figure("history", "Seven years of branches, 2019 to 2026",
+                notes="Context only: most of these no longer exist.")
+
     rows = [
         ["", "Count", "What happened"],
-        ["**Branches**", "39", "24 contained in `dev-next`; 10 decided against; "
-         "3 whose content was taken. Nothing deleted yet: archiving to tags "
-         "waits for the software team's green light"],
         ["**Pull requests**", "8 + 1", "Closed: #9, #49, #52, #146, #149, #151, "
          "#153, #154. Ported by hand: #150 (Cramér–Rao bounds)"],
         ["**Old issues, triaged**", "12", "Fixed (#95, #122, #123, #136); "
          "duplicate (#80, #84, #94, #99); not reproducible (#90, #92, #156); "
          "obsolete (#47)"],
         ["**Old issues, fixed**", "7", "#71, #89, #91, #104 (Xmax, direction), "
-         "#137, #139 (T1 trigger), #140 (reader half)"],
-        ["**Left for owners**", "4", "#85, #121, #141, #142 (mjtueros)"],
+         "#137, #139 (T1 trigger), #140 (reader)"],
+        ["**Left for owners**", "4", "#85, #121, #141, #142"],
     ]
-    parts, _ = table(MARGIN, 2.45, [0.0, 6.0, 8.6], rows, size=15,
-                     row_h="auto", width=25.45, aligns=["left", "center", "left"])
-    slide(lead="Branches, pull requests and old issues", extras=parts,
-          ref="resources/dev/dev-next/BRANCHES.md and RECOVERY_PLAN.md on dev-next",
-          notes="The branch map is in BRANCHES.md, read from git.")
+    parts, _ = table(MARGIN, 2.6, [0.0, 6.2, 8.6], rows, size=TABLE,
+                     row_h="auto", width=BODY_W,
+                     aligns=["left", "center", "left"])
+    slide(lead="Old pull requests and issues", extras=parts, ref=PLAN)
 
     # ================================================================== B
     section(["Input validation"])
 
-    # ------------------------------------------------------------------ 6
-    slide(
-        lead="Bad input now stops with a clear message",
-        body=["60 bad inputs given to public functions (wrong type, wrong "
-              "range, missing file). ^^Before:^^ 27 gave a wrong result "
-              "silently. ^^After:^^ none do."],
-        body_size=18,
-        extras=[fig("grandlib_validation", FIG_VALIDATION, MARGIN, 4.55),
-                note(MARGIN, 12.95, 25.4,
-                     ["Messages name the function and the problem: "
-                      "@@GRANDlib: TShower.zenith: should be in [0, 180] deg, "
-                      "got 500@@"], size=15)],
-        ref="PR #179; TEST_PLAN.md §4.1",
-        notes=(
-            "Merged as PR #179. One regression found by the beta test\n"
-            "(#207, numbers given as text) and one more by tester 9 (#263,\n"
-            "channel masks); both fixed in PR #208."),
-    )
+    t, h = body(2.6, ["60 bad inputs given to public functions: wrong type, "
+                      "range, shape or file. ~Before:~ 27 gave a wrong result "
+                      "silently. ~After:~ none do."])
+    slide(lead="Bad input now stops with a clear message",
+          extras=[t, fig("grandlib_validation", FIG_VALIDATION, MARGIN,
+                         2.6 + h + 0.3)],
+          ref="PR #179; " + TRACKER + ", §4.1")
 
     # ================================================================== C
     section(["{The} beta test"])
 
-    # ------------------------------------------------------------------ 8
+    t, h = body(2.6, [
+        "Testers use GRANDlib as a newcomer, an expert or a pipeline user "
+        "would, and report only.",
+        "Every report is reproduced before it becomes a GitHub issue, titled "
+        "*dev-next_beta-test: …*, with its severity.",
+        "Fixes go into one pull request, one commit and one test each. A test "
+        "must fail without its fix.",
+    ])
     rows = [
-        ["Wave", "Testers", "Role", "Issues"],
-        ["**1 — using it**", "11", "Beginners (setup, notebooks), experts "
-         "(dataio, aoi, analysis), pipeline (ZHAireS, CoREAS), input fuzzers",
+        ["Wave", "Testers", "Looks for", "Issues"],
+        ["**1. Using it**", "11", "Missing steps, wrong docs, brittle input",
          "69"],
-        ["**2 — checking it**", "8", "Physics and geometry, documentation, "
-         "error handling, test-suite audit, input validation, notebook prose",
-         "22"],
-        ["**3 — breaking it**", "5", "After PR #208 merges", "—"],
-        ["**4 — regression**", "~4", "Before `dev-next` becomes the default", "—"],
+        ["**2. Checking it**", "8", "Physics, docs, error handling, tests", "22"],
+        ["**3. Breaking it**", "5", "Misuse, extremes, stress, unsafe input",
+         "next"],
     ]
-    parts, _ = table(MARGIN, 2.45, [0.0, 5.6, 8.4, 23.0], rows, size=15,
-                     row_h="auto", width=25.45,
+    parts, _ = table(MARGIN, 2.6 + h + 0.4, [0.0, 6.2, 9.0, 22.4], rows,
+                     size=TABLE, row_h="auto", width=BODY_W,
                      aligns=["left", "center", "left", "center"])
-    slide(
-        lead="How the beta test runs",
-        extras=parts + [note(MARGIN, 10.6, 25.4, [
-            "Each tester gets one mission and reports only. Every finding is "
-            "reproduced before it becomes an issue, titled "
-            "~dev-next_beta-test: …~",
-            "Testers are AI agents, each in its own copy of the repository, on "
-            "`dev-next` at `91d30a1b`."], size=15)],
-        ref="resources/dev/dev-next/beta-tests/TEST_PLAN.md",
-        notes="Issues #180–#271 (#208 is the PR).")
+    slide(lead="The beta test: three waves", extras=[t] + parts, ref=TRACKER,
+          notes="Testers are AI agents, each in its own copy of the "
+                "repository, on dev-next at 91d30a1b.")
 
-    # ------------------------------------------------------------------ 9
+    rows = [
+        ["Tester", "Area", "Issues", "Critical", "High"],
+        ["**Beginners** (×3)", "Setup, the 12 notebooks, examples", "14",
+         "–", "2"],
+        ["**Expert, dataio**", "Every tree, reader and writer", "12", "–",
+         "5"],
+        ["**Expert, analysis**", "aoi, reconstruction, event viewer", "7",
+         "1", "3"],
+        ["**Pipeline, ZHAireS**", "ZHAireS → rawroot → sim2root", "8", "1",
+         "3"],
+        ["**Pipeline, CoREAS**", "CoREAS, e-field → voltage → ADC", "9", "4",
+         "2"],
+        ["**Input fuzzers** (×4)", "Readers, scripts, damaged simulations",
+         "18", "6", "8"],
+    ]
+    parts, _ = table(MARGIN, 2.6, [0.0, 6.4, 18.0, 20.5, 23.0], rows,
+                     size=TABLE, row_h="auto", width=BODY_W,
+                     aligns=["left", "left", "center", "center", "center"])
+    t, _ = body(10.6, ["69 issues: !!10 Critical!!, 22 High, 26 Medium, 11 Low. "
+                       "Most Critical ones were in the conversion chain."])
+    slide(lead="Wave 1: using it", extras=parts + [t], ref=TRACKER,
+          notes="Counts include 5 issues found before the wave, while "
+                "double-checking the validation PR. An issue reported by two "
+                "testers counts once.")
+
+    rows = [
+        ["Tester", "Area", "Issues", "Critical", "High"],
+        ["**Physics** (×2)", "Coordinates, Xmax, signal chain, noise", "7",
+         "1", "2"],
+        ["**Documentation** (×2)", "Docs, Handbook, READMEs, docstrings", "4",
+         "–", "1"],
+        ["**Error handling**", "Silent failures, prints, asserts", "3", "–",
+         "2"],
+        ["**Test suite**", "Coverage, deliberate bugs, weak tests", "2", "–",
+         "1"],
+        ["**Input validation**", "Type, range, shape, units", "6", "–", "3"],
+        ["**Notebook prose**", "Every claim against its output", "2", "–",
+         "1"],
+    ]
+    parts, _ = table(MARGIN, 2.6, [0.0, 6.4, 18.0, 20.5, 23.0], rows,
+                     size=TABLE, row_h="auto", width=BODY_W,
+                     aligns=["left", "left", "center", "center", "center"])
+    t, _ = body(10.6, ["22 issues: !!1 Critical!!, the EGM96 geoid upside "
+                       "down (−7.75 m at GP300 instead of −61.0 m). The test "
+                       "suite let 5 of 15 deliberate bugs through."])
+    slide(lead="Wave 2: checking it", extras=parts + [t], ref=TRACKER)
+
+    rows = [
+        ["Breaker", "Attack"],
+        ["**Misuse**", "Methods in the wrong order; one object across files; "
+         "events that do not exist"],
+        ["**Numerical edges**", "Zenith 0° and 90°; NaN through a whole chain; "
+         "one-antenna events"],
+        ["**Scale and stress**", "Thousands of files; long traces; memory "
+         "over long loops"],
+        ["**Environment**", "Unset variables; missing packages; read-only or "
+         "partial data"],
+        ["**Unsafe input**", "File names that reach a shell; archive "
+         "extraction"],
+    ]
+    parts, _ = table(MARGIN, 2.6, [0.0, 6.4], rows, size=TABLE,
+                     row_h="auto", width=BODY_W)
+    t, _ = body(10.6, ["Starts once PR #208 is merged. A regression wave "
+                       "then re-runs the busiest testers on the fixed code."])
+    slide(lead="Wave 3: breaking it", extras=parts + [t], ref=TRACKER)
+
     rows = [
         ["Severity", "Issues", "Fixed", "Open"],
-        ["!!Critical!!", "11", "%%11%%", "0"],
-        ["**High**", "31", "%%5%%", "26"],
+        ["!!Critical!!", "11", "11", "0"],
+        ["**High**", "31", "5", "26"],
         ["**Medium**", "38", "0", "38"],
         ["**Low**", "11", "0", "11"],
-        ["**Total**", "**91**", "%%16%%", "**75**"],
+        ["**Total**", "91", "16", "75"],
     ]
-    parts, _ = table(15.9, 3.0, [0.0, 3.6, 5.8, 7.9], rows, size=17,
-                     row_h=0.95, width=10.0,
+    parts, _ = table(16.2, 2.9, [0.0, 3.4, 5.6, 7.6], rows, size=TABLE,
+                     row_h=0.9, width=9.6,
                      aligns=["left", "center", "center", "center"])
-    slide(
-        lead="91 issues; every Critical one fixed",
-        extras=[fig("grandlib_severity", FIG_SEVERITY, MARGIN, 2.3)] + parts + [
-            note(15.9, 9.3, 10.6, [
-                "!!Critical!!: wrong physics or data, silently.",
-                "**High**: crashes, data loss, documented commands that fail.",
-                "Fixes: PR #208, one commit and one test each."], size=14)],
-        ref="TEST_PLAN.md §7 and §7a, 1 Oct. 2026",
-        notes="Fixed means 'fix in PR #208', not yet merged.")
+    t, _ = body(9.3, ["!!Critical:!! wrong physics or data, silently.",
+                      "**High:** crashes, data loss, documented commands "
+                      "that fail."], w=10.4, x=16.2)
+    slide(lead="91 issues; every Critical one fixed",
+          extras=[fig("grandlib_severity", FIG_SEVERITY, MARGIN, 2.5)] + parts
+          + [t],
+          ref=TRACKER + ". Fixed: in PR #208, not yet merged")
 
-    # ------------------------------------------------------------------ 10
     rows = [
         ["Issue", "Was wrong", "Effect"],
-        ["#209", "CoREAS azimuth mirrored (.inp path)", "wrong arrival direction"],
-        ["#220", "sim2root antenna lat/lon", "off by up to ~8 km"],
-        ["#227, #229", "RF-chain flags ignored; resampled rate lost",
-         "wrong voltages, wrong ADC rate"],
-        ["#228", "CoREAS unknown Xmax read as −1 cm", "voltages ~10{{−13}} µV"],
-        ["#237", "L0 e-field paired with L1 run tree", "amplitudes doubled"],
-        ["#238, #247", "Missing event or shower", "another event's data written"],
-        ["#242, #243", "ZHAireS, CoREAS: damaged simulations accepted",
-         "valid-looking files"],
-        ["#250", "EGM96 geoid upside down", "GP300: −7.75 m → −61.0 m"],
+        ["#209", "CoREAS azimuth mirrored", "Wrong arrival direction"],
+        ["#220", "sim2root antenna latitude and longitude", "Off by up to 8 km"],
+        ["#227, #229", "RF-chain options ignored; resampled rate lost",
+         "Wrong voltages and ADC rate"],
+        ["#228", "Unknown CoREAS Xmax read as −1 cm",
+         "Voltages near 10{{−13}} µV"],
+        ["#237", "L0 e-field paired with an L1 run tree", "Amplitudes doubled"],
+        ["#238, #247", "A missing event or shower", "Another event's data"],
+        ["#242, #243", "Damaged simulations accepted", "Valid-looking files"],
+        ["#250", "EGM96 geoid upside down", "Heights off by 53 m at GP300"],
     ]
-    parts, _ = table(MARGIN, 2.45, [0.0, 3.6, 15.0], rows, size=15,
-                     row_h=0.98, width=25.45)
+    parts, _ = table(MARGIN, 2.6, [0.0, 3.8, 16.4], rows, size=TABLE,
+                     row_h="auto", width=BODY_W)
     slide(lead="The 11 Critical bugs, now fixed", extras=parts,
-          ref="All in PR #208; CI green on both ROOT versions",
-          notes=(
-              "Every one gave a plausible-looking wrong answer with exit code 0.\n"
-              "#250 changes absolute heights by ~53 m at the GP300 site."))
+          ref="PR #208: one commit and one test each; CI green on ROOT 6.36 "
+              "and 6.38",
+          notes="Each gave a plausible wrong answer with exit code 0.")
 
-    # ------------------------------------------------------------------ 11
     rows = [
         ["Area", "Open High issues"],
-        ["**Data loss**", "`write()` replaces trees (#197, #198); "
-         "`Event.write(overwrite=True)` (#212); `extract_events -ow` (#244); "
-         "re-runs (#240); `get_files_from_db.py` (#245)"],
-        ["**Silent wrong results**", "`DataDirectory` drops files (#195); "
-         "event order (#199); NaN to ADC (#239); geodetic west of Greenwich "
-         "(#251); no-test bugs (#270)"],
-        ["**Documented commands fail**", "README quickstart (#185), pipeline "
-         "(#221), docs (#257), scripts (#184, #248)"],
-        ["**Crashes and hangs**", "`close_files()` (#234); `EventList` (#213, "
-         "#235); rf_chain (#255); silent failures (#256)"],
+        ["**Data loss**", "write() replaces trees; Event.write(overwrite=True); "
+         "extract_events -ow; re-runs; get_files_from_db.py"],
+        ["**Silent wrong results**", "DataDirectory drops files; event order; "
+         "NaN in the ADC; geodetic heights west of Greenwich"],
+        ["**Commands that fail**", "README quickstart; pipeline commands; "
+         "docs examples; helper scripts"],
+        ["**Crashes and hangs**", "close_files(); EventList options; the "
+         "rf_chain error path"],
     ]
-    parts, _ = table(MARGIN, 2.45, [0.0, 6.6], rows, size=15, row_h="auto",
-                     width=25.45)
-    slide(lead="Still to fix: 26 High, 38 Medium, 11 Low", extras=parts + [
-        note(MARGIN, 12.6, 25.4, ["Next: the High issues, then wave 3. "
-                                  "Medium and Low are mostly docs and messages."],
-             size=15, color=BLUE)],
-          notes="Order: data loss first, then silent wrong results.")
+    parts, _ = table(MARGIN, 2.6, [0.0, 6.4], rows, size=TABLE,
+                     row_h="auto", width=BODY_W)
+    t, _ = body(10.6, ["Next: the 26 High issues, data loss first. The 38 "
+                       "Medium and 11 Low are mostly docs and messages."])
+    slide(lead="Still to fix", extras=parts + [t], ref=TRACKER)
 
     # ================================================================== D
-    section(["What {we} need", "{from} you"])
+    t, _ = body(2.6, [
+        "~Access to the GRAND data at CC-IN2P3 (SPS)~, to run the aoi part of "
+        "GRANDlib on real events.",
+        "The aoi readers and the reconstruction scripts expect the data under "
+        "/sps/grand/data/. So far they have been tested only on simulations "
+        "and on the small files committed to the repository.",
+        "An account, or a few event files copied out, would be enough.",
+    ])
+    slide(lead="What we need from you", extras=[t],
+          notes="This is the one request.")
 
-    # ------------------------------------------------------------------ 13
-    rows = [
-        ["Need", "From", "Issue"],
-        ["**Were productions made with geoid heights?** They move ~53 m at GP300",
-         "simulation", "#250"],
-        ["**Store the sampling rate in TVoltage?** A data-format change",
-         "data model", "#229"],
-        ["**Which RA convention do the galactic-noise tables use?**",
-         "noise model", "#268"],
-        ["**Units of the T1 parameters** `tcmax_ch`, `tprev_ch`, `tper_ch`",
-         "trigger group", "#139"],
-        ["**Origin of GP80 GPS positions**", "GP80", "#215"],
-        ["**Regenerate files** made with the buggy converters",
-         "productions", "#209 #220 #237"],
-        ["**Small real-data samples** to commit as test fixtures",
-         "data", "#271"],
-        ["**Green light** to merge PR #208, archive branches, tag", "software team",
-         ""],
-    ]
-    parts, _ = table(MARGIN, 2.45, [0.0, 17.4, 22.0], rows, size=15,
-                     row_h="auto", width=25.45,
-                     aligns=["left", "center", "center"])
-    slide(lead="Decisions and data only you can give", extras=parts,
-          notes="The rest of the work does not need anyone else.")
-
-    # ------------------------------------------------------------------ 14
-    slide(
-        lead="Next",
-        body=[
-            ("1.", "Merge PR #208: 11 Critical + 5 High fixes, each with a test "
-                   "that fails without it."),
-            ("2.", "Fix the open High issues, data loss first."),
-            ("3.", "Wave 3 (breakers), then wave 4 (regression)."),
-            ("4.", "Make `dev-next` the default branch; archive old branches "
-                   "to tags; tag a release. ^^After the software team's green "
-                   "light.^^"),
-        ],
-        body_size=20,
-        notes="Leave this up during questions.")
+    # ------------------------------------------------------------------ end
+    href, iw, ih = fit(FIGS / "grandlib_timeline.png", *FIG_TIMELINE)
+    full_figure(href, iw, ih, lead="Timeline",
+                ref="Planned dates to confirm; the release waits for the "
+                    "software team's green light",
+                notes="Leave this up during questions.")
 
 
 if __name__ == "__main__":

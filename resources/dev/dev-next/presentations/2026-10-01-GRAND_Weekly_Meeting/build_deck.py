@@ -895,6 +895,10 @@ def write_content():
     src = (BUILD / "content.xml").read_text(encoding="utf8")
     head, rest = src.split("<office:automatic-styles>", 1)
     auto, tail = rest.split("</office:automatic-styles>", 1)
+    # A carrier built by this script carries its own x-named styles (xT24, ...);
+    # left in, they come first and win over this deck's styles of the same name.
+    auto = re.sub(r'<style:style style:name="x[^"]*".*?</style:style>', "", auto,
+                  flags=re.S)
     body_open = tail.index("<office:presentation>") + len("<office:presentation>")
 
     # Keep the presentation settings element, drop every page, close the document.
