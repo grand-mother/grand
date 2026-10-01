@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`convert_voltage_to_ADC` converts only the channels asked for (#263).** A
+  regression from #179: a boolean mask such as `[True, False, True]` was iterated
+  as indices 1, 0, 1, converting the wrong rows, and a slice or a single index
+  raised `TypeError`. Channels are now selected as NumPy indexing does, as in
+  `get_peak_amplitude`, and a mask of the wrong length is refused.
 - **The EGM96 geoid map is no longer upside down (#250).** `data/egm96.png`
   stored its rows south-first, while TURTLE reads PNG rows north-first, so every
   geoid undulation was the value at the opposite latitude: the North Pole read

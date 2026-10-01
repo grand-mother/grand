@@ -257,6 +257,24 @@ def test_signal_extraction_checks_channels_and_sampling():
         ex.get_peak_time(np.ones((3, 10)), 0, channels=[0], dt_ns=0)
 
 
+@pytest.mark.parametrize("channels", [[True, False, True], slice(0, 3, 2), [0, 2], np.array([0, 2])],
+                         ids=["mask", "slice", "list", "array"])
+def test_adc_conversion_selects_the_same_channels_as_numpy(channels):
+    r"""#263: a mask converted every channel, and a slice or an int raised TypeError."""
+    from grand.analysis.signals import extraction as ex
+
+    trace = np.arange(30, dtype=float).reshape(3, 10) * 100
+    converted = ex.convert_voltage_to_ADC(trace, channels)
+    scale = 1e-6 * 8192 / 0.9
+    np.testing.assert_allclose(converted[[0, 2]], trace[[0, 2]] * scale)
+    np.testing.assert_array_equal(converted[1], trace[1])
+    one = ex.convert_voltage_to_ADC(trace, 1)
+    np.testing.assert_allclose(one[1], trace[1] * scale)
+    np.testing.assert_array_equal(one[[0, 2]], trace[[0, 2]])
+    with pytest.raises(ValueError, match="needs one value per channel"):
+        ex.convert_voltage_to_ADC(trace, [True, False])
+
+
 # ------------------------------------------------------------------ simulation
 
 def test_simulation_inputs_are_checked():

@@ -373,7 +373,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#260](https://github.com/grand-mother/grand/issues/260) | READMEs are stale | Medium | 6b | open | | |
 | [#261](https://github.com/grand-mother/grand/issues/261) | Docstrings that mislead: missing units and frames, wrong parameters and returns | Medium | 6b | open | | |
 | [#262](https://github.com/grand-mother/grand/issues/262) | A NaN or None latitude/longitude segfaults the process (geoid_undulation, Map.elevation) | High | 9 | open | | |
-| [#263](https://github.com/grand-mother/grand/issues/263) | `convert_voltage_to_ADC` converts every channel for a boolean mask; slice or int raises (regression from #179) | High | 9 | open | | |
+| [#263](https://github.com/grand-mother/grand/issues/263) | `convert_voltage_to_ADC` converts every channel for a boolean mask; slice or int raises (regression from #179) | High | 9 | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | channels indexed as NumPy does; mask length checked |
 | [#264](https://github.com/grand-mother/grand/issues/264) | `Handling3dTraces` accepts a NumPy-scalar `f_samp_mhz`, then `apply_bandpass` fails | High | 9 | open | | |
 | [#265](https://github.com/grand-mother/grand/issues/265) | `Efield2Voltage.params` ignores unknown keys; flags read by truthiness | Medium | 9 | open | | |
 | [#266](https://github.com/grand-mother/grand/issues/266) | Values in the wrong unit (Hz/MHz, s/ns, degrees/radians) accepted silently | Medium | 9 | open | | |
