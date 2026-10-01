@@ -75,3 +75,38 @@ def test_an_unknown_xmax_distance_is_written_as_nan(tmp_path):
     shower.get_entry(0)
     assert np.all(np.isnan(np.asarray(shower.xmax_pos_shc, dtype=float)))
     shower.stop_using()
+
+
+def _damage(work, how):
+    proton = work / "proton"
+    traces = sorted((proton / "SIM004100_coreas").glob("raw_*.dat"))
+    if how == "truncated_list":
+        lines = (proton / "SIM004100.list").read_text().splitlines()
+        (proton / "SIM004100.list").write_text("\n".join(lines[:100]) + "\n")
+    elif how == "extra_trace":
+        shutil.copy(traces[0], traces[0].with_name("raw_extra999.dat"))
+    elif how == "nan_trace":
+        rows = traces[0].read_text().splitlines()
+        parts = rows[10].split()
+        rows[10] = " ".join([parts[0], "nan", "nan", "nan"])
+        traces[0].write_text("\n".join(rows) + "\n")
+    elif how == "short_trace":
+        rows = traces[0].read_text().splitlines()
+        traces[0].write_text("\n".join(rows[:50]) + "\n")
+
+
+@pytest.mark.parametrize("how, message", [
+    ("truncated_list", "trace files are not in the antenna list"),
+    ("extra_trace", "trace files are not in the antenna list"),
+    ("nan_trace", "NaN or infinite"),
+    ("short_trace", "different lengths"),
+])
+def test_antenna_list_and_traces_are_cross_checked(tmp_path, how, message):
+    r"""#243: a list/trace mismatch, NaN or ragged traces were written silently (exit 0)."""
+    work = _workdir(tmp_path, with_event_block=False)
+    _damage(work, how)
+    done = subprocess.run([sys.executable, "CoreasToRawROOT.py", "--file", "proton/SIM004100.reas"],
+                          cwd=work, capture_output=True, text=True, timeout=900)
+    assert done.returncode != 0
+    assert message in done.stderr
+    assert not (work / "Coreas_004100.rawroot").exists()

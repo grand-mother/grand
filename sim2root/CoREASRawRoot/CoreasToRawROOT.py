@@ -30,6 +30,62 @@ parser.add_option("--file", "-f", type="str", dest="file",
 
 (options, args) = parser.parse_args()
 
+
+def check_antennas_and_traces(path_antenna_list, trace_dir):
+  r"""Checks that the antenna list and the trace files describe the same, usable antennas.
+
+  The converter used to take the antenna count from the trace files and
+  everything else from the list, so a truncated list, a missing trace or an
+  extra one produced a file whose ``du_count`` disagreed with its traces, and
+  NaN or truncated traces were written as they were (issue #243).
+
+  Parameters
+  ----------
+  path_antenna_list : str
+      The ``SIM<id>.list`` file.
+  trace_dir : str
+      The ``SIM<id>_coreas`` folder holding one ``raw_<name>.dat`` per antenna.
+
+  Raises
+  ------
+  ValueError
+      Naming every problem found: duplicate names or IDs, antennas without a
+      trace, traces without an antenna, non-finite positions, and traces that
+      are not finite, not 4 columns, or of different lengths.
+  """
+  problems = []
+  info = antenna_positions_dict(path_antenna_list)
+  names = [str(n) for n in info["name"]]
+  if len(set(names)) != len(names):
+    problems.append("duplicate antenna names: %s" % sorted({n for n in names if names.count(n) > 1})[:10])
+  ids = list(info["ID"])
+  if len(set(ids)) != len(ids):
+    problems.append("duplicate antenna IDs: %s" % sorted({i for i in ids if ids.count(i) > 1})[:10])
+  if not all(np.all(np.isfinite(info[axis])) for axis in ("x", "y", "z")):
+    problems.append("antenna positions that are not finite numbers")
+  traces = {os.path.basename(f)[len("raw_"):-len(".dat")]
+            for f in glob.glob(os.path.join(trace_dir, "raw_*.dat"))}
+  missing = sorted(set(names) - traces)
+  extra = sorted(traces - set(names))
+  if missing:
+    problems.append("%d listed antennas have no trace file, e.g. %s" % (len(missing), missing[:10]))
+  if extra:
+    problems.append("%d trace files are not in the antenna list, e.g. %s" % (len(extra), extra[:10]))
+  lengths = set()
+  for name in sorted(set(names) & traces):
+    trace = np.loadtxt(os.path.join(trace_dir, "raw_%s.dat" % name), ndmin=2)
+    if trace.ndim != 2 or trace.shape[1] != 4:
+      problems.append("raw_%s.dat has shape %s, expected (samples, 4)" % (name, trace.shape))
+      continue
+    if not np.all(np.isfinite(trace)):
+      problems.append("raw_%s.dat holds NaN or infinite values" % name)
+    lengths.add(trace.shape[0])
+  if len(lengths) > 1:
+    problems.append("traces have different lengths: %s samples" % sorted(lengths))
+  if problems:
+    raise ValueError("GRANDlib: CoreasToRawROOT: %s and %s do not match:\n  - %s"
+                     % (path_antenna_list, trace_dir, "\n  - ".join(problems)))
+
 def CoreasToRawRoot(file, simID=None):
   print("-----------------------------------------")
   print("------ COREAS to RAWROOT converter ------")
@@ -64,6 +120,9 @@ def CoreasToRawRoot(file, simID=None):
     sys.exit("No traces found. Please check path and try again.")
   else:
     print("Found", len(available_traces), "*.dat files (traces).")
+  # The antenna list and the trace files must describe the same antennas, and
+  # every trace must be usable, before anything is written (issue #243).
+  check_antennas_and_traces(f"{path}/SIM{simID}.list", f"{path}/SIM{simID}_coreas")
      
   print("*****************************************")
   # in each dat file:
@@ -123,6 +182,9 @@ def CoreasToRawRoot(file, simID=None):
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
   TimeResolution = read_params(reas_input, "TimeResolution") * 10**9 #convert to ns
+  if not TimeResolution > 0:
+    raise ValueError("GRANDlib: CoreasToRawROOT: TimeResolution in %s must be positive, got %s ns"
+                     % (reas_input, TimeResolution))
   # TODO: add a check here to see if timeboundaries are auto or not
   AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
   TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
@@ -507,7 +569,8 @@ def CoreasToRawRoot(file, simID=None):
 
   #****** fill traces ******
  
-  RawEfield.du_count = len(tracefiles)
+  # One entry per listed antenna; check_antennas_and_traces made sure each has its trace
+  RawEfield.du_count = len(antenna_names)
 
   # loop through polarizations and positions for each antenna
   print("******")

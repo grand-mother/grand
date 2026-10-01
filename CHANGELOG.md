@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The CoREAS converter checks the antenna list against the trace files (#243).**
+  `du_count` came from the trace files and everything else from the list, so a
+  truncated list, a missing or extra trace, a NaN or a short trace produced a
+  `.rawroot` that looked valid, exit 0. Before writing anything the converter now
+  checks that both name the same antennas (no duplicates), that positions and
+  traces are finite, traces have 4 columns and equal lengths, and
+  `TimeResolution` is positive; otherwise it stops listing every problem.
 - **An unknown Xmax no longer gives a crash or near-zero voltages (#228).** The
   CoREAS converter took `DistanceOfShowerMaximum = -1` ("unknown") as a distance
   of -1 cm, putting Xmax at the core, and `convert_efield2voltage` then produced
