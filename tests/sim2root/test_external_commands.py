@@ -53,7 +53,7 @@ def test_pipeline_steps_pass_arguments_without_a_shell(tmp_path):
     _fake_program(fake, log)
     # INPUTDIR and EXTRA as a user, or a directory found on disk, could name them
     done = subprocess.run([sys.executable, str(COMMON / "RunSimPipe.py"), "sim; touch PWNED #",
-                           "e$(touch PWNED2)"],
+                           "e$(touch PWNED2)", "-sl", "GP300"],
                           cwd=tmp_path, capture_output=True, text=True, timeout=300,
                           env=dict(os.environ, PYTHONINTERPRETER=str(fake)))
     assert not (tmp_path / "PWNED").exists() and not (tmp_path / "PWNED2").exists(), done.stdout
@@ -61,3 +61,18 @@ def test_pipeline_steps_pass_arguments_without_a_shell(tmp_path):
     assert calls, done.stdout[-1500:] + done.stderr[-1500:]
     assert "sim; touch PWNED #" in calls[0]
     assert "e$(touch PWNED2)" in calls[0]
+
+
+def test_pipeline_passes_the_site_layout_and_stops_when_sim2root_fails(tmp_path):
+    r"""#221: RunSimPipe.py never passed the required -sl to sim2root, and after the
+    failed step went on with whichever directory was newest."""
+    log = tmp_path / "calls.jsonl"
+    fake = tmp_path / "fake_python"
+    _fake_program(fake, log)                       # exits 0 but writes nothing
+    (tmp_path / "older_sample").mkdir()            # must not be picked up
+    done = subprocess.run([sys.executable, str(COMMON / "RunSimPipe.py"), "in", "x", "-sl", "GP13"],
+                          cwd=tmp_path, capture_output=True, text=True, timeout=300,
+                          env=dict(os.environ, PYTHONINTERPRETER=str(fake)))
+    calls = [json.loads(line) for line in log.read_text().splitlines()]
+    assert len(calls) == 1 and calls[0][calls[0].index("-sl") + 1] == "GP13"
+    assert done.returncode != 0 and "no new directory" in done.stderr

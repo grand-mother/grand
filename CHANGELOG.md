@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The sim2root pipeline example runs as documented (#221).** `RunSimPipe.py`
+  and `RunSimPipeNoJitter.py` never passed the site layout that sim2root
+  requires, so the first step failed and the next ones ran on whichever
+  directory was newest (in `sim2root/Common`, a committed sample); the voltage
+  step was also given its output path twice over (`DIR/DIR/voltage_...`).
+  Both scripts now take a required `-sl`, pass it on, take the directory
+  sim2root created rather than the newest one, and stop at the first failed
+  step. The sim2root README examples gain `-sl` (and lose a stray `python`).
+  `RunSimPipe.py ../ZHAireSRawRoot ZHAireS -sl GP300` was run end to end.
+
 - **`recons_ADF` no longer returns its starting point as a fit (#286).** The
   loss divides by the antenna amplitudes, so a zero amplitude (an antenna
   below one ADC count) made it infinite everywhere and the fit returned the
