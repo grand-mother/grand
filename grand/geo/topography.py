@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import enum
+import warnings
 from pathlib import Path
 from typing import Optional, Union, Any
 from typing_extensions import Final
@@ -115,6 +116,31 @@ def elevation(coordinates, reference: Optional[str] = _default_reference):
         DATADIR.mkdir(exist_ok=True)
         _default_topography = Topography(DATADIR)
     return _default_topography.elevation(coordinates, reference)
+
+
+def _finite_points(a, b, frame_finite, where):
+    r"""Returns the mask of the points libturtle can be given (issue #262).
+
+    Parameters
+    ----------
+    a, b : ndarray
+        The two horizontal coordinates of each point.
+    frame_finite : bool
+        Whether the frame (origin and basis) the points are given in is finite.
+    where : str
+        The calling function, for the warning.
+
+    Returns
+    -------
+    ndarray of bool
+        True where both coordinates, and the frame, are finite.
+    """
+    finite = np.ravel(np.isfinite(a) & np.isfinite(b)) & bool(frame_finite)
+    if not finite.all():
+        warnings.warn(_validate.message(where, "%d of %d points have a non-finite position; "
+                                        "their elevation is NaN" % ((~finite).sum(), finite.size)),
+                      _validate.GRANDlibWarning, stacklevel=4)
+    return finite
 
 
 def _get_geoid():
@@ -419,11 +445,16 @@ class Topography:
 
         # Return the topography elevation
         n = x.size
-        elevation = np.zeros(n)
-        origin = coordinates.location
-        basis = (
-            coordinates.basis.T
+        origin = np.ascontiguousarray(coordinates.location, dtype=float)
+        basis = np.ascontiguousarray(
+            coordinates.basis.T, dtype=float
         )  # basis in coordinates.py and in lib... are transpose of each other.
+        # libturtle crashes on a NaN coordinate (issue #262): only finite
+        # points are passed to it, the others get NaN with a warning.
+        finite = _finite_points(x, y, np.all(np.isfinite(origin)) and np.all(np.isfinite(basis)),
+                                "Topography.elevation")
+        x, y = (np.ascontiguousarray(np.ravel(v)[finite], dtype=float) for v in (x, y))
+        values = np.zeros(x.size)
         geoid = _get_geoid()._map[0]
         stack = self._stack._stack[0] if self._stack._stack else ffi.NULL
 
@@ -434,10 +465,12 @@ class Topography:
             self._as_double_ptr(basis),
             self._as_double_ptr(x),
             self._as_double_ptr(y),
-            self._as_double_ptr(elevation),
-            n,
+            self._as_double_ptr(values),
+            x.size,
         )
 
+        elevation = np.full(n, np.nan)
+        elevation[finite] = values
         return elevation
 
     def _global_elevation(self, coordinates, reference: str):
@@ -467,7 +500,12 @@ class Topography:
 
         # Return the topography elevation
         n = latitude.size
-        elevation = np.zeros(n)
+        # libturtle crashes on a NaN coordinate (issue #262): only finite
+        # points are passed to it, the others get NaN with a warning.
+        finite = _finite_points(latitude, longitude, True, "Topography.elevation")
+        latitude, longitude = (np.ascontiguousarray(np.ravel(v)[finite], dtype=float)
+                               for v in (latitude, longitude))
+        values = np.zeros(latitude.size)
         if reference == "ELLIPSOID":
             geoid = _get_geoid()._map[0]
         else:
@@ -479,10 +517,12 @@ class Topography:
             geoid,
             self._as_double_ptr(latitude),
             self._as_double_ptr(longitude),
-            self._as_double_ptr(elevation),
-            n,
+            self._as_double_ptr(values),
+            latitude.size,
         )
 
+        elevation = np.full(n, np.nan)
+        elevation[finite] = values
         return elevation
 
     def distance(
