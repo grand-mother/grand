@@ -15,7 +15,7 @@ Automatically loaded with env/setup.sh,
 
 ## How to reload a GRAND model
 
-* remove/change name of directory grand/data/model/detector
+* remove/change name of directory grand/data/detector
 * in directory grand/data, do 
 
 ```

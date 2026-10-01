@@ -318,7 +318,7 @@ Longitudinal profile of electrons
 def long_pd_muplus()
 ```
 
-Longitudinal profile of positrons
+Longitudinal profile of positive muons
 
 <a id="raw_root_trees.RawShowerTree.long_pd_muminus"></a>
 
@@ -329,7 +329,7 @@ Longitudinal profile of positrons
 def long_pd_muminus()
 ```
 
-Longitudinal profile of electrons
+Longitudinal profile of negative muons
 
 <a id="raw_root_trees.RawShowerTree.long_pd_allch"></a>
 

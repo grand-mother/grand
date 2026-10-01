@@ -37,7 +37,7 @@ main options:
 grand_quality_analysis.bash
 ```
 
-### Output example
+### Output example (from 2022; the module names have changed since)
 
 ```console
 grand/tools/fake.py:20: [E0602(undefined-variable), max_2_vectors] Undefined variable 'vb'
@@ -65,7 +65,7 @@ coverage run --source=grand -m pytest tests
 grand_quality_test_cov.bash
 ```
 
-### Output example
+### Output example (from 2022; the module names have changed since)
 
 ```console
 Name                                        Stmts   Miss Branch BrPart  Cover
@@ -160,7 +160,7 @@ We use this simple option
 grand_quality_type.bash
 ```
 
-### Output example
+### Output example (from 2022; the module names have changed since)
 
 
 See report in file 

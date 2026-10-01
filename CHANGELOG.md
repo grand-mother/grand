@@ -15,6 +15,23 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Stale READMEs (#260).** `scripts/readme.md` covered four scripts with
+  outdated help; it now indexes all of them and reproduces each one's current
+  `-h` output, with the working two-step recipe. The CoREAS README named a
+  non-existent `coreas_pipeline.py` and the wrong script spelling;
+  `sim2root/README.md` had two sections numbered 3; `data/readme.md`,
+  `examples/dataio/readme.md`, the conda and quality READMEs pointed at paths
+  and modules that are gone; `env/readme.md` now links the Docker README;
+  `docs/readme.md` says how to build the docs; the sim2root API dump called
+  the muon profiles electron and positron ones.
+- **Stale or garbled documentation text (#193).** The coordinates page
+  promised a notebook that exists (now linked); the notebook page's sentence
+  about notebook 12's dependencies is readable; the quickstart's design
+  sketch is marked as not runnable; the Handbook's Directory Structure page
+  states the arms the right way round; notebook footers no longer say
+  "uncommitted changes" for a build made with its own commit. (Docstrings
+  with `jupyter-execute` blocks are left: the docs build runs them.)
+
 - **Notebooks 10–12: counts, units, jargon (#219).** Notebook 10 named five
   scripts and listed four (`register_in_db` was missing) and explained
   behaviour by commit history; notebook 11's bound check now says which bound

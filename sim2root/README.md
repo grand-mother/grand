@@ -103,7 +103,7 @@ python ../../scripts/convert_voltage2adc.py sim_Xiaodushan_20221026_000000_RUN1_
 4) compute DC2 efield
 python ../../scripts/convert_efield2efield.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500
 
-## 3) Simulation Pipe WITHOUT NOISE example (in the Common directory)
+## 4) Simulation Pipe WITHOUT NOISE example (in the Common directory)
 
 The example shows how to use the example rawroot file given in /grand/sim2root/CoREASRawRoot/
 

@@ -1,6 +1,6 @@
 # Coreas to Raw Root Converter
 
-## How to run just CoreasToRawRoot
+## How to run just CoreasToRawROOT.py
 ### Convert Multiple Showers in a Directory
 To convert data from multiple CoREAS showers located in the same directory, use the following command:
 `python3 CoreasToRawROOT.py -d <path_to_directory>`
@@ -20,14 +20,14 @@ file). An existing output file is refused, rather than appended to; give
 `--overwrite`.
 
 
-## How to run the whole CoreasToRawRoot + sim2root + efield2voltage
-`python3 coreas_pipeline.py -d <directory with Coreas Sim>`\
-optional: specify an output directory as well:\
-`python3 coreas_pipeline.py -d <directory with Coreas Sim> -o <output directory>`\
+## How to run the whole chain (CoreasToRawROOT + sim2root + efield2voltage)
+There is no single script for it any more. `../Common/RunSimPipeNoJitter.py`
+runs the steps after this converter on a folder of `.rawroot` files:\
+`python3 ../Common/RunSimPipeNoJitter.py <folder with .rawroot files> <extra> -sl GP300`
 
 
 ## Overview
-### CoreasToRawRoot.py
+### CoreasToRawROOT.py
 This Python code defines a function called `CoreasToRawRoot` that performs several tasks related to processing and converting data from a CORSIKA simulation with Coreas output into a ROOT file format. Here's a brief summary/explanation of the code:
 
 1. Importing Libraries:

@@ -9,7 +9,8 @@ Docker is the best choice for Mac OS. Note image version depends on [processor a
 * ARM64: for M1, M2 version 2.0
 * AMD64 : version 1.2
 
-See github [wiki](https://github.com/grand-mother/grand/wiki#development-environment) of grand project
+See [docker/README.md](docker/README.md), and the github [wiki](https://github.com/grand-mother/grand/wiki#development-environment) of grand project.
+The images are not maintained any more (see `docs/source/known_issues.rst`); prefer conda.
   
 
 ## With Conda 
