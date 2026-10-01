@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Plane-wave fit: vertical showers and collinear antennas (#288, item 5).**
+  Equal arrival times -- a vertical shower over a flat array -- made the
+  solver fail with "function value is NaN"; the fit now returns the array's
+  normal (zenith 0). Antennas on one line returned `[nan nan]` with only a
+  `RuntimeWarning`; they are now refused with a message.
+
 - **`get_peak_amplitude` was biased by −4 % to +6 % (#288, item 4).** It took
   the Hilbert envelope of the field's norm, which depends on the carrier
   frequency. It now takes the norm of the per-channel envelopes, which gives

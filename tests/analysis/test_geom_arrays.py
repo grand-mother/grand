@@ -26,3 +26,15 @@ def test_peak_amplitude_is_the_envelope_of_the_field(carrier_mhz):
     carrier = envelope * np.sin(2 * np.pi * carrier_mhz * t)
     trace = np.array([0.6 * carrier, 0.8 * carrier, 0 * carrier])
     assert get_peak_amplitude(trace, [0, 1, 2]) == pytest.approx(100.0, rel=2e-3)
+
+
+def test_plane_wave_vertical_shower_and_collinear_antennas():
+    r"""#288: equal times (zenith 0) failed in the solver; collinear antennas gave [nan nan]."""
+    from grand.analysis.fitting.plane_wave import PWF_semianalytical
+
+    flat = np.array([[0.0, 0, 0], [1000, 0, 0], [0, 1000, 0], [1000, 1000, 0], [500, 300, 0]])
+    theta, phi = PWF_semianalytical(flat, np.zeros(5))
+    assert theta == pytest.approx(0.0, abs=1e-12)
+    line = np.array([[0.0, 0, 0], [1000, 0, 0], [2000, 0, 0]])
+    with pytest.raises(ValueError, match="on one line"):
+        PWF_semianalytical(line, np.array([0.0, 1e-6, 2e-6]))

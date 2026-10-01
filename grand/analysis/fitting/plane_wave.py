@@ -43,8 +43,22 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     A = np.dot(PXT.T, PXT)
     b = np.dot(PXT.T, t_center) * c / n
     d, W = np.linalg.eigh(A)
+    # Antennas on one line leave the direction undetermined about that line:
+    # it returned [nan nan] with only a RuntimeWarning (#288)
+    if d[1] <= 1e-12 * d[2]:
+        raise ValueError(_validate.message(
+            where, "the antennas lie on one line; a plane-wave direction needs them spread in two dimensions"))
     beta = np.dot(b, W)
     nbeta = np.linalg.norm(beta)
+
+    # Equal times: the front is parallel to the array, and the shower comes
+    # along its normal.  The solver divided by |beta| = 0 and failed, for
+    # every vertical shower over a flat array (#288)
+    if nbeta == 0 or np.ptp(tants) == 0:
+        k_opt = W[:, 0] if W[2, 0] < 0 else -W[:, 0]
+        theta_opt = np.arccos(np.clip(-k_opt[2], -1.0, 1.0))
+        phi_opt = np.arctan2(-k_opt[1], -k_opt[0]) % (2 * np.pi)
+        return np.array([theta_opt, phi_opt])
 
     if (np.abs(beta[0] / nbeta) < 1e-14):
         if (verbose):
