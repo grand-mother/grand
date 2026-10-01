@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Tests for deliberate bugs the suite missed (#270).** A mutation audit
+  found five changes that passed every test. Each is now caught: the azimuth
+  of `Horizontal` from an (east, north, up) position, and its round trip
+  through ECEF; `final_resample`'s amplitude and output length at 2× and 0.5×
+  the rate; exact ADC counts at ±0.5 and ±1.5 LSB and full scale. The order of
+  `get_dus_indices_in_run` is pinned by the #199 test. Each new test was
+  checked against its mutation.
+
 - **Raw or reduced χ² in `TRecons`, and bounds that read 0 (#211).** The
   committed `recons_CR_candidates.root` holds the raw χ², as `TRecons`
   documents, but `main_AOI.py` and `main_DOI.py` wrote it divided by the
