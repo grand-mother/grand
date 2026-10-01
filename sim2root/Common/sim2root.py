@@ -670,11 +670,11 @@ def init_all_trees(clargs, unix_date, run_number, site, gt):
     if clargs.forced_output_directory is None:
         out_dir_name = form_directory_name(clargs, date, time, run_number, site)
         logger.info(f"Storing files in directory {out_dir_name}")
-        out_dir_name.mkdir()
+        out_dir_name.mkdir(parents=True)  # -o may name a folder not yet made (#257)
     # If another directory was forced as the output directory, create it
     else:
         out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
-        out_dir_name.mkdir(exist_ok=True)
+        out_dir_name.mkdir(parents=True, exist_ok=True)
 
     # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
     # Init run trees only if requested

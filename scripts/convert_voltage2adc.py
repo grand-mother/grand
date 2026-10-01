@@ -381,7 +381,15 @@ if __name__ == '__main__':
     f_output  = args.out_file
     noise_dir = args.noise_dir
 
-    f_input_file=glob.glob(f_input_dir+"/voltage_*_L0_*.root")[0]
+    # The folder sim2root wrote, holding the voltage_*_L0_*.root that
+    # convert_efield2voltage.py writes when -o is not given (#257)
+    found = sorted(glob.glob(os.path.join(f_input_dir, "voltage_*_L0_*.root")))
+    if not found:
+        raise SystemExit(
+            "GRANDlib: convert_voltage2adc: no voltage_*_L0_*.root in %s.  Give the simulation "
+            "folder that convert_efield2voltage.py wrote to, and let it name the voltage file "
+            "(leave out its -o)." % f_input_dir)
+    f_input_file = found[0]
 
     if f_output == None:
         f_output = adc_file_path(f_input_file)

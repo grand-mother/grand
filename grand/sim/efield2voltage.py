@@ -190,11 +190,16 @@ class Efield2Voltage:
         Parameters
         ----------
         d_input : str
-            Input ROOT file, or a directory of them.
+            The simulation folder ``sim2root.py`` wrote, holding the
+            ``efield_*``, ``run_*`` and ``shower_*`` files.  A single e-field
+            file is not enough: the run and shower trees are read too.
         f_output : str, optional
-            Output file.  Derived from the input name when omitted.
+            Output file name, relative to `output_directory`.  Derived from
+            the input name when omitted, as ``voltage_*_L0_*.root``, which is
+            what ``convert_voltage2adc.py`` looks for.
         output_directory : str, optional
-            Directory to write into.
+            Directory to write into; the current directory when omitted
+            (``convert_efield2voltage.py`` passes the input folder).
         seed : int, optional
             Seed for the noise generator.  ``None`` gives an independent
             realisation each run; a fixed value makes it reproducible.

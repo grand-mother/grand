@@ -43,7 +43,7 @@ From a CoREAS simulation directory:
 .. code-block:: bash
 
     cd sim2root/CoREASRawRoot
-    python3 CoreasToRawROOT.py proton/
+    python3 CoreasToRawROOT.py -d proton
 
 From a ZHAireS one, where the long form takes the identifiers explicitly and
 the short form works them out:
@@ -58,7 +58,15 @@ Then, in either case:
 
 .. code-block:: bash
 
-    python3 sim2root/Common/sim2root.py <path>/*.rawroot -d 20221026 -t 180000 -e DC2Alpha
+    python3 sim2root/Common/sim2root.py <path>/*.rawroot -sl GP300 -d 20221026 -t 180000 -e DC2Alpha \
+        --trigger_time_ns 800 --target_duration_us 4.096
+
+``-sl``, the site layout, is required.  A run stores one trace window, so when
+the input showers were simulated with different windows -- as the two committed
+ZHAireS samples were -- ``--trigger_time_ns`` and ``--target_duration_us`` give
+them a common one; without them ``sim2root.py`` stops and says so.  The output
+is a folder named ``sim_<site>_<date>_<time>_RUN<run>_CD_<extra>_<serial>``,
+made in the current directory or in the one ``-o`` names.
 
 ``sim2root.py --help`` lists the rest.  ``sim2root/README.md`` is the
 authoritative usage document and is kept by the people who wrote the

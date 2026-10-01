@@ -7,21 +7,24 @@ simulation, and compute the voltage a detection unit would record.
 Today
 -----
 
-From Listing 4 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_:
+After Listing 4 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_,
+which passes a single e-field file.  The input is now the simulation folder
+``sim2root.py`` writes (``efield_*``, ``run_*`` and ``shower_*`` files), since
+the run and shower trees are needed too:
 
 .. code-block:: python
 
     from grand import Efield2Voltage
 
-    signal = Efield2Voltage("input_efield.root", "output_voltage.root")
+    signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
     signal.params["add_noise"]    = True
     signal.params["add_rf_chain"] = True
 
-    signal.compute_voltage()      # writes output_voltage.root as a side effect
+    signal.compute_voltage()      # writes ./voltage.root as a side effect
 
 or, equivalently, from a shell::
 
-    python scripts/convert_efield2voltage.py input_efield.root -o output_voltage.root
+    python scripts/convert_efield2voltage.py my_simulation -o voltage.root -od .
 
 .. note::
 

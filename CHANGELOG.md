@@ -15,6 +15,19 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Documented commands that failed (#257).** `sim2root.rst`,
+  `simulation.rst`, `quickstart.rst` and the Handbook's Directory Structure
+  page gave commands that failed as written: the CoREAS converter without
+  `-d`, `sim2root.py` without `-sl`, and the voltage and ADC steps on single
+  files. Each now gives the working form: `-d proton`, `-sl GP300` (with a
+  common trace window for the two ZHAireS samples, #222), and the folder
+  `sim2root.py` wrote for both conversion steps. A new test reads the commands
+  out of the pages and runs them on the committed samples.
+  `convert_voltage2adc.py` says what it needs instead of failing with
+  `IndexError`, `sim2root.py -o` creates missing parent folders, the
+  `Efield2Voltage` docstring describes its input correctly, and the Handbook
+  errata list the failing commands.
+
 - **Tests for deliberate bugs the suite missed (#270).** A mutation audit
   found five changes that passed every test. Each is now caught: the azimuth
   of `Horizontal` from an (east, north, up) position, and its round trip

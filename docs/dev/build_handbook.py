@@ -51,7 +51,9 @@ HAND_MAINTAINED = {
         'Corrected by hand on 2026-09-08 (3a91507c): "Python Dependencies '
         '(Docker)" told readers to pip install requirements_vers.txt, a 2022 '
         'pin set carrying a Pillow with a critical advisory; the file was '
-        'removed and the section now points at the conda environment.',
+        'removed and the section now points at the conda environment.  '
+        'Also corrected by hand on 2026-10-01 (#257): its sim2root, CoREAS '
+        'converter and voltage/ADC commands failed as written.',
 }
 
 #: Statements in the Handbook that the code contradicts.  Each was checked
@@ -100,6 +102,15 @@ ERRATA = [
      '``env/conda/grand-dev.yml``. The online Directory Structure page is '
      'already corrected; the PDF is compiled from the unchanged source.',
      ':doc:`../installation`'),
+    ('Commands',
+     '``CoreasToRawROOT.py proton/``; ``sim2root.py <path>/*.rawroot -d ... -e '
+     'DC2Alpha``; ``convert_efield2voltage.py <efield.root> -o out.root`` then '
+     '``convert_voltage2adc.py out.root -o adc.root``.',
+     'Each fails. The CoREAS converter takes ``-d proton``; ``sim2root.py`` '
+     'needs ``-sl GP300``; both conversion scripts take the folder '
+     '``sim2root.py`` wrote, not a file, and name their outputs into it. The '
+     'Directory Structure page is corrected; the PDF is not.',
+     ':doc:`../sim2root`, :doc:`../simulation`'),
 ]
 
 

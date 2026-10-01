@@ -161,21 +161,29 @@ saturation of the ADC chip, producing the counts a ``TADC`` tree holds.
 Running it
 ----------
 
+The input is the folder ``sim2root.py`` wrote (see :doc:`sim2root`): a single
+e-field file is not enough, since the run and shower trees are read too.
+
 .. code-block:: python
 
     from grand import Efield2Voltage
 
-    signal = Efield2Voltage("input_efield.root", "output_voltage.root")
+    signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
     signal.params["add_noise"]    = True
     signal.params["add_rf_chain"] = True
     signal.compute_voltage()
 
-or:
+or, from a shell, both steps on the same folder:
 
 .. code-block:: bash
 
-    python scripts/convert_efield2voltage.py in.root -o out.root --lst 18
-    python scripts/convert_voltage2adc.py out.root -o adc.root
+    python scripts/convert_efield2voltage.py my_simulation --lst 18
+    python scripts/convert_voltage2adc.py my_simulation
+
+Without ``-o`` each script names its output (``voltage_*_L0_*.root``,
+``adc_*_L1_*.root``) and writes it into the folder, which is where the next
+step looks.  A name given with ``-o`` is taken relative to the output folder:
+the input folder, unless ``-od`` names another.
 
 Run time is about 13 s per shower across a full GRANDProto300 array on one
 core, measured over 300 ZHAireS showers for the GRANDlib paper.

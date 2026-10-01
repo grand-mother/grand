@@ -72,3 +72,7 @@ Every entry below was checked against the package rather than assumed.
      - Tells readers to ``pip install -r requirements_vers.txt`` for pinned versions.
      - Do not. That file was a 2022 pin set -- numpy 1.22.1, and a Pillow with a critical advisory -- that nothing ever built from, and it was removed on 2026-09-08. Use the conda environment, ``env/conda/grand-dev.yml``. The online Directory Structure page is already corrected; the PDF is compiled from the unchanged source.
      - :doc:`../installation`
+   * - Commands
+     - ``CoreasToRawROOT.py proton/``; ``sim2root.py <path>/*.rawroot -d ... -e DC2Alpha``; ``convert_efield2voltage.py <efield.root> -o out.root`` then ``convert_voltage2adc.py out.root -o adc.root``.
+     - Each fails. The CoREAS converter takes ``-d proton``; ``sim2root.py`` needs ``-sl GP300``; both conversion scripts take the folder ``sim2root.py`` wrote, not a file, and name their outputs into it. The Directory Structure page is corrected; the PDF is not.
+     - :doc:`../sim2root`, :doc:`../simulation`
