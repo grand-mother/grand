@@ -23,8 +23,12 @@ if args.p:
     interp = "python"
 
 # Construct the command based on the arguments
-command = f"from grand.dataio import *; f = DataFile('{args.filename}');"
+# The name reaches the shell through the environment, never as code: it was
+# pasted into the command, so a quote in it broke the session and a crafted
+# name ran arbitrary Python (#184)
+os.environ["GRAND_OPEN"] = args.filename
+command = "import os; from grand.dataio import *; f = DataFile(os.environ['GRAND_OPEN']);"
 if not args.s:
-    command+=f" print(f'\\n\\033[0;31mOpened file {args.filename} as f\\033[0m\\n'); f.print()"
+    command+=" print('\\n\\033[0;31mOpened file %s as f\\033[0m\\n' % os.environ['GRAND_OPEN']); f.print()"
 os.execlp(interp, interp, '-i', '-c', command)
 

@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The `open_grand_*` scripts no longer run the file name as code (#184).**
+  `open_grand_file.py`, `open_grand_directory.py` and
+  `open_grand_analysis_prompt.py` pasted the name into the Python command they
+  start the shell with, so a quote in it broke the session and a crafted name
+  ran arbitrary code. The name now reaches the shell through the environment.
+  `open_grand_analysis_prompt.py` also printed `sys.argv[1]` as the directory,
+  which is the first option when one is given.
+
 - **Appending events slows down less (#283, in part).** Every time a tree was
   opened it listed all run and event numbers, reading the whole tree, and
   `Efield2Voltage` reopened and rewrote its output file for every event, so

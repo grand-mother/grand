@@ -29,9 +29,11 @@ else:
     verbose=True
 
 # Construct the command based on the arguments
-command = f"from grand.dataio import *; d = DataDirectory('{args.dirname}');"
+# The name reaches the shell through the environment, never as code (#184)
+os.environ["GRAND_OPEN"] = args.dirname
+command = "import os; from grand.dataio import *; d = DataDirectory(os.environ['GRAND_OPEN']);"
 if not args.s:
-    command+=f" print(f'\\n\\033[0;31mOpened directory {args.dirname} as d\\033[0m\\n'); d.print(verbose={verbose})"
+    command+=" print('\\n\\033[0;31mOpened directory %%s as d\\033[0m\\n' %% os.environ['GRAND_OPEN']); d.print(verbose=%s)" % verbose
  
 os.execlp(interp, interp, '-i', '-c', command)
 
