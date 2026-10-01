@@ -296,6 +296,28 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#182](https://github.com/grand-mother/grand/issues/182) | `-od/--out_directory` fails when the folder does not exist yet | Medium | coordinator (pre-wave) | open | | |
 | [#183](https://github.com/grand-mother/grand/issues/183) | `T1_trigger_offline.py` has no argument parsing; `-h` is opened as a file | Low | coordinator (pre-wave) | open | | |
 | [#184](https://github.com/grand-mother/grand/issues/184) | `open_grand_file.py` / `open_grand_directory.py` run the file name as Python code | Medium | coordinator (pre-wave) | open | | |
+| [#185](https://github.com/grand-mother/grand/issues/185) | README quickstart fails: `Efield2Voltage` needs a directory, not an efield file | High | 1a-A, 1a-B | open | | |
+| [#186](https://github.com/grand-mother/grand/issues/186) | Docs say the declination at Dunhuang is "a few degrees"; it is about 0.3° (and IGRF-13 is outdated after 2020) | Medium | 1a-A, 1a-B | open | | |
+| [#187](https://github.com/grand-mother/grand/issues/187) | A file whose name level disagrees with its trees is silently ignored | Medium | 1a-A, 1a-B | open | | |
+| [#188](https://github.com/grand-mother/grand/issues/188) | Notebook 06 fixture triggers an unexplained Xmax warning; the warning's angles are ambiguous | Medium | 1a-A, 1a-B | open | | |
+| [#189](https://github.com/grand-mother/grand/issues/189) | Notebooks 03, 04 and 06: prose contradicts the outputs | Medium | 1a-A | open | | |
+| [#190](https://github.com/grand-mother/grand/issues/190) | Notebook 05 places 1 MHz-spaced noise into 0.977 MHz FFT bins | Medium | 1a-A | open | | |
+| [#191](https://github.com/grand-mother/grand/issues/191) | `help()` on a tree field fails: descriptors crash on class access | Low | 1a-B | open | | |
+| [#192](https://github.com/grand-mother/grand/issues/192) | Docs lack basic recipes (read one event's shower; geodetic to GRANDCS) | Medium | 1a-B | open | | |
+| [#193](https://github.com/grand-mother/grand/issues/193) | Stale or garbled documentation text | Low | 1a-A, 1a-B | open | | |
+| [#194](https://github.com/grand-mother/grand/issues/194) | Routine operations print alarming messages | Low | 1a-A, 1a-B | open | | |
+| [#195](https://github.com/grand-mother/grand/issues/195) | `DataDirectory` silently drops files: keeps 1 of 10 showers in examples/analysis | High | 2a | open | | |
+| [#196](https://github.com/grand-mother/grand/issues/196) | `get_list_of_events()` and `draw()` silently change the loaded entry's values | High | 2a | open | | |
+| [#197](https://github.com/grand-mother/grand/issues/197) | `write()` to an existing file replaces its tree even with `overwrite=False` | High | 2a | open | | |
+| [#198](https://github.com/grand-mother/grand/issues/198) | `write("other.root")` on a tree that already has a file writes a corrupt copy | High | 2a | open | | |
+| [#199](https://github.com/grand-mother/grand/issues/199) | `get_dus_indices_in_run` returns run order, not event order | High | 2a | open | | |
+| [#200](https://github.com/grand-mother/grand/issues/200) | `get_traces_lengths` always returns None; `get_list_of_dus` returns the whole tree's units | Medium | 2a | open | | |
+| [#201](https://github.com/grand-mother/grand/issues/201) | Vector fields: unsigned char read as characters; `+=` replaces; numpy bool/uint64 assignment fails and empties the field | Medium | 2a | open | | |
+| [#202](https://github.com/grand-mother/grand/issues/202) | A misspelt tree field is accepted silently: the typo guard never runs | Medium | 2a | open | | |
+| [#203](https://github.com/grand-mother/grand/issues/203) | `creation_datetime` is stored in local time, not UTC | Medium | 2a | open | | |
+| [#204](https://github.com/grand-mother/grand/issues/204) | `DataDirectory`: `recursive=True` finds nothing; one oddly named file aborts the directory | Medium | 2a | open | | |
+| [#205](https://github.com/grand-mother/grand/issues/205) | Tree wildcards: no match creates a file named with '*'; wildcard chains cannot look up events | Medium | 2a | open | | |
+| [#206](https://github.com/grand-mother/grand/issues/206) | Smaller dataio inconsistencies (argument order, silent failed lookups, TRecons units) | Low | 2a | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -311,6 +333,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Batch 1 reports in from 1a-A, 1a-B and 2a: all findings confirmed by the coordinator (re-run where marked) and logged as #185–#206; five High (silent data loss or wrong values in `grand.dataio`). Batch 2 started: 1b, 2b, 3b. |
 | 2026-10-01 | Validation merged (PR #179). Wave 1 started on `dev-next` at `91d30a1b`: batch 1 (1a ×2, 2a, 3a, 4a). Five problems found by the coordinator during the pre-PR check logged as #180–#184. |
 | 2026-10-01 | Validation work double-checked before its PR, against `dev-next`: full pipeline (sim2root, the three converters, T1, CoREAS) gives identical output (676 branches in 21 files); the 12 notebooks give the same results; reading and writing speed unchanged. Found and fixed 3 checks that refused input which used to work: a covariance matrix as `sigma`, `channels` as a slice, a `(1, 3)` source position (and `[[x, y, z]]` for 3-value tree fields). |
 | 2026-10-01 | Validation PR: 50 of 60 bad inputs now refused with a `GRANDlib:` message, 0 crashes, 0 `exit()` (§4.1). |
