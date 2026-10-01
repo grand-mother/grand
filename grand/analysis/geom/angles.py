@@ -3,6 +3,7 @@
 import grand.analysis.coords.array_shower as co
 import numpy as np
 import grand.analysis.constants as cons
+from grand.analysis import _checks
 
 def eta(theta, phi, Bvec, Xants, Xsource):
     """
@@ -72,6 +73,7 @@ def sin_geomag_angle(theta, phi, B=None):
     sin_alpha : float or ndarray
         Sine of the geomagnetic angle
     """
+    _checks.angles("sin_geomag_angle", theta=theta, phi=phi)
     if B is None:
         B = cons.Bn
     K = co.shower_direction_vector(theta, phi)

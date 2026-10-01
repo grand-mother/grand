@@ -117,6 +117,15 @@ Signals and traces
 .. automodule:: grand.basis.pipeline
    :members:
 
+Input checks
+------------
+
+The checks behind GRANDlib's ``GRANDlib:`` errors and warnings, for use in
+new code: see :doc:`troubleshooting`.
+
+.. automodule:: grand.basis.validate
+   :members:
+
 Analysis-oriented interface
 ---------------------------
 

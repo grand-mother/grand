@@ -167,6 +167,21 @@ wave 1:
 The input-validation auditor (tester 9) and the input fuzzers (4a–c) then
 check what remains.
 
+**Result (validation PR, 2026-10-01).** The fix above was done as its own
+pull request, before wave 1. Re-running the same 60 probes:
+
+| Outcome | Before | After |
+|---|---|---|
+| Refused with a clear `GRANDlib:` message | 7 | 50 (2 of them `OSError` for a non-ROOT file) |
+| Error by accident, or crash from deep inside | 25 | 0 |
+| Accepted with a `GRANDlibWarning` | 0 | 5 (NaN position, twice; zenith 500°; negative energy; negative time bin) |
+| Accepted silently, by design | — | 5 (a new file is created by opening a tree on it; an empty `DataDirectory` for writing; zero antennas; a negative energy proxy floored at 0, as documented, twice) |
+| `exit()` | 1 | 0 |
+
+Physical ranges in tree fields warn rather than raise: reading a file goes
+through the same setters, and a 2024 shower file stores `xmax_grams = -201`.
+The probe is kept as `tests/test_input_validation.py`.
+
 ### Wave 1: using it (11 agents)
 
 | # | Tester | Mission | Looks for |
@@ -292,5 +307,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Validation work double-checked before its PR, against `dev-next`: full pipeline (sim2root, the three converters, T1, CoREAS) gives identical output (676 branches in 21 files); the 12 notebooks give the same results; reading and writing speed unchanged. Found and fixed 3 checks that refused input which used to work: a covariance matrix as `sigma`, `channels` as a slice, a `(1, 3)` source position (and `[[x, y, z]]` for 3-value tree fields). |
+| 2026-10-01 | Validation PR: 50 of 60 bad inputs now refused with a `GRANDlib:` message, 0 crashes, 0 `exit()` (§4.1). |
 | 2026-10-01 | Input validation review: 18 % of public functions check input; 27 of 60 bad inputs accepted silently (§4.1). |
 | 2026-10-01 | Data model downloaded into the test environment; full suite 727 passed, 10 skipped, 11 xfailed, 0 failed. Plan written. |

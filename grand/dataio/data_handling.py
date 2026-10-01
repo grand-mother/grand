@@ -4,6 +4,8 @@ import os
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
+
+from grand.basis import validate as _validate
 import ROOT
 import datetime
 
@@ -38,6 +40,7 @@ class DataDirectory:
         self.analysis_level = analysis_level
 
         # Make the path absolute
+        _validate.existing_directory(dir_name, "dir_name", "DataDirectory")
         self.dir_name = os.path.abspath(dir_name)
 
         # Get the file list
@@ -288,6 +291,37 @@ class DataDirectory:
                 if tree_inst := getattr(self, f"{tree}_l{level}"):
                     return tree_inst.get_list_of_events()
 
+def _open_root_file(name):
+    r"""Opens a ROOT file for reading, with a clear error if it cannot be.
+
+    Parameters
+    ----------
+    name : str
+        The file name.
+
+    Returns
+    -------
+    ROOT.TFile
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist.
+    OSError
+        If it is not a ROOT file, or is damaged.
+    """
+    if not os.path.isfile(name):
+        raise FileNotFoundError(_validate.message("DataFile", "no such file: %s" % name))
+    try:
+        f = ROOT.TFile(name)
+    except OSError:
+        f = None
+    if not f or f.IsZombie():
+        raise OSError(_validate.message("DataFile", "cannot open %s: it is not a ROOT file, "
+                                        "or it is damaged" % name))
+    return f
+
+
 ## Class holding the information about GRAND TTrees in the specified file
 class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
@@ -326,33 +360,37 @@ class DataFile:
         self.flist = []
         """File list in case this is a chain"""
 
+        if isinstance(filename, os.PathLike):
+            filename = os.fspath(filename)
         # If a string given, open the file
         if type(filename) is str:
             # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
             flist = glob.glob(filename)
+            if not flist:
+                raise FileNotFoundError(_validate.message("DataFile", "no such file: %s" % filename))
             self.flist = flist
             if len(flist) > 1:
-                f = ROOT.TFile(flist[0])
+                f = _open_root_file(flist[0])
                 self.f = f
                 self.filename = flist[0]
                 self.is_tchain = True
             # Single file
             else:
-                f = ROOT.TFile(filename)
+                f = _open_root_file(filename)
                 self.f = f
                 self.filename = filename
         # If list of files is given, make a TChain
         elif type(filename) is list:
 
             if len(filename) > 1:
-                f = ROOT.TFile(filename[0])
+                f = _open_root_file(filename[0])
                 self.f = f
                 self.filename = filename[0]
                 self.is_tchain = True
                 self.flist = filename
             # Single file
             else:
-                f = ROOT.TFile(filename[0])
+                f = _open_root_file(filename[0])
                 self.f = f
                 self.filename = filename[0]
                 self.flist = filename
@@ -360,7 +398,9 @@ class DataFile:
             self.f = filename
             self.filename = self.f.GetName()
         else:
-            raise TypeError(f"Unsupported type {type(filename)} as a filename")
+            raise TypeError(_validate.message(
+                "DataFile", "the file must be a file name, a list of file names or a ROOT.TFile, "
+                "got %s" % type(filename).__name__))
 
         # Loop through the keys
         for key in self.f.GetListOfKeys():

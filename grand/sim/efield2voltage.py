@@ -7,6 +7,8 @@ from logging import getLogger
 import time
 
 import numpy as np
+
+from grand.basis import validate as _validate
 import scipy.fft as sf
 from pathlib import Path
 
@@ -88,7 +90,9 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     axis applied to all of them.  The ``ToDo`` in the body marks the same
     point.
     """
-    assert padding_factor >= 1
+    if not padding_factor >= 1:
+        raise ValueError(_validate.message(
+            "get_fastest_size_fft", "'padding_factor' must be >= 1, got %s" % padding_factor))
     dt_s      = 1e-6 / f_samp_mhz
     fast_size = sf.next_fast_len(int(padding_factor * sig_size + 0.5))
     # ToDo: this function (or something higher) should properly handle different time bin for each trace
@@ -302,10 +306,12 @@ class Efield2Voltage:
         if self.f_samp_mhz[0]==self.target_sampling_rate_mhz :
           self.target_sampling_rate_mhz=0  #no resampling needed
 
-        assert  self.target_sampling_rate_mhz >= 0
+        _validate.non_negative(_validate.as_real(self.target_sampling_rate_mhz, "resample_to_mhz", "Efield2Voltage"),
+                               "resample_to_mhz", "Efield2Voltage", "MHz")
 
         self.target_duration_us = self.params["extend_to_us"]        # if different from 0, will adjust padding factor to get a trace of this lenght in us
-        assert self.target_duration_us >= 0
+        _validate.non_negative(_validate.as_real(self.target_duration_us, "extend_to_us", "Efield2Voltage"),
+                               "extend_to_us", "Efield2Voltage", "us")
 
         if(self.target_duration_us>0):
           self.target_lenght= int(self.target_duration_us*self.f_samp_mhz[0])
@@ -315,7 +321,11 @@ class Efield2Voltage:
           self.target_lenght=int(self.padding_factor * self.sig_size + 0.5) #add 0.5 to avoid any rounding error for the int conversion
           self.target_duration_us = self.target_lenght/self.f_samp_mhz[0]
 
-        assert self.padding_factor >= 1
+        if not self.padding_factor >= 1:
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "'extend_to_us' = %s us is shorter than the traces "
+                "(%.4g us); the output cannot be shorter than the input"
+                % (self.params["extend_to_us"], self.sig_size / self.f_samp_mhz[0])))
 
         # common frequencies for all processing in Fourier domain.
         self.fft_size, self.freqs_mhz = get_fastest_size_fft(
@@ -828,7 +838,8 @@ class Efield2Voltage:
                     self.save_voltage(append_file)
             # compute voltage for a list of events given in event_number and run_number. List can be given as 'list' or 'np.ndarray'.
             elif isinstance(event_number, (list, np.ndarray)) and isinstance(run_number, (list, np.ndarray)):
-                assert len(event_number)==len(run_number)
+                _validate.same_length("Efield2Voltage.compute_voltage",
+                                      event_number=event_number, run_number=run_number)
                 for i in range(len(event_number)):
                     self.compute_voltage_event(event_number=event_number[i], run_number=run_number[i])
                     self.final_resample()
@@ -841,17 +852,25 @@ class Efield2Voltage:
 
         # Compute voltage of one DU of a given event. Note that this can be only done for one event.
         elif isinstance(du_idx, int):
-            assert isinstance(event_idx, (int, type(None))), "event_index must be integer when du_idx is given. Can compute voltage for only one event."
-            assert isinstance(event_number, (int, type(None))), "event_number must be integer when du_idx is given. Can compute voltage for only one event."
-            assert isinstance(run_number, (int, type(None))), "run_number must be integer when du_idx is given. Can compute voltage for only one event."
+            for _name, _value in (("event_idx", event_idx), ("event_number", event_number),
+                                  ("run_number", run_number)):
+                if not isinstance(_value, (int, type(None))):
+                    raise TypeError(_validate.message(
+                        "Efield2Voltage.compute_voltage", "'%s' must be a single integer when "
+                        "'du_idx' is given (voltages of chosen units are computed for one event "
+                        "at a time), got %s" % (_name, type(_value).__name__)))
             self.get_event(event_idx=event_idx, event_number=event_number, run_number=run_number) # update event
             self.compute_voltage_du(du_idx)
 
         # Compute voltage of list of DUs of a given event. Note that this can be only done for one event.
         elif isinstance(du_idx, (list, np.ndarray)):
-            assert isinstance(event_idx, (int, type(None))), "event_index must be integer when du_idx is given. Can compute voltage for only one event."
-            assert isinstance(event_number, (int, type(None))), "event_number must be integer when du_idx is given. Can compute voltage for only one event."
-            assert isinstance(run_number, (int, type(None))), "run_number must be integer when du_idx is given. Can compute voltage for only one event."
+            for _name, _value in (("event_idx", event_idx), ("event_number", event_number),
+                                  ("run_number", run_number)):
+                if not isinstance(_value, (int, type(None))):
+                    raise TypeError(_validate.message(
+                        "Efield2Voltage.compute_voltage", "'%s' must be a single integer when "
+                        "'du_idx' is given (voltages of chosen units are computed for one event "
+                        "at a time), got %s" % (_name, type(_value).__name__)))
             self.get_event(event_idx=event_idx, event_number=event_number, run_number=run_number) # update event
             for idx in du_idx:
                 self.compute_voltage_du(idx)
@@ -934,7 +953,8 @@ class Efield2Voltage:
 
         #apply time jitter
         jitter= self.params["add_jitter_ns"]
-        assert jitter >=0
+        _validate.non_negative(_validate.as_real(jitter, "add_jitter_ns", "Efield2Voltage"),
+                               "add_jitter_ns", "Efield2Voltage", "ns")
 
         if(jitter>0):
            logger.info(f"adding {jitter} ns of time jitter to the trigger times.")

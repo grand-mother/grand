@@ -4,6 +4,25 @@
 
 import numpy as np
 from scipy.signal import hilbert
+from grand.basis import validate as _validate
+
+def _trace_channels(trace, channels, where):
+    r"""Checks a (channels, samples) trace and the channel indices to use."""
+    trace = _validate.as_array(trace, "trace", where, ndim=2)
+    if trace.shape[1] == 0:
+        raise ValueError(_validate.message(where, "'trace' has no samples"))
+    # A slice or a boolean mask selects channels as NumPy does; only
+    # explicit indices are checked here.
+    if isinstance(channels, slice) or np.asarray(channels).dtype == bool:
+        return trace
+    for ch in np.atleast_1d(channels):
+        index = _validate.as_integer(ch, "channels", where)
+        if not -trace.shape[0] <= index < trace.shape[0]:
+            raise ValueError(_validate.message(
+                where, "channel %d does not exist: 'trace' has %d channels (0 to %d)"
+                % (index, trace.shape[0], trace.shape[0] - 1)))
+    return trace
+
 
 def get_peak_amplitude(trace, channels, return_envelope=False):
     """
@@ -29,7 +48,7 @@ def get_peak_amplitude(trace, channels, return_envelope=False):
     hilbert_amp : np.ndarray, optional
         Hilbert envelope of the signal (only if return_envelope=True).
     """
-    trace = np.asarray(trace)
+    trace = _trace_channels(trace, channels, "get_peak_amplitude")
     selected = trace[channels, :]
     E_modulus = np.linalg.norm(selected, axis=0)
     hilbert_amp = np.abs(hilbert(E_modulus))
@@ -81,6 +100,7 @@ def get_peak_time(trace, t0, channels, dt_ns=2):
     float or np.ndarray
         Time of the peak amplitude in seconds.
     """
+    _validate.positive(_validate.as_real(dt_ns, "dt_ns", "get_peak_time"), "dt_ns", "get_peak_time", "ns")
     _, hilbert_amp = get_peak_amplitude(trace, channels, return_envelope=True)
     peak_idx = np.argmax(hilbert_amp)
     #Convert sample index to time in seconds (2ns per sample)
@@ -107,7 +127,9 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
     np.ndarray
         Trace converted to ADC counts.
     """
-    trace = np.asarray(trace)  
+    trace = _trace_channels(trace, channels, "convert_voltage_to_ADC")
+    _validate.positive(_validate.as_real(voltage_ref, "voltage_ref", "convert_voltage_to_ADC"),
+                       "voltage_ref", "convert_voltage_to_ADC", "V")
     ADC_trace = trace.copy().astype(float) 
     
     for ch in channels:

@@ -924,8 +924,8 @@ The VGA gain setting has no effect
 :Affects: any study that varies the amplifier gain
 :Test: ``tests/sim/test_rf_chain_physics.py::test_gain_setting_changes_the_transfer_function``
 
-``RFChain(vga_gain=...)`` accepts 20, 5, 0 or -5 dB, stores the value, asserts
-it is one of those four, and logs it — and then loads the same S-parameter
+``RFChain(vga_gain=...)`` accepts 20, 5, 0 or -5 dB (any other value raises
+``ValueError``), stores the value and logs it — and then loads the same S-parameter
 file whatever it was.  The transfer function is identical for every setting:
 
 .. code-block:: text

@@ -2,6 +2,8 @@
 from dataclasses import dataclass, field, fields
 
 import numpy as np
+
+from grand.basis import validate as _validate
 import ROOT
 from pathlib import Path
 import shutil
@@ -718,7 +720,9 @@ class Event:
                 cur_tree = self.tvoltage
             else:
                 # Raising a plain string is itself a TypeError in Python 3
-                raise ValueError("Can't calculate antennas positions: no efield or voltage tree")
+                raise ValueError(_validate.message(
+                    "Event.fill_antennas", "cannot calculate the antenna positions: the event "
+                    "has neither an efield nor a voltage tree"))
 
             # If this is the first time we calculate antennas positions, or
             # the ones we hold were not built from GPS for this same site
@@ -729,7 +733,9 @@ class Event:
                 # Get the coordinates for all DUs from all events
                 count = cur_tree.draw("du_id:gps_lat:gps_long:gps_alt", "", "goff")
                 if count == -1:
-                    raise "Can't get antenna positions from the ROOT file"
+                    raise RuntimeError(_validate.message(
+                        "Event.fill_antennas", "cannot read the antenna GPS positions "
+                        "(du_id, gps_lat, gps_long, gps_alt) from the ROOT file"))
 
                 du_ids = np.array(np.frombuffer(cur_tree.get_v1(), dtype=np.float64, count=count)).astype(np.int32)
                 du_lats = np.array(np.frombuffer(cur_tree.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
@@ -1109,8 +1115,9 @@ class Event:
                 target_dir = out_dir
 
             if not isinstance(target_dir, DataDirectory):
-                print("ERROR: out_dir must be of type DataDirectory or string")
-                exit(1)
+                raise TypeError(_validate.message(
+                    "Event.write", "'out_dir' must be a directory name or a DataDirectory, got %s"
+                    % type(target_dir).__name__))
 
             # Go through all the run trees
             # ToDo: Add trunrawvoltage

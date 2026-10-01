@@ -9,6 +9,8 @@ from typing import Optional, Union, Any
 from typing_extensions import Final
 import numpy as np
 
+from grand.basis import validate as _validate
+
 from grand import grand_get_path_root_pkg
 
 from . import DATADIR
@@ -356,10 +358,15 @@ class Topography:
         """
         if isinstance(reference, str):
             reference = reference.upper()
+            # "SEA" (sea level) has always been accepted and means the geoid
+            _validate.one_of(reference, ("GEOID", "SEA", "ELLIPSOID", "LOCAL"), "reference",
+                             "Topography.elevation")
 
             if reference == "LOCAL":
                 if not isinstance(coordinates, (LTP, GRANDCS)):
-                    raise ValueError("not an LTP or GRANDCS frame")
+                    raise TypeError(_validate.message(
+                        "Topography.elevation", "reference='LOCAL' needs coordinates in an LTP or "
+                        "GRANDCS frame, got %s" % type(coordinates).__name__))
                 elevation = self._local_elevation(coordinates)
             else:
                 elevation = self._global_elevation(coordinates, reference)
@@ -369,8 +376,9 @@ class Topography:
 
             return elevation
         else:
-            # TODO: what doing if reference is None ?
-            raise ValueError
+            raise TypeError(_validate.message(
+                "Topography.elevation", "'reference' must be 'GEOID' (or 'SEA'), 'ELLIPSOID' or 'LOCAL', "
+                "got %r" % (reference,)))
 
     @staticmethod
     def _as_double_ptr(a):

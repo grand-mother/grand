@@ -12,6 +12,30 @@ import numpy                              as np
 import grand.analysis.fitting.adf         as adf
 import grand.analysis.fitting.spherical   as swf
 import grand.analysis.fitting.plane_wave  as pwf
+from grand.analysis import _checks
+from grand.basis import validate as _validate
+
+#: Above this condition number of the unit-diagonal Fisher matrix, the
+#: measurements do not constrain the parameters and the bounds mean nothing.
+_ILL_CONDITIONED = 1e10
+
+
+def _warn_if_ill_conditioned(fisher, where, threshold=_ILL_CONDITIONED):
+    r"""Warns when the Fisher matrix is close to singular.
+
+    The matrix is first scaled to unit diagonal, so that parameters in very
+    different units (radians, metres, seconds) do not make every case look
+    ill-conditioned.
+    """
+    diag = np.sqrt(np.abs(np.diag(fisher)))
+    if np.any(diag == 0):
+        _validate.warn(where, "a parameter has no effect on the measurements, so its bound is infinite", stacklevel=4)
+        return
+    cond = np.linalg.cond(fisher / np.outer(diag, diag))
+    if not np.isfinite(cond) or cond > threshold:
+        _validate.warn(where, "the antennas barely constrain the parameters (condition number %.2g); "
+                       "the bounds are not meaningful. Use more antennas, or antennas not on a line" % cond,
+                       stacklevel=4)
 
 def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, theta_adf: float, phi_adf: float, delta_omega: float, scaling_factor: float, Xants: np.ndarray, uncertainty_amplitude= 0.075, uncertainty_time=5e-9) -> np.ndarray:
     """
@@ -48,6 +72,14 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
         The computed Cramer-Rao Bound value for the ADF SWF model.
     """
     # Number of antennas
+    where = "CRB_ADF_SWF"
+    Xants = _checks.antennas(Xants, where, min_ants=4)
+    for _name, _value in (("theta_swf", theta_swf), ("phi_swf", phi_swf), ("r_xsource", r_xsource),
+                          ("t_s", t_s), ("theta_adf", theta_adf), ("phi_adf", phi_adf),
+                          ("delta_omega", delta_omega), ("scaling_factor", scaling_factor)):
+        _validate.as_real(_value, _name, where)
+    _validate.positive(_validate.as_real(uncertainty_amplitude, "uncertainty_amplitude", where), "uncertainty_amplitude", where)
+    _validate.positive(_validate.as_real(uncertainty_time, "uncertainty_time", where), "uncertainty_time", where, "s")
     nants = Xants.shape[0]
     params = [theta_swf, phi_swf, r_xsource, t_s, theta_adf, phi_adf, delta_omega, scaling_factor]
     
@@ -108,6 +140,9 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
         fisher_information_matrix += np.outer(derivates_ampl[i, :], derivates_ampl[i, :]) / (sigma_ampl[i] ** 2)
         fisher_information_matrix += np.outer(derivates_time[i, :], derivates_time[i, :]) / (sigma_time ** 2)
     
+    # Its eight parameters are strongly correlated by construction, so only a
+    # singular matrix is flagged here.
+    _warn_if_ill_conditioned(fisher_information_matrix, where, threshold=1e16)
     try:
         cov_matrix = np.linalg.inv(fisher_information_matrix)
         crb_values = np.sqrt(np.diag(cov_matrix))
@@ -141,6 +176,11 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
         The computed Cramer-Rao Bound value for the PWF model.
     """
     # Number of antennas
+    where = "CRB_PWF"
+    Xants = _checks.antennas(Xants, where, min_ants=3)
+    _validate.as_real(theta_pwf, "theta_pwf", where)
+    _validate.as_real(phi_pwf, "phi_pwf", where)
+    _validate.positive(_validate.as_real(uncertainty_time, "uncertainty_time", where), "uncertainty_time", where, "s")
     nants = Xants.shape[0]
 
     # Allocate memory for Fisher Information Matrix
@@ -170,6 +210,7 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
     for i in range(nants):
         fisher_information_matrix += np.outer(derivates_time[i, :], derivates_time[i, :]) / (sigma_time ** 2)
     
+    _warn_if_ill_conditioned(fisher_information_matrix, where)
     try:
         cov_matrix = np.linalg.inv(fisher_information_matrix)
         crb_values = np.sqrt(np.diag(cov_matrix))

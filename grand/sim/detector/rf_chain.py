@@ -3,6 +3,8 @@ import os
 import xml.etree.ElementTree as ET
 import os.path
 import numpy as np
+
+from grand.basis import validate as _validate
 from pathlib import Path
 
 from grand import grand_add_path_data
@@ -551,7 +553,9 @@ class GenericProcessingDU:
         freqs_mhz : ndarray, shape (n_freq,)
             Frequency axis the stage's response is wanted on, in MHz.
         """
-        assert isinstance(freqs_mhz, np.ndarray)
+        freqs_mhz = _validate.as_array(freqs_mhz, "freqs_mhz", type(self).__name__,
+                                       ndim=1, min_length=1, finite=True)
+        _validate.non_negative(freqs_mhz, "freqs_mhz", type(self).__name__, "MHz")
         self.freqs_mhz = freqs_mhz
         self.nb_freqs = freqs_mhz.shape[0]
         self.size_sig = (self.nb_freqs - 1) * 2
@@ -1232,6 +1236,11 @@ class VGAFilter(GenericProcessingDU):
         """
         super().__init__()
 
+        # The four settings the hardware has.  (The value does not yet change
+        # the response: see "VGA gain setting has no effect" in known_issues.)
+        if isinstance(gain, (bool, np.bool_)) or gain not in (-5, 0, 5, 20):
+            raise ValueError(_validate.message(
+                "RFChain", "'vga_gain' must be one of -5, 0, 5 or 20 dB, got %r" % (gain,)))
         self.gain = gain
         self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz

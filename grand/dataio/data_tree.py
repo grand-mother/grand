@@ -9,6 +9,8 @@ import ROOT
 
 import numpy as np
 
+from grand.basis import validate as _validate
+
 from grand.dataio import StdVectorList, StdVectorListDesc, StdString
 
 logger = getLogger(__name__)
@@ -552,7 +554,8 @@ class DataTree:
             self._file = f
             self._file_name = self._file.GetName()
         # If the filename string is given, check if chain, if not open/create the ROOT file with this name
-        elif isinstance(f, str):
+        elif isinstance(f, (str, os.PathLike)):
+            f = os.fspath(f)
             # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
             flist = glob.glob(f)
             if len(flist) > 1:
@@ -567,15 +570,34 @@ class DataTree:
                 # If not opened, open
                 else:
                     # If file exists, initially open in the read-only mode (changed during write())
+                    where = type(self).__name__
                     if os.path.isfile(self._file_name):
-                        self._file = ROOT.TFile(self._file_name, "read")
-                    # If the file does not exist, create it
+                        try:
+                            self._file = ROOT.TFile(self._file_name, "read")
+                        except OSError:
+                            raise OSError(_validate.message(
+                                where, "cannot open %s: it is not a ROOT file, or it is "
+                                "damaged" % self._file_name)) from None
+                    elif os.path.isdir(self._file_name):
+                        raise IsADirectoryError(_validate.message(
+                            where, "%s is a directory; give a ROOT file, or use "
+                            "DataDirectory for a directory" % self._file_name))
+                    # If the file does not exist, create it (this is how trees
+                    # are written), but not in a directory that does not exist:
+                    # that is almost always a mistyped path.
                     else:
+                        parent = os.path.dirname(os.path.abspath(self._file_name))
+                        if not os.path.isdir(parent):
+                            raise FileNotFoundError(_validate.message(
+                                where, "no such file: %s, and its directory %s does not exist "
+                                "either, so it cannot be created" % (self._file_name, parent)))
                         self._file = ROOT.TFile(self._file_name, "create")
                     # Opened here, so stop_using() may close it
                     _register_opened_file(self._file)
         else:
-            raise ValueError(f"Unsupported filename {f}. Can't open/create a file with a tree.")
+            raise TypeError(_validate.message(
+                type(self).__name__, "the file must be a file name or a ROOT.TFile, got %s"
+                % type(f).__name__))
 
         # If a list is given, it's a Chain
         if isinstance(f, list):

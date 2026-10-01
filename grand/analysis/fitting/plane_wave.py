@@ -5,6 +5,8 @@ import grand.analysis.constants as cons
 import numpy as np
 from scipy.linalg import cho_factor, cho_solve
 from scipy.optimize import brentq
+from grand.analysis import _checks
+from grand.basis import validate as _validate
 
 def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=None):
     """Solve the minimization problem using a semi-analytical approach.
@@ -23,11 +25,10 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     -------
     ndarray: Theta and phi angles in radians.
     """
-    nants = tants.shape[0]
-
-    if (Xants.shape[0] != nants):
-        print("Shapes of tants and Xants are incompatible", tants.shape, Xants.shape)
-        return None
+    where = "PWF_semianalytical"
+    Xants = _checks.antennas(Xants, where, min_ants=3)
+    tants = _checks.per_antenna(tants, Xants, "tants", where)
+    sigma = _checks.sigma(sigma, where)
 
     PXT = Xants - mean(Xants, sigma)[None, :]
     # PXT = PXT - mean(PXT, sigma)[None, :]   #twice for numerical stability
@@ -104,11 +105,13 @@ def PWF_loss(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n_atm,
 
     After maximizing likelihood over reference time.
     """
-    nants = tants.shape[0]
-    if (Xants.shape[0] != nants):
-        print("Shapes of tants and Xants are incompatible", tants.shape, Xants.shape)
-        return None
-    # Make sure tants and Xants are compatible
+    where = "PWF_loss"
+    Xants = _checks.antennas(Xants, where)
+    tants = _checks.per_antenna(tants, Xants, "tants", where)
+    if sigma is None:
+        raise TypeError(_validate.message(
+            where, "'sigma', the timing uncertainty in seconds, is required to normalise the chi2"))
+    sigma = _checks.sigma(sigma, where)
     residuals = PWF_residuals(params, Xants, tants, verbose=verbose, c=c, n=n)
     chi2 = (residuals**2).sum()
     sigma = c*sigma #express in m
@@ -121,11 +124,9 @@ def PWF_residuals(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n
     Note that this is defined at up to an additive constant, that when minimizing
     the loss over it, amounts to centering the residuals.
     """
-    nants = tants.shape[0]
-    # Make sure tants and Xants are compatible
-    if (Xants.shape[0] != nants):
-        print("Shapes of tants and Xants are incompatible", tants.shape, Xants.shape)
-        return None
+    where = "PWF_residuals"
+    Xants = _checks.antennas(Xants, where)
+    tants = _checks.per_antenna(tants, Xants, "tants", where)
 
     times = PWF_model(params, Xants, c, n)
     res = (c/n) * (tants - times)

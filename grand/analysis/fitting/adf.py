@@ -7,6 +7,8 @@ import grand.analysis.coords.array_shower as co
 import grand.analysis.geom.angles as an
 #print(sys.path)
 from iminuit import minimize
+from grand.analysis import _checks
+from grand.basis import validate as _validate
 
 def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAltitude=cons.groundAltitude, Bvec=None):
     """
@@ -105,6 +107,16 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
         delta_omega   : best-fit ADF shape parameter
         amplitude     : best-fit ADF amplitude
     """
+    where = "recons_ADF"
+    _checks.angles(where, theta_pwf=theta_pwf, phi_pwf=phi_pwf)
+    Xants = _checks.antennas(Xants, where, min_ants=4)
+    Aants = _checks.per_antenna(Aants, Xants, "Aants", where)
+    # (1, 3), as compute_Xsource_cartesian_coords returns it, is accepted too
+    Xsource = _validate.as_array(Xsource, "Xsource", where, finite=True)
+    if Xsource.size != 3:
+        raise ValueError(_validate.message(
+            where, "'Xsource' must be three numbers (x, y, z), got shape %s" % (Xsource.shape,)))
+    Xsource = Xsource.reshape(3)
     # Define bounds for each parameter
     bounds = [
         [theta_pwf - 2*np.pi/180, theta_pwf + 2*np.pi/180],

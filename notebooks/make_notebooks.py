@@ -3062,18 +3062,11 @@ ignores the charge-excess share, which depends on the zenith; and a scale
 below $b\,\sin\alpha$ is clamped to **zero** rather than flagged — the
 docstring notes that such events may still be genuine cosmic rays.
 
-The function's docstring also says it takes arrays. It does not: it calls
-Python's `max`, which cannot compare an array with 0, so an array raises
-`ValueError`. Until that is fixed (it needs `np.maximum`), loop, or vectorise
-it yourself:'''),
+It takes arrays as well as single numbers, as its docstring says, so a whole
+set of events is converted in one call:'''),
     code(r'''scales = np.array([5e6, 5e7, 1e8])
-try:
-    en.recons_energy_from_voltage(scales, sin_alpha)
-except ValueError as error:
-    print("array input:", type(error).__name__, "-", str(error)[:60], "...")
-
-per_event = np.vectorize(en.recons_energy_from_voltage)(scales, sin_alpha)
-print("vectorised:", ["%.3g eV" % e for e in per_event])'''),
+per_event = en.recons_energy_from_voltage(scales, sin_alpha)
+print("per event:", ["%.3g eV" % e for e in per_event])'''),
     md(r'''The first of those is clamped to zero: $5\times10^6 / \sin\alpha$ is below
 $b$, so the formula goes negative — the proxy cannot see a shower that faint,
 and says 0 rather than "unknown".
@@ -3303,7 +3296,7 @@ on `dev-next`.
 things to understand before trusting a reconstructed direction or energy.
 
 **Known behaviours to watch for.** Pinned by tests, so a change is noticed:
-`recons_swf` ignores `sigma`; `recons_energy_from_voltage` rejects arrays.
+`recons_swf` ignores `sigma`.
 Not pinned: `compute_Xsource_cartesian_coords` returns shape (1, 3); an ADF fit
 on its bounds is not flagged; `display.py` divides the stored, already
 reduced, `chi2_adf` by the degrees of freedom again.'''),

@@ -327,7 +327,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.run_number = EventID
   RawShower.sim_name = str("Corsika")
   RawShower.sim_version = str(corsika_version)
-  RawShower.event_number = RunID
+  RawShower.event_number = int(RunID)  # the ID is a string such as "004100"
   RawShower.event_name = RunID
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
@@ -433,7 +433,7 @@ def CoreasToRawRoot(file, simID=None):
   print("***RawMeta***")
     
   RawMeta = RawTrees.RawMetaTree(OutputFileName)
-  RawMeta.run_number = RunID
+  RawMeta.run_number = int(RunID)
   RawMeta.event_number = EventID
 
   print("[WARNING] array_name is hardcoded")
@@ -481,7 +481,7 @@ def CoreasToRawRoot(file, simID=None):
   RawEfield = RawTrees.RawEfieldTree(OutputFileName)
 
   RawEfield.run_number = EventID
-  RawEfield.event_number = RunID
+  RawEfield.event_number = int(RunID)
   RawEfield.sim_name = str("CoREAS")
   RawEfield.sim_version = str(coreas_version)
 

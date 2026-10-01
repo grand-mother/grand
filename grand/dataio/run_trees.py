@@ -205,7 +205,7 @@ class TRun(MotherRunTree):
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """Detector unit (antenna) (lat,lon,alt) position"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
-    du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>", inner_length=3))
     """Detector unit (antenna) (x,y,z) position in site's referential"""
     ## Detector unit type
     du_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
@@ -223,7 +223,7 @@ class TRun(MotherRunTree):
     du_feb: StdVectorListDesc = field(default=StdVectorListDesc("int"))
     """Detector unit (antenna) FrontEnd Board ID"""
     ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
-    t_bin_size: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    t_bin_size: StdVectorListDesc = field(default=StdVectorListDesc("float", positive=True, unit="ns"))
     """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
 
     def __post_init__(self):

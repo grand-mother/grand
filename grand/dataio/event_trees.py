@@ -979,16 +979,16 @@ class TShower(MotherEventTree):
     primary_type: StdStringDesc = field(default=StdStringDesc(""))
     """Shower primary type"""
     ## Energy from e+- (ie related to radio emission) (GeV)
-    energy_em: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    energy_em: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, unit="GeV"))
     """Energy from e+- (ie related to radio emission) (GeV)"""
     ## Total energy of the primary (including muons, neutrinos, ...) (GeV)
-    energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, unit="GeV"))
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
     ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
     azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Shower azimuth  (coordinates system = NWU + origin = core, "comes from")"""
     ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
-    zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=180, unit="degrees"))
     """Shower zenith  (coordinates system = NWU + origin = core, "comes from")"""
     ## Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
     direction: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
@@ -1013,7 +1013,7 @@ class TShower(MotherEventTree):
     core_alt: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Ground Altitude at core position (m asl)"""
     ## Shower Xmax depth  (g/cm2 along the shower axis)
-    xmax_grams: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    xmax_grams: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, unit="g/cm2"))
     """Shower Xmax depth  (g/cm2 along the shower axis)"""
     ## Shower Xmax position in GRAND detector ref
     xmax_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))

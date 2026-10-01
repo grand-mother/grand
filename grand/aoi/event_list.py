@@ -1,9 +1,11 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import os
 from pathlib import Path
 import ROOT
 
 from grand.aoi.event import Event
 from grand.dataio import DataDirectory, DataFile
+from grand.basis import validate as _validate
 
 
 class EventList:
@@ -31,6 +33,14 @@ class EventList:
         """
         self.event_list = None
 
+        if isinstance(inp_name, os.PathLike):
+            inp_name = os.fspath(inp_name)
+        accepted = tuple(t for t in (str, ROOT.TFile, DataDirectory, DataFile) if isinstance(t, type))
+        if not isinstance(inp_name, accepted):
+            raise TypeError(_validate.message(
+                "EventList", "the input must be a file or directory name, a ROOT.TFile, a "
+                "DataFile or a DataDirectory, got %s" % type(inp_name).__name__))
+
         # If TFile was given.  It is wrapped like a file name is: the rest of
         # the class reads the file through a DataFile (``self.file.f``).
         if isinstance(inp_name, ROOT.TFile):
@@ -51,11 +61,14 @@ class EventList:
                 self.event_list = self.file.get_max_list_of_events()
             # If directory name was given
             elif Path(inp_name).is_dir():
+                if not any(Path(inp_name).glob("*.root")):
+                    raise FileNotFoundError(_validate.message(
+                        "EventList", "no ROOT files (*.root) in %s" % inp_name))
                 self.directory = DataDirectory(inp_name)
                 self.event_list = self.directory.get_max_list_of_events()
             else:
-                print("Please provide proper file or directory name.")
-                exit()
+                raise FileNotFoundError(_validate.message(
+                    "EventList", "no such file or directory: %s" % inp_name))
         # If DataFile was given
         elif isinstance(inp_name, DataFile):
             self.file_name = inp_name.f.GetName()
@@ -63,8 +76,8 @@ class EventList:
             self.event_list = self.file.get_max_list_of_events()
 
         if start_event is not None and start_entry is not None:
-            print("Please provide only start event or start entry.")
-            exit()
+            raise ValueError(_validate.message(
+                "EventList", "give 'start_event' or 'start_entry', not both"))
         self.start_event = start_event
         self.start_entry = start_entry
 
@@ -110,8 +123,7 @@ class EventList:
         elif self.directory is not None:
             e.directory = self.directory
         else:
-            print("No directory or file provided!")
-            exit()
+            raise RuntimeError(_validate.message("EventList", "no file or directory to read"))
 
         # If entry/event/run number not specified, take the first entry
         run_entry_number = None
@@ -173,8 +185,7 @@ class EventList:
             # Already a DataFile; wrapping it again raised a TypeError
             data_input = self.file
         else:
-            print("Please provide data directory or file.")
-            exit()
+            raise RuntimeError(_validate.message("EventList", "no file or directory to read"))
 
         # First, try to get the number of events from tshower
         # if hasattr(data_input, "tshower"):
