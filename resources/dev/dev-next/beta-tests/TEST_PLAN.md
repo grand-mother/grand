@@ -339,7 +339,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#226](https://github.com/grand-mother/grand/issues/226) | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics | Low | 3a | open | | |
 | [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | Nut/GAA chains brought back to the time domain |
 | [#228](https://github.com/grand-mother/grand/issues/228) | CoREAS Xmax NaN or ~1 cm: efield2voltage crashes or outputs ~1e-13 µV | Critical | 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | unknown Xmax written as NaN; `Efield2Voltage` refuses an event with no usable Xmax |
-| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | trigger rescaled; script refuses `--target_sampling_rate_mhz` |
+| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | open (reopened) | [#208](https://github.com/grand-mother/grand/pull/208) | CLI refuses resampling; the Python API (`resample_to_mhz`) still resamples without updating `t_bin_size` (tester 12) |
 | [#230](https://github.com/grand-mother/grand/issues/230) | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded | High | 3b | open | | |
 | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
 | [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
@@ -390,6 +390,15 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#278](https://github.com/grand-mother/grand/issues/278) | A non-editable install or wheel lacks vector_filling.C and rf_chain_config.xml | High | 14 | open | | |
 | [#279](https://github.com/grand-mother/grand/issues/279) | Data model integrity: damaged files accepted, unhelpful errors, "up to date" with noise/ missing; undeclared psutil | Medium | 14 | open | | |
 | [#280](https://github.com/grand-mother/grand/issues/280) | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths | Low | 14 | open | | |
+| [#281](https://github.com/grand-mother/grand/issues/281) | Several processes writing to one output file lose events or corrupt it, while some report success | Critical | 13 | open | | |
+| [#282](https://github.com/grand-mother/grand/issues/282) | copy_contents() then fill() empties the source tree's traces | Medium | 13 | open | | |
+| [#283](https://github.com/grand-mother/grand/issues/283) | Scaling: per-event appends slow down with file size; DataDirectory superlinear in files | High | 13 | open | | |
+| [#284](https://github.com/grand-mother/grand/issues/284) | Memory: trees not freed without stop_using(); residual leak; Efield2Voltage memory far above data size | Medium | 13 | open | | |
+| [#285](https://github.com/grand-mother/grand/issues/285) | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) | Critical | 12 | open | | |
+| [#286](https://github.com/grand-mother/grand/issues/286) | recons_ADF returns its starting point when an amplitude is 0 or negative; can run for minutes | High | 12 | open | | |
+| [#287](https://github.com/grand-mother/grand/issues/287) | Handling3dTraces crashes on one-antenna events | High | 12 | open | | |
+| [#288](https://github.com/grand-mother/grand/issues/288) | Numerical edges: NaN and extreme values pass silently; peak amplitude biased; PWF at zenith 0 | Medium | 12 | open | | |
+| [#289](https://github.com/grand-mother/grand/issues/289) | Numerical edges, minor: position guards, ignored sigma, trigger shapes, float32 overflow, ADC helpers | Low | 12 | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -460,6 +469,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | **Wave 3 complete.** Testers 12 (numerical edges) and 13 (scale and stress) in: logged #281–#289 (2 Critical: #281 concurrent writers lose events, #285 antenna response wrapped below the horizon; 3 High, 3 Medium, 1 Low); #229 reopened (Python API still resamples); #223 extended. Wave 3 total: #273–#289 (2 Critical, 7 High, 6 Medium, 2 Low) plus tester 15's security findings, fixed in PR #272. No regression of the #208 fixes. |
 | 2026-10-01 | Wave 3: testers 11 (misuse) and 14 (environment) in, logged #273–#280 (4 High, 3 Medium, 1 Low). Security fixes for tester 15 in PR #272. Still running: 12, 13. |
 | 2026-10-01 | Tester 15 (unsafe input) in: security findings in three areas (archive handling, simulation scripts, production pipeline), confirmed by the coordinator. Reported privately as GitHub security advisories, not as public issues; they will be summarised here once fixed. |
 | 2026-10-01 | **Wave 3 started** on `dev-next` at `89622823` (PR #208 merged): breakers 11 (misuse), 12 (numerical edges), 13 (scale and stress, capped at 3 GB disk and ~4 GB RAM), 14 (environment, on private copies of the data model), 15 (unsafe input, harmless marker-file proofs only). |
