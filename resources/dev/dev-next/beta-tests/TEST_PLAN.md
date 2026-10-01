@@ -382,6 +382,14 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#269](https://github.com/grand-mother/grand/issues/269) | Notebook prose, second pass: 14 statements the outputs contradict | Medium | 10 | open | | |
 | [#270](https://github.com/grand-mother/grand/issues/270) | Deliberate bugs no test catches (Horizontal azimuth, `get_dus_indices_in_run`, `final_resample`, ADC rounding) | High | 8 | open | | |
 | [#271](https://github.com/grand-mother/grand/issues/271) | Tests that cannot fail, non-strict xfails, tests depending on untracked `data/` files | Medium | 8 | open | | |
+| [#273](https://github.com/grand-mother/grand/issues/273) | Two tree objects on one file share branch buffers: wrong event numbers written, reads mixed | High | 11 | open | | |
+| [#274](https://github.com/grand-mother/grand/issues/274) | Segfault when a tree is used after close_file(), or after another tree closed its file | High | 11 | open | | |
+| [#275](https://github.com/grand-mother/grand/issues/275) | Entries filled but not written are discarded silently when a with-block ends or stop_using() is called | High | 11 | open | | |
+| [#276](https://github.com/grand-mother/grand/issues/276) | Tree get_entry/get_entry_with_index refuse NumPy integers | Medium | 11 | open | | |
+| [#277](https://github.com/grand-mother/grand/issues/277) | Event and Efield2Voltage used in the wrong order or with bad indices give bare errors | Medium | 11 | open | | |
+| [#278](https://github.com/grand-mother/grand/issues/278) | A non-editable install or wheel lacks vector_filling.C and rf_chain_config.xml | High | 14 | open | | |
+| [#279](https://github.com/grand-mother/grand/issues/279) | Data model integrity: damaged files accepted, unhelpful errors, "up to date" with noise/ missing; undeclared psutil | Medium | 14 | open | | |
+| [#280](https://github.com/grand-mother/grand/issues/280) | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths | Low | 14 | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -452,6 +460,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Wave 3: testers 11 (misuse) and 14 (environment) in, logged #273–#280 (4 High, 3 Medium, 1 Low). Security fixes for tester 15 in PR #272. Still running: 12, 13. |
 | 2026-10-01 | Tester 15 (unsafe input) in: security findings in three areas (archive handling, simulation scripts, production pipeline), confirmed by the coordinator. Reported privately as GitHub security advisories, not as public issues; they will be summarised here once fixed. |
 | 2026-10-01 | **Wave 3 started** on `dev-next` at `89622823` (PR #208 merged): breakers 11 (misuse), 12 (numerical edges), 13 (scale and stress, capped at 3 GB disk and ~4 GB RAM), 14 (environment, on private copies of the data model), 15 (unsafe input, harmless marker-file proofs only). |
 | 2026-10-01 | PR #208 merged into `dev-next` (8962282). Its 16 issues closed: all 11 Critical (#209, #220, #227, #228, #229, #237, #238, #242, #243, #247, #250) and 5 High (#207, #262, #263, #264, #268). Follow-ups recorded on #229 (TVoltage sampling rate), #242 (damaged `.t*` tables), #250 (productions with geoid heights), #268 (noise-table RA convention). Next: wave 3. |
