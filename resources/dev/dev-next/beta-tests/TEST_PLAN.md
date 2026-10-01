@@ -318,7 +318,35 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#204](https://github.com/grand-mother/grand/issues/204) | `DataDirectory`: `recursive=True` finds nothing; one oddly named file aborts the directory | Medium | 2a | open | | |
 | [#205](https://github.com/grand-mother/grand/issues/205) | Tree wildcards: no match creates a file named with '*'; wildcard chains cannot look up events | Medium | 2a | open | | |
 | [#206](https://github.com/grand-mother/grand/issues/206) | Smaller dataio inconsistencies (argument order, silent failed lookups, TRecons units) | Low | 2a | open | | |
-| [#207](https://github.com/grand-mother/grand/issues/207) | Regression from #179: numbers given as text refused; ZHAireS one-argument form and `sim2root.py -la/-lo/-al` crash | High | 3a | fix in PR | | Text that reads as a number converted again, with a warning; callers pass numbers |
+| [#207](https://github.com/grand-mother/grand/issues/207) | Regression from #179: numbers given as text refused; ZHAireS one-argument form and `sim2root.py -la/-lo/-al` crash | High | 3a | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | Text that reads as a number converted again, with a warning; callers pass numbers |
+| [#209](https://github.com/grand-mother/grand/issues/209) | CoREAS converter mirrors the azimuth on the .inp path (180 − PHIP) | Critical | 2b, 3b | open | | |
+| [#210](https://github.com/grand-mother/grand/issues/210) | Notebook 07 passes an ENU direction to `topography.distance`, which needs ECEF | High | 1b | open | | |
+| [#211](https://github.com/grand-mother/grand/issues/211) | Committed `recons_CR_candidates.root` stores raw χ² (notebook 11 calls it reduced); CRB fields 0.0 | High | 2b | open | | |
+| [#212](https://github.com/grand-mother/grand/issues/212) | `Event.write`: `overwrite=True` deletes the whole output folder; in-place write crashes | High | 2b | open | | |
+| [#213](https://github.com/grand-mother/grand/issues/213) | `EventList` ignores `start_event`, `start_entry`, per-call `tefield_level`; one Event object reused | High | 2b, 4a | open | | |
+| [#214](https://github.com/grand-mother/grand/issues/214) | `sin_geomag_angle` returns one number for arrays | Medium | 2b | open | | |
+| [#215](https://github.com/grand-mother/grand/issues/215) | Antenna positions from GPS use a hard-coded origin (question for GP80 owners) | Medium | 2b | open | | |
+| [#216](https://github.com/grand-mother/grand/issues/216) | Reconstruction edge cases and docstrings | Low | 2b | open | | |
+| [#217](https://github.com/grand-mother/grand/issues/217) | Notebook 08's "bit for bit" claim fails here; its control row reads "caught" | Medium | 1b | open | | |
+| [#218](https://github.com/grand-mother/grand/issues/218) | examples/: broken, stale or silently misbehaving examples | Medium | 1b | open | | |
+| [#219](https://github.com/grand-mother/grand/issues/219) | Notebooks 10–12: miscounts, unstated units, developer jargon | Low | 1b | open | | |
+| [#220](https://github.com/grand-mother/grand/issues/220) | sim2root writes wrong `du_geoid` for several events per file; empty with `-ss` | Critical | 3a | open | | |
+| [#221](https://github.com/grand-mother/grand/issues/221) | README pipeline commands fail: `RunSimPipe.py` and the sim2root example lack `-sl` | High | 3a, 3b | open | | |
+| [#222](https://github.com/grand-mother/grand/issues/222) | sim2root: mixed trace windows share one run's t_pre/t_post; window options unchecked | High | 3a | open | | |
+| [#223](https://github.com/grand-mother/grand/issues/223) | sim2root: `-ef` bugs; different run numbers silently merged | Medium | 3a | open | | |
+| [#224](https://github.com/grand-mother/grand/issues/224) | sim2root and ZHAireS converter: failures leave junk files and often exit 0 | Medium | 3a | open | | |
+| [#225](https://github.com/grand-mother/grand/issues/225) | ZHAireS conversion stores sentinels for unknown Xmax and a magic default time | Medium | 3a | open | | |
+| [#226](https://github.com/grand-mother/grand/issues/226) | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics | Low | 3a | open | | |
+| [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | open | | |
+| [#228](https://github.com/grand-mother/grand/issues/228) | CoREAS Xmax NaN or ~1 cm: efield2voltage crashes or outputs ~1e-13 µV | Critical | 3b | open | | |
+| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size` | High | 3b | open | | |
+| [#230](https://github.com/grand-mother/grand/issues/230) | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded | High | 3b | open | | |
+| [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
+| [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
+| [#233](https://github.com/grand-mother/grand/issues/233) | efield2efield bare AssertionErrors; plots always drawn; T1 passes no DU on clean sims | Low | 3b | open | | |
+| [#234](https://github.com/grand-mother/grand/issues/234) | `Event.close_files()` rewrites input files and can hang; EventList scripts crash at exit | High | 4a | open | | |
+| [#235](https://github.com/grand-mother/grand/issues/235) | EventList and DataFile crash deep, with unclear errors, on plausible input | High | 4a | open | | |
+| [#236](https://github.com/grand-mother/grand/issues/236) | dataio returns stale or zeroed data: reopened files, missing branches, unrecognised names, use after close | Medium | 4a | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -334,6 +362,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Reports in from 3a, 1b, 2b, 4a, 3b: confirmed and logged as #207–#236 (4 Critical: #209 CoREAS azimuth mirrored, #220 sim2root `du_geoid`, #227 nut/GAA chains ignored, #228 CoREAS Xmax → zero voltage). #207 is a regression from #179 (validation), fixed in PR #208. Batch 3 running: 4b ×2, 4c. |
 | 2026-10-01 | Batch 1 reports in from 1a-A, 1a-B and 2a: all findings confirmed by the coordinator (re-run where marked) and logged as #185–#206; five High (silent data loss or wrong values in `grand.dataio`). Batch 2 started: 1b, 2b, 3b. |
 | 2026-10-01 | Validation merged (PR #179). Wave 1 started on `dev-next` at `91d30a1b`: batch 1 (1a ×2, 2a, 3a, 4a). Five problems found by the coordinator during the pre-PR check logged as #180–#184. |
 | 2026-10-01 | Validation work double-checked before its PR, against `dev-next`: full pipeline (sim2root, the three converters, T1, CoREAS) gives identical output (676 branches in 21 files); the 12 notebooks give the same results; reading and writing speed unchanged. Found and fixed 3 checks that refused input which used to work: a covariance matrix as `sigma`, `channels` as a slice, a `(1, 3)` source position (and `[[x, y, z]]` for 3-value tree fields). |
