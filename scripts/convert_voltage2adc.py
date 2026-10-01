@@ -320,14 +320,16 @@ def manage_args(argv=None):
     parser = argparse.ArgumentParser(description="Conversion of voltage at ADC input to digitized ADC counts. Includes option to add measured noise.")
 
     parser.add_argument('in_file',
+                        metavar='in_dir',
                         type=str,
-                        help='Path to voltage input file in GrandRoot format (TVoltage).')
+                        help='Directory holding the sim2root output: voltage_*_L0_*.root and the run '
+                             'trees.  A voltage file in it may be given instead (#180).')
     
     parser.add_argument('-o',
                         '--out_file',
                         type=str,
                         default=None,
-                        help='Path to utput file in GrandRoot format (TADC). If the file exists it is overwritten.')
+                        help='Path to output file in GrandRoot format (TADC). If the file exists it is overwritten.')
     
     parser.add_argument('--add_noise_from',
                         dest='noise_dir',
@@ -378,6 +380,9 @@ if __name__ == '__main__':
     #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
     f_input_dir   = args.in_file
+    # Its help said it took a file, and a file gave IndexError (#180)
+    if os.path.isfile(f_input_dir):
+        f_input_dir = os.path.dirname(os.path.abspath(f_input_dir))
     f_output  = args.out_file
     noise_dir = args.noise_dir
 

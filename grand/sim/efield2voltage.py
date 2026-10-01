@@ -248,6 +248,8 @@ class Efield2Voltage:
         self.output_directory = ""
         if output_directory:
             self.output_directory = output_directory
+            # A folder not yet made failed when writing (#182)
+            Path(output_directory).mkdir(parents=True, exist_ok=True)
             # self.f_output = output_directory + "/" + Path(self.f_output).name
 
 

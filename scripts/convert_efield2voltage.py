@@ -172,6 +172,7 @@ def manage_args():
 
 if __name__ == "__main__":
     import argparse
+    import os
     from typing import Union
     import numpy as np
 
@@ -197,6 +198,8 @@ if __name__ == "__main__":
     # If no output directory given, define it as input directory
     if args.out_directory is None:
         args.out_directory = args.directory
+    # A folder not yet made failed with FileNotFoundError (#182)
+    os.makedirs(args.out_directory, exist_ok=True)
 
     logger.debug(args.directory)
 

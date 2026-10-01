@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Output folders and the ADC script's input (#180, #182).** `-od` with a
+  folder that did not exist yet failed with `FileNotFoundError` in
+  `convert_efield2voltage.py` and `convert_efield2efield.py`, and so did
+  `Efield2Voltage(output_directory=...)`; the folder is now created.
+  `convert_voltage2adc.py` documented a file but needed the folder; its help
+  now says folder, a voltage file in it is accepted too, and the "utput"
+  typo is gone.
+
 - **Effective length 1° off for every negative azimuth (#253).** The antenna
   tables hold azimuth 0–360° inclusive (361 points, 360 repeating 0), and the
   periodic wrap used the 361 points, so every direction with a negative
