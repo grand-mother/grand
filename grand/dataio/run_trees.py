@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, logger, StdStringDesc, TTreeArrayDesc, StdVectorListDesc
+from grand.dataio import file_lock as _file_lock
 
 
 @dataclass
@@ -24,6 +25,9 @@ class MotherRunTree(DataTree):
         # Repoen the file in write mode, if it exists
         # Reopening in case of different mode takes here ~0.06 s, in case of the same mode, 0.0005 s, so negligible
         if self._file is not None:
+            # One writer at a time, with an up-to-date view of the file: a file
+            # reopened for update is rewritten when it is closed (#281)
+            _file_lock.lock_for_writing(self._file.GetName(), type(self).__name__)
             self._file.ReOpen("update")
 
         # Fill the tree

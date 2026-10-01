@@ -15,6 +15,30 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Several processes writing one ROOT file no longer lose events or
+  corrupt it (#281).** Two batch jobs with the same output, or a resubmitted
+  job, interleaved their writes: with three processes appending to one file,
+  40 events were reported written and 21 were in the file, or the file was left
+  unreadable, while some processes reported success. A process that writes a
+  file now holds an exclusive lock on it (`flock` on the file itself, in the new
+  `grand.dataio.file_lock`) from the moment it opens it for writing (`fill()`,
+  `write()`, or creating the file) until it closes it. Another process that
+  tries to write meanwhile, or to open the half-written file, is refused with
+  a clear message; one that opened the file before someone else wrote it is
+  refused when it tries to write, since its view is out of date. Everything
+  reported as written is in the file (checked over 10 runs of 4 writers).
+  Reading takes no lasting lock, and one process writing a file is unchanged.
+  Where `flock` is unavailable the old behaviour remains.
+
+- **No antenna response from below the antenna's horizon (#285).** The
+  effective-length lookup took the zenith row modulo the table size, so a
+  source at 91° read the 0° (zenith) row, 95° the 4° row, and so on, at full
+  strength: an Xmax below an antenna's plane (near-horizontal showers over
+  relief, or a wrong Xmax) gave 777–2500 µV instead of about zero, while 90–91°
+  gave exactly zero. Directions outside the table (zenith above 90° for the
+  GP300 tables) now get zero response, continuous with the 90° row, and a
+  warning naming the angle. Directions inside the table are unchanged.
+
 - **Notebook 05's sky maps show right ascension correctly (#268).** The shipped
   LFMap grid's first axis runs 12 h ahead of right ascension, so the maps put
   the Galactic Centre at 5.8 h instead of 17.8 h. The notebook now shifts the
@@ -93,11 +117,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   resampling (the ratio compared the input rate with itself), and left the run
   tree's `t_bin_size` at the input rate, so `convert_voltage2adc.py` processed a
   resampled trace as if it were at the input rate (at 750 MHz: 12288 samples
-  written as 500 MHz ADC data, exit 0). The trigger position is now rescaled,
-  and `convert_efield2voltage.py --target_sampling_rate_mhz` is refused, since
-  the voltage file cannot record the new rate; resample the e-field with
-  `convert_efield2efield.py`, which writes the rate to its run file. The
-  library option (`params["resample_to_mhz"]`) still works and warns.
+  written as 500 MHz ADC data, exit 0). `convert_efield2voltage.py
+  --target_sampling_rate_mhz` is refused, since the voltage file cannot record
+  the new rate; resample the e-field with `convert_efield2efield.py`, which
+  writes the rate to its run file. The Python API did the same until wave 3
+  found it (at 250 MHz the ADC traces came out all zeros):
+  `Efield2Voltage.save_voltage` now refuses a voltage resampled with
+  `params["resample_to_mhz"]`, before writing anything. Resampling in memory
+  (`compute_voltage_event` and `final_resample`) still works, and a value equal
+  to the input rate is not a resampling.
 - **`Efield2Voltage` reads the run tree at the efield's level (#237).**
   `DataDirectory` picks the highest level of each tree type on its own, so a
   folder with an L0 efield file and an L1 run file (as `convert_efield2efield

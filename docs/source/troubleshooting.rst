@@ -132,6 +132,13 @@ Exceptions
     a simulation twice into the same output file.  Give each run its own output
     path, or advance ``event_number``.
 
+``OSError: ... is being written by another process`` (or ``was changed by another process``)
+    Two processes tried to write the same ROOT file, for example two batch
+    jobs with the same output name.  Only one process may write a file at a
+    time; the other is refused rather than allowed to lose events or corrupt
+    the file.  Give each job its own output file, or wait for the first to
+    finish and run the second again.
+
 ``ModuleNotFoundError: No module named 'ROOT'``
     The environment is not active, or ROOT is not installed.  ``import grand``
     requires ROOT at import time, not lazily; see

@@ -339,7 +339,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#226](https://github.com/grand-mother/grand/issues/226) | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics | Low | 3a | open | | |
 | [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | Nut/GAA chains brought back to the time domain |
 | [#228](https://github.com/grand-mother/grand/issues/228) | CoREAS Xmax NaN or ~1 cm: efield2voltage crashes or outputs ~1e-13 µV | Critical | 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | unknown Xmax written as NaN; `Efield2Voltage` refuses an event with no usable Xmax |
-| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | open (reopened) | [#208](https://github.com/grand-mother/grand/pull/208) | CLI refuses resampling; the Python API (`resample_to_mhz`) still resamples without updating `t_bin_size` (tester 12) |
+| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208), dev-next-ipfxhh 99cda479 | CLI refuses resampling (#208); `Efield2Voltage.save_voltage` now refuses a resampled voltage too, before writing |
 | [#230](https://github.com/grand-mother/grand/issues/230) | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded | High | 3b | open | | |
 | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
 | [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
@@ -390,11 +390,11 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#278](https://github.com/grand-mother/grand/issues/278) | A non-editable install or wheel lacks vector_filling.C and rf_chain_config.xml | High | 14 | open | | |
 | [#279](https://github.com/grand-mother/grand/issues/279) | Data model integrity: damaged files accepted, unhelpful errors, "up to date" with noise/ missing; undeclared psutil | Medium | 14 | open | | |
 | [#280](https://github.com/grand-mother/grand/issues/280) | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths | Low | 14 | open | | |
-| [#281](https://github.com/grand-mother/grand/issues/281) | Several processes writing to one output file lose events or corrupt it, while some report success | Critical | 13 | open | | |
+| [#281](https://github.com/grand-mother/grand/issues/281) | Several processes writing to one output file lose events or corrupt it, while some report success | Critical | 13 | fix in PR | dev-next-ipfxhh 398b6680 | exclusive `flock` on the file while a process writes it; other writers and stale writers refused with a clear message (`grand.dataio.file_lock`) |
 | [#282](https://github.com/grand-mother/grand/issues/282) | copy_contents() then fill() empties the source tree's traces | Medium | 13 | open | | |
 | [#283](https://github.com/grand-mother/grand/issues/283) | Scaling: per-event appends slow down with file size; DataDirectory superlinear in files | High | 13 | open | | |
 | [#284](https://github.com/grand-mother/grand/issues/284) | Memory: trees not freed without stop_using(); residual leak; Efield2Voltage memory far above data size | Medium | 13 | open | | |
-| [#285](https://github.com/grand-mother/grand/issues/285) | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) | Critical | 12 | open | | |
+| [#285](https://github.com/grand-mother/grand/issues/285) | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) | Critical | 12 | fix in PR | dev-next-ipfxhh 8e135a19 | no modulo on zenith; directions outside the table get zero response, with a warning |
 | [#286](https://github.com/grand-mother/grand/issues/286) | recons_ADF returns its starting point when an amplitude is 0 or negative; can run for minutes | High | 12 | open | | |
 | [#287](https://github.com/grand-mother/grand/issues/287) | Handling3dTraces crashes on one-antenna events | High | 12 | open | | |
 | [#288](https://github.com/grand-mother/grand/issues/288) | Numerical edges: NaN and extreme values pass silently; peak amplitude biased; PWF at zenith 0 | Medium | 12 | open | | |
@@ -456,6 +456,135 @@ wave 3.
   wave 2 (physics and documentation checks) running in parallel; wave 3 (breakers)
   after the Critical fixes merge; wave 4 (regression) at the end.
 
+## 7b. Open issues (2026-10-01, after PR #272)
+
+98 open issues: the 93 `dev-next_beta-test:` issues below (none closed by PR #272, whose
+security fixes were reported privately) and 5 issues kept with their owners
+(#104, #139, #140, #141, #142; feature requests and simulation-field questions).
+
+### By area and severity
+
+| Area | Critical | High | Medium | Low | Total |
+|---|---|---|---|---|---|
+| dataio | 1 | 13 | 11 | 3 | 28 |
+| Conversion scripts, voltage chain | 1 | 4 | 8 | 2 | 15 |
+| sim2root, ZHAireS, CoREAS |  | 2 | 3 | 2 | 7 |
+| Physics, geo, analysis | 1 | 5 | 7 | 2 | 15 |
+| Docs, notebooks, examples |  | 4 | 11 | 2 | 17 |
+| Tools, install, tests |  | 5 | 4 | 2 | 11 |
+| **Total** | **3** | **33** | **44** | **13** | **93** |
+
+### By wave
+
+| Found in | Critical | High | Medium | Low | Total |
+|---|---|---|---|---|---|
+| Pre-wave (coordinator) |  | 1 | 3 | 1 | 5 |
+| Wave 1 | 1 | 20 | 23 | 10 | 54 |
+| Wave 2 |  | 5 | 12 |  | 17 |
+| Wave 3 | 2 | 7 | 6 | 2 | 17 |
+
+### All open issues
+
+| Severity | Issue | Area | Wave | Title |
+|---|---|---|---|---|
+| Critical | [#229](https://github.com/grand-mother/grand/issues/229) | Conversion scripts, voltage chain | 1 | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate |
+| Critical | [#281](https://github.com/grand-mother/grand/issues/281) | dataio | 3 | Several processes writing to one output file lose events or corrupt it, while some report success |
+| Critical | [#285](https://github.com/grand-mother/grand/issues/285) | Physics, geo, analysis | 3 | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) |
+| High | [#184](https://github.com/grand-mother/grand/issues/184) | Tools, install, tests | pre | `open_grand_file.py` / `open_grand_directory.py` / `open_grand_analysis_prompt.py` run the file name as Python code |
+| High | [#185](https://github.com/grand-mother/grand/issues/185) | Docs, notebooks, examples | 1 | README quickstart fails: `Efield2Voltage` needs a directory, not an efield file |
+| High | [#195](https://github.com/grand-mother/grand/issues/195) | dataio | 1 | `DataDirectory` silently drops files: keeps 1 of 10 showers in examples/analysis |
+| High | [#196](https://github.com/grand-mother/grand/issues/196) | dataio | 1 | `get_list_of_events()` and `draw()` silently change the loaded entry's values |
+| High | [#197](https://github.com/grand-mother/grand/issues/197) | dataio | 1 | `write()` to an existing file replaces its tree even with `overwrite=False` |
+| High | [#198](https://github.com/grand-mother/grand/issues/198) | dataio | 1 | `write("other.root")` on a tree that already has a file writes a corrupt copy |
+| High | [#199](https://github.com/grand-mother/grand/issues/199) | dataio | 1 | `get_dus_indices_in_run` returns run order, not event order |
+| High | [#210](https://github.com/grand-mother/grand/issues/210) | Docs, notebooks, examples | 1 | Notebook 07 passes an ENU direction to `topography.distance`, which needs ECEF |
+| High | [#211](https://github.com/grand-mother/grand/issues/211) | Docs, notebooks, examples | 1 | Committed `recons_CR_candidates.root` stores raw χ² (notebook 11 calls it reduced); CRB fields 0.0 |
+| High | [#212](https://github.com/grand-mother/grand/issues/212) | dataio | 1 | `Event.write`: `overwrite=True` deletes the whole output folder; in-place write crashes |
+| High | [#213](https://github.com/grand-mother/grand/issues/213) | dataio | 1 | `EventList` ignores `start_event`, `start_entry`, per-call `tefield_level`; one Event object reused |
+| High | [#221](https://github.com/grand-mother/grand/issues/221) | sim2root, ZHAireS, CoREAS | 1 | README pipeline commands fail: `RunSimPipe.py` and the sim2root example lack `-sl` |
+| High | [#222](https://github.com/grand-mother/grand/issues/222) | sim2root, ZHAireS, CoREAS | 1 | sim2root: mixed trace windows share one run's t_pre/t_post; window options unchecked |
+| High | [#230](https://github.com/grand-mother/grand/issues/230) | Conversion scripts, voltage chain | 1 | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded |
+| High | [#234](https://github.com/grand-mother/grand/issues/234) | dataio | 1 | `Event.close_files()` rewrites input files and can hang; EventList scripts crash at exit |
+| High | [#235](https://github.com/grand-mother/grand/issues/235) | dataio | 1 | EventList and DataFile crash deep, with unclear errors, on plausible input |
+| High | [#239](https://github.com/grand-mother/grand/issues/239) | Conversion scripts, voltage chain | 1 | NaN/inf voltages become INT64_MIN in the ADC; saturation never reported |
+| High | [#240](https://github.com/grand-mother/grand/issues/240) | Conversion scripts, voltage chain | 1 | Re-running conversions: voltage2adc deletes old output then crashes; failed runs leave blocking stubs |
+| High | [#244](https://github.com/grand-mother/grand/issues/244) | Tools, install, tests | 1 | `extract_events.py`: `-ow` deletes everything in the target (even "."); duplicates leave a broken target |
+| High | [#245](https://github.com/grand-mother/grand/issues/245) | Tools, install, tests | 1 | `pipeline/get_files_from_db.py` moves small files while listing |
+| High | [#248](https://github.com/grand-mother/grand/issues/248) | Conversion scripts, voltage chain | 1 | `convert_efield2efield` writes `du_count` 0, ignores the `-o` folder, crashes on zero-antenna events |
+| High | [#251](https://github.com/grand-mother/grand/issues/251) | Physics, geo, analysis | 2 | Geodetic height NaN west of Greenwich (GEOID); NaN declination there; Horizon objects share location |
+| High | [#255](https://github.com/grand-mother/grand/issues/255) | Physics, geo, analysis | 2 | rf_chain error path crashes (NameError 'Nonec'); duplicate definitions; prints instead of errors |
+| High | [#256](https://github.com/grand-mother/grand/issues/256) | Physics, geo, analysis | 2 | Silent failures: Newton non-convergence, raise of a string, prints instead of errors in aoi, global warning filter |
+| High | [#257](https://github.com/grand-mother/grand/issues/257) | Docs, notebooks, examples | 2 | Docs give commands that fail (CoREAS, sim2root, Efield2Voltage file input) |
+| High | [#270](https://github.com/grand-mother/grand/issues/270) | Tools, install, tests | 2 | Deliberate bugs no test catches (Horizontal azimuth, `get_dus_indices_in_run`, `final_resample`, ADC rounding) |
+| High | [#273](https://github.com/grand-mother/grand/issues/273) | dataio | 3 | Two tree objects on one file share branch buffers: wrong event numbers written, reads mixed |
+| High | [#274](https://github.com/grand-mother/grand/issues/274) | dataio | 3 | Segfault when a tree is used after close_file(), or after another tree closed its file |
+| High | [#275](https://github.com/grand-mother/grand/issues/275) | dataio | 3 | Entries filled but not written are discarded silently when a with-block ends or stop_using() is called |
+| High | [#278](https://github.com/grand-mother/grand/issues/278) | Tools, install, tests | 3 | A non-editable install or wheel lacks vector_filling.C and rf_chain_config.xml |
+| High | [#283](https://github.com/grand-mother/grand/issues/283) | dataio | 3 | Scaling: per-event appends slow down with file size; DataDirectory superlinear in files |
+| High | [#286](https://github.com/grand-mother/grand/issues/286) | Physics, geo, analysis | 3 | recons_ADF returns its starting point when an amplitude is 0 or negative; can run for minutes |
+| High | [#287](https://github.com/grand-mother/grand/issues/287) | Physics, geo, analysis | 3 | Handling3dTraces crashes on one-antenna events |
+| Medium | [#180](https://github.com/grand-mother/grand/issues/180) | Conversion scripts, voltage chain | pre | `convert_voltage2adc.py` takes a directory, but its help says it takes a file |
+| Medium | [#181](https://github.com/grand-mother/grand/issues/181) | Conversion scripts, voltage chain | pre | CoREAS converter appends to an existing output and fails with `NotUniqueEvent` |
+| Medium | [#182](https://github.com/grand-mother/grand/issues/182) | Conversion scripts, voltage chain | pre | `-od/--out_directory` fails when the folder does not exist yet |
+| Medium | [#186](https://github.com/grand-mother/grand/issues/186) | Docs, notebooks, examples | 1 | Docs say the declination at Dunhuang is "a few degrees"; it is about 0.3° (and IGRF-13 is outdated after 2020) |
+| Medium | [#187](https://github.com/grand-mother/grand/issues/187) | dataio | 1 | A file whose name level disagrees with its trees is silently ignored |
+| Medium | [#188](https://github.com/grand-mother/grand/issues/188) | Docs, notebooks, examples | 1 | Notebook 06 fixture triggers an unexplained Xmax warning; the warning's angles are ambiguous |
+| Medium | [#189](https://github.com/grand-mother/grand/issues/189) | Docs, notebooks, examples | 1 | Notebooks 03, 04 and 06: prose contradicts the outputs |
+| Medium | [#190](https://github.com/grand-mother/grand/issues/190) | Docs, notebooks, examples | 1 | Notebook 05 places 1 MHz-spaced noise into 0.977 MHz FFT bins |
+| Medium | [#192](https://github.com/grand-mother/grand/issues/192) | Docs, notebooks, examples | 1 | Docs lack basic recipes (read one event's shower; geodetic to GRANDCS) |
+| Medium | [#200](https://github.com/grand-mother/grand/issues/200) | dataio | 1 | `get_traces_lengths` always returns None; `get_list_of_dus` returns the whole tree's units |
+| Medium | [#201](https://github.com/grand-mother/grand/issues/201) | dataio | 1 | Vector fields: unsigned char read as characters; `+=` replaces; numpy bool/uint64 assignment fails and empties the field |
+| Medium | [#202](https://github.com/grand-mother/grand/issues/202) | dataio | 1 | A misspelt tree field is accepted silently: the typo guard never runs |
+| Medium | [#203](https://github.com/grand-mother/grand/issues/203) | dataio | 1 | `creation_datetime` is stored in local time, not UTC |
+| Medium | [#204](https://github.com/grand-mother/grand/issues/204) | dataio | 1 | `DataDirectory`: `recursive=True` finds nothing; one oddly named file aborts the directory |
+| Medium | [#205](https://github.com/grand-mother/grand/issues/205) | dataio | 1 | Tree wildcards: no match creates a file named with '*'; wildcard chains cannot look up events |
+| Medium | [#214](https://github.com/grand-mother/grand/issues/214) | Physics, geo, analysis | 1 | `sin_geomag_angle` returns one number for arrays |
+| Medium | [#215](https://github.com/grand-mother/grand/issues/215) | Physics, geo, analysis | 1 | Antenna positions from GPS use a hard-coded origin (question for GP80 owners) |
+| Medium | [#217](https://github.com/grand-mother/grand/issues/217) | Docs, notebooks, examples | 1 | Notebook 08's "bit for bit" claim fails here; its control row reads "caught" |
+| Medium | [#218](https://github.com/grand-mother/grand/issues/218) | Docs, notebooks, examples | 1 | examples/: broken, stale or silently misbehaving examples |
+| Medium | [#223](https://github.com/grand-mother/grand/issues/223) | sim2root, ZHAireS, CoREAS | 1 | sim2root: `-ef` bugs; different run numbers silently merged |
+| Medium | [#224](https://github.com/grand-mother/grand/issues/224) | sim2root, ZHAireS, CoREAS | 1 | sim2root and ZHAireS converter: failures leave junk files and often exit 0 |
+| Medium | [#225](https://github.com/grand-mother/grand/issues/225) | sim2root, ZHAireS, CoREAS | 1 | ZHAireS conversion stores sentinels for unknown Xmax and a magic default time |
+| Medium | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts, voltage chain | 1 | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently |
+| Medium | [#236](https://github.com/grand-mother/grand/issues/236) | dataio | 1 | dataio returns stale or zeroed data: reopened files, missing branches, unrecognised names, use after close |
+| Medium | [#241](https://github.com/grand-mother/grand/issues/241) | Conversion scripts, voltage chain | 1 | Multi-run folders crash; measured noise reused across antennas silently; raw noise errors |
+| Medium | [#249](https://github.com/grand-mother/grand/issues/249) | Conversion scripts, voltage chain | 1 | Conversion scripts don't check that run, e-field and shower trees match |
+| Medium | [#252](https://github.com/grand-mother/grand/issues/252) | Physics, geo, analysis | 2 | Reconstruction hard-codes ground altitude 1231 m; file antenna z is relative to the site |
+| Medium | [#253](https://github.com/grand-mother/grand/issues/253) | Physics, geo, analysis | 2 | Antenna effective-length lookup 1° off for every negative azimuth |
+| Medium | [#254](https://github.com/grand-mother/grand/issues/254) | Physics, geo, analysis | 2 | Physics details: ADF asymmetry B unnormalised, circular convolution at default padding, ADC truncation, refractive index |
+| Medium | [#258](https://github.com/grand-mother/grand/issues/258) | Docs, notebooks, examples | 2 | Docs state stale or wrong facts |
+| Medium | [#259](https://github.com/grand-mother/grand/issues/259) | Tools, install, tests | 2 | About 25 user-facing input checks are asserts |
+| Medium | [#260](https://github.com/grand-mother/grand/issues/260) | Docs, notebooks, examples | 2 | READMEs are stale |
+| Medium | [#261](https://github.com/grand-mother/grand/issues/261) | Docs, notebooks, examples | 2 | Docstrings that mislead: missing units and frames, wrong parameters and returns |
+| Medium | [#265](https://github.com/grand-mother/grand/issues/265) | Conversion scripts, voltage chain | 2 | `Efield2Voltage.params` ignores unknown keys; flags read by truthiness |
+| Medium | [#266](https://github.com/grand-mother/grand/issues/266) | Physics, geo, analysis | 2 | Values in the wrong unit (Hz/MHz, s/ns, degrees/radians) accepted silently |
+| Medium | [#267](https://github.com/grand-mother/grand/issues/267) | Tools, install, tests | 2 | Modules the validation work did not reach (geo reps, turtle, aoi, ShowerEvent, trigger, basis.signal, du_network) |
+| Medium | [#269](https://github.com/grand-mother/grand/issues/269) | Docs, notebooks, examples | 2 | Notebook prose, second pass: 14 statements the outputs contradict |
+| Medium | [#271](https://github.com/grand-mother/grand/issues/271) | Tools, install, tests | 2 | Tests that cannot fail, non-strict xfails, tests depending on untracked `data/` files |
+| Medium | [#276](https://github.com/grand-mother/grand/issues/276) | dataio | 3 | Tree get_entry/get_entry_with_index refuse NumPy integers |
+| Medium | [#277](https://github.com/grand-mother/grand/issues/277) | Conversion scripts, voltage chain | 3 | Event and Efield2Voltage used in the wrong order or with bad indices give bare errors |
+| Medium | [#279](https://github.com/grand-mother/grand/issues/279) | Tools, install, tests | 3 | Data model integrity: damaged files accepted, unhelpful errors, "up to date" with noise/ missing; undeclared psutil |
+| Medium | [#282](https://github.com/grand-mother/grand/issues/282) | dataio | 3 | copy_contents() then fill() empties the source tree's traces |
+| Medium | [#284](https://github.com/grand-mother/grand/issues/284) | dataio | 3 | Memory: trees not freed without stop_using(); residual leak; Efield2Voltage memory far above data size |
+| Medium | [#288](https://github.com/grand-mother/grand/issues/288) | Physics, geo, analysis | 3 | Numerical edges: NaN and extreme values pass silently; peak amplitude biased; PWF at zenith 0 |
+| Low | [#183](https://github.com/grand-mother/grand/issues/183) | Conversion scripts, voltage chain | pre | `T1_trigger_offline.py` has no argument parsing; `-h` is opened as a file |
+| Low | [#191](https://github.com/grand-mother/grand/issues/191) | dataio | 1 | `help()` on a tree field fails: descriptors crash on class access |
+| Low | [#193](https://github.com/grand-mother/grand/issues/193) | Docs, notebooks, examples | 1 | Stale or garbled documentation text |
+| Low | [#194](https://github.com/grand-mother/grand/issues/194) | dataio | 1 | Routine operations print alarming messages |
+| Low | [#206](https://github.com/grand-mother/grand/issues/206) | dataio | 1 | Smaller dataio inconsistencies (argument order, silent failed lookups, TRecons units) |
+| Low | [#216](https://github.com/grand-mother/grand/issues/216) | Physics, geo, analysis | 1 | Reconstruction edge cases and docstrings |
+| Low | [#219](https://github.com/grand-mother/grand/issues/219) | Docs, notebooks, examples | 1 | Notebooks 10–12: miscounts, unstated units, developer jargon |
+| Low | [#226](https://github.com/grand-mother/grand/issues/226) | sim2root, ZHAireS, CoREAS | 1 | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics |
+| Low | [#232](https://github.com/grand-mother/grand/issues/232) | sim2root, ZHAireS, CoREAS | 1 | CoREAS converter: magnetic field in three units; run/event swapped; README names |
+| Low | [#233](https://github.com/grand-mother/grand/issues/233) | Conversion scripts, voltage chain | 1 | efield2efield bare AssertionErrors; plots always drawn; T1 passes no DU on clean sims |
+| Low | [#246](https://github.com/grand-mother/grand/issues/246) | Tools, install, tests | 1 | Utility scripts: no argparse, wrong option lists, files in cwd, version 0.0.0 |
+| Low | [#280](https://github.com/grand-mother/grand/issues/280) | Tools, install, tests | 3 | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths |
+| Low | [#289](https://github.com/grand-mother/grand/issues/289) | Physics, geo, analysis | 3 | Numerical edges, minor: position guards, ignored sigma, trigger shapes, float32 overflow, ADC helpers |
+
+**Next:** the 3 Critical (#229 Python-API resampling, #281 concurrent writers,
+#285 antenna response below the horizon), one commit and one test each, in one PR;
+then the High issues by area, starting with `dataio` (data loss and wrong values).
+
 ## 8. Findings not logged
 
 Reports that were not confirmed, with the reason.
@@ -469,6 +598,8 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | The 3 open Critical issues fixed on `dev-next-ipfxhh`, one commit and one failing-first test each: #229 (Python API saved a resampled voltage with the input rate), #285 (antenna response wrapped below the horizon), #281 (concurrent writers lost events; 10 stress runs of 4 writers now lose nothing). Full suite 841 passed, 10 skipped, 11 xfailed. |
+| 2026-10-01 | PR #272 merged into `dev-next` (7e5c753d): fixes for the privately reported security findings (archive extraction, external commands, production pipeline, granddb remote access), with tests. Open-issue summary added (§7b): 98 open, 3 Critical, 33 High, 44 Medium, 13 Low, 5 with owners. |
 | 2026-10-01 | **Wave 3 complete.** Testers 12 (numerical edges) and 13 (scale and stress) in: logged #281–#289 (2 Critical: #281 concurrent writers lose events, #285 antenna response wrapped below the horizon; 3 High, 3 Medium, 1 Low); #229 reopened (Python API still resamples); #223 extended. Wave 3 total: #273–#289 (2 Critical, 7 High, 6 Medium, 2 Low) plus tester 15's security findings, fixed in PR #272. No regression of the #208 fixes. |
 | 2026-10-01 | Wave 3: testers 11 (misuse) and 14 (environment) in, logged #273–#280 (4 High, 3 Medium, 1 Low). Security fixes for tester 15 in PR #272. Still running: 12, 13. |
 | 2026-10-01 | Tester 15 (unsafe input) in: security findings in three areas (archive handling, simulation scripts, production pipeline), confirmed by the coordinator. Reported privately as GitHub security advisories, not as public issues; they will be summarised here once fixed. |
