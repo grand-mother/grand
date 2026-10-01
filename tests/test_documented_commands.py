@@ -115,4 +115,4 @@ def test_voltage2adc_says_what_it_needs(tmp_path):
     done = subprocess.run([sys.executable, str(ROOT / "scripts" / "convert_voltage2adc.py"), str(tmp_path)],
                           env=env, capture_output=True, text=True, timeout=300)
     assert done.returncode != 0
-    assert "GRANDlib: convert_voltage2adc: no voltage_*_L0_*.root" in done.stderr
+    assert "GRANDlib: convert_voltage2adc: no voltage_*_L<level>_*.root" in done.stderr

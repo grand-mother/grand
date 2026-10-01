@@ -63,7 +63,8 @@ Know that rfft is several hundred times faster if you use a multiple of 2,3 or 5
 $ python convert_efield2voltage.py -h
 usage: convert_efield2voltage.py [-h] [--no_noise] [--no_rf_chain]
                                  [--rf_chain_nut] [--rf_chain_gaa]
-                                 [-o OUT_FILE] [-od OUT_DIRECTORY]
+                                 [-o OUT_FILE] [--level LEVEL]
+                                 [-od OUT_DIRECTORY]
                                  [--verbose {debug,info,warning,error,critical}]
                                  [--seed SEED] [--lst LST]
                                  [--padding_factor PADDING_FACTOR]
@@ -86,8 +87,11 @@ options:
   --rf_chain_nut        add RF chain in antenna nut
   --rf_chain_gaa        add RF chain for G@Auger setup
   -o OUT_FILE, --out_file OUT_FILE
-                        output file in GRANDROOT format. If the file exists it
-                        is overwritten.
+                        output file in GRANDROOT format, relative to the
+                        output directory (-od, by default the input folder).
+                        If the file exists it is overwritten.
+  --level LEVEL         level of the efield files to read, for a folder
+                        holding several (default: the highest, with a warning)
   -od OUT_DIRECTORY, --out_directory OUT_DIRECTORY
                         output directory in GRANDROOT format. If not given, is
                         it the same as input directory
@@ -135,14 +139,17 @@ add measured noise.
 
 positional arguments:
   in_dir                Directory holding the sim2root output:
-                        voltage_*_L0_*.root and the run trees. A voltage file
-                        in it may be given instead (#180).
+                        voltage_*_L<level>_*.root and the run trees. A voltage
+                        file in it may be given instead, and is then the only
+                        one converted, whatever its name (#180, #231).
 
 options:
   -h, --help            show this help message and exit
   -o OUT_FILE, --out_file OUT_FILE
-                        Path to output file in GrandRoot format (TADC). If the
-                        file exists it is overwritten.
+                        Output file in GrandRoot format (TADC); a bare name
+                        goes into the input folder, as for the other
+                        conversion scripts. If the file exists it is
+                        overwritten.
   --add_noise_from NOISE_DIR
                         Path to directory containing files with measured noise
                         in GrandRoot format (TADC). Default adds no noise.
@@ -189,11 +196,12 @@ options:
   --no_filter           remove the filter on the GRAND bandwidth. (50-200Mhz,
                         band-pass elliptic causal filter)
   -o OUT_FILE, --out_file OUT_FILE
-                        output file in GRANDROOT format. If the file exists it
-                        is overwritten.
+                        output file in GRANDROOT format, relative to -od when
+                        it is a bare name. If the file exists it is replaced,
+                        as are the L1 run files.
   -od OUT_DIRECTORY, --out_directory OUT_DIRECTORY
-                        output directory in GRANDROOT format. If not given, is
-                        it the same as input directory
+                        output directory for the efield and run files. If not
+                        given, the input directory
   --verbose {debug,info,warning,error,critical}
                         logger verbosity.
   --seed SEED           Fix the random seed to reproduce same galactic noise,

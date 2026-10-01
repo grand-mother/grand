@@ -26,6 +26,7 @@ output is unchanged.
 ###-###-###-###-###-###-###- IMPORTS -###-###-###-###-###-###-###
 
 import glob
+import re
 import os
 import time
 import argparse
@@ -289,14 +290,16 @@ def manage_args(argv=None):
     parser.add_argument('in_file',
                         metavar='in_dir',
                         type=str,
-                        help='Directory holding the sim2root output: voltage_*_L0_*.root and the run '
-                             'trees.  A voltage file in it may be given instead (#180).')
+                        help='Directory holding the sim2root output: voltage_*_L<level>_*.root and the '
+                             'run trees.  A voltage file in it may be given instead, and is then the only '
+                             'one converted, whatever its name (#180, #231).')
     
     parser.add_argument('-o',
                         '--out_file',
                         type=str,
                         default=None,
-                        help='Path to output file in GrandRoot format (TADC). If the file exists it is overwritten.')
+                        help='Output file in GrandRoot format (TADC); a bare name goes into the input '
+                             'folder, as for the other conversion scripts. If the file exists it is overwritten.')
     
     parser.add_argument('--add_noise_from',
                         dest='noise_dir',
@@ -347,10 +350,18 @@ if __name__ == '__main__':
     #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
     f_input_dir   = args.in_file
-    # Its help said it took a file, and a file gave IndexError (#180)
+    # Its help said it took a file, and a file gave IndexError (#180).  The
+    # file given is the one converted: a voltage file named with -o was not
+    # found by the glob below (#231)
+    given_file = None
     if os.path.isfile(f_input_dir):
-        f_input_dir = os.path.dirname(os.path.abspath(f_input_dir))
+        given_file = os.path.abspath(f_input_dir)
+        f_input_dir = os.path.dirname(given_file)
     f_output  = args.out_file
+    # A bare name goes into the input folder, as convert_efield2voltage's -o
+    # does; it went into the current directory (#231)
+    if f_output is not None and os.path.dirname(f_output) == "":
+        f_output = os.path.join(f_input_dir, f_output)
     noise_dir = args.noise_dir
     # A negative seed gave a raw NumPy traceback; a negative rate was accepted (#277)
     if args.seed is not None and args.seed < 0:
@@ -361,16 +372,13 @@ if __name__ == '__main__':
 
     # The folder sim2root wrote, holding the voltage_*_L0_*.root that
     # convert_efield2voltage.py writes when -o is not given (#257)
-    found = sorted(glob.glob(os.path.join(f_input_dir, "voltage_*_L0_*.root")))
+    found = [given_file] if given_file else sorted(glob.glob(os.path.join(f_input_dir, "voltage_*_L*_*.root")))
     if not found:
         raise SystemExit(
-            "GRANDlib: convert_voltage2adc: no voltage_*_L0_*.root in %s.  Give the simulation "
-            "folder that convert_efield2voltage.py wrote to, and let it name the voltage file "
-            "(leave out its -o)." % f_input_dir)
-    f_input_file = found[0]
+            "GRANDlib: convert_voltage2adc: no voltage_*_L<level>_*.root in %s.  Give the voltage "
+            "file itself, or the folder convert_efield2voltage.py wrote to with the voltage file "
+            "named by it (leave out its -o)." % f_input_dir)
 
-    if f_output == None:
-        f_output = adc_file_path(f_input_file)
     if noise_dir == None:
         noise_trace = None
     t1_config = t1_config_from_params(args.t1_param) if args.t1_trigger else None
@@ -383,16 +391,23 @@ if __name__ == '__main__':
 
     #-#-#- Load TVoltage -#-#-#
     df       = grand.dataio.DataDirectory(f_input_dir)
-    tvoltage = df.tvoltage
-    entries  = tvoltage.get_number_of_entries()
     trun = df.trun
 
     # Loop through the voltage files
-    for f_input_file in df.ftvoltages[0].flist:
+    for f_input_file in ([given_file] if given_file else df.ftvoltages[0].flist):
 
         df_input_file = grand.dataio.DataFile(f_input_file)
         tvoltage = df_input_file.tvoltage
         entries = tvoltage.get_number_of_entries()
+
+        # The run file at the voltage file's level, which carries its
+        # sampling time: the highest level present was used, whatever the
+        # voltage's (#231, as #237 for the voltage step)
+        level = re.search(r"_L(\d+)_[^_]*\.root$", os.path.basename(f_input_file))
+        trun = getattr(df, "trun_l%s" % level.group(1), None) if level else None
+        if trun is None:
+            trun = df.trun
+        logger.info(f'Reading {f_input_file} with the run file {getattr(trun, "file_name", "?")}')
 
         logger.info(f'Converting {entries} voltage traces from {f_input_file} to ADC traces')
         print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")

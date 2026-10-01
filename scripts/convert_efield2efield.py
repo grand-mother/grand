@@ -56,13 +56,14 @@ def manage_args():
         "-o",
         "--out_file",
         default=None,
-        help="output file in GRANDROOT format. If the file exists it is overwritten.",
+        help="output file in GRANDROOT format, relative to -od when it is a bare name. If the file "
+             "exists it is replaced, as are the L1 run files.",
     )
     parser.add_argument(
         "-od",
         "--out_directory",
         default=None,
-        help="output directory in GRANDROOT format. If not given, is it the same as input directory",
+        help="output directory for the efield and run files. If not given, the input directory",
     )
     parser.add_argument(
         "--verbose",
@@ -108,6 +109,16 @@ def manage_args():
     )      
     # retrieve argument
     return parser.parse_args()
+
+def level1_name(level0_file, output_directory=None):
+    r"""Returns the L1 counterpart of `level0_file`, in `output_directory` if given.
+
+    Only the file name's ``_L0_`` changes: replacing "L0" in the whole path
+    changed a folder's name instead when it held "L0".
+    """
+    name = Path(level0_file).name.replace("_L0_", "_L1_", 1)
+    return str(Path(output_directory or Path(level0_file).parent) / name)
+
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     """
@@ -276,28 +287,41 @@ if __name__ == "__main__":
     output_directory=args.out_directory
     #############################################################################################
     #############################################################################################
-    #Open file
-    d_input = grand.dataio.DataDirectory(args.directory)
-
-    # Loop through the efield files
-    for f_input_file in d_input.ftefields[0].flist:
-
-        if args.out_file is None:
+    def efield_output(f_input_file):
+        r"""Returns where the L1 efield made from `f_input_file` goes."""
+        f_output = args.out_file
+        if f_output is None:
             # Replace only first occurrences
             f_output = "L1".join(f_input_file.split("L0", 1))
-
-        # # If output filename given, use it
-        # if f_output:
-        #    f_output = f_output
-        # # Otherwise, generate it from tefield filename
-        # else:                          #Matias: TODO: this will change from L0 to L1 when sim2root and the datadirectory can support it
-        #    f_output = d_input.ftefield.filename.replace("L0", "L1")
-
         # The output directory applies to a bare name; an -o with a directory
         # in it is used as given (it was cut to its name and written into the
         # input folder, #248)
         if output_directory and (args.out_file is None or Path(f_output).parent == Path(".")):
-           f_output = output_directory + "/" + Path(f_output).name
+            f_output = output_directory + "/" + Path(f_output).name
+        return f_output
+
+    # The level-0 efield files are the input (tefield_l0 is read).  Earlier
+    # outputs are removed before the folder is opened: a rerun, or a folder
+    # already holding L1 files (as the committed sample does), failed with
+    # NotUniqueEvent, and a file still open in the DataDirectory is reused
+    # by name when reopened (#231).
+    input_files = sorted(glob.glob(os.path.join(args.directory, "efield_*_L0_*.root")))
+    outputs = [efield_output(f) for f in input_files]
+    run_outputs = [level1_name(f, output_directory)
+                   for pattern in ("run_*_L0_*.root", "runefieldsim_*_L0_*.root")
+                   for f in glob.glob(os.path.join(args.directory, pattern))[:1]]
+    for path in dict.fromkeys(outputs + run_outputs):
+        if os.path.exists(path):
+            logger.info(f"replacing the existing {path}")
+            os.remove(path)
+    if output_directory:
+        os.makedirs(output_directory, exist_ok=True)
+
+    #Open file
+    d_input = grand.dataio.DataDirectory(args.directory)
+
+    # Loop through the level-0 efield files
+    for f_input_file, f_output in zip(input_files, outputs):
 
         df_input_file = grand.dataio.DataFile(f_input_file)
         tefield = df_input_file.tefield_l0
@@ -642,8 +666,9 @@ if __name__ == "__main__":
     #TODO: Ask Lech how to do this for files with multiple runs.
     #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
-    filename=glob.glob(args.directory+ "/run_*L0*.root")[0]
-    filename=filename.replace("L0", "L1")
+    # Into -od, with the efield files: they went into the input folder, so
+    # the -od folder could not feed the next step (#231)
+    filename = level1_name(glob.glob(args.directory+ "/run_*L0*.root")[0], output_directory)
     outrun = grand.dataio.TRun(filename)
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
@@ -658,8 +683,7 @@ if __name__ == "__main__":
     #TODO: if we changed the trace lenght this needs to update t_post acordingly.        
     #now, we copy trunefieldsim and change tpost (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
-    filename=glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0]
-    filename=filename.replace("L0", "L1")
+    filename = level1_name(glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0], output_directory)
     outrunefieldsim = grand.dataio.TRunEfieldSim(filename)
     outrunefieldsim.copy_contents(trunefieldsim)
     outrunefieldsim.analysis_level = trunefieldsim.analysis_level+1

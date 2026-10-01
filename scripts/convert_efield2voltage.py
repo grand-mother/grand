@@ -101,10 +101,18 @@ def manage_args():
         "-o",
         "--out_file",
         default=None,
-        help="output file in GRANDROOT format. If the file exists it is overwritten.",
+        help="output file in GRANDROOT format, relative to the output directory (-od, by default "
+             "the input folder). If the file exists it is overwritten.",
         # required=True,
         # PB with option ???
         # type=argparse.FileType("w"),
+    )
+    parser.add_argument(
+        "--level",
+        type=int,
+        default=None,
+        help="level of the efield files to read, for a folder holding several (default: the "
+             "highest, with a warning)",
     )
     parser.add_argument(
         "-od",
@@ -223,7 +231,8 @@ if __name__ == "__main__":
     logger.info(f"seed used for random number generator is {seed}.")
 
     # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
-    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
+    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type,
+                            efield_level=args.level)
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst

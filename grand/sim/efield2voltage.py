@@ -124,7 +124,7 @@ def _grandlib_version():
 _MIN_XMAX_DISTANCE_M = 100.0
 
 
-def _trees_of_one_level(directory):
+def _trees_of_one_level(directory, level=None):
     r"""The efield, run and shower trees of `directory`, read at one level.
 
     ``DataDirectory`` picks the highest level of each tree type on its own, so
@@ -137,6 +137,9 @@ def _trees_of_one_level(directory):
     Parameters
     ----------
     directory : grand.dataio.DataDirectory
+    level : int, optional
+        Level of the efield to read; the highest present when omitted, with
+        a warning if there are several (#231: it was picked silently).
 
     Returns
     -------
@@ -156,7 +159,16 @@ def _trees_of_one_level(directory):
     if not efield_levels:
         raise FileNotFoundError(_validate.message(
             "Efield2Voltage", "%s holds no efield file (efield_*_L<level>_*.root)" % directory.dir_name))
-    level = efield_levels[-1]
+    if level is None:
+        level = efield_levels[-1]
+        if len(efield_levels) > 1:
+            _validate.warn("Efield2Voltage", "%s holds efield files at levels %s: reading the highest, "
+                           "%d; give efield_level (--level) to choose" % (
+                               directory.dir_name, ", ".join(str(v) for v in efield_levels), level))
+    elif level not in efield_levels:
+        raise FileNotFoundError(_validate.message(
+            "Efield2Voltage", "%s holds no efield file at level %s; it has levels %s"
+            % (directory.dir_name, level, ", ".join(str(v) for v in efield_levels))))
     trun = getattr(directory, "trun_l%d" % level, None)
     if trun is None:
         raise FileNotFoundError(_validate.message(
@@ -197,7 +209,8 @@ class Efield2Voltage:
       * Save output in ROOT format
     """
 
-    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300'):
+    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300',
+                 efield_level=None):
 
         # If directory given, use DataDirectory
         r"""Opens the input and prepares the antenna and RF-chain models.
@@ -223,6 +236,9 @@ class Efield2Voltage:
             frequency resolution.
         du_type : str, optional
             Which antenna model to use.
+        efield_level : int, optional
+            For a folder holding efield files at several levels, the one to
+            read; the highest by default, with a warning (#231).
 
                 Raises
                 ------
@@ -255,7 +271,7 @@ class Efield2Voltage:
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
         if isinstance(self.d_input, groot.DataDirectory):
-            f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input)
+            f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input, efield_level)
 
         self.f_output = f_output
 

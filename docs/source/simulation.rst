@@ -182,10 +182,12 @@ or, from a shell, both steps on the same folder:
     python scripts/convert_efield2voltage.py my_simulation --lst 18
     python scripts/convert_voltage2adc.py my_simulation
 
-Without ``-o`` each script names its output (``voltage_*_L0_*.root``,
-``adc_*_L1_*.root``) and writes it into the folder, which is where the next
-step looks.  A name given with ``-o`` is taken relative to the output folder:
-the input folder, unless ``-od`` names another.
+Without ``-o`` each script names its output (``voltage_*_L<level>_*.root``,
+then ``adc_*_L<level>_*.root``) and writes it into the folder, which is where
+the next step looks.  A bare name given with ``-o`` goes into the output
+folder: the input folder, unless ``-od`` names another.  An existing output
+is replaced.  A folder holding efield files at several levels is read at the
+highest, with a warning; ``--level`` chooses another.
 
 Run time is about 13 s per shower across a full GRANDProto300 array on one
 core, measured over 300 ZHAireS showers for the GRANDlib paper.

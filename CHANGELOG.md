@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The conversion scripts write where they say and can be rerun (#231):
+  `convert_efield2efield.py -od` writes the L1 run files there too (they
+  went into the input folder), replaces earlier outputs instead of failing
+  with `NotUniqueEvent`, and no longer reads a folder's existing L1 efield
+  files as input; `convert_voltage2adc.py` converts a voltage file given by
+  path whatever its name, finds `voltage_*_L<level>_*.root` at any level,
+  pairs each voltage file with the run file of its own level, and puts a
+  bare `-o` name in the input folder like the other scripts;
+  `Efield2Voltage` warns when a folder holds efield files at several levels
+  and reads the highest, and `efield_level=` / `--level` chooses one.
+
 - A ZHAireS simulation without an Xmax stores NaN, not -1 g/cm² and -1000 m
   (which became an Xmax below ground in `TShower`) (#225). A simulation
   without an event time (`EventUnixTime: 0`, as in the committed sample)
