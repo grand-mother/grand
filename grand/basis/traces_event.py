@@ -456,14 +456,21 @@ class Handling3dTraces:
             tr_norm = np.linalg.norm(self.traces, axis=1)
             idx_max = np.argmax(tr_norm, axis=1)
             idx_max = idx_max[:, np.newaxis]
-            tmax = np.squeeze(np.take_along_axis(self.t_samples, idx_max, axis=1))
-            vmax = np.squeeze(np.take_along_axis(tr_norm, idx_max, axis=1))
+            tmax = np.take_along_axis(self.t_samples, idx_max, axis=1)
+            vmax = np.take_along_axis(tr_norm, idx_max, axis=1)
+        # One value per trace, whatever the number of traces: np.squeeze made
+        # them 0-d for a one-antenna event, which then crashed (#287)
+        n_trace = self.get_nb_trace()
+        tmax = np.reshape(np.asarray(tmax), (n_trace,))
+        vmax = np.reshape(np.asarray(vmax), (n_trace,))
         if interpol == "no":
             self.t_max = tmax
             self.v_max = vmax
             return tmax, vmax
         if interpol not in ["parab", "auto"]:
-            raise
+            raise ValueError(_validate.message(
+                "Handling3dTraces.get_tmax_vmax",
+                "'interpol' must be \"parab\", \"auto\" or \"no\", got %r" % (interpol,)))
         t_max = np.empty_like(tmax)
         v_max = np.empty_like(tmax)
         for idx in range(self.get_nb_trace()):

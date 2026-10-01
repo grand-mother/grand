@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Handling3dTraces` handles one-antenna events (#287).** `np.squeeze`
+  dropped the antenna axis, so `get_tmax_vmax()` and `get_snr_and_noise()`
+  crashed on an event with one antenna, and `interpol="no"` returned 0-d
+  arrays. They now return one value per antenna for any number of antennas,
+  and an unknown `interpol` raises a `ValueError` naming the accepted values
+  (it raised "No active exception to reraise").
+
 - **The ADC step no longer turns NaN or huge voltages into the most negative
   count (#239).** Casting a NaN, an inf or a voltage beyond the int64 range to
   an integer gave -9223372036854775808, whose absolute value is negative too,
