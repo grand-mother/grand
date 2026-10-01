@@ -205,7 +205,7 @@ File Format
 ^^^^^^^^^^^
 
 | 
-| The files are stored as a NumPy ``.npz`` archive, which is a compressed container of multiple arrays. It provides the effective length response of the GP300 antenna model (East–West arm, denoted as EW or X arm , South–North denoted as SN or Y arm and Vertical denotes as Zarm) as a function of frequency and arrival direction.
+| The files are stored as a NumPy ``.npz`` archive, which is a compressed container of multiple arrays. It provides the effective length response of the GP300 antenna model (South–North arm, denoted SN or X arm, East–West arm, denoted EW or Y arm, and the vertical Z arm — corrected here; the PDF has X and Y the other way round, see :doc:`index`) as a function of frequency and arrival direction.
 
 Contents
 ^^^^^^^^

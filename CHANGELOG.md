@@ -15,6 +15,20 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Documentation facts that were stale or wrong (#258).** `TRun.software_version`
+  does not exist (the version fields are named now); the noise-table pages
+  speak of the pre-2026-09-07 problems in the past tense; `data_files.rst`
+  counts 14 tracked files and four download scripts; `sim2root.rst` says what
+  the tests cover and has current line and finding counts; `api.rst` gains the
+  eight undocumented modules and current docstring figures (702 functions);
+  `ci.rst` lists the workflows that exist and their triggers; installation no
+  longer says `setup.sh` downloads topography; the −5 dB VGA table is gone
+  from `simulation.rst`; `testing.rst` has today's numbers (998 passed, 72 %
+  coverage); the Handbook errata cover its installation commands and snippets
+  for removed code, and its orphan `:width:` lines are gone;
+  `make_notebooks.py --help` prints help instead of rebuilding everything.
+  The analysis angles are radians, as the troubleshooting page now says.
+
 - **Stale READMEs (#260).** `scripts/readme.md` covered four scripts with
   outdated help; it now indexes all of them and reproduces each one's current
   `-h` output, with the working two-step recipe. The CoREAS README named a

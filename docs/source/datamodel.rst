@@ -57,8 +57,12 @@ Class              Contents
 Provenance
 ----------
 
-``TRun`` carries ``software_version``, ``analysis_level``, ``site`` and
-``site_layout``, which is what lets a file answer *what produced me*.  That
+``TRun`` carries ``data_generator_version``, ``event_version``,
+``analysis_level``, ``site`` and ``site_layout``; every tree records the
+software that last wrote it (``modification_software``,
+``modification_software_version``), and ``TVoltage`` the GRANDlib version
+that computed its voltages (``grandlib_version``).  That is what lets a file
+answer *what produced me*.  That
 matters more than it sounds: a change to the Galactic-noise normalisation
 alters every voltage in a file without changing its shape, and the version
 stamp is the only way to tell two such files apart.

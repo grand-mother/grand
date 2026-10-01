@@ -76,3 +76,11 @@ Every entry below was checked against the package rather than assumed.
      - ``CoreasToRawROOT.py proton/``; ``sim2root.py <path>/*.rawroot -d ... -e DC2Alpha``; ``convert_efield2voltage.py <efield.root> -o out.root`` then ``convert_voltage2adc.py out.root -o adc.root``.
      - Each fails. The CoREAS converter takes ``-d proton``; ``sim2root.py`` needs ``-sl GP300``; both conversion scripts take the folder ``sim2root.py`` wrote, not a file, and name their outputs into it. The Directory Structure page is corrected; the PDF is not.
      - :doc:`../sim2root`, :doc:`../simulation`
+   * - Installation commands
+     - ``conda env create -f reqmt_grandenv_2509.yml`` after ``cd grand``; ``grandlib_amd64.yml`` and ``requirements.txt``; a ``docker run -v $PWD:/home/grandlib/dev:x`` line; Jupyter at ``https://localhost:8888``.
+     - The environment file is ``env/conda/grand-dev.yml``; the other two files do not exist; the ``docker run`` line is malformed; Jupyter serves ``http://localhost:8888``.
+     - :doc:`../installation`
+   * - Removed code
+     - Snippets use ``tests/tools/test_fake.py``, ``tests/recon/test_elec_field.py``, ``test_params_shower.py``, ``grand.io.root_trees``, ``from grand.topography import Topography`` and ``data/test_efield.root``.
+     - None of these exists any more. The readers are in ``grand.dataio``, topography in ``grand.geo.topography``, and the tests under ``tests/`` as listed in :doc:`../testing`.
+     - :doc:`../api`

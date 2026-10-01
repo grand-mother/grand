@@ -17,8 +17,8 @@ Current state, on the ``dev-next`` branch:
 
 .. code-block:: text
 
-    459 passed, 13 skipped, 10 xfailed, 1 xpassed
-    coverage: 73% over grand/, 17% over granddb/, 62% together
+    998 passed, 10 skipped, 11 xfailed            (2026-10-01)
+    coverage: 80% over grand/, 23% over granddb/, 72% together
 
 Layout
 ------
@@ -96,7 +96,7 @@ Measured with:
 
     pytest tests/ -q --cov=grand --cov=granddb --cov-report=term
 
-64% today.  The number is worth less than it looks: line coverage counts
+72% today.  The number is worth less than it looks: line coverage counts
 executed lines, not verified behaviour, and the end-to-end test executed a
 great deal of the simulation chain while asserting only that an output file
 appeared.  Appendix C of the GRANDlib paper reports 84%, measured when CI

@@ -87,14 +87,14 @@ File                                                       Lines   What it does
 ``ZHAireSRawRoot/AiresInfoFunctionsGRANDROOT.py``           2095   Reads ZHAireS output files
 ``Common/raw_root_trees.py``                                1434   The RawRoot schema
 ``ZHAireSRawRoot/ZHAireSRawToRawROOT.py``                   1049   ZHAireS to RawRoot
-``Common/sim2root.py``                                      1011   RawRoot to GRANDRoot
-``CoREASRawRoot/CoreasToRawROOT.py``                         593   CoREAS to RawRoot
-``Common/IllustrateSimPipe.py``                              571   Plots for the pipeline example
+``Common/sim2root.py``                                      1122   RawRoot to GRANDRoot
+``CoREASRawRoot/CoreasToRawROOT.py``                         733   CoREAS to RawRoot
+``Common/IllustrateSimPipe.py``                              574   Plots for the pipeline example
 ``ZHAireSRawRoot/ZHAireSInputGenerator.py``                  492   Generates ZHAireS inputs
-``Common/EventParametersGenerator.py``                       342   Event parameter files
-``CoREASRawRoot/CorsikaInfoFuncs.py``                        335   Reads CORSIKA output
-``ZHAireSRawRoot/ZHAireSCompressEvent.py``                   214   Compresses an event
-``Common/RunSimPipe*.py``                                    310   Three pipeline examples
+``Common/EventParametersGenerator.py``                       353   Event parameter files
+``CoREASRawRoot/CorsikaInfoFuncs.py``                        455   Reads CORSIKA output
+``ZHAireSRawRoot/ZHAireSCompressEvent.py``                   219   Compresses an event
+``Common/RunSimPipe*.py``                                    287   Three pipeline examples
 =========================================================  ======  ================================
 
 ``Common/raw_root_trees.py`` is worth knowing about independently: it is a
@@ -108,12 +108,14 @@ Said plainly, because the alternative is finding out by accident.
 
 **It is outside the quality gates.**  The CI lint job checks ``grand/``,
 ``tests/``, ``quality/``, ``notebooks/`` and ``docs/dev/``.  It does not check
-``sim2root/``, and neither does the test suite: there are no tests for any of
-the files above.
+``sim2root/``.  The test suite does cover it, from outside: ``tests/sim2root/``
+runs the converters on the committed samples (conversion, the trace window,
+Xmax, the no-antenna case, the documented commands), but nothing tests the
+modules piece by piece.
 
-**Ruff reports 839 findings there**, against zero in the gated scope.
-The largest groups are ``F405`` (371, names possibly undefined from star
-imports), ``D103`` (108, missing docstrings) and ``F821`` (99, undefined
+**Ruff reports 837 findings there**, against zero in the gated scope.
+The largest groups are ``F405`` (372, names possibly undefined from star
+imports), ``D103`` (104, missing docstrings) and ``F821`` (98, undefined
 names).
 
 **Ninety-eight of those undefined names are in one block.**

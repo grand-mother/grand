@@ -149,8 +149,10 @@ applied before the LNA.  And the ``vgaf`` stage loads
     print("transfer function shape (arms, frequencies):", tf.shape)
     print("peak |V_out/V_oc| per arm:", np.round(tf.max(axis=1), 1))
 
-The gain is a configuration choice: S-parameters are shipped for VGA gains of
-20 dB (the GRANDProto300 default), 5 dB, 0 dB and −5 dB.
+The gain is meant to be a configuration choice: S-parameters are shipped for
+VGA gains of 20 dB (the GRANDProto300 default), 5 dB and 0 dB.  At present the
+argument is ignored and every chain uses the 20 dB table
+(:ref:`issue-vga-gain-ignored`).
 
 Digitisation
 ------------

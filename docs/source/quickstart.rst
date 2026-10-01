@@ -32,11 +32,17 @@ or, equivalently, from a shell::
    the problem.  A ``jupyter-execute`` block runs when the page is built, so
    it cannot go stale; but this one cannot run, because it needs a ROOT file
    on disk before the object can even be constructed.  Every example in this
-   library has that shape today, which is why none of the 554 functions
-   carries one.
+   library has that shape today, which is why only 17 of the 702 functions
+   carry one.
 
 After Phase 6
 -------------
+
+.. warning::
+
+   **Not runnable.**  The code in this section is a design sketch: the
+   modules it imports (``grand.config``, ``grand.io``, ``grand.sim.kernel``)
+   do not exist yet.  Use the form above.
 
 Once input, processing and output are delineated, the same operation
 separates into steps that can each be demonstrated on their own:

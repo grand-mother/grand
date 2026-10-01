@@ -152,4 +152,5 @@ Available
 
    Notebook 11 needs ``iminuit``, which the conda environment carries;
    elsewhere, ``pip install -e ".[analysis]"``. Notebook 12 needs the viewer's
-   plotting stack, which it does not: ``pip install -e ".[viewer]"``.
+   plotting stack, which the conda environment does not carry: install it with
+   ``pip install -e ".[viewer]"``.

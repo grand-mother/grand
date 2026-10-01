@@ -88,19 +88,22 @@ out as 600 : 400 : 1.  See :doc:`simulation` and notebook 06.
 **Changing ``vga_gain`` changes nothing.**  It is ignored.  See
 :ref:`issue-vga-gain-ignored`.
 
-**Two noise levels disagree by a factor of two.**  Compare the ``du_type``.
-The three values resolve to two distinct sets of numbers whose levels differ by
-up to 2.1×, and two of the three read a byte-identical file.  See
-:ref:`issue-galactic-noise-tables`.
+**Two noise levels disagree by a factor of two.**  If either was simulated
+before 2026-09-07, compare the ``du_type``: until then the three values
+resolved to two distinct sets of numbers, differing by up to 2.1×, and two of
+the three read a byte-identical file (:ref:`issue-galactic-noise-tables`).
+Since then each reads its own table, and the three agree to about 10 %.
 
 **A frequency is out by** :math:`10^6`.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
 stores its frequency axis in **hertz**; everything in
 :mod:`grand.sim.detector.rf_chain` uses **megahertz**, and the attribute name
 carries no unit suffix.  Divide by ``1e6`` when crossing between them.
 
-**An angle is out by a factor of 57.3.**  Every angle in GRANDlib is in
-**degrees**, never radians — including ``zenith``, ``azimuth``, and the
-``phi``/``theta`` axes of the antenna tables.
+**An angle is out by a factor of 57.3.**  The trees, the simulation chain and
+the antenna tables take angles in **degrees** — ``zenith``, ``azimuth``, and
+the ``phi``/``theta`` axes of the tables — while :mod:`grand.analysis` and the
+event viewer work in **radians**.  The analysis functions warn when given a
+value larger than :math:`2\pi`.
 
 **``leff_theta`` is ``None``.**  The loaded tables hold the real/imaginary form
 in ``leff_theta_reim``; the polar attributes ``leff_theta``, ``leff_phi``,

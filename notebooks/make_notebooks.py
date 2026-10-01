@@ -157,7 +157,7 @@ def provenance():
               'place is overwritten by the next build, and `--check` will say '
               'so.*'
               % (PROVENANCE_MARKER, stamp, commit,
-                 ' with uncommitted changes' if dirty else '',
+                 ' plus the changes being committed with it' if dirty else '',
                  platform.python_version()))
 
 
@@ -505,7 +505,9 @@ file beside the L0 one.
 
 ## 5. Provenance
 
-`TRun` carries `software_version`, `analysis_level`, `site` and `site_layout`.
+`TRun` carries `data_generator_version`, `analysis_level`, `site` and
+`site_layout`, and every tree records the software that last wrote it
+(`modification_software`, `modification_software_version`).
 This matters more than it sounds: a change to the Galactic-noise normalisation
 alters every voltage in a file without changing its shape, and the version
 stamp is the only way to tell two such files apart.'''),
@@ -513,9 +515,9 @@ stamp is the only way to tell two such files apart.'''),
 for field_name in ('run_number', 'site', 'site_layout', 'analysis_level'):
     print("%-16s %r" % (field_name, getattr(handle.trun, field_name, None)))'''),
     md(r'''That paragraph was not hypothetical. The normalisation did change, in
-September 2026, by a factor of $\sqrt2$ (notebook 05, section 7), and
-`TRun.software_version` records what produced the *run* rather than what
-produced the *voltages*.
+September 2026, by a factor of $\sqrt2$ (notebook 05, section 7), and the run's
+version fields record what produced the *run* rather than what produced the
+*voltages*.
 
 So `TVoltage` now carries `grandlib_version` of its own, written by
 `Efield2Voltage` at the moment the traces are computed. Files written before
@@ -3771,12 +3773,19 @@ viewer's history and its open items.'''),
 
 
 if __name__ == '__main__':
+    import argparse
 
-    argv = sys.argv[1:]
-    if '--check' in argv:
+    # --help rebuilt and rewrote all twelve notebooks (#258)
+    parser = argparse.ArgumentParser(
+        description="Generate the tutorial notebooks from this file, and execute them.")
+    parser.add_argument("--check", action="store_true",
+                        help="only check that the committed notebooks match this generator")
+    parser.add_argument("--only", metavar="NAMES",
+                        help="comma-separated notebook file names to build, e.g. 05_galactic_noise.ipynb")
+    parser.add_argument("--no-execute", action="store_true",
+                        help="write the notebooks without executing them")
+    args = parser.parse_args()
+    if args.check:
         raise SystemExit(check())
-    chosen = None
-    if '--only' in argv:
-        chosen = [f.strip() for f in argv[argv.index('--only') + 1].split(',')
-                  if f.strip()]
-    build(execute='--no-execute' not in argv, only=chosen)
+    chosen = [f.strip() for f in args.only.split(',') if f.strip()] if args.only else None
+    build(execute=not args.no_execute, only=chosen)

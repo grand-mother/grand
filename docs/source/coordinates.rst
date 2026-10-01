@@ -211,10 +211,9 @@ Common mistakes
 
 .. note::
 
-   A worked notebook is planned for this page — the frames and conversions
-   end to end, with a detector layout drawn in ``GRANDCS`` and again in
-   geodetic coordinates, a shower axis in both, and a terrain profile along
-   it. Tracked in ``resources/dev/dev-next/RECOVERY_PLAN.md``.
+   Notebook 01, *Coordinate systems* (see :doc:`notebooks`), works through this
+   page end to end: the frames and conversions, a detector layout drawn in
+   ``GRANDCS`` and again in geodetic coordinates, and a shower axis in both.
 
 Reference
 ---------

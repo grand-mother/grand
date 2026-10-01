@@ -26,11 +26,4 @@ This structure ensures that ROOT files contain not only the physics events of in
 For instance, the same file may include detector-level raw traces (``TADC``), reconstructed voltage signals (``TVoltage``), the corresponding electric field at the antenna level (``TEfield``), as well as the shower properties that generated them (``TShower``).
 Simulation runs are equally documented through specialized classes (``TRunEfieldSim``, ``TRunShowerSim``, ``TShowerSim``), ensuring reproducibility and comparability across different codes (e.g., ZHAireS, CoREAS).
 
-   :width: 60.0%
-   :width: 80.0%
-   :width: 80.0%
-   :width: 60.0%
-   :width: 50.0%
-   :width: 30.0%
-   :width: 60.0%
 
