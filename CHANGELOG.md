@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Notebooks 10–12: counts, units, jargon (#219).** Notebook 10 named five
+  scripts and listed four (`register_in_db` was missing) and explained
+  behaviour by commit history; notebook 11's bound check now says which bound
+  (every bounded fit is on the upper ring width, as the text says), the ring
+  width is stated to be dimensionless, and the table header is complete;
+  notebook 12's axis reads "West [km]" (y runs west) and its legend no longer
+  covers the point the text cites. (Notebook 07's 57 km is fixed with #210.)
+
 - **Notebook prose the outputs contradicted, second pass (#269).** Each
   statement was checked against its own cell output and rewritten from it:
   the per-bin noise spectrum does not fall steeply (05); the sky-temperature

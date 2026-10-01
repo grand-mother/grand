@@ -2622,9 +2622,8 @@ the same way as a remote.
     code(r'''found = dm.get_file("efield_5388_L0.root")
 print(found)
 print(type(found).__name__)'''),
-    md(r'''A `Path`, not a string. It was a string until June 2025, when
-`dev_database` changed `return str(found_file)` to `return found_file`; code
-that concatenates the result rather than passing it to `open` predates that.
+    md(r'''A `Path`, not a string: pass it to `open` or join it with `/`. (It used to be
+a string, so older code that concatenates the result with `+` fails on it.)
 
 The search descends, so a file need not sit at the top of a `localdir`:'''),
     code(r'''print(dm.get_file("efield_6914_L0.root"))   # two directories down
@@ -2720,17 +2719,14 @@ Five scripts wrap the same object, and they take the config file with `-c`:
 python -m granddb.register_file_in_db    -c config.ini  file.root
 python -m granddb.register_dir_in_db     -c config.ini  somedir/
 python -m granddb.register_dataset_in_db -c config.ini  somedir/
+python -m granddb.register_in_db         -c config.ini  file.root somedir/
 python -m granddb.refresh_mat_views      -c config.ini
 ```
 
 Each needs a `[database]` section, since registering is what they do.
 
-Two notes on them, both dated September 2026. Importing one of these modules
-used to run it — `parse_args()` and a database connection at import — so they
-now have a `main()` and a `__main__` guard; the commands above are unchanged.
-And `register_file_in_db` calls `os._exit(0)` after its first file, so passing
-it several registers one; the comment beside it says that avoids a deadlock in
-ROOT.
+One practical note: `register_file_in_db` stops after its first file, so
+passing it several registers only one. Use `register_dir_in_db` for many.
 
 ## 7. Where this leaves you
 
@@ -3018,9 +3014,9 @@ because the geomagnetic and charge-excess emission add on one side and cancel
 on the other.
 
 `ADF_parameters` evaluates all of that for a given shower. Give it the shower
-from step 2, a ring width of 2 and an amplitude scale $A_0$, and it returns
+from step 2, a ring width of 2 (dimensionless: it scales the angular term of the ADF) and an amplitude scale $A_0$, and it returns
 each antenna's angles and predicted amplitude:'''),
-    code(r'''WIDTH, SCALE = 2.0, 5.0e7                     # ring width; amplitude scale in ADC counts x metres
+    code(r'''WIDTH, SCALE = 2.0, 5.0e7                     # ring width (dimensionless); amplitude scale in ADC counts x metres
 
 eta, omega, omega_cr, ell, amplitude = fit.ADF_parameters(
     truth[0], truth[1], WIDTH, SCALE, ANTENNAS, XSOURCE)
@@ -3082,7 +3078,8 @@ nothing in `recons_ADF` or `main_AOI.py` flags it. The check is short:'''),
              "azimuth": (phi, phi_pwf - np.deg2rad(1), phi_pwf + np.deg2rad(1)),
              "width": (width, 1.25, 3.0),
              "scale": (scale, 1e6, 1e10)}
-    return [name for name, (value, low, high) in edges.items()
+    return ["%s (%s)" % (name, "lower" if np.isclose(value, low, rtol=1e-5) else "upper")
+            for name, (value, low, high) in edges.items()
             if np.isclose(value, low, rtol=1e-5) or np.isclose(value, high, rtol=1e-5)]
 
 
@@ -3208,7 +3205,7 @@ for event_number, run_number in events:
         Xsource=np.asarray(recons.Xsource)[0], Xants=np.asarray(recons.Xants),
         amps=np.asarray(recons.adf_amplitude), omega_cr=np.mean(recons.omega_cr)))
 
-print("\n  event   run  DUs   zenith  azimuth   (ADF)   source    energy")
+print("\n  event   run  DUs   ADF zenith, azimuth (deg)   source    energy")
 for r in rows:
     print("%7d %5d %4d  %7.2f  %7.2f          %5.1f km  %8.2g eV"
           % (r["event"], r["run"], r["antennas"], *r["adf"],
@@ -3526,7 +3523,7 @@ sc = ax.scatter(viewer.hitX / 1e3, viewer.hitY / 1e3, c=viewer.peaktime * 1e6,
 ax.plot(viewer.corex / 1e3, viewer.corey / 1e3, "k*", ms=14, label="core")
 fig.colorbar(sc, ax=ax, label="peak time [microseconds]")
 ax.set_xlabel("South-North [km]")
-ax.set_ylabel("East-West [km]")
+ax.set_ylabel("West [km]")
 ax.set_aspect("equal")
 ax.legend(fontsize=8, loc="upper left")
 ax.set_title("Footprint, as the viewer draws it")
