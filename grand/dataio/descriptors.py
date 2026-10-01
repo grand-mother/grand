@@ -4,6 +4,8 @@ import sys
 import ROOT
 import os
 
+import operator
+
 import numpy as np
 
 from grand.basis import validate as _validate
@@ -22,10 +24,10 @@ ROOT.gROOT.LoadMacro(_MACRO)
 numpy_to_array_typecodes = {np.dtype('int8'): 'b', np.dtype('int16'): 'h', np.dtype('int32'): 'i', np.dtype('int64'): 'q', np.dtype('uint8'): 'B', np.dtype('uint16'): 'H', np.dtype('uint32'): 'I', np.dtype('uint64'): 'Q', np.dtype('float32'): 'f', np.dtype('float64'): 'd', np.dtype('complex64'): 'F', np.dtype('complex128'): 'D', np.dtype('int16'): 'h'}
 
 # Conversion between C++ type and array.array typecodes
-cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q', 'unsigned char': 'B', 'unsigned short': 'H', 'unsigned int': 'I', 'unsigned long long': 'Q', 'float': 'f', 'double': 'd', 'string': 'u'}
+cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q', 'unsigned char': 'B', 'unsigned short': 'H', 'unsigned int': 'I', 'unsigned long long': 'Q', 'bool': 'b', 'float': 'f', 'double': 'd', 'string': 'u'}
 
 # Conversion between C++ type and numpy typecodes
-cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype('uint64'), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
+cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype(np.ulonglong), 'bool': np.dtype(bool), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
 
 
 def _check_limits(values, where, minimum=None, maximum=None, positive=False, unit=""):
@@ -131,7 +133,9 @@ class StdVectorList(MutableSequence):
         sec_vec_type : str, optional
             Element type of the inner vector, for nested vectors.
         """
-        self._vector = ROOT.vector(vec_type)(value)
+        # Built empty and filled through _assign: ROOT.vector(type)(value)
+        # failed to compile for nested char vectors and crashed (#201)
+        self._vector = ROOT.vector(vec_type)()
         if sec_vec_type is not None:
             self._sec_vector = ROOT.vector(sec_vec_type)()
         #: C++ type for the std::vector (eg. "float", "string", etc.)
@@ -144,6 +148,8 @@ class StdVectorList(MutableSequence):
             self.basic_vec_type = self.vec_type
         # The number of dimensions of this vector
         self.ndim = vec_type.count("vector") + 1
+        if value is not None and len(value):
+            self._assign(value)
 
     def __len__(self):
         r"""Returns the number of elements in the vector.
@@ -155,15 +161,126 @@ class StdVectorList(MutableSequence):
         """
         return self._vector.size()
 
-    def __delitem__(self, index):
-        r"""Removes the element at `index`.
+    # Element conversion.  ROOT returns the elements of a char vector as
+    # one-character strings ('\x01', 'È'), and numpy reads them as booleans;
+    # they are numbers in the data model (#201).
+    def _element(self, value):
+        r"""Returns one innermost element as a Python value.
+
+        Parameters
+        ----------
+        value : object
+            The element as cppyy returns it.
+
+        Returns
+        -------
+        object
+            An int for char types, a str for strings, the value otherwise.
+        """
+        if "char" in self.basic_vec_type:
+            if isinstance(value, str):
+                value = ord(value)
+            elif isinstance(value, bytes):
+                value = value[0]
+            value = int(value)
+            if self.basic_vec_type == "char" and value > 127:
+                value -= 256
+            return value
+        if isinstance(value, bytes):
+            return value.decode("utf-8", "replace")
+        return value
+
+    def _convert(self, value, depth):
+        r"""Returns a (nested) std::vector as nested Python lists.
+
+        Parameters
+        ----------
+        value : std::vector
+            The vector, or an inner vector of it.
+        depth : int
+            Its number of dimensions.
+
+        Returns
+        -------
+        list
+            The contents, with the elements converted by :meth:`_element`.
+        """
+        if depth > 1:
+            return [self._convert(inner, depth - 1) for inner in value]
+        if "char" not in self.basic_vec_type and self.basic_vec_type != "string":
+            return list(value)
+        return [self._element(element) for element in value]
+
+    def tolist(self):
+        r"""Returns the contents as (nested) Python lists.
+
+        Returns
+        -------
+        list
+            The contents; char elements as ints, strings as str.
+        """
+        return self._convert(self._vector, self.ndim)
+
+    def _index(self, index):
+        r"""Returns `index` as a position in range, as a list would.
 
         Parameters
         ----------
         index : int
-            Position to remove.
+            Position, negative from the end.
+
+        Returns
+        -------
+        int
+            The non-negative position.
+
+        Raises
+        ------
+        IndexError
+            When it is out of range: ``s[10] = x`` on three elements was
+            ignored, and ``s[-1] = x`` failed in C++ (#201).
         """
-        self._vector.erase(index)
+        size = len(self._vector)
+        position = operator.index(index)
+        if position < 0:
+            position += size
+        if not 0 <= position < size:
+            raise IndexError("StdVectorList index %d out of range for %d elements" % (index, size))
+        return position
+
+    @staticmethod
+    def _as_list(value):
+        r"""Returns `value` as a Python list, for rebuilding the vector.
+
+        Parameters
+        ----------
+        value : StdVectorList, ndarray or sequence
+            Elements.
+
+        Returns
+        -------
+        list
+            The elements.
+        """
+        if isinstance(value, StdVectorList):
+            return value.tolist()
+        if isinstance(value, np.ndarray):
+            return value.tolist()
+        return list(value)
+
+    def __delitem__(self, index):
+        r"""Removes the element at `index`, or the elements of a slice.
+
+        Parameters
+        ----------
+        index : int or slice
+            Position or range to remove.
+        """
+        items = self.tolist()
+        if not isinstance(index, slice):
+            index = self._index(index)
+        del items[index]
+        self._assign(items)
 
     def insert(self, index, value):
         """Insert the value to the vector at index
@@ -171,58 +288,70 @@ class StdVectorList(MutableSequence):
         Parameters
         ----------
         index : int
-            Position to insert at.
+            Position to insert at, as for a list.
         value : object
             Value to insert.
         """
-        self._vector.insert(index, value)
+        items = self.tolist()
+        items.insert(operator.index(index), value.tolist() if isinstance(value, (np.ndarray, np.generic))
+                     else value)
+        self._assign(items)
 
     def __setitem__(self, index, value):
-        r"""Replaces the element at `index`.
-
-        Parameters
-        ----------
-        index : int
-            Position to write.
-        value : object
-            New value, converted to the vector's C++ element type.
-        """
-        self._vector[index] = value
-
-    def __getitem__(self, index):
-        # If this is a vector of vectors, convert a subvector to list for the return
-        r"""Returns the element at `index`.
+        r"""Replaces the element at `index`, or the elements of a slice.
 
         Parameters
         ----------
         index : int or slice
-            Position or range to read.
+            Position or range to write; negative counts from the end.
+        value : object
+            New value, converted to the vector's C++ element type.
+        """
+        items = self.tolist()
+        if isinstance(index, slice):
+            items[index] = self._as_list(value)
+        else:
+            items[self._index(index)] = (value.tolist() if isinstance(value, (np.ndarray, np.generic))
+                                         else value)
+        self._assign(items)
+
+    def __getitem__(self, index):
+        r"""Returns the element at `index`, or a list for a slice.
+
+        Parameters
+        ----------
+        index : int or slice
+            Position or range to read; negative counts from the end.
 
         Returns
         -------
         object
-            The element, converted back to a Python value.
+            The element, converted back to a Python value: an inner vector
+            as a list, a char as an int.
         """
-        if len(self._vector) > 0:
-            if "std.vector" in str(type(self._vector[index])):
-                try:
-                    # Conversion of char arrays with numpy gives a bool array :/ Need to go with the looping
-                    if "char" in self.basic_vec_type:
-                        raise
-                    return np.array(self._vector[index]).tolist()
-                except:
-                    if self.ndim == 2:
-                        return list(self._vector[index])
-                    elif self.ndim == 3:
-                        return [list(el) for el in self._vector[index]]
-                    elif self.ndim == 4:
-                        return [list(el) for el1 in self._vector[index] for el in el1]
-                    else:
-                        return self._vector[index]
-            else:
-                return self._vector[index]
-        else:
-            raise IndexError("list index out of range")
+        if isinstance(index, slice):
+            # A slice of an empty vector raised IndexError (#201)
+            return [self[i] for i in range(*index.indices(len(self._vector)))]
+        element = self._vector[self._index(index)]
+        if self.ndim == 1:
+            return self._element(element)
+        if "char" not in self.basic_vec_type and self.basic_vec_type != "string":
+            try:
+                return np.array(element).tolist()
+            except Exception:       # ragged inner vectors
+                pass
+        return self._convert(element, self.ndim - 1)
+
+    def __iter__(self):
+        r"""Yields the elements, converted as :meth:`__getitem__` does.
+
+        Yields
+        ------
+        object
+            Each element.
+        """
+        for i in range(len(self._vector)):
+            yield self[i]
 
     def __eq__(self, other):
         # Make comparisons to lists with same contents true
@@ -236,14 +365,12 @@ class StdVectorList(MutableSequence):
         Returns
         -------
         bool
-            True when the contents match element by element.
+            True when the contents match element by element, at every depth.
         """
-        if self.ndim == 1:
-            return list(self._vector) == other
-        elif self.ndim == 2:
-            return [list(el) for el in self._vector] == other
-        elif self.ndim == 3:
-            return [list(el) for el1 in self._vector for el in el1] == other
+        try:
+            return self.tolist() == self._as_list(other)
+        except TypeError:
+            return NotImplemented
 
     def append(self, value):
         """Append the value to the list
@@ -275,26 +402,75 @@ class StdVectorList(MutableSequence):
         str
             The contents, printable.
         """
-        if len(self._vector) > 0:
-            if "std.vector" in str(type(self._vector[0])):
-                return str([list(el) for el in self._vector])
+        return str(self.tolist())
 
-        return str(list(self._vector))
-
-    # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
-        # To avoid memory leak when getting a numpy array
-        r"""Appends `value` to the vector, in place.
+        r"""Appends the elements of `value`, in place, as ``list +=`` does.
+
+        It replaced the contents instead on ROOT >= 6.30 (#201); replacing is
+        :meth:`_assign`, which the field descriptors use.
 
         Parameters
         ----------
-        value : sequence
+        value : sequence, ndarray or StdVectorList
             Elements to append.
 
         Returns
         -------
         StdVectorList
             This object, extended.
+        """
+        if len(self._vector) == 0:
+            return self._assign(value)
+        return self._assign(self.tolist() + self._as_list(value))
+
+    def _assign(self, value):
+        r"""Replaces the contents with `value`.
+
+        The new contents are built while the old ones are held aside, and
+        put back if the conversion fails: a failed assignment emptied the
+        field (#201).  The vector object itself is kept, since a tree branch
+        points at it.
+
+        Parameters
+        ----------
+        value : sequence, ndarray or StdVectorList
+            New contents.
+
+        Returns
+        -------
+        StdVectorList
+            This object.
+        """
+        if isinstance(value, StdVectorList) and value._vector is self._vector:
+            return self
+        if isinstance(value, np.ndarray) and self.basic_vec_type not in cpp_to_numpy_typecodes:
+            raise TypeError(_validate.message(
+                "StdVectorList", "cannot fill a vector<%s> from an array" % self.basic_vec_type))
+        held = ROOT.vector(self.vec_type)()
+        held.swap(self._vector)
+        try:
+            self._append_raw(value)
+        except BaseException:
+            self._vector.clear()
+            self._vector.swap(held)
+            raise
+        return self
+
+    # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
+    def _append_raw(self, value):
+        # To avoid memory leak when getting a numpy array
+        r"""Fills the (emptied) vector from `value`; see :meth:`_assign`.
+
+        Parameters
+        ----------
+        value : sequence
+            Elements to store.
+
+        Returns
+        -------
+        StdVectorList
+            This object.
         """
         if isinstance(value, np.ndarray):
             fill_stdvectorlist_with_array(self, value)
@@ -456,6 +632,9 @@ class StdVectorList(MutableSequence):
         ndarray
             The contents as a NumPy array, without a copy where possible.
         """
+        # numpy reads a char vector as booleans (#201)
+        if "char" in self.basic_vec_type:
+            return np.array(self.tolist(), dtype=cpp_to_numpy_typecodes[self.basic_vec_type])
         return np.array(self._vector)
 
 
@@ -545,7 +724,6 @@ class StdVectorListDesc:
             # Do not set empty values
             if not value: return
         inst = getattr(obj, self.attrname)
-        vector = inst._vector
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
             where = "%s.%s" % (type(obj).__name__, self.name)
@@ -560,9 +738,8 @@ class StdVectorListDesc:
                     and cpp_to_numpy_typecodes.get(inst.basic_vec_type, np.dtype("U")).kind in "iuf":
                 for row in (value if inst.ndim > 1 else [value]):
                     _check_limits(row, where, **self.limits)
-            # Clear the vector before setting
-            vector.clear()
-            inst += value
+            # Replaces; the old contents come back if this fails (#201)
+            inst._assign(value)
         # A vector of vectors was given
         elif isinstance(value, ROOT.vector(inst.vec_type)):
             inst._vector = value

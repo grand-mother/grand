@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `StdVectorList` behaves like the list it claims to be (#201): `unsigned
+  char` / `char` elements read back as numbers, not characters (also from
+  files; `asnumpy()` no longer gives booleans); `+=` appends instead of
+  replacing; numpy `bool` and `uint64` arrays can be assigned; a failed
+  assignment keeps the field's previous value instead of emptying it;
+  negative indices, slices (also of an empty vector), slice assignment,
+  `del`, `insert`, `pop` and `remove` work, and an out-of-range index raises
+  `IndexError` instead of being ignored; `==` compares nested vectors
+  correctly; constructing a nested char vector no longer crashes cling.
+
 - The docs now show how to read one event's shower (#192): `datamodel.rst`
   has a "Read one event" recipe in both `grand.dataio` (`TShower`, not
   `TShowerSim`) and `grand.aoi` (`event.simshower`) forms, with a table of
