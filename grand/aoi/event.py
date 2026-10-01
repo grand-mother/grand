@@ -247,9 +247,11 @@ class Event:
             Path of the file this event is read from or written to.
         """
 
-        # If the _file is not yet TFile, make it so
+        # If the _file is not yet TFile, make it so; a path object or a file
+        # ROOT cannot open used to give a bare cppyy error (#235)
         if not isinstance(value, ROOT.TFile):
-            self._file = ROOT.TFile(value, "read")
+            from grand.dataio.data_handling import _open_root_file
+            self._file = _open_root_file(os.fspath(value))
         else:
             self._file = value
 
@@ -1036,6 +1038,13 @@ class Event:
         ## Shower Xmax [g/cm2]
         shower.Xmax = tree.xmax_grams
         ## Shower position in the site's reference frame
+        # The ground altitude comes from the run tree; without one this failed
+        # on "'NoneType' object has no attribute 'origin_geoid'" (#235)
+        if self.trun is None:
+            raise FileNotFoundError(_validate.message(
+                "Event", "the shower needs the run tree (the site's origin) and this input has "
+                "none: give the directory holding the run_*.root file, or a file with a trun "
+                "tree"))
         # Above the ground whichever frame the file used (grand-mother/grand#160).
         shower.Xmaxpos, _ = xmax_above_ground(
             tree.xmax_pos_shc, tree.zenith, tree.azimuth,

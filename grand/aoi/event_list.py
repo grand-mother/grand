@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import ROOT
+import numpy as np
 
 from grand.aoi.event import Event
 from grand.dataio import DataDirectory, DataFile
@@ -65,7 +66,9 @@ class EventList:
         elif isinstance(inp_name, str):
             # If file name was given
             if Path(inp_name).is_file():
-                self.file = DataFile(ROOT.TFile(inp_name, "read"))
+                # DataFile opens it with a clear error for an empty, text or
+                # damaged file, rather than cppyy's bare OSError (#235)
+                self.file = DataFile(inp_name)
                 # self.file = ROOT.TFile(inp_name, "read")
                 self.event_list = self.file.get_max_list_of_events()
             # If directory name was given
@@ -141,7 +144,20 @@ class EventList:
             entry_number = 0
 
         if entry_number is not None:
-            e._entry_number = entry_number
+            # Checked here: out of range it failed deep in the reader with
+            # "zero-size array to reduction operation minimum", and a bool or
+            # a float reached cppyy (#235)
+            if isinstance(entry_number, bool) or not isinstance(entry_number, (int, np.integer)):
+                raise TypeError(_validate.message(
+                    "EventList.get_event", "'entry_number' must be an integer, got %r" % (entry_number,)))
+            count = self.get_number_of_events()
+            if count is None and self.event_list is not None:
+                count = len(self.event_list)
+            if entry_number < 0 or (count is not None and entry_number >= count):
+                raise IndexError(_validate.message(
+                    "EventList.get_event", "entry_number %s is out of range: the input holds %s "
+                    "events" % (entry_number, count)))
+            e._entry_number = int(entry_number)
         else:
             if run_number is None:
                 run_number = 0

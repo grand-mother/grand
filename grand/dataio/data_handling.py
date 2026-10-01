@@ -405,6 +405,10 @@ class DataFile:
                 self.filename = filename[0]
                 self.flist = filename
         elif type(filename) is ROOT.TFile:
+            # A closed file gave an empty DataFile with no error (#235)
+            if not filename.IsOpen():
+                raise ValueError(_validate.message(
+                    "DataFile", "the ROOT.TFile %s is closed" % filename.GetName()))
             self.f = filename
             self.filename = self.f.GetName()
         else:
@@ -421,6 +425,12 @@ class DataFile:
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
+            # A tree that is not a GRAND tree is skipped: its unknown type
+            # crashed with "attribute name must be string, not 'NoneType'" (#235)
+            if not isinstance(tree_info.get("type"), str) or not hasattr(grand.dataio, tree_info["type"]):
+                logger.warning("%s: tree %s is not a GRAND tree; skipped",
+                               self.filename, tree_info["name"])
+                continue
 
             # If we want a TChain
             if self.is_tchain:
@@ -466,6 +476,10 @@ class DataFile:
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
 
             self.dict_of_trees[tree_info["name"]] = t
+
+        if not self.dict_of_trees:
+            raise ValueError(_validate.message(
+                "DataFile", "%s holds no GRAND tree" % self.filename))
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
@@ -685,16 +699,16 @@ class DataFile:
         #     return "ShowerEventZHAireSTree"
         # Other trees
         else:
-            if "run" in name:
-                return "TRun"
-            elif "adc" in name:
-                return "TADC"
-            elif "voltage" in name:
-                return "TRawVoltage"
-            elif "efield" in name:
-                return "TEfield"
-            elif "shower" in name:
-                return "TShower"
+            # The specific names first: "trunvoltage" was taken for TRun and
+            # "tvoltage" for TRawVoltage (#235)
+            for part, tree_type in (("runrawvoltage", "TRunRawVoltage"), ("runvoltage", "TRunVoltage"),
+                                    ("runnoise", "TRunNoise"), ("run", "TRun"), ("adc", "TADC"),
+                                    ("rawvoltage", "TRawVoltage"), ("voltage", "TVoltage"),
+                                    ("efield", "TEfield"), ("shower", "TShower"),
+                                    ("recons", "TRecons")):
+                if part in name:
+                    return tree_type
+            return None
 
     def _load_trees(self):
         # Loop through the keys

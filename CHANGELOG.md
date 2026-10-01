@@ -15,6 +15,22 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`EventList` and `DataFile` say what is wrong with an input (#235).**
+  Plausible inputs failed deep inside with errors that named nothing useful.
+  Now:
+  - a shower file without a run tree raises `FileNotFoundError` saying the
+    run tree is needed (it was `'NoneType' object has no attribute
+    'origin_geoid'`);
+  - a tree that is not a GRAND tree is skipped with a warning, and a file
+    holding none raises `ValueError` (it was `attribute name must be string`);
+  - `entry_number` must be an integer within the input (out of range it was
+    `zero-size array to reduction operation minimum`; `True` was read as 1);
+  - a closed `ROOT.TFile`, or an empty, text or damaged file, is refused with a
+    `GRANDlib:` message, and `Event.file` accepts a path object;
+  - data holding only raw voltages is read without `use_trawvoltage=True`;
+  - tree types guessed from names no longer take `tvoltage` for
+    `TRawVoltage` or `trunvoltage` for `TRun`.
+
 - **`EventList` options take effect (#213).** `start_event` and `start_entry`
   were stored but ignored by iteration; they now set where it starts, and
   refuse values the input does not hold. A per-call `tefield_level` was

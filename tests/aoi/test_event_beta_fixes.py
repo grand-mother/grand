@@ -109,3 +109,56 @@ def test_raw_voltage_channels_and_tree_choice():
     raw = events.get_event(entry_number=0, use_trawvoltage=True, trawvoltage_channels=[1, 2, 3])
     assert len(raw.voltages) == 5
     assert len(events.get_event(entry_number=0).voltages) == 5
+
+
+@pytest.mark.skipif(not AOI.is_dir(), reason="needs examples/analysis")
+@pytest.mark.parametrize("entry, error", [(10, IndexError), (-1, IndexError), (10**9, IndexError),
+                                          (2**70, IndexError), (True, TypeError), (1.5, TypeError),
+                                          ("3", TypeError)])
+def test_entry_number_is_checked(entry, error):
+    r"""#235: out-of-range entries failed deep in the reader; bools were taken as 1."""
+    from grand.aoi import EventList
+
+    with pytest.raises(error, match="GRANDlib: EventList.get_event"):
+        EventList(str(AOI)).get_event(entry_number=entry)
+
+
+@pytest.mark.skipif(not AOI.is_dir(), reason="needs examples/analysis")
+def test_unusable_inputs_say_what_is_wrong(tmp_path):
+    r"""#235: a shower without a run tree, a foreign tree, a closed TFile and a non-ROOT
+    file all failed with errors that did not say what was wrong."""
+    import array
+
+    import ROOT
+
+    from grand.aoi import Event, EventList
+    from grand.dataio import DataFile
+
+    shower = sorted(AOI.glob("shower_*.root"))[0]
+    with pytest.raises(FileNotFoundError, match="needs the run tree"):
+        EventList(str(shower)).get_event(entry_number=0)
+
+    foreign = str(tmp_path / "foo.root")
+    f = ROOT.TFile(foreign, "recreate")
+    tree = ROOT.TTree("foo", "foo")
+    x = array.array("i", [0])
+    tree.Branch("x", x, "x/I")
+    tree.Fill()
+    tree.Write()
+    f.Close()
+    with pytest.raises(ValueError, match="holds no GRAND tree"):
+        DataFile(foreign)
+
+    closed = ROOT.TFile(str(AOI / "run_00000_L0_0000.root"))
+    closed.Close()
+    with pytest.raises(ValueError, match="is closed"):
+        DataFile(closed)
+
+    text = tmp_path / "text.root"
+    text.write_text("hello")
+    with pytest.raises(OSError, match="GRANDlib: DataFile: cannot open"):
+        EventList(str(text))
+
+    e = Event()
+    e.file = AOI / "run_00000_L0_0000.root"          # a path object is accepted
+    assert "run_00000_L0_0000.root" in e.file
