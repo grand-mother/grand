@@ -306,11 +306,11 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#192](https://github.com/grand-mother/grand/issues/192) | Docs lack basic recipes (read one event's shower; geodetic to GRANDCS) | Medium | 1a-B | open | | |
 | [#193](https://github.com/grand-mother/grand/issues/193) | Stale or garbled documentation text | Low | 1a-A, 1a-B | open | | |
 | [#194](https://github.com/grand-mother/grand/issues/194) | Routine operations print alarming messages | Low | 1a-A, 1a-B | open | | |
-| [#195](https://github.com/grand-mother/grand/issues/195) | `DataDirectory` silently drops files: keeps 1 of 10 showers in examples/analysis | High | 2a | open | | |
-| [#196](https://github.com/grand-mother/grand/issues/196) | `get_list_of_events()` and `draw()` silently change the loaded entry's values | High | 2a | open | | |
-| [#197](https://github.com/grand-mother/grand/issues/197) | `write()` to an existing file replaces its tree even with `overwrite=False` | High | 2a | open | | |
-| [#198](https://github.com/grand-mother/grand/issues/198) | `write("other.root")` on a tree that already has a file writes a corrupt copy | High | 2a | open | | |
-| [#199](https://github.com/grand-mother/grand/issues/199) | `get_dus_indices_in_run` returns run order, not event order | High | 2a | open | | |
+| [#195](https://github.com/grand-mother/grand/issues/195) | `DataDirectory` silently drops files: keeps 1 of 10 showers in examples/analysis | High | 2a | fix in PR | dev-next-ipfxhh | files grouped by the level in their name |
+| [#196](https://github.com/grand-mother/grand/issues/196) | `get_list_of_events()` and `draw()` silently change the loaded entry's values | High | 2a | fix in PR | dev-next-ipfxhh | fields a draw touches saved and restored |
+| [#197](https://github.com/grand-mother/grand/issues/197) | `write()` to an existing file replaces its tree even with `overwrite=False` | High | 2a | fix in PR | dev-next-ipfxhh | refused without overwrite; overwrite replaces only that tree |
+| [#198](https://github.com/grand-mother/grand/issues/198) | `write("other.root")` on a tree that already has a file writes a corrupt copy | High | 2a | fix in PR | dev-next-ipfxhh | tree cloned into the other file |
+| [#199](https://github.com/grand-mother/grand/issues/199) | `get_dus_indices_in_run` returns run order, not event order | High | 2a | fix in PR | dev-next-ipfxhh | indices in the event's order; missing units raise |
 | [#200](https://github.com/grand-mother/grand/issues/200) | `get_traces_lengths` always returns None; `get_list_of_dus` returns the whole tree's units | Medium | 2a | open | | |
 | [#201](https://github.com/grand-mother/grand/issues/201) | Vector fields: unsigned char read as characters; `+=` replaces; numpy bool/uint64 assignment fails and empties the field | Medium | 2a | open | | |
 | [#202](https://github.com/grand-mother/grand/issues/202) | A misspelt tree field is accepted silently: the typo guard never runs | Medium | 2a | open | | |
@@ -322,8 +322,8 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#209](https://github.com/grand-mother/grand/issues/209) | CoREAS converter mirrors the azimuth on the .inp path (180 − PHIP) | Critical | 2b, 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | azimuth (PHIP − 180) mod 360; committed sample regenerated |
 | [#210](https://github.com/grand-mother/grand/issues/210) | Notebook 07 passes an ENU direction to `topography.distance`, which needs ECEF | High | 1b | open | | |
 | [#211](https://github.com/grand-mother/grand/issues/211) | Committed `recons_CR_candidates.root` stores raw χ² (notebook 11 calls it reduced); CRB fields 0.0 | High | 2b | open | | |
-| [#212](https://github.com/grand-mother/grand/issues/212) | `Event.write`: `overwrite=True` deletes the whole output folder; in-place write crashes | High | 2b | open | | |
-| [#213](https://github.com/grand-mother/grand/issues/213) | `EventList` ignores `start_event`, `start_entry`, per-call `tefield_level`; one Event object reused | High | 2b, 4a | open | | |
+| [#212](https://github.com/grand-mother/grand/issues/212) | `Event.write`: `overwrite=True` deletes the whole output folder; in-place write crashes | High | 2b | fix in PR | dev-next-ipfxhh | replaces only its own files or trees; no in-place write; source trees untouched |
+| [#213](https://github.com/grand-mother/grand/issues/213) | `EventList` ignores `start_event`, `start_entry`, per-call `tefield_level`; one Event object reused | High | 2b, 4a | fix in PR | dev-next-ipfxhh | start_event/start_entry, per-call tefield_level and voltage tree honoured; 3 channels required |
 | [#214](https://github.com/grand-mother/grand/issues/214) | `sin_geomag_angle` returns one number for arrays | Medium | 2b | open | | |
 | [#215](https://github.com/grand-mother/grand/issues/215) | Antenna positions from GPS use a hard-coded origin (question for GP80 owners) | Medium | 2b | open | | |
 | [#216](https://github.com/grand-mother/grand/issues/216) | Reconstruction edge cases and docstrings | Low | 2b | open | | |
@@ -344,8 +344,8 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
 | [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
 | [#233](https://github.com/grand-mother/grand/issues/233) | efield2efield bare AssertionErrors; plots always drawn; T1 passes no DU on clean sims | Low | 3b | open | | |
-| [#234](https://github.com/grand-mother/grand/issues/234) | `Event.close_files()` rewrites input files and can hang; EventList scripts crash at exit | High | 4a | open | | |
-| [#235](https://github.com/grand-mother/grand/issues/235) | EventList and DataFile crash deep, with unclear errors, on plausible input | High | 4a | open | | |
+| [#234](https://github.com/grand-mother/grand/issues/234) | `Event.close_files()` rewrites input files and can hang; EventList scripts crash at exit | High | 4a | fix in PR | dev-next-ipfxhh | close_files() writes only trees filled for writing; buffers detached before ROOT's exit cleanup |
+| [#235](https://github.com/grand-mother/grand/issues/235) | EventList and DataFile crash deep, with unclear errors, on plausible input | High | 4a | fix in PR | dev-next-ipfxhh | GRANDlib: errors for missing run tree, foreign trees, bad entries, closed or non-ROOT files |
 | [#236](https://github.com/grand-mother/grand/issues/236) | dataio returns stale or zeroed data: reopened files, missing branches, unrecognised names, use after close | Medium | 4a | open | | |
 | [#237](https://github.com/grand-mother/grand/issues/237) | efield2voltage pairs an L0 e-field with an L1 run tree: 2× amplitude, no warning | Critical | 4b-B | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | run tree read at the efield's level |
 | [#238](https://github.com/grand-mother/grand/issues/238) | `compute_voltage` for a missing event writes another event with an empty trace | Critical | 4b-B | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | `get_event` checks the pair against the input's events |
@@ -382,9 +382,9 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#269](https://github.com/grand-mother/grand/issues/269) | Notebook prose, second pass: 14 statements the outputs contradict | Medium | 10 | open | | |
 | [#270](https://github.com/grand-mother/grand/issues/270) | Deliberate bugs no test catches (Horizontal azimuth, `get_dus_indices_in_run`, `final_resample`, ADC rounding) | High | 8 | open | | |
 | [#271](https://github.com/grand-mother/grand/issues/271) | Tests that cannot fail, non-strict xfails, tests depending on untracked `data/` files | Medium | 8 | open | | |
-| [#273](https://github.com/grand-mother/grand/issues/273) | Two tree objects on one file share branch buffers: wrong event numbers written, reads mixed | High | 11 | open | | |
-| [#274](https://github.com/grand-mother/grand/issues/274) | Segfault when a tree is used after close_file(), or after another tree closed its file | High | 11 | open | | |
-| [#275](https://github.com/grand-mother/grand/issues/275) | Entries filled but not written are discarded silently when a with-block ends or stop_using() is called | High | 11 | open | | |
+| [#273](https://github.com/grand-mother/grand/issues/273) | Two tree objects on one file share branch buffers: wrong event numbers written, reads mixed | High | 11 | fix in PR | dev-next-ipfxhh | each object rebinds the branches to its own buffers |
+| [#274](https://github.com/grand-mother/grand/issues/274) | Segfault when a tree is used after close_file(), or after another tree closed its file | High | 11 | fix in PR | dev-next-ipfxhh | trees marked when their file closes; methods raise |
+| [#275](https://github.com/grand-mother/grand/issues/275) | Entries filled but not written are discarded silently when a with-block ends or stop_using() is called | High | 11 | fix in PR | dev-next-ipfxhh | with-block writes; stop_using() warns about discarded entries |
 | [#276](https://github.com/grand-mother/grand/issues/276) | Tree get_entry/get_entry_with_index refuse NumPy integers | Medium | 11 | open | | |
 | [#277](https://github.com/grand-mother/grand/issues/277) | Event and Efield2Voltage used in the wrong order or with bad indices give bare errors | Medium | 11 | open | | |
 | [#278](https://github.com/grand-mother/grand/issues/278) | A non-editable install or wheel lacks vector_filling.C and rf_chain_config.xml | High | 14 | open | | |
@@ -392,7 +392,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#280](https://github.com/grand-mother/grand/issues/280) | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths | Low | 14 | open | | |
 | [#281](https://github.com/grand-mother/grand/issues/281) | Several processes writing to one output file lose events or corrupt it, while some report success | Critical | 13 | fixed | [#290](https://github.com/grand-mother/grand/pull/290) | exclusive `flock` on the file while a process writes it; other writers and stale writers refused with a clear message (`grand.dataio.file_lock`) |
 | [#282](https://github.com/grand-mother/grand/issues/282) | copy_contents() then fill() empties the source tree's traces | Medium | 13 | open | | |
-| [#283](https://github.com/grand-mother/grand/issues/283) | Scaling: per-event appends slow down with file size; DataDirectory superlinear in files | High | 13 | open | | |
+| [#283](https://github.com/grand-mother/grand/issues/283) | Scaling: per-event appends slow down with file size; DataDirectory superlinear in files | High | 13 | partly fixed in PR | dev-next-ipfxhh | part: no full scan per open; Efield2Voltage writes once. Open: DataDirectory on many files |
 | [#284](https://github.com/grand-mother/grand/issues/284) | Memory: trees not freed without stop_using(); residual leak; Efield2Voltage memory far above data size | Medium | 13 | open | | |
 | [#285](https://github.com/grand-mother/grand/issues/285) | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) | Critical | 12 | fixed | [#290](https://github.com/grand-mother/grand/pull/290) | no modulo on zenith; directions outside the table get zero response, with a warning |
 | [#286](https://github.com/grand-mother/grand/issues/286) | recons_ADF returns its starting point when an amplitude is 0 or negative; can run for minutes | High | 12 | open | | |
@@ -593,6 +593,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | High issues in `dataio` and `aoi` fixed on `dev-next-ipfxhh`, one commit and one failing-first test each: #195, #196, #197, #198, #199, #212, #213, #234, #235, #273, #274, #275; #283 in part. Also a follow-up to #281 (lock wait). Beta-test progress after this batch: 30/108 (wave 1: 20/69, wave 2: 5/22, wave 3: 5/17). |
 | 2026-10-01 | PR #290 merged into `dev-next` (db6964b5); #229, #281, #285 closed. **No Critical issue open.** Open: 95 (33 High, 44 Medium, 13 Low, 5 with owners). |
 | 2026-10-01 | The 3 open Critical issues fixed on `dev-next-ipfxhh`, one commit and one failing-first test each: #229 (Python API saved a resampled voltage with the input rate), #285 (antenna response wrapped below the horizon), #281 (concurrent writers lost events; 10 stress runs of 4 writers now lose nothing). Full suite 841 passed, 10 skipped, 11 xfailed. |
 | 2026-10-01 | PR #272 merged into `dev-next` (7e5c753d): fixes for the privately reported security findings (archive extraction, external commands, production pipeline, granddb remote access), with tests. Open-issue summary added (§7b): 98 open, 3 Critical, 33 High, 44 Medium, 13 Low, 5 with owners. |
