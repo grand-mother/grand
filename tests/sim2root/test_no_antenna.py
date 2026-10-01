@@ -184,14 +184,24 @@ def _tree(directory, pattern, name):
 def work(tmp_path_factory):
     r"""Returns a directory holding the no-antenna rawroot file, ``noant.rawroot``.
 
-    Built once per module: the fixture minus every ``a*.trace`` and
-    ``antpos.dat``, converted.
+    Built once per module: the fixture minus every ``a*.trace``, ``antpos.dat``
+    and the rows of the ``.sry`` antenna table, converted.  ZHAireS lists no
+    antenna when none was selected; a ``.sry`` that lists antennas without their
+    trace files is a damaged simulation, which the converter refuses (#242).
     """
     base = tmp_path_factory.mktemp('no_antenna')
     folder = base / FIXTURE.name
     folder.mkdir()
     for path in FIXTURE.iterdir():
         if path.suffix == '.trace' or path.name == 'antpos.dat':
+            continue
+        if path.suffix == '.sry':
+            lines = path.read_text().splitlines(keepends=True)
+            start = next(i for i, line in enumerate(lines) if 'Antenna|      Label' in line) + 1
+            end = start
+            while len(lines[end].split()) == 6:
+                end += 1
+            (folder / path.name).write_text(''.join(lines[:start] + lines[end:]))
             continue
         shutil.copy(str(path), str(folder / path.name))
     assert not list(folder.glob('*.trace'))

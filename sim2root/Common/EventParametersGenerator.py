@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 import numpy as np
 import sim2root.Common.raw_root_trees as RawTrees
       
@@ -72,8 +74,12 @@ def GetCorePositionFromParametersFile(filename):
     
     Output:
     A tuple containing the x, y, and z coordinates of the core position.
-    If the file is not found, or if the core position is not found or the format is incorrect, 
-    the function returns (0.0, 0.0, 0.0).
+    If the file is not found, the function warns and returns (0.0, 0.0, 0.0):
+    a simulation made without the GRAND event generator has no such file, and
+    its antenna positions are already relative to the core.
+    A file that exists must hold a valid core position (issue #242): a missing
+    "Core Position:" line, a badly formatted one or a non-finite value raises
+    ValueError rather than silently moving every antenna.
     """
     
     try:
@@ -82,14 +88,19 @@ def GetCorePositionFromParametersFile(filename):
                 if "Core Position:" in line:
                     try:
                         x, y, z = line.strip().split(": ")[1].split()
-                        return (float(x), float(y), float(z))
+                        core = (float(x), float(y), float(z))
                     except (ValueError, IndexError):
-                        print("Error: Incorrect format for core position in file:", filename)
-                        sys.exit(1)
-            # If the loop completes without finding the core position, return (0,0,0)
-            return (0.0,0.0,0.0)
+                        raise ValueError("GRANDlib: EventParameters: badly formatted 'Core Position:' line in "
+                                         + filename + ": " + line.strip()) from None
+                    if not np.all(np.isfinite(core)):
+                        raise ValueError("GRANDlib: EventParameters: the core position in " + filename
+                                         + " is not finite: " + line.strip())
+                    return core
+            raise ValueError("GRANDlib: EventParameters: no 'Core Position:' line in " + filename
+                             + ": the file is incomplete or damaged")
     except FileNotFoundError:
-        print("Error: File not found:", filename)
+        logging.warning("GRANDlib: EventParameters: " + filename + " not found: using core position "
+                        "(0, 0, 0), i.e. the antenna positions are taken as relative to the core")
         return (0.0,0.0,0.0)
     
 

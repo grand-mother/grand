@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The ZHAireS converter refuses a damaged simulation (#242).** A missing trace
+  file was dropped, a truncated trace zero-padded, a NaN written as data, a
+  missing zenith line read as a vertical shower, an unknown energy unit ignored,
+  and a broken `.EventParameters` gave a NaN core, all with exit 0. Before
+  writing anything the converter now checks that the trace files match the
+  `.sry` antenna list, that antenna names and du_ids are unique and positions
+  finite, that each trace is a finite (N, 4) table as long as the `.sry` time
+  window (within one bin), and that zenith, azimuth, energy and core are
+  present and valid. A failure exits non-zero naming the file and the problem,
+  and removes the output file if this run created it. A shower that hit no
+  antenna (no antenna in the `.sry`, no trace file) is still written (#91). A
+  missing `.EventParameters` still gives core (0, 0, 0), now with a warning.
 - **The CoREAS converter checks the antenna list against the trace files (#243).**
   `du_count` came from the trace files and everything else from the list, so a
   truncated list, a missing or extra trace, a NaN or a short trace produced a
