@@ -6,6 +6,9 @@ import logging    #for...you guessed it...logging
 import argparse   #for command line parsing
 import glob       #for listing files in directories
 import subprocess #for launching subprocesses
+# Run as a script from its own folder, the repository root is not on the path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from grand.basis.archive import safe_extract
 
 
 
@@ -144,12 +147,14 @@ def ZHAireSCompressEvent(eventdir, action):
       
       #if the file exist, then we extract
       if os.path.isfile(tarfilename) :
-          tar = tarfile.open(tarfilename,"r:gz")  
-          tar.extractall(path=eventdir)
-          # Restore the original modification times
-          for member in tar.getmembers():
-            os.utime(os.path.join(eventdir, member.name), (member.mtime, member.mtime))      
-          tar.close()
+          # Members that would land outside eventdir are refused before
+          # anything is written (a crafted archive could otherwise write
+          # anywhere the user can).
+          members = safe_extract(tarfilename, eventdir, "r:gz")
+          # Restore the original modification times (the names are checked)
+          for member in members:
+            if member.isfile() or member.isdir():
+              os.utime(os.path.join(eventdir, member.name), (member.mtime, member.mtime))
           
           
       else:

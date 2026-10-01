@@ -12,6 +12,7 @@ between, so the output appears as it is produced, in order, and no pipe can
 fill up.
 """
 
+import shlex
 import subprocess
 import sys
 
@@ -21,8 +22,10 @@ def run_step(cmd):
 
     Parameters
     ----------
-    cmd : str
-        The command line, run through the shell as before.
+    cmd : list of str, or str
+        The program and its arguments, run without a shell. A string is still
+        accepted and run through the shell, for callers that need one; the
+        pipeline scripts pass lists.
 
     Returns
     -------
@@ -31,12 +34,18 @@ def run_step(cmd):
         stop the pipeline, as before: a step can fail at exit after writing
         good output (see issue #90).
     """
-    print("about to run: " + cmd, flush=True)
+    # A list runs without a shell, so names found on disk (directories,
+    # simulation files) are passed as they are and never interpreted.
+    if isinstance(cmd, (list, tuple)):
+        args, shell, shown = [str(a) for a in cmd], False, shlex.join(str(a) for a in cmd)
+    else:
+        args, shell, shown = cmd, True, cmd
+    print("about to run: " + shown, flush=True)
     # Flush our own output first, so that it is not printed after the step's
     sys.stdout.flush()
     sys.stderr.flush()
-    status = subprocess.run(cmd, cwd=".", shell=True).returncode
+    status = subprocess.run(args, cwd=".", shell=shell).returncode
     if status != 0:
-        print("WARNING: step exited with status %d: %s" % (status, cmd),
+        print("WARNING: step exited with status %d: %s" % (status, shown),
               file=sys.stderr, flush=True)
     return status

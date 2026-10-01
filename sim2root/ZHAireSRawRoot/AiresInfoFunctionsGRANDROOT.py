@@ -33,6 +33,29 @@ from sys import argv
 import os
 
 import glob
+import shutil
+import subprocess
+
+
+def _run(args, quiet=False):
+  r"""Runs an external program from a list of arguments, without a shell.
+
+  Paths and task names come from the simulation files on disk; passed as a
+  list, characters such as ;, $( ) or spaces in them are not interpreted.
+  """
+  logging.debug("running " + " ".join(args))
+  try:
+    subprocess.run(args, stdout=subprocess.DEVNULL if quiet else None, check=False)
+  except OSError as error:
+    logging.error("could not run " + args[0] + ": " + str(error))
+
+
+def _remove(path):
+  r"""Removes a file this module created, if it is there."""
+  try:
+    os.remove(path)
+  except FileNotFoundError:
+    pass
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -1468,15 +1491,15 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
 
       if(len(Path)+len(taskname)<60 and len(taskname)<60):
         if(Slant==True):
-            cmd=AiresPath+"/AiresExport -O a "+Path+"/"+taskname+" "+TableNumber + " >/dev/null"
+            cmd=[AiresPath+"/AiresExport", "-O", "a", Path+"/"+taskname, TableNumber]
         elif(Slant==False):
-            cmd=AiresPath+"/AiresExport "+Path+"/"+taskname+" "+TableNumber + " >/dev/null"
+            cmd=[AiresPath+"/AiresExport", Path+"/"+taskname, TableNumber]
         else:
             logging.error("unrecognized Slant value, please state either True/False")
             return -1
-        logging.debug("abut to run "+ cmd)
+        logging.debug("about to run "+ " ".join(cmd))
         #print("1:",cmd)
-        os.system(cmd)
+        _run(cmd, quiet=True)
         tablefile=glob.glob(Path+"/*.t"+TableNumber)
 
         if(len(tablefile)==1):
@@ -1485,28 +1508,25 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
 
       elif(len(taskname)<60):
         logging.debug("idf path+name is too long, need to copy the idf here")
-        cmd="cp "+idffile[0]+" ."
-        os.system(cmd)
+        shutil.copy(idffile[0], ".")
 
         if(Slant==True):
-            cmd=AiresPath+"/AiresExport -O a "+taskname+" "+TableNumber + " >/dev/null"
+            cmd=[AiresPath+"/AiresExport", "-O", "a", taskname, TableNumber]
         elif(Slant==False):
-            cmd=AiresPath+"/AiresExport "+taskname+" "+TableNumber + " >/dev/null"
+            cmd=[AiresPath+"/AiresExport", taskname, TableNumber]
         else:
             logging.error("unrecognized Slant value, please state either True/False")
             return -1
         #print("2:",cmd)
-        os.system(cmd)
+        _run(cmd, quiet=True)
         tablefile=glob.glob("*.t"+TableNumber)
         logging.debug(tablefile)
 
         if(len(tablefile)==1):#this means we are not wo
             logging.debug("Table exported successfully")
             deletefile=True
-            cmd="rm "+taskname+".idf"
-            os.system(cmd)
-            cmd="rm "+taskname+".lgf"
-            os.system(cmd)
+            _remove(taskname+".idf")
+            _remove(taskname+".lgf")
       else:
        logging.error("task name is to long, AIRES does not support that!")
 
@@ -1530,8 +1550,7 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
         return -1
 
       if(deletefile==True):
-        cmd="rm "+tablefile[0]
-        os.system(cmd)
+        _remove(tablefile[0])
         logging.debug("Table deleted successfully")
 
       return numpyarray
@@ -1560,14 +1579,14 @@ def GetLateralTable(Path,TableNumber,Density=True,Precision="Double"):
       if(len(Path)+len(taskname)<60 and len(taskname)<60):
 
           if(Density==True):
-            cmd=AiresPath+"/AiresExport -O dX "+Path+"/"+taskname+" "+str(TableNumber)
+            cmd=[AiresPath+"/AiresExport", "-O", "dX", Path+"/"+taskname, str(TableNumber)]
           elif(Density==False):
-            cmd=AiresPath+"/AiresExport -O X "+Path+"/"+taskname+" "+str(TableNumber)
+            cmd=[AiresPath+"/AiresExport", "-O", "X", Path+"/"+taskname, str(TableNumber)]
           else:
             logging.error("LDF.unrecognized Density value, please state either True/False")
             return -1
 
-          os.system(cmd)
+          _run(cmd, quiet=False)
           tablefile=glob.glob(Path+"/*.t"+str(TableNumber))
 
           if(len(tablefile)==1):
@@ -1576,27 +1595,24 @@ def GetLateralTable(Path,TableNumber,Density=True,Precision="Double"):
 
       elif(len(taskname)<60):
           logging.debug("LDF. idf path+name is too long, need to copy the idf here")
-          cmd="cp "+idffile[0]+" ."
-          os.system(cmd)
+          shutil.copy(idffile[0], ".")
 
           if(Density==True):
-            cmd=AiresPath+"/AiresExport -O dX "+taskname+" "+str(TableNumber)
+            cmd=[AiresPath+"/AiresExport", "-O", "dX", taskname, str(TableNumber)]
           elif(Density==False):
-            cmd=AiresPath+"/AiresExport -O X "+taskname+" "+str(TableNumber)
+            cmd=[AiresPath+"/AiresExport", "-O", "X", taskname, str(TableNumber)]
           else:
             logging.error("LFD.unrecognized Density value, please state either True/False")
             return -1
 
-          os.system(cmd)
+          _run(cmd, quiet=False)
           tablefile=glob.glob("*.t"+str(TableNumber))
 
           if(len(tablefile)==1):
             logging.debug("LDF.Table exported successfully")
             deletefile=True
-            cmd="rm "+taskname+".idf"
-            os.system(cmd)
-            cmd="rm "+taskname+".lgf"
-            os.system(cmd)
+            _remove(taskname+".idf")
+            _remove(taskname+".lgf")
 
       else:
          logging.debug("LDF.task name is to long, AIRES does not support that!")
@@ -1615,8 +1631,7 @@ def GetLateralTable(Path,TableNumber,Density=True,Precision="Double"):
         return -1
 
       if(deletefile==True):
-        cmd="rm "+tablefile[0]
-        os.system(cmd)
+        _remove(tablefile[0])
         logging.debug("LDF.Table deleted successfully")
 
       return numpyarray

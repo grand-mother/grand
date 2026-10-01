@@ -6,12 +6,14 @@ logging.basicConfig(level=logging.DEBUG)
 import argparse  #for command line parsing
 import glob      #for listing files in directories
 from pipeline_step import run_step  # runs each step with its output shown live (#121)
+import shlex
 
 try:
   PYTHONINTERPRETER=os.environ["PYTHONINTERPRETER"]
 except:
   logging.debug(" PYTHONINTERPRETER not defined, defaulting to python")
   PYTHONINTERPRETER="python"
+PY=shlex.split(PYTHONINTERPRETER)  # each step runs from an argument list, without a shell
 
 #Manual Configuration
 
@@ -45,7 +47,7 @@ if args.Extra is not None:
 ########################################################################################################################################################
 logging.debug(" Trying to make GrandRoot file")
 #line to make file
-cmd=PYTHONINTERPRETER+" "+PRODUCEGRANDROOT+" "+INPUTDIR+" --target_duration_us=4.096 --trigger_time_ns 800 -e "+EXTRA
+cmd=PY+[PRODUCEGRANDROOT, INPUTDIR, "--target_duration_us=4.096", "--trigger_time_ns", "800", "-e", EXTRA]
 run_step(cmd)
 
 
@@ -60,7 +62,7 @@ OUTPUTFILE=OUTPUTFILE[0].replace("efield", "voltage")
 OUTPUTFILE=OUTPUTFILE[:-5]
 
 #no noise
-cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --verbose=info --no_noise -o " + OUTPUTFILE+".root"
+cmd=PY+[PRODUCEVOLTAGE, INPUTDIR, "--seed", "1234", "--verbose=info", "--no_noise", "-o", OUTPUTFILE+".root"]
 run_step(cmd)
 
 
@@ -68,7 +70,7 @@ run_step(cmd)
 # ADC
 #####################################################################################################################################################
 logging.debug(" Trying to produce ADCs")
-cmd=PYTHONINTERPRETER+" "+PRODUCEADC+" "+INPUTDIR
+cmd=PY+[PRODUCEADC, INPUTDIR]
 run_step(cmd)
 
 
@@ -76,6 +78,6 @@ run_step(cmd)
 # DC2Efields
 #####################################################################################################################################################
 logging.debug(" Trying to produce DC2efields") 
-cmd=PYTHONINTERPRETER+" "+PRODUCEDC2Efield+" "+INPUTDIR+"  --target_duration_us 4.096 --target_sampling_rate_mhz 500"
+cmd=PY+[PRODUCEDC2Efield, INPUTDIR, "--target_duration_us", "4.096", "--target_sampling_rate_mhz", "500"]
 run_step(cmd)
 
