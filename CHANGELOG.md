@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Utility scripts parse their arguments (#246).** `plot_tmax_vmax.py` and
+  `extract_rf_chain.py` read `sys.argv` or nothing: `-h` was a file name or
+  ran the whole computation, a bad index became 0, and output went into the
+  current folder. Both now use `argparse`, with `--savefig` and `-o`/
+  `--overwrite`. `get_version.py` printed `0.0.0` outside the repository root;
+  it now finds the version file from its own location. `plot_noise.py`
+  accepts only whole LST hours 0–23 and the known `du_type`s; the
+  `plot_rf_chain`/`plot_Vout_AT_Device`/`Compute_Vout_AT_Device_save` option
+  checks are argparse choices instead of a bare `Exception` listing the wrong
+  options; `Compute_Vout_AT_Device_save.py --savedata` takes `--out_dir`;
+  `snakemake_report.py` exits non-zero on a file with no Snakemake log lines.
+
 - **Routine operations no longer print alarms (#194).** Creating a tree in a
   new file warned "No valid … TTree … Creating a new one" (now debug); every
   read of an older file warned that a branch was "not found … will not be

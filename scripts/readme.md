@@ -12,7 +12,7 @@ output of `-h` itself, so it is current as of the commit that wrote this file.
 | `extract_events.py` | Copies a list of events from several folders into one |
 | `open_grand_file.py`, `open_grand_directory.py`, `open_grand_analysis_prompt.py` | An interactive shell with a file, a folder or an `EventList` loaded |
 | `plot_noise.py`, `plot_rf_chain.py`, `plot_Vout_AT_Device.py`, `plot_tmax_vmax.py` | Plots of the noise model, the RF chain, the voltage at each device, and trace peaks |
-| `extract_rf_chain.py` | Writes the combined RF-chain transfer function to `TF_RF_Chain.npy` (no options) |
+| `extract_rf_chain.py` | Writes the combined RF-chain transfer function to an `.npy` file |
 | `get_version.py` | Prints the data-format version (no options; used by CI) |
 
 The conversion scripts take the folder `sim2root.py` wrote, not a single file,
@@ -318,40 +318,45 @@ options:
 
 ```
 $ python plot_noise.py -h
-usage: plot_noise.py [-h] [--savefig] [--du_type DU_TYPE] [--lst LST]
+usage: plot_noise.py [-h] [--savefig] [--du_type {GP300,GP300_nec,GP300_mat}]
+                     [--lst {0..23}]
 
 Plot function with command line arguments
 
 options:
-  -h, --help         show this help message and exit
-  --savefig          Flag to save the figure
-  --du_type DU_TYPE  Type of du
-  --lst LST          LST info (defaults to 18)
+  -h, --help            show this help message and exit
+  --savefig             Flag to save the figure
+  --du_type {GP300,GP300_nec,GP300_mat}
+                        Type of du
+  --lst {0..23}         local sidereal time, whole hours 0 to 23 (default 18)
 ```
 
 # plot_rf_chain.py
 
 ```
 $ python plot_rf_chain.py -h
-usage: plot_rf_chain.py [-h] [--savefig] plot_option
+usage: plot_rf_chain.py [-h] [--savefig]
+                        {matching_network,lna,balun_after_lna,vga,cable,balun_before_adc,rf_chain,rf_chain_gaa,rf_chain_nut}
 
 Parser to select which noise quantity to plot. To Run: ./plot_rf_chain.py
 <plot_option>. <plot_option>: matching_network, lna, balun_after_lna, vga,
 cable, balun_before_adc, rf_chain example: ./plot_rf_chain.py lna --savefig
 
 positional arguments:
-  plot_option  what do you want to plot? example: lna.
+  {matching_network,lna,balun_after_lna,vga,cable,balun_before_adc,rf_chain,rf_chain_gaa,rf_chain_nut}
+                        what do you want to plot? example: lna.
 
 options:
-  -h, --help   show this help message and exit
-  --savefig    don't add galactic noise.
+  -h, --help            show this help message and exit
+  --savefig             save the figure instead of only showing it.
 ```
 
 # plot_Vout_AT_Device.py
 
 ```
 $ python plot_Vout_AT_Device.py -h
-usage: plot_Vout_AT_Device.py [-h] [--savefig] plot_option
+usage: plot_Vout_AT_Device.py [-h] [--savefig]
+                              {Vin_balun1,Vout_balun1,Vout_match_net,Vout_lna,Vout_cable_connector,Vout_VGA,Vout_tot,Vratio_Balun1,Vratio_match_net,Vratio_lna,Vratio_cable_connector,Vratio_vga,Vratio_adc}
 
 Parser to select which quantity to plot. To Run: python3
 plot_Vout_AT_Device.py <plot_option>. <plot_option>: Vin_balun1, Vout_balun1,
@@ -361,17 +366,43 @@ Vratio_vga, Vratio_adc example: python3 plot_Vout_AT_Device.py Vout_lna
 --savefig
 
 positional arguments:
-  plot_option  what do you want to plot? example: Vout_lna.
+  {Vin_balun1,Vout_balun1,Vout_match_net,Vout_lna,Vout_cable_connector,Vout_VGA,Vout_tot,Vratio_Balun1,Vratio_match_net,Vratio_lna,Vratio_cable_connector,Vratio_vga,Vratio_adc}
+                        what do you want to plot? example: Vout_lna.
 
 options:
-  -h, --help   show this help message and exit
-  --savefig    don't add Voc.
+  -h, --help            show this help message and exit
+  --savefig             save the figure instead of only showing it.
 ```
 
 # plot_tmax_vmax.py
 
-Takes an e-field file and an event index as plain arguments (no `-h`):
+```
+$ python plot_tmax_vmax.py -h
+usage: plot_tmax_vmax.py [-h] [--savefig FILE] efield_file [event_index]
 
-```bash
-python plot_tmax_vmax.py <efield.root> <event index>
+Plot the time and value of each trace's maximum.
+
+positional arguments:
+  efield_file     e-field file (TEfield), with its run and shower files beside
+                  it
+  event_index     event index (default 0)
+
+options:
+  -h, --help      show this help message and exit
+  --savefig FILE  save the figure to FILE instead of showing it
+```
+
+# extract_rf_chain.py
+
+```
+$ python extract_rf_chain.py -h
+usage: extract_rf_chain.py [-h] [-o OUT] [--overwrite] [--plot]
+
+Write the combined RF-chain transfer function (30-251 MHz).
+
+options:
+  -h, --help         show this help message and exit
+  -o OUT, --out OUT  output .npy file (default: TF_RF_Chain.npy)
+  --overwrite        replace an existing output file
+  --plot             also plot the three arms
 ```

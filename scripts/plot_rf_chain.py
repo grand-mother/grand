@@ -1512,15 +1512,18 @@ if __name__ == "__main__":
         <plot_option>: matching_network, lna, balun_after_lna, vga, cable, balun_before_adc, rf_chain \
         example: ./plot_rf_chain.py lna --savefig"
         )
+    # The options are checked by argparse: the check after it listed the
+    # wrong ones (#246)
     parser.add_argument(
         "plot_option",
+        choices=["matching_network", "lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain","rf_chain_gaa","rf_chain_nut"],
         help="what do you want to plot? example: lna.",
     )
     parser.add_argument(
         "--savefig",
         action="store_true",
         default=False,
-        help="don't add galactic noise.",
+        help="save the figure instead of only showing it.",
     )
 
     args = parser.parse_args()
@@ -1530,5 +1533,5 @@ if __name__ == "__main__":
     if args.plot_option in options_list:
         plot(args.plot_option, savefig=args.savefig)
     else:
-        raise Exception("Please provide a proper option for plotting noise. Options: galactic, vswr, lna, vga, cable, rf_chain, rf_chain_gaa")
+        raise SystemExit("GRANDlib: plot_rf_chain: unknown option %s" % args.plot_option)
 

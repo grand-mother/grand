@@ -446,13 +446,14 @@ if __name__ == "__main__":
         )
     parser.add_argument(
         "plot_option",
+        choices=["Vin_balun1", "Vout_balun1", "Vout_match_net", "Vout_lna", "Vout_cable_connector", "Vout_VGA", "Vout_tot", "Vratio_Balun1", "Vratio_match_net", "Vratio_lna", "Vratio_cable_connector", "Vratio_vga", "Vratio_adc"],      # checked by argparse (#246)
         help="what do you want to plot? example: Vout_lna.",
     )
     parser.add_argument(
         "--savefig",
         action="store_true",
         default=False,
-        help="don't add Voc.",
+        help="save the figure instead of only showing it.",
     )
 
     args = parser.parse_args()
@@ -462,4 +463,4 @@ if __name__ == "__main__":
     if args.plot_option in options_list:
         plot(args.plot_option, savefig=args.savefig)
     else:
-        raise Exception("Please provide a proper option for plotting noise. Options: Vin_balun1, Vout_balun1, Vout_match_net, Vout_lna,  Vout_cable_connector, Vout_VGA Vout_tot, Vratio_Balun1, Vratio_match_net, Vratio_lna, Vratio_cable_connector, Vratio_vga, Vratio_adc")
+        raise SystemExit("GRANDlib: plot_Vout_AT_Device: unknown option %s" % args.plot_option)
