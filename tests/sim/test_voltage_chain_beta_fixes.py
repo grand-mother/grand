@@ -222,3 +222,33 @@ def test_seed_controls_calibration_smearing_and_jitter(level0_sample, tmp_path):
 
     with pytest.raises(ValueError, match="'seed' must be None or a non-negative integer"):
         Efield2Voltage(str(level0_sample), seed=-3)
+
+
+@pytest.mark.parametrize("params, error, message", [
+    ({"add_noise_": True}, KeyError, "unknown key 'add_noise_'"),
+    ({"add_rf_chain": "no"}, TypeError, "'add_rf_chain' must be True or False"),
+    ({"add_noise": 0}, TypeError, "'add_noise' must be True or False"),
+    ({"calibration_smearing_sigma": -0.1}, ValueError, "calibration_smearing_sigma"),
+    ({"calibration_smearing_sigma": float("nan")}, ValueError, "calibration_smearing_sigma"),
+    ({"lst": 25.0}, ValueError, "'lst' must be 0 to 24"),
+])
+def test_bad_params_are_refused_before_computing(level0_sample, params, error, message):
+    r"""#265: misspelt keys were ignored, flags read by truthiness ('no' meant yes)."""
+    with pytest.raises(error, match=message):
+        _voltage(level0_sample, 13790, **params)
+
+
+@pytest.mark.parametrize("padding", [0, -1, float("nan"), "a"])
+def test_a_bad_padding_factor_is_refused(level0_sample, padding):
+    from grand import Efield2Voltage
+
+    with pytest.raises((ValueError, TypeError), match="padding_factor"):
+        Efield2Voltage(str(level0_sample), padding_factor=padding)
+
+
+def test_a_single_efield_file_is_explained(level0_sample):
+    from grand import Efield2Voltage
+
+    (efield,) = level0_sample.glob("efield_*_L0_*.root")
+    with pytest.raises(ValueError, match="give the folder sim2root.py wrote"):
+        Efield2Voltage(str(efield))

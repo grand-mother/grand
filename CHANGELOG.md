@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Efield2Voltage` checks its configuration (#265).** A misspelt key in
+  `params` (`add_noise_`) was ignored and the default used; the flags were read
+  by truthiness, so the string `'no'` turned the RF chain on; a negative or
+  NaN smearing sigma was accepted. Before any computation, unknown keys are
+  now refused with the list of valid ones, the four flags must be `True` or
+  `False`, `lst` must be 0–24 h and the numbers non-negative and finite.
+  `padding_factor` is checked in the constructor, and a single e-field file
+  (no run or shower tree) is refused with a message saying to give the
+  sim2root folder, instead of `AttributeError: 'DataFile' object has no
+  attribute 'trun'`. The defaults are public as `PARAM_DEFAULTS`.
+
 - **A file whose name level disagrees with its trees (#187).** A `run_..._L1_`
   file holding level-0 trees made `DataDirectory` fail with an
   `AttributeError` naming a tree nobody wrote; a file not named after a tree

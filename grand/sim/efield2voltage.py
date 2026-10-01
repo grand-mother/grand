@@ -170,6 +170,20 @@ def _trees_of_one_level(directory):
                    getattr(tshower, "file_name", "?")))
     return tefield, trun, tshower
 
+
+#: The processing switches of `Efield2Voltage.params`, with their defaults.
+PARAM_DEFAULTS = {
+    "add_noise": True,
+    "lst": 18.0,
+    "add_rf_chain": True,
+    "add_rf_chain_nut": False,
+    "add_rf_chain_gaa": False,
+    "resample_to_mhz": 0,            # 0: keep the input rate; other rates: in memory only, save_voltage refuses them (#229)
+    "extend_to_us": 0,               # 0: keep the input trace length
+    "calibration_smearing_sigma": 0, # 0: no calibration smearing
+    "add_jitter_ns": 0,              # 0: no trigger-time jitter
+}
+
 class Efield2Voltage:
     """
     Class to compute voltage with GRANDROOT IO
@@ -228,6 +242,13 @@ class Efield2Voltage:
             self.f_input = d_input
         else:
             raise IOError("Input file/directory does not exist")
+        # A single e-field file has no run or shower tree: it failed with
+        # "'DataFile' object has no attribute 'trun'" (#185, #265)
+        missing = [name for name in ("trun", "tshower", "tefield") if getattr(self.d_input, name, None) is None]
+        if missing:
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "%s holds no %s tree; give the folder sim2root.py wrote, with its "
+                "efield_*, run_* and shower_* files" % (d_input, ", ".join(missing))))
 
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
@@ -260,6 +281,9 @@ class Efield2Voltage:
             raise ValueError(_validate.message(
                 "Efield2Voltage", "'seed' must be None or a non-negative integer, got %r" % (seed,)))
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
+        # 0, negative, NaN or text failed later with a message about extend_to_us (#265)
+        _validate.positive(_validate.as_real(padding_factor, "padding_factor", "Efield2Voltage"),
+                           "padding_factor", "Efield2Voltage")
         self.padding_factor = padding_factor               #
         self.events = f_input_TEfield        # traces and du_pos are stored here
         self.run = f_input_TRun                 # site_long, site_lat info is stored here. Used to define shower frame.
@@ -276,17 +300,7 @@ class Efield2Voltage:
         # the documented Python usage raised KeyError on the first call to
         # compute_voltage().  The defaults are the argparse defaults of that
         # script: zero, meaning the step is off.
-        self.params = {
-            "add_noise": True,
-            "lst": 18.0,
-            "add_rf_chain": True,
-            "add_rf_chain_nut": False,
-            "add_rf_chain_gaa": False,
-            "resample_to_mhz": 0,            # 0: keep the input rate; other rates: in memory only, save_voltage refuses them (#229)
-            "extend_to_us": 0,               # 0: keep the input trace length
-            "calibration_smearing_sigma": 0, # 0: no calibration smearing
-            "add_jitter_ns": 0,              # 0: no trigger-time jitter
-        }
+        self.params = dict(PARAM_DEFAULTS)
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -763,6 +777,7 @@ class Efield2Voltage:
         Either `event_idx`, or both `event_number` and `run_number`, must be
         given.
         """
+        self._check_params()
         # update event. Provide either integer event_idx, or event_number and run_number.
         self.get_event(event_idx, event_number, run_number)
         for du_idx in range(self.nb_du):
@@ -928,6 +943,21 @@ class Efield2Voltage:
         They were checked only when the first event was saved, after the whole
         computation, and the failed run left a stub output file (#240).
         """
+        # A misspelt key was ignored and the default used; a flag was read by
+        # truthiness, so the string 'no' turned the RF chain on (#265)
+        unknown = sorted(set(self.params) - set(PARAM_DEFAULTS))
+        if unknown:
+            raise KeyError(_validate.message(
+                "Efield2Voltage.params", "unknown key%s %s; the keys are %s"
+                % ("s" if len(unknown) > 1 else "", ", ".join(map(repr, unknown)),
+                   ", ".join(sorted(PARAM_DEFAULTS)))))
+        for name in ("add_noise", "add_rf_chain", "add_rf_chain_nut", "add_rf_chain_gaa"):
+            if not isinstance(self.params[name], (bool, np.bool_)):
+                raise TypeError(_validate.message(
+                    "Efield2Voltage.params", "%r must be True or False, got %r" % (name, self.params[name])))
+        lst = _validate.as_real(self.params["lst"], "lst", "Efield2Voltage")
+        if not 0 <= lst <= 24:
+            raise ValueError(_validate.message("Efield2Voltage.params", "'lst' must be 0 to 24 h, got %r" % lst))
         for name, unit in (("resample_to_mhz", "MHz"), ("extend_to_us", "us"),
                            ("calibration_smearing_sigma", ""), ("add_jitter_ns", "ns")):
             _validate.non_negative(_validate.as_real(self.params[name], name, "Efield2Voltage"),
