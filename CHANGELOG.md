@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Tree file patterns and lists (#205).** `TShower("dir/nomatch_*.root")`
+  with no match created a file literally named `nomatch_*.root`; it now raises
+  `FileNotFoundError`. A chain built from a pattern had no index, so
+  `get_event` found nothing; it is now indexed, as `DataFile`'s chains are. A
+  list of files is accepted, as `DataFile` accepts it; pattern matches are
+  chained in sorted order; and `is_tchain` is true for a chain from
+  `DataFile` too.
+
 - **`DataDirectory`: recursive scan and oddly named files (#204).**
   `recursive=True` found nothing below the top folder, because the pattern
   had no `**`. A file of a known type whose name does not end in

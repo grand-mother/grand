@@ -392,3 +392,33 @@ def test_data_directory_recursive_and_odd_names(tmp_path):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         d.close()
+
+
+def test_patterns_and_lists_make_indexed_chains(tmp_path):
+    r"""#205: a pattern matching nothing created a file named with '*'; chains had no index."""
+    import pytest
+
+    from grand.dataio import TShower
+
+    for i, events in enumerate(((1, 2), (3,))):
+        t = TShower(str(tmp_path / ("shower_%d_L0_0000.root" % i)))
+        for event in events:
+            t.run_number, t.event_number, t.zenith = 1, event, float(event)
+            t.fill()
+        t.write()
+        t.stop_using()
+
+    with pytest.raises(FileNotFoundError, match="no file matches"):
+        TShower(str(tmp_path / "nomatch_*.root"))
+    assert not list(tmp_path.glob("nomatch*"))
+
+    files = sorted(str(p) for p in tmp_path.glob("shower_*.root"))
+    for source in (str(tmp_path / "shower_*.root"), files):
+        chain = TShower(source)
+        assert chain.is_tchain
+        assert chain.get_event(3, 1) > 0 and chain.zenith == 3.0
+        assert chain.get_event(2, 1) > 0 and chain.zenith == 2.0
+
+    single = TShower(str(tmp_path / "shower_1_*.root"))
+    assert not single.is_tchain and single.get_event(3, 1) > 0
+    single.stop_using()

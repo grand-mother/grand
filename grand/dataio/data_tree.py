@@ -750,12 +750,22 @@ class DataTree:
             self._file = f
             self._file_name = self._file.GetName()
         # If the filename string is given, check if chain, if not open/create the ROOT file with this name
+        elif isinstance(f, (list, tuple)) and f and all(isinstance(el, (str, os.PathLike)) for el in f):
+            # A list of files is a chain, as DataFile accepts (#205)
+            f = [os.fspath(el) for el in f]
+            self._file_name = f[0]
         elif isinstance(f, (str, os.PathLike)):
             f = os.fspath(f)
-            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
-            flist = glob.glob(f)
-            if len(flist) > 1:
-                f = flist
+            # A pattern is a chain of the files it matches, in sorted order.  A
+            # pattern matching nothing created a file named with the "*" (#205)
+            if glob.has_magic(f):
+                flist = sorted(glob.glob(f))
+                if not flist:
+                    raise FileNotFoundError(_validate.message(
+                        type(self).__name__, "no file matches %s" % f))
+                f = flist if len(flist) > 1 else flist[0]
+            if isinstance(f, list):
+                pass
             # Otherwise, it was a single file
             else:
                 self._file_name = f
@@ -799,17 +809,26 @@ class DataTree:
                     _register_opened_file(self._file)
         else:
             raise TypeError(_validate.message(
-                type(self).__name__, "the file must be a file name or a ROOT.TFile, got %s"
-                % type(f).__name__))
+                type(self).__name__, "the file must be a file name, a list of them or a "
+                "ROOT.TFile, got %s" % type(f).__name__))
 
         # If a list is given, it's a Chain
         if isinstance(f, list):
             self.is_tchain = True
+            self._file = None
             # Create the TChain
             self._tree = ROOT.TChain(self._tree_name, self._tree_name)
             # Assign files to the chain
             for el in f:
                 self._tree.Add(el)
+            # Indexed, as DataFile's chains are: get_event() found nothing
+            # in a chain built from a pattern (#205)
+            if self._tree.GetBranch("event_number"):
+                self._reset_read_cache(self._tree)
+                self._tree.BuildIndex("run_number", "event_number")
+            elif self._tree.GetBranch("run_number"):
+                self._reset_read_cache(self._tree)
+                self._tree.BuildIndex("run_number")
 
 
     ## Init/readout the tree from a file
@@ -825,6 +844,8 @@ class DataTree:
         if isinstance(t, ROOT.TTree) or isinstance(t, ROOT.TChain):
             self._tree = t
             self._tree_name = t.GetName()
+            # A chain from DataFile read as not one (#205)
+            self.is_tchain = isinstance(t, ROOT.TChain)
         # If the tree name string is given, open/create the ROOT TTree with this name
         else:
             self._tree_name = t
