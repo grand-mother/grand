@@ -19,6 +19,7 @@ checks are skipped and the behaviour is the old one.
 
 import errno
 import os
+import time
 from logging import getLogger
 
 from grand.basis import validate as _validate
@@ -36,6 +37,24 @@ _held = {}
 _seen = {}
 
 _NO_LOCKS = (errno.ENOLCK, errno.EOPNOTSUPP, errno.ENOSYS, errno.EINVAL)
+
+#: Seconds to wait for a lock before refusing.  A reader holds its shared lock
+#: only while opening a file, so a writer that meets one waits for it instead
+#: of refusing: refusing made processes started together all give up.
+WAIT = 2.0
+
+
+def _flock(fd, mode):
+    r"""``flock(fd, mode | LOCK_NB)``, retried for up to ``WAIT`` seconds."""
+    deadline = time.monotonic() + WAIT
+    while True:
+        try:
+            fcntl.flock(fd, mode | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.02)
 
 
 def _key(name):
@@ -80,7 +99,7 @@ class opening:
         if fcntl is not None and path not in _held:
             try:
                 self.fd = os.open(path, os.O_RDONLY)
-                fcntl.flock(self.fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                _flock(self.fd, fcntl.LOCK_SH)
             except BlockingIOError:
                 os.close(self.fd)
                 self.fd = None
@@ -123,7 +142,7 @@ def lock_for_writing(name, where, fresh=False):
     except OSError:
         return                                       # ROOT reports a file it cannot open
     try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _flock(fd, fcntl.LOCK_EX)
     except BlockingIOError:
         os.close(fd)
         raise OSError(_validate.message(

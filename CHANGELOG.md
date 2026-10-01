@@ -53,7 +53,9 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   refused when it tries to write, since its view is out of date. Everything
   reported as written is in the file (checked over 10 runs of 4 writers).
   Reading takes no lasting lock, and one process writing a file is unchanged.
-  Where `flock` is unavailable the old behaviour remains.
+  Where `flock` is unavailable the old behaviour remains. A process waits up to
+  2 s for a lock before refusing: processes started together briefly met each
+  other's read lock and could all give up.
 
 - **No antenna response from below the antenna's horizon (#285).** The
   effective-length lookup took the zenith row modulo the table size, so a
