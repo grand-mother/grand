@@ -449,8 +449,9 @@ def main():
                 gt.tshowersim.event_number = ext_event_number
                 gt.tefield.event_number = ext_event_number
 
-            # store temporarily the first event number
-            if file_num==0 and i==0:
+            # store temporarily the first event number (with -ss, every file
+            # is its own run, so its first event starts a new run: #220)
+            if (file_num==0 or clargs.star_shape) and i==0:
                 start_event_number = gt.tshower.event_number
                 start_event_time = trawshower.unix_date
                 if ext_event_number is not None:
@@ -522,12 +523,13 @@ def main():
         if clargs.star_shape:
             gt.trun.du_id = tdu_ids
             gt.trun.du_xyz = np.array(tdu_xyzs)
-            gt.trun.du_geoids = np.array(tdu_geoids)
+            gt.trun.du_geoid = np.array(tdu_geoids)   # was "du_geoids", silently ignored (#220)
 
-            gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
+            # This run's units only (du_ids accumulates over all files)
+            gt.trun.du_tilt = np.zeros(shape=(len(tdu_ids), 2), dtype=np.float32)
 
             # For now (and for the foreseeable future) all DU will have the same bin size at the level of the efield simulator.
-            gt.trun.t_bin_size = np.array([trawefield.t_bin_size] * len(du_ids))
+            gt.trun.t_bin_size = np.array([trawefield.t_bin_size] * len(tdu_ids))
 
             # Set the site layout to star_shape if not overriden by a command line option
             if not clargs.site_layout: gt.trun.site_layout = "star_shape"
@@ -745,8 +747,11 @@ def get_tree_du_id_xyz_geoid(trawefield, shower_core, origin_geoid):
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
     # Get lat/lon/alt from xyz
+    # From the unique positions, so that the rows match du_ids and du_xyzs:
+    # computed from the full draw arrays, they did not as soon as a file held
+    # several events with the same antennas (issue #220)
     origin = Geodetic(latitude=origin_geoid[0], longitude=origin_geoid[1], height=origin_geoid[2])
-    grandcs = GRANDCS(x=du_xs, y=du_ys, z=du_zs, location=origin)
+    grandcs = GRANDCS(x=du_xyzs[:, 0], y=du_xyzs[:, 1], z=du_xyzs[:, 2], location=origin)
     du_geoid = np.moveaxis(np.asarray(Geodetic(grandcs), dtype=np.float32), 0, 1)
 
     return np.asarray(du_ids, dtype=np.int32), np.asarray(du_xyzs, dtype=np.float32), du_geoid

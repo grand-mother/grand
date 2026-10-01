@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **sim2root writes the right antenna latitude/longitude (`du_geoid`) (#220).**
+  With several events sharing antennas in one `.rawroot`, `du_geoid` was
+  computed from the non-unique antenna list and so paired with the wrong
+  antennas (up to 0.1°, about 8 km off). With `-ss` it was assigned to a
+  misspelt field and silently dropped, `du_tilt`/`t_bin_size` took the
+  cumulative antenna count, and every run kept the first run's first event.
 - **Resampling in the voltage step no longer gives the ADC step a wrong rate
   (#229).** `Efield2Voltage` kept the input's `trigger_position` after
   resampling (the ratio compared the input rate with itself), and left the run
