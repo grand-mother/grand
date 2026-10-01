@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`get_files_from_db.py` reports what it does (#245).** Files of 256 kB or
+  less that the transfer database lists were moved to a `crap/` folder with no
+  message, listed files that did not exist were dropped silently, a database
+  whose name did not match `<tag>_<site>_` gave `[]` and exit 0, and a
+  mistyped path created an empty database before failing on "no such table"
+  (also in `get_files_list.py`). The move is kept (a question for the pipeline
+  owners) but every move and every missing file is reported on stderr; a
+  misnamed, missing or unreadable database exits 2 with a message; the
+  database is opened read-only, and the query takes its tag as a parameter.
+
 - **A wheel carries the data files the code opens (#278).** `package-data`
   listed only `dataio/version`, so a wheel built where setuptools does not see
   the git checkout lacked `dataio/vector_filling.C` and
