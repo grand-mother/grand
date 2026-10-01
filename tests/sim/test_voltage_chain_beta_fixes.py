@@ -71,8 +71,8 @@ def test_an_event_the_input_does_not_hold_is_refused(level0_sample, tmp_path):
     assert (tmp_path / "out.root").exists()
 
 
-def _set_shower_run_number(sample, run_number):
-    r"""Rewrites the shower file of `sample` with every entry in `run_number`."""
+def _rewrite_shower(sample, **changes):
+    r"""Rewrites the shower file of `sample`, setting the given fields in every entry."""
     from grand.dataio import TShower
 
     path = next(sample.glob("shower_*_L0_*.root"))
@@ -89,9 +89,10 @@ def _set_shower_run_number(sample, run_number):
     path.unlink()
     target = TShower(str(path))
     for row in rows:
+        row.setdefault("run_number", 1)
+        row.update(changes)
         for name, value in row.items():
             setattr(target, name, value)
-        target.run_number = run_number
         target.fill()
     target.write()
     target.stop_using()
@@ -101,7 +102,7 @@ def test_a_shower_tree_without_the_event_is_refused(level0_sample, tmp_path):
     r"""#247: a missing shower entry silently reused the previous event's shower."""
     from grand import Efield2Voltage
 
-    _set_shower_run_number(level0_sample, 2)
+    _rewrite_shower(level0_sample, run_number=2)
     signal = Efield2Voltage(str(level0_sample), "out.root", output_directory=str(tmp_path), seed=1)
     signal.params["add_noise"] = False
     with pytest.raises(KeyError, match="shower tree has no entry for event"):
@@ -150,3 +151,15 @@ def test_resampling_rescales_the_trigger_position_and_the_script_refuses_it(leve
                           capture_output=True, text=True, timeout=300)
     assert done.returncode != 0
     assert "--target_sampling_rate_mhz is not supported" in done.stderr
+
+
+@pytest.mark.parametrize("xmax", [[np.nan] * 3, [0.0, 0.0, 0.01]], ids=["nan", "at_the_core"])
+def test_an_event_without_a_usable_xmax_is_refused(level0_sample, tmp_path, xmax):
+    r"""#228: a NaN Xmax crashed in the antenna lookup; one at the core gave ~1e-13 uV."""
+    from grand import Efield2Voltage
+
+    _rewrite_shower(level0_sample, xmax_pos_shc=xmax)
+    signal = Efield2Voltage(str(level0_sample), "out.root", output_directory=str(tmp_path), seed=1)
+    signal.params["add_noise"] = False
+    with pytest.raises(ValueError, match="no usable Xmax position"):
+        signal.compute_voltage(event_number=13790, run_number=1)

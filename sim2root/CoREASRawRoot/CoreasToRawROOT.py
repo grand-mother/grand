@@ -156,6 +156,16 @@ def CoreasToRawRoot(file, simID=None):
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
+    # CoREAS writes -1 for "not known" (issue #228): taken as a distance of
+    # -1 cm it put Xmax 1 cm from the core, which made every voltage ~1e-13 uV.
+    # Unknown is NaN, as on the .inp path below.
+    if DistanceOfShowerMaximum is None or not DistanceOfShowerMaximum > 0:
+      print("[WARNING] DistanceOfShowerMaximum is not given (%s); Xmax position written as NaN"
+            % DistanceOfShowerMaximum)
+      DistanceOfShowerMaximum = np.nan
+    if DepthOfShowerMaximum is None or not DepthOfShowerMaximum > 0:
+      DepthOfShowerMaximum = np.nan
+
     # calculate Xmax cartesian position
     # set spherical system vector in m and radians
     Xmax_sph = np.array([DistanceOfShowerMaximum, np.deg2rad(zenith), np.deg2rad(azimuth)])

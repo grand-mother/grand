@@ -117,6 +117,11 @@ def _grandlib_version():
 
 
 
+#: Below this distance from the core an Xmax position is taken as a placeholder,
+#: not a measurement: real showers have Xmax kilometres away (issue #228).
+_MIN_XMAX_DISTANCE_M = 100.0
+
+
 def _trees_of_one_level(directory):
     r"""The efield, run and shower trees of `directory`, read at one level.
 
@@ -364,6 +369,20 @@ class Efield2Voltage:
         shower.load_root(self.shower)                # calculates grand_ref_frame, shower_frame, Xmax in shower_frame LTP etc
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
+
+        # The antenna response is evaluated in the direction of Xmax seen from
+        # each antenna.  Without a usable Xmax that direction is undefined: a
+        # NaN position crashed deep in the antenna lookup, and a position a few
+        # centimetres from the core (a "-1 = unknown" read as a distance) gave
+        # voltages near 1e-13 uV (issue #228).  Refuse instead.
+        maximum = np.asarray(shower.maximum, dtype=float).ravel()
+        if not np.all(np.isfinite(maximum)) or np.linalg.norm(maximum) < _MIN_XMAX_DISTANCE_M:
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_event", "event %d of run %d has no usable Xmax position "
+                "(xmax_pos_shc %s, %.3g m from the core); the antenna response needs the "
+                "direction of Xmax. Regenerate the simulation with the shower maximum filled in"
+                % (self.event_number, self.run_number, np.asarray(self.shower.xmax_pos_shc).tolist(),
+                   np.linalg.norm(maximum) if np.all(np.isfinite(maximum)) else float("nan"))))
 
         # A shower that hit no antenna (issue #91): there is nothing to
         # compute, but the event is still written, with du_count 0, so that it

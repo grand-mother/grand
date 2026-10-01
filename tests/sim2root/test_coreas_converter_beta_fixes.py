@@ -61,3 +61,17 @@ def test_azimuth_is_where_the_shower_comes_from(tmp_path, with_event_block):
     zenith, azimuth = _convert(_workdir(tmp_path, with_event_block))
     assert zenith == pytest.approx(55.0, abs=1e-3)
     assert azimuth == pytest.approx(13.57, abs=1e-3)
+
+
+def test_an_unknown_xmax_distance_is_written_as_nan(tmp_path):
+    r"""#228: DistanceOfShowerMaximum = -1 ("unknown") was used as -1 cm, putting Xmax at the core."""
+    import numpy as np
+
+    from sim2root.Common.raw_root_trees import RawShowerTree
+
+    work = _workdir(tmp_path, with_event_block=True)   # its block has DistanceOfShowerMaximum = -1
+    _convert(work)
+    shower = RawShowerTree(str(work / "Coreas_004100.rawroot"))
+    shower.get_entry(0)
+    assert np.all(np.isnan(np.asarray(shower.xmax_pos_shc, dtype=float)))
+    shower.stop_using()

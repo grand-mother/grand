@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **An unknown Xmax no longer gives a crash or near-zero voltages (#228).** The
+  CoREAS converter took `DistanceOfShowerMaximum = -1` ("unknown") as a distance
+  of -1 cm, putting Xmax at the core, and `convert_efield2voltage` then produced
+  V_oc around 1e-13 uV and all-zero ADC traces, exit 0; a NaN Xmax (the `.inp`
+  path) crashed in the antenna lookup. The converter now writes NaN for an
+  unknown distance or depth, and `Efield2Voltage` refuses an event whose Xmax is
+  not finite or lies within 100 m of the core, with a message naming the event.
 - **The CoREAS converter no longer mirrors the azimuth (#209).** For a `.reas`
   without the shower block (as the committed sample), the converter reads the
   CORSIKA `.inp` and computed `180 - PHIP`; PHIP is the direction of travel in a
