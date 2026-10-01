@@ -188,6 +188,16 @@ if __name__ == "__main__":
     # The voltage file has nowhere to record a new sampling rate and the run
     # tree is not rewritten, so the next step (convert_voltage2adc.py) would
     # read the input rate and process the trace at the wrong rate (issue #229).
+    # 1e9 us tried to allocate terabytes; NaN and inf gave raw errors (#277)
+    if not 0 <= args.target_duration_us <= 1e4:
+        raise SystemExit("GRANDlib: convert_efield2voltage: --target_duration_us must be 0 (keep) to 10000 us, "
+                         "got %s" % args.target_duration_us)
+    if not 1 <= args.padding_factor < float("inf"):
+        raise SystemExit("GRANDlib: convert_efield2voltage: --padding_factor must be finite and at least 1, "
+                         "got %s" % args.padding_factor)
+    if not 0 <= args.calibration_smearing_sigma < float("inf"):
+        raise SystemExit("GRANDlib: convert_efield2voltage: --calibration_smearing_sigma must be finite and "
+                         ">= 0, got %s" % args.calibration_smearing_sigma)
     if args.target_sampling_rate_mhz:
         raise SystemExit(
             "GRANDlib: convert_efield2voltage: --target_sampling_rate_mhz is not supported: the "

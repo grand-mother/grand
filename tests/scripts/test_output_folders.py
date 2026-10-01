@@ -72,6 +72,19 @@ def test_efield2voltage_names_padding_factor(simulation, tmp_path):
     r"""#233: --padding_factor 0.5 was reported as "'extend_to_us' = 0 us is shorter"."""
     stderr = _fails(ROOT / "scripts" / "convert_efield2voltage.py", simulation, "--padding_factor", "0.5",
                     "-od", tmp_path, cwd=tmp_path)
-    assert "'padding_factor' must be at least 1" in stderr
+    assert "padding_factor" in stderr and "at least 1" in stderr and "extend_to_us" not in stderr
     lst = _fails(ROOT / "scripts" / "convert_efield2voltage.py", simulation, "--lst", "25", cwd=tmp_path)
     assert "--lst must be from 0 to 24 h" in lst
+
+
+@pytest.mark.parametrize("script, option, message", [
+    ("convert_efield2voltage.py", ("--target_duration_us", "1e9"), "--target_duration_us must be 0 (keep) to 10000 us"),
+    ("convert_efield2voltage.py", ("--padding_factor", "nan"), "--padding_factor must be finite"),
+    ("convert_efield2voltage.py", ("--calibration_smearing_sigma", "-1"), "--calibration_smearing_sigma must be finite"),
+    ("convert_voltage2adc.py", ("--seed", "-3"), "--seed must be a non-negative integer"),
+    ("convert_voltage2adc.py", ("--target_sampling_rate_mhz", "-5"), "--target_sampling_rate_mhz must not be negative"),
+])
+def test_script_options_are_checked(simulation, tmp_path, script, option, message):
+    r"""#277: these were accepted, or failed with raw errors deep in the run."""
+    stderr = _fails(ROOT / "scripts" / script, simulation, *option, cwd=tmp_path)
+    assert message in stderr, stderr[-1500:]

@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Conversion script options checked (#277, item 5).**
+  `convert_efield2voltage.py --target_duration_us 1e9` tried to allocate
+  terabytes; `--padding_factor nan` and `--calibration_smearing_sigma -1`
+  gave raw errors or were accepted; `convert_voltage2adc.py --seed -3` gave a
+  NumPy traceback and `--target_sampling_rate_mhz -5` exited 0. Each is now
+  refused with a `GRANDlib:` message before any work.
+
 - **`Efield2Voltage` and `Event` misuse is explained (#277, items 1–4).**
   `compute_voltage_du`, `final_resample` and `save_voltage` before an event
   was loaded raised `AttributeError`; they now say to call `get_event` first.

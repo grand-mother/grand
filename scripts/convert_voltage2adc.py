@@ -352,6 +352,12 @@ if __name__ == '__main__':
         f_input_dir = os.path.dirname(os.path.abspath(f_input_dir))
     f_output  = args.out_file
     noise_dir = args.noise_dir
+    # A negative seed gave a raw NumPy traceback; a negative rate was accepted (#277)
+    if args.seed is not None and args.seed < 0:
+        raise SystemExit("GRANDlib: convert_voltage2adc: --seed must be a non-negative integer, got %d" % args.seed)
+    if args.target_sampling_rate_mhz is not None and not args.target_sampling_rate_mhz >= 0:
+        raise SystemExit("GRANDlib: convert_voltage2adc: --target_sampling_rate_mhz must not be negative, got %s"
+                         % args.target_sampling_rate_mhz)
 
     # The folder sim2root wrote, holding the voltage_*_L0_*.root that
     # convert_efield2voltage.py writes when -o is not given (#257)
