@@ -246,6 +246,11 @@ class Efield2Voltage:
 
 
         self.du_type = du_type                              # load antenna models
+        # None, or a non-negative integer: a negative seed was accepted and
+        # silently meant "unseeded", and so did 0 (#230)
+        if seed is not None and (isinstance(seed, bool) or not isinstance(seed, (int, np.integer)) or seed < 0):
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "'seed' must be None or a non-negative integer, got %r" % (seed,)))
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
         self.padding_factor = padding_factor               #
         self.events = f_input_TEfield        # traces and du_pos are stored here
@@ -363,6 +368,11 @@ class Efield2Voltage:
             raise ValueError(_validate.message(
                 "Efield2Voltage", "the e-field of event %s (run %s) has NaN or infinite samples, "
                 "for units %s" % (self.event_number, self.run_number, bad)))
+        # Calibration smearing draws from a generator seeded per event: it used
+        # NumPy's global one, which the seed never reached, so two runs with
+        # the same seed differed (#230)
+        self._smearing_rng = np.random.default_rng(
+            None if self.seed is None else [int(self.seed), int(self.event_number)])
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
@@ -676,7 +686,7 @@ class Efield2Voltage:
 
                     #add the calibration noise
         if(self.params["calibration_smearing_sigma"]>0):
-          calfactor=np.random.normal(1,self.params["calibration_smearing_sigma"])
+          calfactor=self._smearing_rng.normal(1,self.params["calibration_smearing_sigma"])
           logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")
         else:
           calfactor=1.0
@@ -1114,7 +1124,8 @@ class Efield2Voltage:
         if(jitter>0):
            logger.info(f"adding {jitter} ns of time jitter to the trigger times.")
            #reinitialize the random number
-           if(self.seed>0):
+           # Seed 0 seeds too, and no seed no longer crashes (None > 0, #230)
+           if self.seed is not None:
              np.random.seed(self.seed*(self.events.event_number+1))
 
            delays=np.round(np.random.normal(0,jitter,size=np.shape(self.events.du_nanoseconds)).astype(int))

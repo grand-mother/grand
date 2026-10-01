@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`--seed` makes calibration smearing reproducible (#230).** The smearing
+  drew from NumPy's global generator, which the seed never reached, so two runs
+  with the same seed differed by up to 18583 µV; it now draws from a generator
+  seeded with the seed and the event number. Jitter without a seed crashed
+  (`None > 0`); seed 0 counted as no seed, in `Efield2Voltage` and
+  `convert_efield2efield.py`; and negative seeds were accepted. Now 0 is a
+  seed like any other, no seed means a fresh realisation, and a negative seed
+  is refused.
+
 - **`convert_efield2efield.py` writes `du_count`, honours `-o`, and handles
   empty events and inputs (#248).** `du_count` was never set, so every event
   of its output read as having no antenna; `-o` with a directory in it was

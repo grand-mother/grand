@@ -194,3 +194,31 @@ def test_compute_voltage_writes_once_and_keeps_every_event(level0_sample, tmp_pa
         out = TVoltage(str(tmp_path / ("out_%s.root" % append)))
         assert sorted(out.get_list_of_events()) == [(1618, 1), (13790, 1)]
         out.stop_using()
+
+
+def _smeared(sample, seed):
+    from grand import Efield2Voltage
+
+    signal = Efield2Voltage(str(sample), seed=seed)
+    signal.params.update(add_noise=False, calibration_smearing_sigma=0.1)
+    signal.compute_voltage_event(event_number=1618, run_number=1)
+    signal.final_resample()
+    return np.array(signal.vout)
+
+
+def test_seed_controls_calibration_smearing_and_jitter(level0_sample, tmp_path):
+    r"""#230: smearing ignored the seed; jitter without a seed crashed on None > 0;
+    seed 0 meant unseeded; a negative seed was accepted."""
+    from grand import Efield2Voltage
+
+    assert np.array_equal(_smeared(level0_sample, 1), _smeared(level0_sample, 1))
+    assert np.array_equal(_smeared(level0_sample, 0), _smeared(level0_sample, 0))
+    assert not np.array_equal(_smeared(level0_sample, 1), _smeared(level0_sample, 2))
+
+    signal = Efield2Voltage(str(level0_sample), "jitter.root", output_directory=str(tmp_path))
+    signal.params.update(add_noise=False, add_jitter_ns=5)
+    signal.compute_voltage(event_number=1618, run_number=1)           # no seed: no crash
+    assert (tmp_path / "jitter.root").exists()
+
+    with pytest.raises(ValueError, match="'seed' must be None or a non-negative integer"):
+        Efield2Voltage(str(level0_sample), seed=-3)

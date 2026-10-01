@@ -205,6 +205,8 @@ if __name__ == "__main__":
     logger.info(mlg.string_begin_script())
     # =============================================
     seed = None if args.seed==-1 else args.seed
+    if seed is not None and seed < 0:
+        raise SystemExit("GRANDlib: convert_efield2voltage: --seed must be a non-negative integer, got %d" % seed)
     logger.info(f"seed used for random number generator is {seed}.")
 
     # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)

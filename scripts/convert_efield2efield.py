@@ -234,6 +234,8 @@ if __name__ == "__main__":
         args.out_directory = args.directory
 
     seed = args.seed
+    if seed < -1:
+        raise SystemExit("GRANDlib: convert_efield2efield: --seed must be a non-negative integer, got %d" % seed)
     logger.info(f"seed used for random number generator is {seed}.")
 
     noise = args.add_noise_uVm
@@ -434,7 +436,7 @@ if __name__ == "__main__":
 
 
            # we initialize the random seed
-           if(seed>0):
+           if seed >= 0:  # 0 seeds too; -1 is the 'no seed' placeholder (#230)
              np.random.seed(seed*(event_idx+1))
 
            for du_idx in range(nb_du):
@@ -576,7 +578,7 @@ if __name__ == "__main__":
            if(jitter>0):
                logger.info(f"adding {jitter} ns of time jitter to the trigger times.")
                #reinitialize the random number
-               if(seed>0):
+               if seed >= 0:  # 0 seeds too; -1 is the 'no seed' placeholder (#230)
                  np.random.seed(seed*(event_idx+1))
                delays=np.round(np.random.normal(0,jitter,size=np.shape(du_nanoseconds)).astype(int))
                du_nanoseconds=du_nanoseconds+delays
