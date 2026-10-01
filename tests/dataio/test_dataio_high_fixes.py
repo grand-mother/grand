@@ -466,3 +466,22 @@ def test_a_name_level_that_disagrees_with_the_trees_is_reported(tmp_path):
     (tmp_path / "run_20260101_000000_RUN0_L1_0000.root").rename(tmp_path / "mismatch_RUN0_L1_0000.root")
     with pytest.warns(GRANDlibWarning, match="not named after a GRAND tree type"):
         DataDirectory(str(tmp_path))
+
+
+def test_class_access_to_a_field_gives_the_descriptor():
+    r"""#191: TShower.zenith and help(TShower.zenith) crashed on class access."""
+    import io
+    import pydoc
+
+    from grand.dataio import TADC, TEfield, TRun, TShower
+
+    for cls, name in ((TShower, "zenith"), (TEfield, "trace"), (TRun, "site"), (TADC, "trace_ch")):
+        descriptor = getattr(cls, name)
+        assert descriptor.name == name
+    out = io.StringIO()
+    pydoc.Helper(output=out).help(TShower.zenith)
+    assert out.getvalue()
+    t = TShower()
+    t.zenith = 12.5
+    assert t.zenith == 12.5          # instance access unchanged
+    t.stop_using()

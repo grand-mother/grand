@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Class access to a tree field (#191).** `TShower.zenith`, and so
+  `help(TShower.zenith)`, failed with `'NoneType' object has no attribute
+  '_zenith'`: the field descriptors did not handle class access. They now
+  return themselves, as Python descriptors do.
+
 - **`Efield2Voltage` checks its configuration (#265).** A misspelt key in
   `params` (`add_noise_`) was ignored and the default used; the flags were read
   by truthiness, so the string `'no'` turned the RF chain on; a negative or

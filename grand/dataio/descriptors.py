@@ -517,6 +517,9 @@ class StdVectorListDesc:
         object
             The stored value, or the descriptor itself for class access.
         """
+        # Class access (TShower.zenith, help()) passed None on and crashed (#191)
+        if obj is None:
+            return self
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return getattr(obj, self.attrname)
@@ -628,6 +631,9 @@ class TTreeScalarDesc:
         object
             The stored value, or the descriptor itself for class access.
         """
+        # Class access (TShower.zenith, help()) passed None on and crashed (#191)
+        if obj is None:
+            return self
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return getattr(obj, self.attrname)[0]
@@ -737,6 +743,9 @@ class TTreeArrayDesc:
         object
             The stored value, or the descriptor itself for class access.
         """
+        # Class access (TShower.zenith, help()) passed None on and crashed (#191)
+        if obj is None:
+            return self
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return getattr(obj, self.attrname)
@@ -860,6 +869,9 @@ class StdStringDesc:
         object
             The stored value, or the descriptor itself for class access.
         """
+        # Class access (TShower.zenith, help()) passed None on and crashed (#191)
+        if obj is None:
+            return self
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return str(getattr(obj, self.attrname))
