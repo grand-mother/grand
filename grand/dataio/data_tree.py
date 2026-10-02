@@ -1278,6 +1278,10 @@ class DataTree:
         """Print out the values of the specified members of the tree (TTree::Scan() interface)"""
         self._check_open("scan")
         self._tree.Scan(*args)
+        # ROOT 6.38 prints through C++ streams: flush them, so the table
+        # appears before anything Python prints next
+        ROOT.std.cout.flush()
+        ROOT.gInterpreter.ProcessLine("fflush(stdout);")
 
     def get_entry(self, ev_no):
         """Read into memory the ev_no entry of the tree
