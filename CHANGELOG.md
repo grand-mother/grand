@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The rest of #256: `StdVectorList`'s ROOT-version fallback chain no longer
+  uses bare `except:` (which caught Ctrl-C); when its last fallback fails
+  too, the `TypeError` names the value, the vector type and the first
+  error, rather than the fallback's own; and an `OverflowError` is raised
+  (it converted the value, stored nothing and left the vector empty).  The
+  informational prints left in `grand.aoi` ("No Run tree", "Writing ...",
+  "Can not find any tree ...") are log records.
+
 - The RF chain's checks survive `python -O` (#255, item 4): its 43
   `assert` statements, removed under optimisation, are explicit checks;
   `interpol_at_new_x` with an empty table and `matmul` with matrices that

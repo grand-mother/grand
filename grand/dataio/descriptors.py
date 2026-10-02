@@ -493,7 +493,7 @@ class StdVectorList(MutableSequence):
                         else:
                             self._vector += value
                     return self
-                except:
+                except Exception:   # not bare: KeyboardInterrupt must pass (#256)
                     try:
                         if isinstance(value, StdVectorList):
                             if "char" in value.basic_vec_type.split()[-1]:
@@ -509,7 +509,7 @@ class StdVectorList(MutableSequence):
                             else:
                                 try:
                                     self._vector.assign(value._vector)
-                                except:
+                                except Exception:   # not bare: KeyboardInterrupt must pass (#256)
                                     self._vector += value._vector
                         else:
                             tmp_array = np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
@@ -517,11 +517,18 @@ class StdVectorList(MutableSequence):
 
                             # self._vector.assign(np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
                         return self
-                    except Exception:
+                    except Exception as error:
                         # Basically only for ROOT <6.36 for 3D lists that can't be converted to arrays (traces of non-homogenous lenght)
-                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                        try:
+                            if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                            if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                            if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                        except (TypeError, ValueError, KeyError):
+                            # The last fallback's own error hid why the value
+                            # could not be stored (#256)
+                            raise TypeError(_validate.message(
+                                "StdVectorList", "cannot store %r in a vector<%s>: %s"
+                                % (value, self.vec_type, error))) from error
 
                         self._vector += value
 
@@ -556,7 +563,7 @@ class StdVectorList(MutableSequence):
                                 try:
                                     # That will not work if we have different types of value and self._vector
                                     self._vector += value._vector
-                                except:
+                                except Exception:   # not bare: KeyboardInterrupt must pass (#256)
                                     # For different types, convert the type with numpy, but it won't simply work for chars
 
                                     # For chars is ugly, using a special function
@@ -592,19 +599,11 @@ class StdVectorList(MutableSequence):
 
 
 
-        except OverflowError:
-            # Handle the OverflowError here, e.g., by logging a message or taking an appropriate action.
-            if isinstance(value, (list, np.ndarray)):
-                # Use signed integer types to allow for negative values
-                signed_type = 'l' if self.basic_vec_type.split()[-1] == "int" else self.basic_vec_type
-                if self.ndim == 1:
-                    value = array.array(signed_type, value)
-                if self.ndim == 2:
-                    value = [array.array(signed_type, el) for el in value]
-                if self.ndim == 3:
-                    value = [[array.array(signed_type, el1) for el1 in el] for el in value]
-            else:
-                value = list(value)
+        except OverflowError as error:
+            # This converted the value to a signed type and then stored
+            # nothing, so the vector was left empty without a word (#256)
+            raise OverflowError(_validate.message(
+                "StdVectorList", "a value does not fit in a vector<%s>" % self.vec_type)) from error
 
         return self
 

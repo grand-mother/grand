@@ -1,4 +1,5 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import logging
 import os
 from pathlib import Path
 import ROOT
@@ -7,6 +8,8 @@ import numpy as np
 from grand.aoi.event import Event
 from grand.dataio import DataDirectory, DataFile
 from grand.basis import validate as _validate
+
+logger = logging.getLogger(__name__)
 
 
 class EventList:
@@ -243,7 +246,8 @@ class EventList:
         #elif hasattr(data_input, "trecons") and data_input.trecons:
         #    return data_input.trecons.get_entries()
         else:
-            print("Can not find any tree to provide the number of events in the file.")
+            # None, as distinct from 0 entries; logged, not printed (#256)
+            logger.warning("Can not find any tree to provide the number of events in the file.")
             return None
 
     ## Return the iterable over self

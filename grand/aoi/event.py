@@ -857,7 +857,8 @@ class Event:
             # the event then has no antennas, as other missing trees are
             # skipped, rather than failing on trun.du_id.
             if self.trun is None:
-                print("No Run tree. Antenna positions will not be available.")
+                # Logged, not printed (#256)
+                logger.warning("No Run tree. Antenna positions will not be available.")
                 return
 
             # Fill the antenna part. With neither tree there is nothing to say
@@ -1268,7 +1269,7 @@ class Event:
                     target_tree.build_index("run_number", "event_number")
 
                 # Write the tree
-                print("Writing", target_tree.tree_name)
+                logger.info("Writing %s", target_tree.tree_name)
                 # target_tree._tree.GetCurrentFile().Write("", ROOT.TObject.kWriteDelete)
                 target_tree.write(force_close_file=True)
 

@@ -64,3 +64,23 @@ def test_event_list_raises_instead_of_printing():
         events.get_event(event_number=7, run_number=1)
     with pytest.raises(ValueError, match="not both"):
         events.get_event(entry_number=0, event_number=1618, run_number=1)
+
+
+def test_aoi_logs_instead_of_printing(capsys):
+    r"""#256: the remaining informational prints in grand.aoi are log records."""
+    import pathlib
+    import re
+
+    root = pathlib.Path(__file__).resolve().parents[1] / "grand" / "aoi"
+    stray = []
+    for name in ("event.py", "event_list.py"):
+        lines = (root / name).read_text().splitlines()
+        inside_print_method = False
+        for line in lines:
+            if re.match(r"\s*def print\(self", line):
+                inside_print_method = True
+            elif re.match(r"\s*def ", line):
+                inside_print_method = False
+            if re.match(r"\s*print\(", line) and not inside_print_method:
+                stray.append((name, line.strip()))
+    assert stray == []

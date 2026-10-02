@@ -54,13 +54,14 @@ def test_every_input_form_lists_counts_and_iterates_the_events(kind):
     assert seen == EVENTS
 
 
-def test_a_file_without_run_tree_gives_events_without_antennas():
+def test_a_file_without_run_tree_gives_events_without_antennas(caplog):
     r"""An efield file alone has no antenna positions: none, not a crash."""
     from grand.aoi.event_list import EventList
 
     quiet = io.StringIO()
-    with contextlib.redirect_stdout(quiet):
+    with contextlib.redirect_stdout(quiet), caplog.at_level("WARNING", logger="grand.aoi.event"):
         event = EventList(str(EFIELD)).get_event(event_number=1618, run_number=1)
     assert len(event.efields) == 5
     assert event.antennas == []
-    assert "Antenna positions will not be available" in quiet.getvalue()
+    # Logged since #256, not printed
+    assert "Antenna positions will not be available" in caplog.text
