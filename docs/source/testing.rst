@@ -17,8 +17,8 @@ Current state, on the ``dev-next`` branch:
 
 .. code-block:: text
 
-    998 passed, 10 skipped, 11 xfailed            (2026-10-01)
-    coverage: 80% over grand/, 23% over granddb/, 72% together
+    1233 passed, 10 skipped, 5 xfailed             (2026-10-02)
+    coverage: 80% over grand/, 23% over granddb/, 72% together   (measured 2026-10-01)
 
 Layout
 ------
