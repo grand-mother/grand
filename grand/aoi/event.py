@@ -54,8 +54,15 @@ except ImportError:
 
 @document_fields
 @dataclass
-class Event:
+class Event(_validate.CheckedFields):
     """A class for holding an event"""
+
+    # Event and run numbers as the trees store them (#267)
+    _field_checks = {
+        "event_number": _validate.field_check("int", minimum=0, refuse=True),
+        "run_number": _validate.field_check("int", minimum=0, refuse=True),
+        "tefield_level": _validate.field_check("int", minimum=0, refuse=True),
+    }
 
     # ToDo: this should allow for multiple files holding different TTrees and TChains in the future
     _file: ROOT.TFile = None

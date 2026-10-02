@@ -6,12 +6,21 @@ from scipy.signal import hilbert
 
 from grand.geo.coordinates import *
 from grand.basis.fielddoc import document_fields
+from grand.basis import validate as _validate
 
 
 @document_fields
 @dataclass
-class Timetrace3D:
+class Timetrace3D(_validate.CheckedFields):
     """A class for holding x,y,z single antenna traces over time"""
+
+    # As the trees' sampling fields are checked (#267); du_id -1 means "not set"
+    _field_checks = {
+        "n_points": _validate.field_check("int", minimum=0, refuse=True),
+        "time_step": _validate.field_check("real", minimum=0, unit="ns"),
+        "t_bin_size": _validate.field_check("real", minimum=0, unit="ns"),
+        "du_id": _validate.field_check("int", minimum=-1, refuse=True),
+    }
 
     n_points: int = 0
     """The trace length"""

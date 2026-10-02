@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The `grand.aoi` classes and `ShowerEvent` check their fields as the tree
+  setters do (#267, the last item): `Shower`, `Antenna`, the timetraces,
+  `Event` and `ShowerEvent` refuse a string or boolean for a number, a
+  fraction or negative value for an id or a count, and three values that
+  are not three; angles, energies, Xmax, sampling steps and the origin's
+  latitude and longitude outside their ranges warn and are stored, as in
+  the trees.  Values keep their type (a tree's `float32` stays one).  The
+  aoi `Shower`'s angles were documented as "pointing to"; they are the
+  direction the shower comes from, as in `TShower`.
+
 - Every dataclass constructor documents its parameters (#261, the last
   item): the 16 data trees, `Event`, `Shower`, `Antenna`, the timetraces,
   `ElectricField`, `Voltage`, `DataTable`, `AntennaProcessing`,

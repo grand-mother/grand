@@ -4,13 +4,25 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from grand import CartesianRepresentation
+from grand.basis import validate as _validate
 from grand.basis.fielddoc import document_fields
 
 
 @document_fields
 @dataclass
-class Shower:
+class Shower(_validate.CheckedFields):
     """A class for holding a shower"""
+
+    # As the TShower setters check them (#267)
+    _field_checks = {
+        "primary_type": _validate.field_check("str"),
+        "energy_em": _validate.field_check("real", minimum=0, unit="GeV"),
+        "energy_primary": _validate.field_check("real", minimum=0, unit="GeV"),
+        "Xmax": _validate.field_check("real", minimum=0, unit="g/cm2"),
+        "azimuth": _validate.field_check("real", minimum=0, maximum=360, unit="degrees"),
+        "zenith": _validate.field_check("real", minimum=0, maximum=180, unit="degrees"),
+        "magnetic_field": _validate.field_check("vector3"),
+    }
 
     primary_type: str = ""
     """Shower primary particle type, such as proton, Fe, etc."""
@@ -28,10 +40,10 @@ class Shower:
     """Shower position in the site's reference frame"""
 
     azimuth: float = 0
-    """Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")"""
+    """Shower azimuth, in degrees, from north towards west (NWU frame, origin at the core); the direction the shower *comes from*, as in ``TShower``"""
 
     zenith: float = 0
-    """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
+    """Shower zenith, in degrees (NWU frame, origin at the core); the direction the shower *comes from*, as in ``TShower``"""
 
     magnetic_field: np.ndarray = field(default_factory=lambda: np.zeros(3))
     """Magnetic field parameters: Inclination, Declination, modulus"""

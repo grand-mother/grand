@@ -6,12 +6,16 @@ import numpy as np
 
 from grand import CartesianRepresentation
 from grand.basis.fielddoc import document_fields
+from grand.basis import validate as _validate
 
 
 @document_fields
 @dataclass
-class Antenna:
+class Antenna(_validate.CheckedFields):
     """A class describing a single antenna"""
+
+    # -1 means "not set" (#267)
+    _field_checks = {"id": _validate.field_check("int", minimum=-1, refuse=True)}
 
     id: int = -1
     """Antenna ID - the du_id from the trees"""

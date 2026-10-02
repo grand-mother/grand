@@ -11,6 +11,7 @@ import numpy as np
 from grand.dataio.xmax_frame import xmax_above_ground
 from grand.sim.shower.pdg import ParticleCode
 from grand.basis.fielddoc import document_fields
+from grand.basis import validate as _validate
 #from grand.basis.type_trace import ElectricField, Voltage
 #from grand.dataio import io_node as io
 
@@ -65,14 +66,41 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
     pass
 
 """
+def _primary(value, where):
+    r"""A primary given as a name or a ``ParticleCode``; anything else is refused (#267)."""
+    if value is not None and not isinstance(value, (str, ParticleCode)):
+        raise TypeError(_validate.message(
+            where, "must be a particle name or a ParticleCode, got %s" % type(value).__name__))
+    return value
+
+
+def _origin_geoid(value, where):
+    r"""``[latitude, longitude, height]``, with the ranges ``TRun.origin_geoid`` warns about (#267)."""
+    if value is None:
+        return value
+    values = _validate.field_check("vector3")(value, where)
+    _validate.field_check("real", minimum=-90, maximum=90, unit="degrees")(values[0], where + "[0] (latitude)")
+    _validate.field_check("real", minimum=-360, maximum=360, unit="degrees")(values[1], where + "[1] (longitude)")
+    return value
+
+
 @document_fields
 @dataclass
-class ShowerEvent:
+class ShowerEvent(_validate.CheckedFields):
     r"""The parameters of one air shower.
 
     Direction, energy, core position, depth of maximum and primary type,
     together with the frame they are expressed in.
     """
+
+    # As the TShower and TRun setters check them (#267)
+    _field_checks = {
+        "energy": _validate.field_check("real", minimum=0, unit="GeV"),
+        "zenith": _validate.field_check("real", minimum=0, maximum=180, unit="degrees"),
+        "azimuth": _validate.field_check("real", minimum=0, maximum=360, unit="degrees"),
+        "primary": lambda value, where: _primary(value, where),
+        "origin_geoid": lambda value, where: _origin_geoid(value, where),
+    }
     energy: Optional[float] = None
     """Energy of the primary, in GeV (``TShower.energy_primary``)"""
     zenith: Optional[float] = None
