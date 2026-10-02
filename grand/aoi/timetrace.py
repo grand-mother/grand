@@ -5,8 +5,10 @@ import numpy as np
 from scipy.signal import hilbert
 
 from grand.geo.coordinates import *
+from grand.basis.fielddoc import document_fields
 
 
+@document_fields
 @dataclass
 class Timetrace3D:
     """A class for holding x,y,z single antenna traces over time"""
@@ -167,6 +169,7 @@ class Timetrace3D:
         """
         self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
+@document_fields
 @dataclass
 class Voltage(Timetrace3D):
     """A class for holding voltage traces + additional information"""
@@ -176,6 +179,7 @@ class Voltage(Timetrace3D):
     is_triggered: bool = True
     """Is this a triggered trace? - not sure if it should be here or in Timetrace3D, or perhaps further up in the event"""
 
+@document_fields
 @dataclass
 class Efield(Timetrace3D):
     """A class for holding Efield traces + additional information"""

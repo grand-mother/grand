@@ -15,6 +15,7 @@ class MotherRunTree(DataTree):
     """A mother class for classes with Run values"""
 
     run_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run number, which identifies the entry"""
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
@@ -425,6 +426,7 @@ class TRunEfieldSim(MotherRunTree):
     refractivity_model: StdStringDesc = field(default=StdStringDesc())
     """Name of the atmospheric index of refraction model"""
     refractivity_model_parameters: StdVectorListDesc = field(default=StdVectorListDesc("double"))
+    """Parameters of ``refractivity_model``; their meaning depends on the model (the CoREAS converter writes the placeholder [1, 1, 1])"""
     ## Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)
     t_pre: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Start of the antenna data window before the trigger, in ns (it can be shorter than the voltage trace, so this can differ from the voltage's)"""

@@ -4,8 +4,10 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from grand import CartesianRepresentation
+from grand.basis.fielddoc import document_fields
 
 
+@document_fields
 @dataclass
 class Shower:
     """A class for holding a shower"""

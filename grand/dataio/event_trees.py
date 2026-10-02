@@ -15,8 +15,10 @@ class MotherEventTree(DataTree):
     """A mother class for classes with Event values"""
 
     run_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run number; with the event number it identifies the entry"""
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Event number, unique within its run"""
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
@@ -418,7 +420,6 @@ class TADC(MotherEventTree):
 
     ## Common for the whole event
     ## Event size
-    """Common for the whole event"""
     event_size: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Event in the run number
     t3_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
@@ -715,7 +716,6 @@ class TRawVoltage(MotherEventTree):
     _tree_name: str = "trawvoltage"
     ## Common for the whole event
     ## Event size
-    """Common for the whole event"""
     event_size: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## First detector unit that triggered in the event
     first_du: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
@@ -1063,7 +1063,9 @@ class TShowerSim(MotherEventTree):
     atmos_altitude: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """Table of air density [g/cm3] and vertical depth [g/cm2] versus altitude [m]"""
     atmos_density: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Air density at each altitude of ``atmos_altitude``, in g/cm3"""
     atmos_depth: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Vertical depth at each altitude of ``atmos_altitude``, in g/cm2"""
 
     ## High energy hadronic model (and version) used
     hadronic_model: StdStringDesc = field(default=StdStringDesc())
@@ -1079,6 +1081,7 @@ class TShowerSim(MotherEventTree):
     long_depth: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     """Slant depth of the observing levels for longitudinal development tables"""
     long_pd_depth: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Slant depth of the levels of the particle-number profiles (``long_pd_*``), in g/cm2"""
     ## Number of electrons
     long_pd_eminus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     """Number of electrons"""
@@ -1139,8 +1142,10 @@ class TRecons(MotherEventTree):
 
     # Event identifiers
     run_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run number; with the event number it identifies the entry"""
     event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    
+    """Event number, unique within its run"""
+
     #Event processing
     ## Maximum amplitude of the Hilbert envelope
     ## (in ADC counts or µV/m depending on the input)

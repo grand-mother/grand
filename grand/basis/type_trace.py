@@ -26,11 +26,13 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )
+from grand.basis.fielddoc import document_fields
 
 
 logger = getLogger(__name__)
 
 
+@document_fields
 @dataclass
 class ElectricField:
     r"""A three-component electric field trace, with its time axis and frame.
@@ -40,9 +42,13 @@ class ElectricField:
     in.
     """
     a_time: np.ndarray
+    """Time of each sample, in s (the voltage chain passes ns times 1e-9)"""
     e_xyz: CartesianRepresentation  # RK
+    """The three components of the field, shape (3, n_samples), in µV/m"""
     pos_xyz: Union[CartesianRepresentation, None] = None
+    """Position of the detection unit, in m, in `frame`"""
     frame: Union[LTP, GRANDCS, None] = None
+    """Frame in which `e_xyz` and `pos_xyz` are expressed"""
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
@@ -127,6 +133,7 @@ class ElectricField:
     """
 
 
+@document_fields
 @dataclass
 class Voltage:
     r"""A three-component voltage trace and its time axis.
@@ -137,7 +144,9 @@ class Voltage:
     components are in is the caller's to remember.
     """
     t: np.ndarray  # [s]
+    """Time of each sample"""
     V: np.ndarray  # [?]
+    """The three components, shape (3, n_samples), in the unit of the caller's input (µV in the voltage chain)"""
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.

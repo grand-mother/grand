@@ -14,6 +14,7 @@ import ROOT
 import numpy as np
 
 from grand.basis import validate as _validate
+from grand.basis.fielddoc import document_fields as _document_fields
 
 from grand.dataio import StdVectorList, StdVectorListDesc, StdString
 from grand.dataio import file_lock as _file_lock
@@ -426,6 +427,11 @@ class DataTree:
         "is_tchain"
     ]
     """Fields that are not branches"""
+
+    def __init_subclass__(cls, **kwargs):
+        r"""Lists the fields of every tree class in its docstring's Parameters section (#261)."""
+        super().__init_subclass__(**kwargs)
+        _document_fields(cls)
 
     def __setattr__(self, key, value):
         r"""Refuses a name the tree class does not define, once it is built.

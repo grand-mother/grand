@@ -17,23 +17,34 @@ import numpy as np
 
 from grand.basis import validate as _validate
 import os
+from grand.basis.fielddoc import document_fields
 
 logger = getLogger(__name__)
 
+@document_fields
 @dataclass
 class DataTable:
     r"""The tabulated antenna response, on a grid of frequency, azimuth and zenith.
 
     """
     frequency: Union[Number, np.ndarray]
+    """Frequencies of the table, in Hz"""
     theta: Union[Number, np.ndarray]
+    """Zenith angles of the table, in degrees, in the antenna frame"""
     phi: Union[Number, np.ndarray]
+    """Azimuths of the table, in degrees, in the antenna frame"""
     leff_theta: Union[Number, np.ndarray] = None
+    """Modulus of the effective length along e_theta, shape (n_freq, n_phi, n_theta), in m"""
     phase_theta: Union[Number, np.ndarray] = None
+    """Phase of the effective length along e_theta, in degrees"""
     leff_phi: Union[Number, np.ndarray] = None
+    """Modulus of the effective length along e_phi, shape (n_freq, n_phi, n_theta), in m"""
     phase_phi: Union[Number, np.ndarray] = None
+    """Phase of the effective length along e_phi, in degrees"""
     leff_phi_reim: Union[Number, np.ndarray] = None
+    """Complex effective length along e_phi (real and imaginary parts), in m"""
     leff_theta_reim: Union[Number, np.ndarray] = None
+    """Complex effective length along e_theta (real and imaginary parts), in m"""
 
     #def __post_init__(self):
     #    logger.info(f"size phase {self.phase_theta.shape}")

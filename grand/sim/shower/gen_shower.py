@@ -10,6 +10,7 @@ import numpy as np
 
 from grand.dataio.xmax_frame import xmax_above_ground
 from grand.sim.shower.pdg import ParticleCode
+from grand.basis.fielddoc import document_fields
 #from grand.basis.type_trace import ElectricField, Voltage
 #from grand.dataio import io_node as io
 
@@ -64,6 +65,7 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
     pass
 
 """
+@document_fields
 @dataclass
 class ShowerEvent:
     r"""The parameters of one air shower.
@@ -72,15 +74,25 @@ class ShowerEvent:
     together with the frame they are expressed in.
     """
     energy: Optional[float] = None
+    """Energy of the primary, in GeV (``TShower.energy_primary``)"""
     zenith: Optional[float] = None
+    """Zenith angle of the direction the shower comes from, in degrees"""
     azimuth: Optional[float] = None
+    """Azimuth of the direction the shower comes from, in degrees, from north towards west"""
     primary: Optional[ParticleCode] = None
+    """Primary particle type"""
     frame: Optional[Union[GRANDCS, LTP]] = None
+    """The shower frame: NWU, centred on the core, magnetic north"""
     core: Optional[CartesianRepresentation] = None
+    """Shower core, in m, in GRANDCS"""
     geomagnet: Optional[CartesianRepresentation] = None
+    """Geomagnetic field vector, if set; ``load_root`` does not set it"""
     maximum: Optional[CartesianRepresentation] = None
+    """Position of Xmax, in m, in `frame`"""
     origin_geoid: Optional[list, np.ndarray] = None
+    """Origin of GRANDCS as [latitude (deg), longitude (deg), height (m)]; set it before ``load_root``"""
     fields: Optional[OrderedDict] = None
+    """Electric fields by antenna, if set; ``load_root`` does not set it"""
 
     # Since ROOT is the only format in which GRAND data will be stored in, 
     # so the code to deal with other formats are deleted.

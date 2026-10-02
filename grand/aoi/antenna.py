@@ -5,8 +5,10 @@ from typing import Any
 import numpy as np
 
 from grand import CartesianRepresentation
+from grand.basis.fielddoc import document_fields
 
 
+@document_fields
 @dataclass
 class Antenna:
     """A class describing a single antenna"""

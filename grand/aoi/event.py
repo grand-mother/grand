@@ -16,6 +16,7 @@ from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent 
 import grand.dataio
 from grand.dataio.xmax_frame import xmax_above_ground
+from grand.basis.fielddoc import document_fields
 
 #: Origin (latitude, longitude, height) of the GRANDCS frame in which
 #: :meth:`Event.fill_antennas` places GP300, GP80 and GP13 antennas computed
@@ -51,6 +52,7 @@ except ImportError:
         return func
 
 
+@document_fields
 @dataclass
 class Event:
     """A class for holding an event"""
@@ -229,6 +231,7 @@ class Event:
 
     # Choose the level of the efield
     tefield_level: int  = None
+    """Analysis level of the Efield tree to read (``tefield_l<level>``); None takes the directory's default"""
 
     # Trees filled for writing with auto_file_close False, written by close_files()
     _pending_writes: list = None

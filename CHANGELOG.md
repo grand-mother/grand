@@ -15,6 +15,19 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Every dataclass constructor documents its parameters (#261, the last
+  item): the 16 data trees, `Event`, `Shower`, `Antenna`, the timetraces,
+  `ElectricField`, `Voltage`, `DataTable`, `AntennaProcessing`,
+  `PreComputeInterpol` and `ShowerEvent` now have a Parameters section in
+  `help()` and the API reference.  It is built when the class is created,
+  from the documentation each field already carries where it is declared
+  (`grand.basis.fielddoc.document_fields`), so the two cannot drift; tree
+  fields show their dtype and unit.  Fields that had no description got one
+  (the ids, the atmosphere and refractivity tables, the antenna table,
+  `ShowerEvent`); the 50 DAQ firmware parameters of `TADC` and
+  `TRunRawVoltage` are listed with their types, and wait on the firmware's
+  documentation for a description.
+
 - `CRB_PWF` at zenith 0 or 180° (#288, the last item): it returned
   `[nan nan]` and printed, because the azimuth is undefined there and a
   central difference in zenith crossed the pole.  The zenith bound is now
