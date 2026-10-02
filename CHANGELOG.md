@@ -1567,6 +1567,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The API reference is split into one page per subpackage, each opening with
+  a table of its modules, under an overview page.  Every documentation page
+  links to its source on GitHub ("Edit on GitHub").
+
 - The documentation is reorganized into Getting started, Using GRANDlib, How
   it works and Reference, and its pages rewritten.  New: a quick start and a
   recipes page whose examples run on the committed sample when the

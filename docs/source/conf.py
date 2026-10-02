@@ -83,6 +83,7 @@ version = release if any(mark in release for mark in ('dev', 'a', 'b', 'rc')) \
 
 extensions = [
     'sphinx.ext.autodoc',       # API reference, generated from the docstrings
+    'sphinx.ext.autosummary',   # the table of modules atop each API page
     'sphinx.ext.napoleon',      # tolerates the legacy :param: docstrings
     'sphinx.ext.mathjax',       # renders LaTeX in the docstrings
     'sphinx.ext.viewcode',      # links API entries to highlighted source
@@ -96,6 +97,10 @@ extensions = [
 # One bibliography file, whose entries come from INSPIRE so that keys and
 # metadata match what the literature uses.
 bibtex_bibfiles = ['refs.bib']
+
+# The module tables only: the modules are documented on the same page, so no
+# stub pages are generated.
+autosummary_generate = False
 bibtex_default_style = 'plain'
 
 # CHANGELOG.md is included by changelog.rst; without this, myst also picks it
@@ -174,4 +179,15 @@ html_theme_options = {
     'logo_only': True,          # the logo already says "GRANDlib"
     'navigation_depth': 3,      # deep enough to reach the handbook subsections
     'collapse_navigation': False,
+}
+
+# "Edit on GitHub" at the top of every page, pointing at its source on the
+# integration branch.  Generated pages (the API's members, the Handbook) are
+# edited through their own sources; the link still shows where they live.
+html_context = {
+    'display_github': True,
+    'github_user': 'grand-mother',
+    'github_repo': 'grand',
+    'github_version': 'dev-next',
+    'conf_py_path': '/docs/source/',
 }
