@@ -1277,7 +1277,8 @@ class Efield2Voltage:
         # delete file can take time => start with this action
         # File name for DataDirecory
         if self.f_output is None and self.f_input is None:
-            cur_file_name = Path(self.d_input.tefield.get_current_file().GetName()).name
+            # From the efield file actually read, so the name carries its level
+            cur_file_name = Path(self.events.get_current_file().GetName()).name
             # Replace the efield in the file name (first occurence in the string) with voltage
             cur_f_output = str(Path(self.output_directory) / "voltage".join(cur_file_name.split("efield", 1)))
             logger.info(f"Output file is {cur_f_output}")

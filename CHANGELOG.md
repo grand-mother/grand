@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The default name of the voltage file carried the wrong analysis level when
+  a folder held electric fields at several levels: with `efield_level=0`
+  (`--level 0`), `Efield2Voltage` read the level-0 field but named the output
+  `voltage_*_L1_*`, while the tree inside said level 0.  The name now comes
+  from the file actually read.
+
 - `EventList` on a file without traces it reads, such as one holding only ADC
   counts (`TADC`), failed with a bare `IndexError`.  It now raises a
   `ValueError` that names the trees it reads and points to `DataFile` for
