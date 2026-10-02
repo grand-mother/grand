@@ -146,12 +146,14 @@ stamp is the only way to tell two such files apart.
 Reading many files: release each tree
 -------------------------------------
 
-Every tree instance is kept in the module-level list
-``grand.dataio.grand_tree_list``, so it is not freed when your variable goes
-out of scope, and neither is the ROOT file it opened.  A loop over hundreds of
-files therefore grows in memory until the job is killed (GitHub issue #71).
-Release each tree when you are done with it.  The simplest way is the ``with``
-form, which releases the tree even if the loop body raises:
+A tree whose last reference goes is released, the ROOT file it opened
+included, unless another live tree reads the same file
+(``grand.dataio.grand_tree_list`` holds the trees by weak reference).  It
+used to keep every tree, and its file, until ``stop_using()``, so a loop that
+only dropped its trees grew by about 630 kB a file (GitHub issues #71, #284).
+Releasing explicitly is still clearer, and immediate rather than at the next
+garbage collection.  The simplest way is the ``with`` form, which releases
+the tree even if the loop body raises:
 
 .. code-block:: python
 

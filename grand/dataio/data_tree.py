@@ -8,6 +8,7 @@ import os
 from dataclasses import dataclass, field
 from logging import getLogger
 import warnings
+import weakref
 import ROOT
 
 import numpy as np
@@ -51,9 +52,86 @@ def _from_unix(value):
     return datetime.datetime.fromtimestamp(value, datetime.timezone.utc).replace(tzinfo=None)
 
 
-## A list of generated Trees
-grand_tree_list = []
-"""Internal list of generated Trees"""
+class _TreeRegistry:
+    r"""The live tree objects, held by weak reference.
+
+    It was a plain list, which kept every tree -- and the file it opened --
+    alive until ``stop_using()``: a loop that only dropped its trees grew by
+    about 630 kB a file (#284).  It iterates over the trees still alive, in
+    creation order, and supports what the code uses of a list: ``append``,
+    ``remove``, ``len``, ``in`` (by identity) and iteration.
+    """
+
+    def __init__(self):
+        self._refs = []
+
+    def append(self, tree):
+        self._refs.append(weakref.ref(tree))
+
+    def _live(self):
+        live = [ref() for ref in self._refs]
+        if None in live:                          # forget the dead, now and then
+            self._refs = [ref for ref, tree in zip(self._refs, live) if tree is not None]
+        return [tree for tree in live if tree is not None]
+
+    def __iter__(self):
+        return iter(self._live())
+
+    def __len__(self):
+        return len(self._live())
+
+    def __contains__(self, tree):
+        return any(other is tree for other in self._live())
+
+    def __getitem__(self, index):
+        return self._live()[index]
+
+    def remove(self, tree):
+        r"""Removes `tree`, by identity; nothing if it is not held."""
+        self._refs = [ref for ref in self._refs if ref() is not None and ref() is not tree]
+
+    def clear(self):
+        self._refs = []
+
+
+## The generated Trees
+grand_tree_list = _TreeRegistry()
+"""Internal registry of the live tree objects (weak references, #284)"""
+
+
+#: The finalizer of each live tree object, keyed by id(tree) (#284)
+_finalizers = {}
+
+
+def _release_dropped_tree(file, tree_address, owner_id):
+    r"""Finalizer of a tree object dropped without ``stop_using()`` (#284).
+
+    Closes the file the tree opened itself, unless another live tree uses it,
+    and forgets the branch binding it held, so that a tree sharing the TTree
+    rebinds before reading.
+    """
+    _finalizers.pop(owner_id, None)
+    if _branch_owner.get(tree_address) == owner_id:
+        del _branch_owner[tree_address]
+    _written_entries.pop(owner_id, None)
+    if file is None:
+        return
+    try:
+        addr = ROOT.addressof(file)
+    except TypeError:
+        return
+    if addr not in _files_opened_by_trees:
+        return
+    for inst in grand_tree_list:
+        try:
+            if inst._file is not None and ROOT.addressof(inst._file) == addr:
+                return
+        except TypeError:
+            continue
+    del _files_opened_by_trees[addr]
+    if file.IsOpen():
+        file.Close()
+    _file_lock.release(file.GetName())
 
 ## ROOT files that the trees opened themselves from a file name, keyed by the TFile address
 _files_opened_by_trees = {}
@@ -757,6 +835,16 @@ class DataTree:
         # The branches were just bound to this object's buffers (#273)
         if self._tree is not None and not self.is_tchain:
             _branch_owner[ROOT.addressof(self._tree)] = id(self)
+
+        # Dropping the object releases what stop_using() would, its file
+        # included, when no other tree uses it (#284).  Not at exit: ROOT
+        # closes its files itself then.
+        # (Kept outside the instance: its attributes become branches.)
+        finalizer = weakref.finalize(
+            self, _release_dropped_tree, None if self.is_tchain else self._file,
+            ROOT.addressof(self._tree) if self._tree else 0, id(self))
+        finalizer.atexit = False
+        _finalizers[id(self)] = finalizer
 
         # From here on, a misspelt field raises (#202)
         self._guard_ready = True
@@ -1838,10 +1926,10 @@ class DataTree:
         _detach_buffers(self)
 
         # Remove by identity: the dataclass __eq__ compares field values and could match another instance
-        for i, inst in enumerate(grand_tree_list):
-            if inst is self:
-                del grand_tree_list[i]
-                break
+        grand_tree_list.remove(self)
+        finalizer = _finalizers.pop(id(self), None)
+        if finalizer is not None:
+            finalizer.detach()
 
         if close_file:
             self._release_file()

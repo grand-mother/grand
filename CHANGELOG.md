@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- A tree dropped without `stop_using()` is released (#284):
+  `grand_tree_list` holds the trees by weak reference, and a dropped tree
+  closes the file it opened unless another live tree reads it. A loop that
+  only dropped its trees grew by about 630 kB a file; it now grows by the
+  same ~58 kB as with `stop_using()`, which is inside ROOT.
+
 - The data model is checked before use (#279): the downloader records a
   manifest (sizes and SHA-256) of what it installs, and re-downloads when
   the version matches but `noise/`, `topography/` or a file is missing (it
