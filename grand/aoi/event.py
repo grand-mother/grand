@@ -1007,11 +1007,8 @@ class Event:
             ret = self.tefield.get_entry(self._entry_number)
         else:
             ret = self.tefield.get_event(self.event_number, self.run_number)
-        # A missing event went on to "zero-size array to reduction operation" (#277)
-        if not ret:
-            raise LookupError(_validate.message(
-                "Event", "no event %s in run %s (entry %s) in the Efield tree"
-                % (self.event_number, self.run_number, self._entry_number)))
+        # A missing event went on to "zero-size array to reduction operation"
+        # (#277); get_event and get_entry now raise LookupError for it (#206)
         self.efields = []
 
         # Obtain the start time of the earliest trace. ToDo: maybe the first trace in the file is always first in time? That would save time...

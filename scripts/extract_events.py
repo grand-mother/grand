@@ -127,15 +127,19 @@ def main():
             source_tree = getattr(cur_dir, source_tree_name)
             # for source_tree in df.tree_instances:
             for a in [1]:
-                ret = 0
+                # A miss raises LookupError rather than returning 0 (#206)
                 if "Run" in source_tree.type:
-                    ret = source_tree.get_run(run_num)
+                    in_source = source_tree.has_run(run_num)
+                    if in_source:
+                        source_tree.get_run(run_num)
                 # For event trees
                 else:
-                    ret = source_tree.get_event(event_num, run_num)
+                    in_source = source_tree.has_event(event_num, run_num)
+                    if in_source:
+                        source_tree.get_event(event_num, run_num)
 
                 # If the run/event was found
-                if ret!=0:
+                if in_source:
                     # If the tree does not exist in the target directory
                     if not getattr(target_dir, source_tree_name):
                         # Create the tree and its file

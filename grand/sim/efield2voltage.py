@@ -430,14 +430,18 @@ class Efield2Voltage:
         logger.info(f"Running on event_number: {self.event_number}, run_number: {self.run_number}")
 
         self.events.get_event(self.event_number, self.run_number)           # update traces, du_pos etc for event with event_idx.
-        self.shower.get_event(self.event_number, self.run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
+        # A lookup that found nothing left the previous entry loaded: the
+        # antenna response was then computed for another event's shower
+        # (issue #247).  It raises LookupError now (#206); say what it means.
+        try:
+            self.shower.get_event(self.event_number, self.run_number)       # update shower info (theta, phi, xmax etc) for event with event_idx.
+            found = True
+        except LookupError:
+            found = False
         if self.previous_run != self.run_number:                      # load only for new run.
             self.run.get_run(self.run_number)                         # update run info to get site latitude and longitude.
             self.previous_run = self.run_number
-        # A lookup that finds nothing leaves the previous entry loaded: the
-        # antenna response was then computed for another event's shower
-        # (issue #247).  Refuse instead.
-        if (int(self.shower.event_number), int(self.shower.run_number)) != (self.event_number, self.run_number):
+        if not found or (int(self.shower.event_number), int(self.shower.run_number)) != (self.event_number, self.run_number):
             raise KeyError(_validate.message(
                 "Efield2Voltage.get_event", "the shower tree has no entry for event %d of run %d; "
                 "the efield and shower files of the input do not match" % (self.event_number, self.run_number)))

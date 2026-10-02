@@ -1081,8 +1081,9 @@ class StdStringDesc:
             nothing to assign.
         """
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string) or isinstance(value, StdStringDesc)):
-            # It named the field "site", whatever the field (#267)
-            raise ValueError(
+            # It named the field "site", whatever the field (#267); a
+            # TypeError, as for the other fields (#206)
+            raise TypeError(
                 _validate.message("%s.%s" % (type(obj).__name__, self.name),
                                   "must be a string, got %s" % type(value).__name__)
             )

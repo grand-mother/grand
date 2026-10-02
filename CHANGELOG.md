@@ -15,6 +15,25 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Tree lookups say when they miss (#206): `get_event`, `get_run` and
+  `get_entry_with_index` raise `LookupError`, and `get_entry` raises
+  `IndexError`, with a `GRANDlib:` message; they returned 0 and left the
+  previous event's values (or zeros) loaded, and `get_event(1618)` quietly
+  looked in run 0.  `get_entry_with_index` takes `run_no=` and `evt_no=` by
+  name only: by position the run came first, the reverse of `get_event`, so
+  a tuple from `get_list_of_events()` found another event.  `get_event` and
+  `has_event` on a tree filled in memory find its events without
+  `build_index()`.  `TEfield(shower_file).write()` with nothing filled no
+  longer adds an empty `tefield` tree to the shower file.  A string field
+  set to a non-string raises `TypeError`, and `None` in a numeric field is
+  refused (it was stored as NaN, or called "NaN or infinity").  The TRecons
+  angles and their bounds are declared in radians, so 85.0 (degrees by
+  mistake) warns; `TRun.du_id` warns outside 0–65535, the range the event
+  trees store.  `get_number_of_events`'s docstring no longer says it can
+  differ from the entry count.  An existing file reopened for update by
+  `fill()` still has its bookkeeping rewritten on close, even if nothing is
+  written (its trees are unchanged); this is now documented.
+
 - Direction reconstruction edge cases and labels (#216): the plane-wave fit
   returns a finite (90°, 0°) for a horizontal shower over a flat array (it
   gave NaN) and an azimuth in [0, 2π) (it could return exactly 360°); its

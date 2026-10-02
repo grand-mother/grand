@@ -442,6 +442,11 @@ def coerce_to_dtype(value, dtype, where):
     dtype = np.dtype(dtype)
     if dtype.kind not in "iuf":
         return np.asarray(value, dtype=dtype)
+    # None was stored as NaN in a float field, and called "NaN or infinity"
+    # in an integer one (#206)
+    if value is None:
+        raise TypeError(message(where, "must be a number, got None; use NaN for an "
+                                "unknown value of a float field"))
     try:
         given = np.asarray(value)
     except (TypeError, ValueError):

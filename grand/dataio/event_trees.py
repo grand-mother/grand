@@ -221,7 +221,13 @@ class MotherEventTree(DataTree):
         Returns
         -------
         int
-            Bytes read; zero when the event is absent.
+            Bytes read.
+
+        Raises
+        ------
+        LookupError
+            When the tree has no such event.  It returned 0 and left the
+            previous event's values loaded (#206).
         """
         self._check_open("get_event")
         # Try to get the requested entry
@@ -230,13 +236,13 @@ class MotherEventTree(DataTree):
         # int() gave a bare "invalid literal for int()" for get_event('x') (#236)
         ev_no = self._integer(ev_no, "get_event", "ev_no")
         run_no = self._integer(run_no, "get_event", "run_no")
-        res = self._tree.GetEntry(self._tree.GetEntryNumberWithIndex(run_no, ev_no))
-        # If no such entry, return
-        if res == 0 or res == -1:
-            logger.error(
-                f"No event with event number {ev_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."
-            )
-            return 0
+        self._current_index("run_number", "event_number")
+        entry = self._tree.GetEntryNumberWithIndex(run_no, ev_no)
+        res = self._tree.GetEntry(entry) if entry >= 0 else 0
+        if res <= 0:
+            raise LookupError(_validate.message(
+                type(self).__name__, "get_event: no event %d in run %d in the %s "
+                "tree" % (ev_no, run_no, self.tree_name)))
 
         self.assign_branches()
 
@@ -258,13 +264,11 @@ class MotherEventTree(DataTree):
         bool
             True when the tree holds that event.
         """
-        # Try to get the requested entry
-        res = self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no))
-        # If no such entry, return
-        if res == -1:
-            return False
-        else:
-            return True
+        self._check_open("has_event")
+        ev_no = self._integer(ev_no, "has_event", "ev_no")
+        run_no = self._integer(run_no, "has_event", "run_no")
+        self._current_index("run_number", "event_number")
+        return self._tree.GetEntryNumberWithIndex(run_no, ev_no) >= 0
 
     ## Builds index based on run_id and evt_id for the TTree
     def build_index(self, run_id, evt_id):
@@ -1148,22 +1152,24 @@ class TRecons(MotherEventTree):
     ## Number of triggered antennas
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
-    # Plane Wave Fits (PWF) reconstruction outputs 
+    # Plane Wave Fits (PWF) reconstruction outputs
+    ## The angles and their bounds are in radians: a value in degrees by
+    ## mistake (85.0) warns, as it lies outside 0 to pi (#206)
     ## Shower zenith angle from PWF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## Shower azimuth angle from PWF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=2 * np.pi, unit="radians"))
     ## Non-reduced (raw) chi² from PWF; NaN if not filled
     ## Divide by du_count - 2, the degrees of freedom, to obtain the reduced chi²
     chi2_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
     # Spherical Wave Fits (SWF) Reconstruction outputs 
     ## polar zenith from SWF (in rad) 
-    zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## polar azimuth from SWF (in rad)
-    azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=2 * np.pi, unit="radians"))
     ## Distance between the reconstructed Xsource and the origin = layout center (in meters)
     r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Emission time from SWF (in seconds)
@@ -1183,10 +1189,10 @@ class TRecons(MotherEventTree):
     # Angular Distribution Function (ADF)
     ## Shower zenith angle from ADF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## Shower azimuth angle from ADF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=2 * np.pi, unit="radians"))
     ## Width parameter from ADF fit (delta_omega)
     width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Scaling factor A from ADF fit
@@ -1209,25 +1215,25 @@ class TRecons(MotherEventTree):
 
     ## Cramér-Rao (lower) bound (CRB); NaN if not filled (main_DOI.py fills them, main_AOI.py does not)
     ## CRB of shower zenith angle from ADF (in radians)
-    crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of shower azimuth angle from ADF (in radians)
-    crb_azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of scaling factor A from ADF fit
     crb_scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of width parameter from ADF fit (delta_omega)
     crb_width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of shower zenith from SWF (in rad)
-    crb_zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of shower azimuth from SWF (in rad)
-    crb_azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of distance between the reconstructed Xsource and the origin = layout center (in meters)
     crb_r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of emission time from SWF (in seconds)
     crb_t_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of shower zenith from PWF (in radians)
-    crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of shower azimuth from PWF (in radians)
-    crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
 
     def __post_init__(self):
         super().__post_init__()

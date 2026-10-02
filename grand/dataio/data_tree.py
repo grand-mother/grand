@@ -127,6 +127,7 @@ def _release_dropped_tree(file, tree_address, owner_id):
     if _branch_owner.get(tree_address) == owner_id:
         del _branch_owner[tree_address]
     _written_entries.pop(owner_id, None)
+    _absent_from_file.pop(owner_id, None)
     if file is None:
         return
     try:
@@ -161,6 +162,12 @@ with it, so dropping the last Python reference does not close it (GitHub issue #
 #: Kept outside the instance because every instance attribute is taken for a
 #: branch.
 _written_entries = {}
+
+
+#: File names of the trees that opened an existing file which did not hold
+#: their tree, keyed by id(tree): ``TEfield(shower_file)``.  Writing such a
+#: tree unfilled only added an empty tree to the user's file (#206).
+_absent_from_file = {}
 
 
 def _unwritten(tree):
@@ -1018,6 +1025,8 @@ class DataTree:
                     logger.debug(
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
+                    if self._file.GetListOfKeys().GetSize() > 0:
+                        _absent_from_file[id(self)] = self._file.GetName()
                     self._create_tree()
 
                 # Make the tree save itself in this file
@@ -1078,6 +1087,17 @@ class DataTree:
             ``overwrite`` is False.
         """
         self._check_open("write")
+        # TEfield(shower_file).write() added an empty tefield tree to the
+        # user's shower file (#206)
+        if (not args and id(self) in _absent_from_file
+                and self._tree.GetEntries() == 0):
+            warnings.warn(_validate.message(
+                "%s.write" % type(self).__name__,
+                "nothing was filled, and %s held no %s tree when it was opened; "
+                "not adding an empty one. Was it the file of another tree?"
+                % (_absent_from_file[id(self)], self._tree_name)),
+                _validate.GRANDlibWarning, stacklevel=2)
+            return
         # Add the tree friends to this tree
         self.add_proper_friends()
 
@@ -1270,12 +1290,35 @@ class DataTree:
         Returns
         -------
         int
-            Bytes read; zero when the entry does not exist.
+            Bytes read.
+
+        Raises
+        ------
+        IndexError
+            When the tree has no entry ``ev_no``.  It returned 0 and loaded
+            zeros, or left the previous entry's values in place (#206).
         """
         self._check_open("get_entry")
-        res = self._tree.GetEntry(self._integer(ev_no, "get_entry", "ev_no"))
+        ev_no = self._integer(ev_no, "get_entry", "ev_no")
+        n = int(self._tree.GetEntries())
+        if not 0 <= ev_no < n:
+            raise IndexError(_validate.message(
+                type(self).__name__, "get_entry: no entry %d; the %s tree has %d "
+                "entries" % (ev_no, self.tree_name, n)))
+        res = self._tree.GetEntry(ev_no)
         self.assign_branches()
         return res
+
+    def _current_index(self, *branches):
+        r"""Builds the tree index when it is missing or misses filled entries.
+
+        ``get_event`` on a tree filled in memory found nothing until
+        ``build_index()`` or ``write()`` (#206).
+        """
+        index = self._tree.GetTreeIndex()
+        if not index or index.GetN() != self._tree.GetEntries():
+            self._reset_read_cache(self._tree)
+            self._tree.BuildIndex(*branches)
 
     def _integer(self, value, action, name):
         r"""Returns `value` as an ``int``, for ROOT.
@@ -1477,7 +1520,8 @@ class DataTree:
         Returns
         -------
         int
-            Number of distinct events, which differs from the entry count when a tree holds several entries per event.
+            Number of entries.  Every tree holds one entry per event (or
+            per run), so this is also the number of events (#206).
         """
         return self.get_number_of_entries()
 
@@ -1721,8 +1765,13 @@ class DataTree:
                 setattr(self, el.GetName(), el.GetVal())
 
     ## Get entry with indices
-    def get_entry_with_index(self, run_no=0, evt_no=0):
+    def get_entry_with_index(self, *args, run_no=0, evt_no=0):
         """Get the event with run_no and evt_no
+
+        The arguments are keyword-only: given by position, the run came first,
+        the reverse of ``get_event(ev_no, run_no)`` and of the tuples
+        ``get_list_of_events()`` returns, so a tuple passed through looked up
+        another event (#206).
 
         Parameters
         ----------
@@ -1734,16 +1783,26 @@ class DataTree:
         Returns
         -------
         int
-            Bytes read; zero when the pair matches no entry.
+            Bytes read.
+
+        Raises
+        ------
+        LookupError
+            When no entry has that run and event number.
         """
+        if args:
+            raise TypeError(_validate.message(
+                type(self).__name__, "get_entry_with_index: give run_no= and "
+                "evt_no= by name (got %d positional arguments); get_event(ev_no, "
+                "run_no) takes the event first" % len(args)))
         self._check_open("get_entry_with_index")
-        res = self._tree.GetEntryWithIndex(self._integer(run_no, "get_entry_with_index", "run_no"),
-                                           self._integer(evt_no, "get_entry_with_index", "evt_no"))
+        run_no = self._integer(run_no, "get_entry_with_index", "run_no")
+        evt_no = self._integer(evt_no, "get_entry_with_index", "evt_no")
+        res = self._tree.GetEntryWithIndex(run_no, evt_no)
         if res == 0 or res == -1:
-            logger.error(
-                f"No event with event number {evt_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."
-            )
-            return 0
+            raise LookupError(_validate.message(
+                type(self).__name__, "get_entry_with_index: no event %d in run %d "
+                "in the %s tree" % (evt_no, run_no, self.tree_name)))
 
         self.assign_branches()
         return res
@@ -1921,6 +1980,11 @@ class DataTree:
         underlying TTree is gone and ``tree`` is ``None``. A tree that was
         filled but not written is not saved; call ``write()`` first.
 
+        The first ``fill()`` reopens an existing file for update, as ROOT
+        writes full baskets while filling.  Closing it then rewrites ROOT's
+        bookkeeping in the file even when nothing is written: its trees are
+        unchanged, but its checksum is not (#206).
+
         Parameters
         ----------
         close_file : bool, optional
@@ -1934,6 +1998,7 @@ class DataTree:
                 "%d entries were filled but not written, and are discarded; call write() "
                 "first to keep them" % pending), _validate.GRANDlibWarning, stacklevel=2)
         _written_entries.pop(id(self), None)
+        _absent_from_file.pop(id(self), None)
         # The tree may outlive this object (another object, or a file the
         # caller keeps open): it must not keep pointing at this object's
         # buffers once Python frees them (#234)

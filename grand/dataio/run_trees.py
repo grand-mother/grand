@@ -3,9 +3,10 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, logger, StdStringDesc, TTreeArrayDesc, StdVectorListDesc
+from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, StdStringDesc, TTreeArrayDesc, StdVectorListDesc
 from grand.dataio.data_tree import grand_tree_list
 from grand.dataio import file_lock as _file_lock
+from grand.basis import validate as _validate
 
 
 @dataclass
@@ -80,17 +81,24 @@ class MotherRunTree(DataTree):
         Returns
         -------
         int
-            Bytes read; zero when the run is absent.
+            Bytes read.
+
+        Raises
+        ------
+        LookupError
+            When the tree has no such run.  It returned 0 and left the
+            previous run's values loaded (#206).
         """
         self._check_open("get_run")
         # Make sure we have an int; int() gave a bare ValueError for 'x' (#236)
         run_no = self._integer(run_no, "get_run", "run_no")
-        # Try to get the run from the tree
-        res = self._tree.GetEntryWithIndex(int(run_no))
-        # If no such entry, return
-        if res == 0 or res == -1:
-            logger.error(f"No run with run number {run_no}. Please provide a proper number.")
-            return 0
+        self._current_index("run_number")
+        entry = self._tree.GetEntryNumberWithIndex(run_no)
+        res = self._tree.GetEntry(entry) if entry >= 0 else 0
+        if res <= 0:
+            raise LookupError(_validate.message(
+                type(self).__name__, "get_run: no run %d in the %s tree"
+                % (run_no, self.tree_name)))
 
         self.assign_branches()
 
@@ -110,15 +118,10 @@ class MotherRunTree(DataTree):
         bool
             True when the tree holds that run.
         """
-        # Make sure we have an int
-        run_no = int(run_no)
-        # Try to get the run from the tree
-        res = self._tree.GetEntryNumberWithIndex(run_no)
-        # If no such entry, return
-        if res == -1:
-            return False
-        else:
-            return True
+        self._check_open("has_run")
+        run_no = self._integer(run_no, "has_run", "run_no")
+        self._current_index("run_number")
+        return self._tree.GetEntryNumberWithIndex(run_no) >= 0
 
     def build_index(self, run_id):
         """Build the tree index (necessary for working with friends)
@@ -213,7 +216,7 @@ class TRun(MotherRunTree):
     """Origin of the array frame: (latitude in degrees, longitude in degrees, height in metres).  du_xyz is relative to it"""
 
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int", minimum=0, maximum=65535))
     """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))

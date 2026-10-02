@@ -26,5 +26,5 @@ def test_a_bool_in_a_numeric_field_is_refused():
 
 
 def test_a_wrong_type_in_a_string_field_names_that_field():
-    with pytest.raises(ValueError, match="TShower.primary_type: must be a string"):
+    with pytest.raises(TypeError, match="TShower.primary_type: must be a string"):
         TShower().primary_type = 5

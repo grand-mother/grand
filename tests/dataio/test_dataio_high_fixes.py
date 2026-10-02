@@ -274,7 +274,7 @@ def test_numpy_integers_select_entries(tmp_path):
         t.get_entry(i)
     assert t.zenith == 5.0
     t.build_index("run_number", "event_number")
-    assert t.get_entry_with_index(np.uint32(1), np.uint32(6)) > 0 and t.zenith == 6.0
+    assert t.get_entry_with_index(run_no=np.uint32(1), evt_no=np.uint32(6)) > 0 and t.zenith == 6.0
     with pytest.raises(TypeError, match="must be an integer"):
         t.get_entry(True)
     with pytest.raises(TypeError, match="must be an integer"):
