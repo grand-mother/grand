@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `EventList` on a file without traces it reads, such as one holding only ADC
+  counts (`TADC`), failed with a bare `IndexError`.  It now raises a
+  `ValueError` that names the trees it reads and points to `DataFile` for
+  ADC counts.
+
 - Documentation links pointed to `grand-mother.github.io/grand-docs`, an old
   site where the pages do not exist; the README, `pyproject.toml`,
   `CITATION.cff`, `CONTRIBUTING.md`, the issue templates and the notebooks now

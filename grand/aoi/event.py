@@ -682,6 +682,13 @@ class Event(_validate.CheckedFields):
                 self.run_number = t.run_number
                 break
 
+        # An event needs traces: without them fill_t_vector failed with a bare IndexError
+        if self.voltages is None and self.efields is None:
+            raise ValueError(_validate.message(
+                "Event.fill_event_from_trees", "the input holds no traces this reads: it reads "
+                "TVoltage, TRawVoltage and TEfield trees.  For ADC counts (TADC), use "
+                "grand.dataio.DataFile"))
+
         # Fill the time vector
         self.fill_t_vector()
 

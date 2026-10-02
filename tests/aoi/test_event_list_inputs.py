@@ -65,3 +65,18 @@ def test_a_file_without_run_tree_gives_events_without_antennas(caplog):
     assert event.antennas == []
     # Logged since #256, not printed
     assert "Antenna positions will not be available" in caplog.text
+
+
+NOISE = (pathlib.Path(__file__).resolve().parents[2] / "sim2root" / "Common" / "LongNoiseTraces"
+         / "noice_traces_merged_gp13_2024_02_night_datafiles_410-415.root")
+
+
+@pytest.mark.skipif(not NOISE.is_file(), reason="the measured noise sample is not present")
+@pytest.mark.parametrize("raw", [False, True])
+def test_a_file_without_traces_it_reads_says_so(raw):
+    """A file holding only ADC counts (TADC) failed with a bare IndexError."""
+    from grand.aoi import EventList
+
+    events = EventList(str(NOISE), use_trawvoltage=raw)
+    with pytest.raises(ValueError, match=r"GRANDlib: .*TADC.*DataFile"):
+        next(iter(events))
