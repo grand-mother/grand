@@ -38,7 +38,7 @@ Converting between them
 -----------------------
 
 A frame is constructed *from* another frame by passing it to the
-constructor.  Starting from the GRANDProto300 site at Dunhuang:
+constructor.  Starting from the :term:`GRANDProto300 <GP300>` site at Dunhuang:
 
 .. jupyter-execute::
 
@@ -201,8 +201,8 @@ not the direction it travels.  A vertical shower has zenith 0°, and the shower
 maximum lies upstream, at those angles as seen from the core.  The files
 GRANDlib reads, the converters that write them and Appendix A of the GRANDlib
 paper all follow this convention.  ``_cartesian_to_spherical`` applied to the
-position of Xmax relative to the core returns the stored zenith and azimuth;
-``tests/geo/test_angle_convention.py`` checks this against the ZHAireS
+position of :term:`Xmax` relative to the core returns the stored zenith and azimuth;
+``tests/geo/test_angle_convention.py`` checks this against the :term:`ZHAireS`
 summaries of the committed example events.
 
 Where the direction of travel is needed, negate the arrival vector.

@@ -45,7 +45,7 @@ The offline T1 trigger passes no unit on clean simulations
 :Issue: `#233 <https://github.com/grand-mother/grand/issues/233>`_
 
 With the default parameters, T1 passed none of the units of clean, strong
-simulated events (ADC peak 850).  On synthetic pulses there are two reasons:
+simulated events (:term:`ADC` peak 850).  On synthetic pulses there are two reasons:
 
 * Only the first T1 crossing is tried, and it is rejected if it lies within
   the first ``t_quiet/2`` samples (256 at the default 512 ns).
@@ -74,7 +74,7 @@ Four defects found in review, each with a known fix awaiting a decision:
 * The ADF fit's geomagnetic asymmetry uses the magnetic field in tesla where a
   unit vector is needed, so its :math:`1/\sin\alpha` factor is always 1.
 * At the default ``padding_factor=1.0``, the antenna response wraps around the
-  end of the trace: the open-circuit voltage of the sample shower differs by 3
+  end of the trace: the :term:`open-circuit voltage` of the sample shower differs by 3
   to 5% from the one computed with ``padding_factor=2``.
 * The ADC truncates toward zero instead of rounding, and its positive full
   scale is +8192 instead of +8191.
@@ -138,7 +138,7 @@ The simulations carry no event time, and the converters used to write a fixed
 value in its place: ``core_time_s`` and ``du_seconds`` read 200854920, 13 May
 1976.  The converters now use the simulation date.  The committed samples are
 kept as they were written, because tests read their other values and a
-regeneration also changes the Xmax frame, the event order and the file names.
+regeneration also changes the :term:`Xmax` frame, the event order and the file names.
 
 *Meanwhile:* take the date of these samples from ``event_date`` or the folder
 name, not from the event time.
@@ -151,7 +151,7 @@ name, not from the event time.
 :Affects: anything that reads ``TShower.magnetic_field``
 
 Both converters store ``[inclination, declination, strength]``, with the
-angles in degrees and the strength in µT (ZHAireS) or gauss (CoREAS):
+angles in degrees and the strength in µT (:term:`ZHAireS`) or gauss (CoREAS):
 
 ==============================================  ===============================
 Sample                                          ``magnetic_field``
@@ -178,7 +178,7 @@ file name, so three conditions must hold:
 
 1. the run, e-field and shower trees are in separate files, named ``run_*``,
    ``efield_*`` and ``shower_*``;
-2. each name carries its analysis level, as ``_L0_`` or ``_L1_``;
+2. each name carries its :term:`analysis level`, as ``_L0_`` or ``_L1_``;
 3. the ``analysis_level`` stored in each tree matches its name.
 
 A file that breaks the first condition, such as one holding all three trees,
@@ -216,7 +216,7 @@ Two names for the NUTRIG correlation fields
 
 ``TADC`` has ``nutrig_rhox`` and ``nutrig_rhoy``.  The branch above adds the
 same quantity as ``correlation_x`` and ``correlation_y``.  Only one pair can
-be part of the format; the choice is for the author and the NUTRIG analysis.
+be part of the format; the choice is for the author and the :term:`NUTRIG` analysis.
 The schema test fails if both appear.
 
 Antenna positions from GPS use a fixed origin by default

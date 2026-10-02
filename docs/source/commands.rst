@@ -10,7 +10,7 @@ up as in :doc:`installation`; ``--help`` lists every option.
 The whole chain
 ---------------
 
-From electric field to ADC counts, on one simulation folder:
+From electric field to :term:`ADC` counts, on one simulation folder:
 
 .. code-block:: bash
 
@@ -41,7 +41,7 @@ highest, with a warning; ``--level`` chooses another.
 ``convert_efield2voltage.py``
 -----------------------------
 
-Computes the voltage at the ADC input of every detection unit.
+Computes the voltage at the ADC input of every :term:`detection unit <DU>`.
 
 ===================================  =====================================================
 Option                               Effect
@@ -109,7 +109,7 @@ from one or more data folders into a new one:
 Other scripts
 -------------
 
-``scripts/`` also holds plotting tools for the RF chain and the noise
+``scripts/`` also holds plotting tools for the :term:`RF chain` and the noise
 (``plot_rf_chain.py``, ``plot_noise.py``), and ``open_grand_file.py`` and
 ``open_grand_directory.py``, which open a file or folder in an interactive
 session with its trees loaded.       ``sim2root/`` has its own converters,

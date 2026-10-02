@@ -5,7 +5,7 @@ The simulation chain
    :local:
 
 This page describes how GRANDlib turns the electric field computed by an
-air-shower code into the digitized voltage a detection unit records: the
+air-shower code into the digitized voltage a :term:`detection unit <DU>` records: the
 physics of each stage and how it is implemented.  To run the chain, see the
 :doc:`quickstart` and :doc:`commands`.
 
@@ -41,7 +41,7 @@ Open-circuit voltage
 
 The response of the antenna to an incoming field is its **effective length**
 :math:`\boldsymbol{\ell}`, a vector that depends on direction and frequency.
-The open-circuit voltage at one arm is its projection onto the field:
+The :term:`open-circuit voltage` at one arm is its projection onto the field:
 
 .. math::
 
@@ -98,7 +98,7 @@ from.  ``process_ant`` rotates the field into that basis before contracting.
 Galactic noise
 --------------
 
-The noise model starts from the sky brightness temperature of LFMap, folded
+The noise model starts from the sky brightness temperature of :term:`LFMap`, folded
 through the antenna response and tabulated over frequency and local sidereal
 time as an available power spectral density (:doc:`data_files`).  Each
 detection unit receives an independent realization, with random amplitudes and phases.
@@ -122,9 +122,9 @@ calculation step by step.
 The RF chain
 ------------
 
-The RF chain is a cascade of two-port networks: matching network, low-noise
-amplifier, balun, cable and connector, filter board, a second balun and the
-ADC input.  Each is described by measured scattering parameters.  S-matrices
+The :term:`RF chain` is a cascade of two-port networks: matching network, low-noise
+amplifier, :term:`balun`, cable and connector, filter board, a second balun and the
+:term:`ADC` input.  Each is described by measured :term:`scattering parameters <S-parameters>`.  S-matrices
 do not cascade (the S-matrix of two networks in series is not the product of
 theirs), so :func:`~grand.sim.detector.rf_chain.s2abcd` converts each to the
 transmission (ABCD) representation, in which the cascade is a matrix product.
@@ -142,7 +142,7 @@ A matched, lossless line gives the identity matrix.
 The numbered circles give the order of the **matrix product**, which differs
 from the signal-flow order of the boxes: the first factor is the class named
 ``BalunAfterLNA``, applied before the LNA.  The ``vgaf`` stage loads
-``feb+amfitler+biast.s2p``, a front-end board, not a variable-gain amplifier
+``feb+amfitler+biast.s2p``, a front-end board, not a :term:`variable-gain amplifier <VGA>`
 (:ref:`issue-vga-gain-ignored`, :doc:`data_files`).
 
 .. jupyter-execute::
@@ -156,7 +156,7 @@ from the signal-flow order of the boxes: the first factor is the class named
     print("transfer function shape (arms, frequencies):", tf.shape)
     print("peak |V_out/V_oc| per arm:", np.round(tf.max(axis=1), 1))
 
-S-parameters are shipped for VGA gains of 20 dB (the GRANDProto300
+S-parameters are shipped for VGA gains of 20 dB (the :term:`GRANDProto300 <GP300>`
 default), 5 dB and 0 dB, but the ``vga_gain`` argument currently has no
 effect: every chain uses the same filter board
 (:ref:`issue-vga-gain-ignored`).
@@ -178,7 +178,7 @@ Performance
 -----------
 
 A shower across the full GRANDProto300 array takes about 13 s on one core,
-measured over 300 ZHAireS showers for the GRANDlib paper.  The 44-antenna
+measured over 300 :term:`ZHAireS` showers for the GRANDlib paper.  The 44-antenna
 shower of the :doc:`quickstart` takes about 10 s, including loading the
 antenna and RF-chain models.
 

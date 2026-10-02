@@ -8,16 +8,16 @@ What GRANDlib is
 ----------------
 
 GRANDlib computes little of the physics itself.  Air showers and their
-radio emission come from ZHAireS or CoREAS, tau propagation from DANTON,
-terrain from TURTLE, the geomagnetic field from GULL, and sky brightness from
-LFMap.  What GRANDlib owns is three things:
+radio emission come from :term:`ZHAireS` or CoREAS, tau propagation from DANTON,
+terrain from :term:`TURTLE`, the geomagnetic field from :term:`GULL`, and sky brightness from
+:term:`LFMap`.  What GRANDlib owns is three things:
 
 1. **A schema** — what a GRAND event *is*, and the format the collaboration
    stores it in (:mod:`grand.dataio`).
 2. **A frame-reconciliation engine** — where things are, in which frame, over
    what terrain, in what magnetic field (:mod:`grand.geo`).
-3. **An instrument-response model** — effective length, Galactic noise, RF
-   chain, ADC (:mod:`grand.sim`).
+3. **An instrument-response model** — :term:`effective length`, Galactic noise, RF
+   chain, :term:`ADC` (:mod:`grand.sim`).
 
 Composition
 -----------

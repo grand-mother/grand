@@ -1573,6 +1573,8 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The first mention of a glossary term on each page links to its entry.
+
 - A What's new page summarizes the changes users notice, those that alter
   results first.
 

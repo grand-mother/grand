@@ -10,12 +10,12 @@ with the repository.
 Your first voltage
 ------------------
 
-GRANDlib starts from the electric field that ZHAireS or CoREAS computed at
+GRANDlib starts from the electric field that :term:`ZHAireS` or CoREAS computed at
 each antenna, converted to GRAND's format by ``sim2root`` (:doc:`sim2root`).
 The result of that conversion is a folder of ROOT files: ``efield_*`` holds the
 traces, ``shower_*`` the shower and ``run_*`` the detector layout.  The
 repository includes one such folder, a 3.9 EeV proton shower at
-zenith 79.4° seen by 44 GRANDProto300 antennas:
+zenith 79.4° seen by 44 :term:`GRANDProto300 <GP300>` antennas:
 
 .. jupyter-execute::
 
@@ -37,8 +37,8 @@ zenith 79.4° seen by 44 GRANDProto300 antennas:
 
 :meth:`~grand.sim.efield2voltage.Efield2Voltage.compute_voltage` runs every
 event in the folder through the antenna response, adds Galactic noise for a
-local sidereal time of 18 h, applies the GRANDProto300 RF chain and writes the
-voltage at the ADC input to ``voltage.root``.  ``seed`` fixes the noise;
+:term:`local sidereal time <LST>` of 18 h, applies the GRANDProto300 :term:`RF chain` and writes the
+voltage at the :term:`ADC` input to ``voltage.root``.  ``seed`` fixes the noise;
 without it, every run draws a new realization.  ``efield_level=0`` picks the
 simulated fields, since this folder also holds a level-1 copy.
 
@@ -47,7 +47,7 @@ Reading the result
 
 Each file holds one ROOT tree, and each tree class reads one kind of file.
 :class:`~grand.dataio.event_trees.TVoltage` gives the traces as one row per
-detection unit, three arms per row:
+:term:`detection unit <DU>`, three arms per row:
 
 .. jupyter-execute::
 
@@ -137,7 +137,7 @@ takes the same three numbers and means east, north, up.
 *The three channels are antenna arms, not field components.*  ``trace[:, 0]``
 is the south-north arm (X), ``trace[:, 1]`` the east-west arm (Y) and
 ``trace[:, 2]`` the vertical arm (Z).  The voltage on an arm is the projection
-of the field on that arm's effective length, so the ratio between arms is not
+of the field on that arm's :term:`effective length`, so the ratio between arms is not
 the ratio between field components.
 
 *A height needs a reference.*  The ellipsoid and the geoid (mean sea level)
@@ -172,7 +172,7 @@ Switching stages off
 
 ``sim.params`` turns the stages on and off before
 :meth:`~grand.sim.efield2voltage.Efield2Voltage.compute_voltage` runs.  With
-neither noise nor RF chain, the output is the open-circuit voltage at the
+neither noise nor RF chain, the output is the :term:`open-circuit voltage` at the
 antenna terminals:
 
 .. jupyter-execute::

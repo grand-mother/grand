@@ -3,8 +3,8 @@ GRANDlib: simulation and data handling for GRAND
 
 GRANDlib is the software library of the `Giant Radio Array for Neutrino
 Detection <http://grand.cnrs.fr>`_ (GRAND).  It takes the radio pulse that an
-external air-shower code computes and turns it into the voltages and ADC
-counts that a GRAND detection unit records.  The same package defines the
+external air-shower code computes and turns it into the voltages and :term:`ADC`
+counts that a GRAND :term:`detection unit <DU>` records.  The same package defines the
 ROOT data format the collaboration stores its simulated and measured data in.
 It also provides the coordinate frames, terrain and geomagnetic field that tie
 both to real sites, and a first set of reconstruction tools that go back from
@@ -41,7 +41,7 @@ recorded signals to the shower.
 **End to end.**  One call goes from the electric field at each antenna to the
 voltage at the ADC input.  It projects the field on the antenna's effective
 length, adds Galactic noise for the chosen sidereal time, passes the result
-through the measured RF chain and writes a file.  A second step digitizes it.
+through the measured :term:`RF chain` and writes a file.  A second step digitizes it.
 Each stage can also be called on its own arrays, without any file.
 
 **One data format.**  Simulated and measured events are stored in the same
@@ -58,16 +58,16 @@ number.
 What it can compute
 -------------------
 
-* The open-circuit voltage at the three arms of a GRAND antenna, for any
+* The :term:`open-circuit voltage` at the three arms of a GRAND antenna, for any
   arrival direction, from tabulated HFSS, NEC or MATLAB effective lengths.
-* Galactic noise from the LFMap sky model at any local sidereal time, for each
+* Galactic noise from the :term:`LFMap` sky model at any :term:`local sidereal time <LST>`, for each
   detection unit independently.
-* The response of the GRANDProto300 RF chain (matching network, LNA, baluns,
+* The response of the :term:`GRANDProto300 <GP300>` RF chain (matching network, LNA, baluns,
   cable, filter board) as a cascade of measured two-port networks.
 * Digitization by the 14-bit, 500 MHz ADC, with saturation and optional
   measured noise, and an offline version of the T1 trigger.
 * Positions in geodetic, Earth-centered, local tangent-plane and array frames,
-  ground elevation from SRTM tiles, the geoid and the geomagnetic field.
+  ground elevation from :term:`SRTM` tiles, the geoid and the geomagnetic field.
 * The arrival direction, the position of the shower maximum and an energy
   estimate, from the peak times and amplitudes of a recorded event
   (:mod:`grand.analysis`).
@@ -75,11 +75,11 @@ What it can compute
 What it has been used for
 -------------------------
 
-* The GRANDlib paper (:cite:`GRAND:2024atu`): 300 ZHAireS showers simulated
+* The GRANDlib paper (:cite:`GRAND:2024atu`): 300 :term:`ZHAireS` showers simulated
   across the full GRANDProto300 layout.
 * The collaboration's Data Challenge datasets, converted with ``sim2root`` and
   processed with the voltage and ADC steps.
-* Reading and viewing GRANDProto300 and GP13 data, including ten GP13
+* Reading and viewing GRANDProto300 and :term:`GP13` data, including ten GP13
   cosmic-ray candidates that ship with the examples (notebooks 11 and 12).
 
 When to use GRANDlib, and when not

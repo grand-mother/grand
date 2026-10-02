@@ -6,7 +6,7 @@ Converting simulations: sim2root
    :depth: 1
 
 GRANDlib starts from an electric field.  The air shower and its radio
-emission are simulated by ZHAireS or CoREAS, outside GRANDlib.  The converters
+emission are simulated by :term:`ZHAireS` or CoREAS, outside GRANDlib.  The converters
 in ``sim2root/`` turn the output of those codes into GRAND's ROOT format, which
 the rest of the library reads.
 
@@ -104,7 +104,7 @@ State of the code
 ``tests/``, ``quality/``, ``notebooks/`` and ``docs/dev/``.  It does not check
 ``sim2root/``.  The test suite does cover it, from outside: ``tests/sim2root/``
 runs the converters on the committed samples (conversion, the trace window,
-Xmax, the no-antenna case, the documented commands), but nothing tests the
+:term:`Xmax`, the no-antenna case, the documented commands), but nothing tests the
 modules piece by piece.
 
 **Ruff reports 837 findings there**, against zero in the gated scope.

@@ -58,7 +58,7 @@ Class              Contents
 Read one event
 --------------
 
-The shower parameters -- zenith, azimuth, energy, Xmax -- are in ``TShower``,
+The shower parameters -- zenith, azimuth, energy, :term:`Xmax` -- are in ``TShower``,
 in the ``shower_*.root`` file.  ``TShowerSim`` (``showersim_*.root``) holds
 only what a simulator adds on top, so ``tshowersim.zenith`` does not exist.
 Both forms below print the first event of the sample that ships with the
@@ -169,7 +169,7 @@ Without ``with``, call ``stop_using()`` at the end of each iteration:
 file the tree opened from a file name, once no other live tree reads from that
 file.  A ``ROOT.TFile`` you passed in yourself, or the one a ``DataFile``
 holds, is left open for you to close.  Do not use a tree after releasing it: if
-its file was closed, the TTree is gone.  Write a tree you filled with
+its file was closed, the :term:`TTree` is gone.  Write a tree you filled with
 ``write()`` *before* releasing it.
 
 Releasing does not bring memory growth to zero: ROOT 6.36 itself keeps about

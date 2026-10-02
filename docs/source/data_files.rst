@@ -197,7 +197,7 @@ Six files are read by no chain at all:
 - ``balun13in20230612.s2p``
 - ``zload_balun_200ohm.s1p``
 
-The first three are the variable-gain amplifier tables; that no chain reads
+The first three are the :term:`variable-gain amplifier <VGA>` tables; that no chain reads
 them is :ref:`issue-vga-gain-ignored`.  The stage named for the VGA,
 ``vgaf``, loads ``feb+amfitler+biast.s2p``, a front-end board with an AM
 filter and a bias tee.
@@ -216,9 +216,9 @@ of 20 minutes, and the three arms.  They hold the **available power spectral
 density** :math:`P_L`, in W/Hz.
 
 They were computed by ``grand/sim/noise/Compute_Plot_Galactic_Noise.py``,
-which integrates the LFMap sky temperature over direction against the
-antenna's effective length, :math:`|\ell_\theta|^2 + |\ell_\phi|^2`, and
-converts the resulting open-circuit voltage to available power:
+which integrates the :term:`LFMap` sky temperature over direction against the
+antenna's :term:`effective length`, :math:`|\ell_\theta|^2 + |\ell_\phi|^2`, and
+converts the resulting :term:`open-circuit voltage` to available power:
 
 .. math::  P_L = \frac{V_{\rm oc,RMS}^2}{4\,\mathrm{Re}(Z_{\rm ant})}
 
@@ -251,7 +251,7 @@ differing by up to a factor of two (:ref:`issue-galactic-noise-tables`).
 Topography
 ----------
 
-``data/topography/`` holds SRTM tiles, one ``.hgt`` per one-degree square,
+``data/topography/`` holds :term:`SRTM` tiles, one ``.hgt`` per one-degree square,
 named after the south-west corner: ``N41E096.hgt`` covers 41–42 °N, 96–97 °E.
 They are a few megabytes each and are **not** in version control, so a fresh
 checkout has none.

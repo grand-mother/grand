@@ -44,7 +44,7 @@ All the trees of a folder
 -------------------------
 
 :class:`~grand.dataio.DataDirectory` opens every file of a folder and gives
-each tree as an attribute, by type and analysis level:
+each tree as an attribute, by type and :term:`analysis level`:
 
 .. jupyter-execute::
 
@@ -137,7 +137,7 @@ Galactic noise at a sidereal time
 ---------------------------------
 
 One realization of the noise spectrum at the open-circuit terminals, for four
-units at 6 h local sidereal time:
+units at 6 h :term:`local sidereal time <LST>`:
 
 .. jupyter-execute::
 
@@ -152,7 +152,7 @@ units at 6 h local sidereal time:
 The T1 trigger
 --------------
 
-Apply the offline T1 trigger to the ADC traces of an event:
+Apply the offline T1 trigger to the :term:`ADC` traces of an event:
 
 .. jupyter-execute::
 

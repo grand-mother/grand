@@ -52,7 +52,7 @@ reads, refuses it.
 Nothing raised, but the answer is ``nan``
 -----------------------------------------
 
-**An elevation lookup returned ``nan``.**  There is no SRTM tile for that
+**An elevation lookup returned ``nan``.**  There is no :term:`SRTM` tile for that
 one-degree square.  Tiles are not in version control and a fresh checkout has
 none:
 
@@ -131,7 +131,7 @@ Exceptions
         source env/setup.sh
 
 ``ValueError`` naming a file and the ``_L0_``/``_L1_`` convention
-    A file name's analysis level does not match the ``analysis_level`` stored
+    A file name's :term:`analysis level` does not match the ``analysis_level`` stored
     in its tree.  Rename the file, or fix the tree.  The two must agree; see
     :doc:`datamodel`.
 

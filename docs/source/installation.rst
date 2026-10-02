@@ -12,7 +12,7 @@ GRANDlib runs on Linux x86-64 with Python 3.10 or later.  Beyond Python
 packages, it needs:
 
 * **ROOT**, for the data format.  GRANDlib is tested with ROOT 6.36 and 6.38.
-* **A C compiler and** ``make``, to build the TURTLE (terrain) and GULL
+* **A C compiler and** ``make``, to build the :term:`TURTLE` (terrain) and :term:`GULL`
   (geomagnetic field) libraries from source.
 * **About 1 GB of model data**: antenna effective lengths, RF-chain
   measurements and Galactic-noise tables, downloaded once (:doc:`data_files`).

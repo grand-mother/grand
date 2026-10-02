@@ -82,19 +82,19 @@ The notebooks
    long form of :doc:`datamodel`.
 
 `03. The antenna response <https://github.com/grand-mother/grand/blob/dev-next/notebooks/03_antenna_response.ipynb>`_
-   The effective length against frequency and direction, its phase and the
+   The :term:`effective length` against frequency and direction, its phase and the
    group delay that follows, and why the Z arm is not a scaled copy of the
    horizontal arms.  Reproduces Fig. 5 of :cite:`GRAND:2024atu`.
 
 `04. The RF chain <https://github.com/grand-mother/grand/blob/dev-next/notebooks/04_rf_chain.ipynb>`_
    Each stage's own transfer function, why the cascade is done in ABCD rather
-   than S-parameters, and the total :math:`V_{\rm out}/V_{\rm oc}` of Fig. 8.
+   than :term:`S-parameters`, and the total :math:`V_{\rm out}/V_{\rm oc}` of Fig. 8.
    Ends by plotting four VGA gain settings that produce one curve — see
    :ref:`the known issue <issue-vga-gain-ignored>`.
 
 `05. Galactic noise <https://github.com/grand-mother/grand/blob/dev-next/notebooks/05_galactic_noise.ipynb>`_
    Follows one number — the microvolts of noise on an antenna arm — from the
-   LFMap radio sky to a simulated trace, and then checks it.  The sky is 180
+   :term:`LFMap` radio sky to a simulated trace, and then checks it.  The sky is 180
    times brighter at 30 MHz than at 250, which is why every noise spectrum
    falls so steeply; the level varies by a third over a sidereal day; and the
    expected level, rebuilt independently from the shipped tables and the
@@ -108,7 +108,7 @@ The notebooks
    field.
 
 `07. Topography <https://github.com/grand-mother/grand/blob/dev-next/notebooks/07_topography.ipynb>`_
-   The two definitions of height and the geoid undulation between them, a
+   The two definitions of height and the :term:`geoid undulation` between them, a
    terrain map, and ray-ground intersection for very inclined showers —
    including how badly a flat-ground estimate does near the horizon.  Also the
    silent ``nan`` a missing elevation tile returns.
@@ -116,7 +116,7 @@ The notebooks
 `08. Pinning the chain <https://github.com/grand-mother/grand/blob/dev-next/notebooks/08_pipeline_regression.ipynb>`_
    For the person about to change the chain: what will tell you the answer
    moved.  Runs the simulation with one thing different at a time — noise
-   off, RF chain off, a different sidereal hour, a different seed — and
+   off, :term:`RF chain` off, a different sidereal hour, a different seed — and
    measures what the regression catches.  Shows that with a symmetric input a
    swapped antenna arm is completely invisible, which is why the reference
    input is asymmetric.
@@ -125,7 +125,7 @@ The notebooks
    ``grand.aoi``, the layer above ``grand.dataio``: it hands back an event
    rather than branches, with its antennas on one common clock.  Covers the
    trap that ``EventList`` reuses a single ``Event`` object, so collecting
-   events in a list gives the same one ten times over; which analysis level
+   events in a list gives the same one ten times over; which :term:`analysis level`
    you get when a directory holds both; and the difference between
    ``event.shower`` and ``event.simshower``.  Ends by reading one event
    through both layers and comparing them.
@@ -145,7 +145,7 @@ The notebooks
    distance to its source and an energy estimate. Runs each step — plane
    wave, spherical wave, angular distribution function, energy proxy — on a
    shower it generated, so the answer is known, then the whole chain as
-   ``examples/analysis/main_AOI.py`` runs it. Ends on the ten GP13 cosmic-ray
+   ``examples/analysis/main_AOI.py`` runs it. Ends on the ten :term:`GP13` cosmic-ray
    candidates shipped with the examples, where the data parts company with
    the model: most timing fits have χ²/ndf well above 1, and 8 of 10
    amplitude fits stop on a bound. Says plainly that the fits are checked for
@@ -155,7 +155,7 @@ The notebooks
    How to run ``examples/eventviewer/``, from the command line and from
    Python, and what each of its panels computes, redrawn as static figures.
    Covers the magnetic-field fix that turned the shower-plane axes the right
-   way in September 2026, and the Xmax correction that fixed the angular
+   way in September 2026, and the :term:`Xmax` correction that fixed the angular
    plane on the committed samples (:ref:`issue-xmax-sample-vintage`), which
    had put it off by 6.5° for one event and 1° for the other.
 
