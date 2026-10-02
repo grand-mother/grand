@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- No committed sample stores a fake 1976 event time where it can be
+  avoided (#225, the last item): the two ZHAireS `.rawroot` samples are
+  regenerated with today's converter, which changes `unix_second` from
+  200854920 to 0 and nothing else, so sim2root dates their events to the
+  simulation day.  The four `sim2root/Common` folders keep the old time,
+  for reasons now given in the known issues (two are the 2024
+  backward-compatibility fixtures; regenerating the others changes far
+  more than the time); a test lists them.
+
 - `DataDirectory` opens one pass faster (#283): each chain's
   `Length$(du_id)` draw is sized by the draw itself, instead of by a
   `GetEntries()` that opened every file first; a chain longer than the

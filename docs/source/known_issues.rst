@@ -725,6 +725,51 @@ the fresh file, if the unconditional subtraction is put back.
 A vertical shower cannot be told apart this way -- both readings point
 straight up -- and is left as stored.
 
+.. _issue-sample-event-times:
+
+The committed ``sim2root/Common`` samples are timed May 1976
+-------------------------------------------------------------
+
+:Status: open by decision — the samples are kept; converters fixed in #291
+:Found: 2026-10-01 (grand-mother/grand#225)
+:Affects: ``core_time_s``, the event time and ``du_seconds`` read from the
+          four sample folders under ``sim2root/Common/``
+:Test: ``tests/sim2root/test_sample_event_times.py``
+
+The simulations give no event time (``EventUnixTime: 0``). The converters
+used to put a magic value in its place, and the samples were written with it,
+while ``TShowerSim.event_date`` and the folder name give the simulation date
+(2017-04-01 for Dunhuang, 2022-10-26 for Xiaodushan) and the run's
+``first_event_time`` is 0:
+
+==================================================  ===========================
+Sample folder                                       ``core_time_s``
+==================================================  ===========================
+``sim_Dunhuang_..._RUN1_CD_CoREAS-NJ_0000``         200854852 (1976-05-13)
+``sim_Xiaodushan_..._RUN0_CD_ZHAireS_0000``         200854920 (1976-05-13)
+``sim_Xiaodushan_..._RUN1_CD_ZHAireS_0000``         200854920 (1976-05-13)
+``sim_Xiaodushan_..._RUN1_CD_ADCNoise_0000``        200854920 (1976-05-13)
+==================================================  ===========================
+
+``du_seconds`` is the same value, or one second less where t0 is negative.
+Since #291, ``sim2root.py`` uses the simulation date instead (1666742400,
+2022-10-26, for Xiaodushan), and the two ``.rawroot`` samples under
+``sim2root/ZHAireSRawRoot/`` were regenerated with ``unix_second`` 0, the
+only value that changed.
+
+**Why the folders are kept.** The first two are the 2024 fixtures that
+``tests/dataio/test_backward_compatibility.py`` reads as they were written.
+For the two ``RUN1`` folders, the pipeline run today changes more than the
+time: the ground-relative Xmax frame (kept on purpose, see
+:ref:`issue-xmax-sample-vintage`), ``direction``, ``energy_em``,
+``xmax_pos``, the run metadata, the event order and the file names. Tests
+read those values, so regenerating them belongs to a deliberate update of the
+samples, not to the time fix.
+
+**Until then**, do not use an event time from these folders; take the date
+from ``event_date`` or the folder name. The test lists the folders that carry
+the old time, so a regenerated sample has to update it.
+
 
 .. _issue-magnetic-field-units:
 
