@@ -50,7 +50,7 @@ file records the GRANDlib version that computed it.
 
 **Tested against what it claims.**  Over 1200 tests check the package against
 independent calculations, the shower codes' own output and properties that
-must hold exactly; the table below lists the main ones.  Inputs are checked
+must hold exactly (:doc:`testing`).  Inputs are checked
 when a function is called, so a wrong unit or a missing file stops with a
 message that names the argument rather than producing a plausible wrong
 number.
@@ -81,30 +81,6 @@ What it has been used for
   processed with the voltage and ADC steps.
 * Reading and viewing GRANDProto300 and GP13 data, including ten GP13
   cosmic-ray candidates that ship with the examples (notebooks 11 and 12).
-
-What "tested" means here
-------------------------
-
-=====================================================  =========================================
-Checked against                                        Result
-=====================================================  =========================================
-The noise level rebuilt independently from the         agrees within the 4σ sampling spread
-shipped tables and the antenna impedance               (about 1%), for all three antenna models
-Parseval's theorem, on every simulated noise trace     spectrum and trace power agree to 1e-9
-The ZHAireS summaries of the committed showers: the    agree to 0.02°
-arrival direction recomputed from the position of
-Xmax
-The arm identity of every effective-length table,      X is the south-north arm, Y the east-west
-by correlating its pattern with the named HFSS arms    arm, in all three models
-Conversions between frames, there and back             return the input
-The full chain on a fixed input and seed               reproduces a stored reference to 1e-6 of
-                                                       the trace peak
-The ROOT tree layout                                   matches a stored snapshot field by field
-=====================================================  =========================================
-
-The last two are regression checks: they show that the answer has not changed,
-not that it is right.  :doc:`testing` describes the suite, and
-:doc:`known_issues` lists what is known to be wrong or still undecided.
 
 When to use GRANDlib, and when not
 ----------------------------------

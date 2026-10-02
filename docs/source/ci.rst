@@ -5,10 +5,18 @@ Continuous integration
    :local:
    :depth: 1
 
-GitHub Actions runs the test suite, the linter and a documentation build on
-every push and every pull request, including pull requests from forks.  The
-results appear as checks on the commit and on the pull request.  Every check
-runs a command you can also run locally (`Running the checks locally`_).
+Continuous integration (CI) is the practice of checking every change to the
+code automatically, on a clean machine, as soon as it is pushed.  It catches
+a broken test, a style error or a documentation page that no longer builds
+within minutes, before the change reaches other people, and it catches
+problems that only appear on a machine other than the author's.
+
+For GRANDlib, GitHub Actions runs the test suite, the linter and a
+documentation build on every push and every pull request, including pull
+requests from forks.  The results appear as checks on the commit and on the
+pull request: a green check means every step passed, and a red cross links
+to the log of the step that failed.  Every check runs a command you can also
+run locally (`Running the checks locally`_).
 
 The workflows
 -------------
@@ -112,12 +120,10 @@ default, start it by pushing to the trigger branch:
 Publishing the documentation
 ----------------------------
 
-``pages.yml`` builds this documentation and deploys it to GitHub Pages on
-every push to ``dev-next``.  For the deployment to succeed, GitHub Pages must
-be enabled in the repository settings (*Settings → Pages → Source: GitHub
-Actions*), which needs administrator access.
+``pages.yml`` builds this documentation and publishes it at
+https://grand-mother.github.io/grand/ on every push to ``dev-next``.
 
-To publish a preview from a fork, which you administer:
+To publish a preview of your own branch, from a fork:
 
 .. code-block:: bash
 

@@ -1,7 +1,7 @@
 # Contributing to GRANDlib
 
 The full guide is in the documentation, at
-[Contributing](https://grand-mother.github.io/grand-docs/contributing.html)
+[Contributing](https://grand-mother.github.io/grand/contributing.html)
 (or `docs/source/contributing.rst` in this repository). This file is the short
 version, and the parts you need before your first commit.
 

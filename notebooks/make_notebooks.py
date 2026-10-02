@@ -58,7 +58,7 @@ import nbformat as nbf
 HERE = pathlib.Path(__file__).resolve().parent
 
 #: Where the rendered documentation lives, for cross-links out of a notebook.
-DOCS = 'https://grand-mother.github.io/grand-docs'
+DOCS = 'https://grand-mother.github.io/grand'
 
 
 def md(text):
@@ -225,7 +225,7 @@ antennas sit at geodetic positions on curved, uneven terrain; the radio
 emission is driven by the local geomagnetic field.
 
 This notebook is the long form of the
-[coordinates page](https://grand-mother.github.io/grand-docs/coordinates.html):
+[coordinates page](https://grand-mother.github.io/grand/coordinates.html):
 the frames, the conversions between them, the two conventions that most often
 catch people out, and a worked layout at the GRANDProto300 site.
 
@@ -381,7 +381,7 @@ point about 100 m (section 3).'''),
     footer(
         r'''[02 — Reading and writing GRAND data](02_data_model.ipynb)''',
         r'''[03 — The antenna response](03_antenna_response.ipynb)''',
-        r'''The [coordinates page](https://grand-mother.github.io/grand-docs/coordinates.html)''',
+        r'''The [coordinates page](https://grand-mother.github.io/grand/coordinates.html)''',
     ),
     ])
 
@@ -394,7 +394,7 @@ file from nothing, reads it back, and works through the conventions that govern
 how files are grouped — which are not written down anywhere else and are easy
 to get wrong.
 
-The long form of the [data model page](https://grand-mother.github.io/grand-docs/datamodel.html).''',
+The long form of the [data model page](https://grand-mother.github.io/grand/datamodel.html).''',
     [
     code(r'''import tempfile, os
 import numpy as np
@@ -544,7 +544,7 @@ print("An empty stamp dates the file rather than leaving it undated.")'''),
     footer(
         r'''[01 — Coordinate systems](01_coordinates.ipynb)''',
         r'''[03 — The antenna response](03_antenna_response.ipynb)''',
-        r'''The [API reference](https://grand-mother.github.io/grand-docs/api.html)''',
+        r'''The [API reference](https://grand-mother.github.io/grand/api.html)''',
     ),
     ])
 
@@ -2806,7 +2806,7 @@ small box around the timing answer.
 - **Angles** in radians, and they say where the shower **comes from**: zenith 0
   is a shower falling straight down, azimuth 0 one arriving from the North,
   azimuth 90° one arriving from the West. The
-  [coordinates page](https://grand-mother.github.io/grand-docs/coordinates.html)
+  [coordinates page](https://grand-mother.github.io/grand/coordinates.html)
   states this convention, and `tests/geo/test_angle_convention.py` pins it.
 - **Times** in seconds.'''),
     code(r'''import numpy as np
@@ -3614,7 +3614,7 @@ model at the site and fails on the old code.
 
 The field's *strength* is not used, which is fortunate: the ZHAireS converter
 stores it in µT and the CoREAS one in gauss, with no unit recorded
-([known issue](https://grand-mother.github.io/grand-docs/known_issues.html#issue-magnetic-field-units)).
+([known issue](https://grand-mother.github.io/grand/known_issues.html#issue-magnetic-field-units)).
 
 Here is the shower plane as the viewer now computes it — each antenna placed
 by its position around the axis and coloured by its peak amplitude. The

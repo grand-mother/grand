@@ -1,6 +1,14 @@
 Test suite
 ==========
 
+The test suite is the set of automated checks, in ``tests/``, that verify
+GRANDlib does what it should: that its physics agrees with independent
+calculations, that files it writes read back unchanged, that its documented
+commands work, and that a fixed bug stays fixed.  Running it tells you whether
+your installation works and whether a change you made broke something.  It
+uses `pytest <https://docs.pytest.org>`_, and runs automatically on every
+change (:doc:`ci`).
+
 .. contents::
    :local:
    :depth: 1
@@ -110,7 +118,3 @@ Writing a test
 * Write files into pytest's ``tmp_path``, never into the repository.
 * For a known defect that needs a decision, add the test with an entry in
   ``tests/conftest.py`` and in :doc:`known_issues`, rather than skipping it.
-
-Known gaps are tracked in `#271
-<https://github.com/grand-mother/grand/issues/271>`_: some tests that cannot
-fail, and some that depend on files outside version control.

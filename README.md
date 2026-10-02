@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/grand-mother/grand/actions/workflows/tests-conda.yml/badge.svg?branch=dev-next)](https://github.com/grand-mother/grand/actions/workflows/tests-conda.yml)
 [![Code Quality](https://github.com/grand-mother/grand/actions/workflows/lint.yml/badge.svg?branch=dev-next)](https://github.com/grand-mother/grand/actions/workflows/lint.yml)
-[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://grand-mother.github.io/grand-docs)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://grand-mother.github.io/grand)
 [![arXiv](https://img.shields.io/badge/arXiv-2408.10926-orange.svg)](https://arxiv.org/abs/2408.10926)
 [![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.cpc.2024.109461-blue.svg)](https://doi.org/10.1016/j.cpc.2024.109461)
 [![License: LGPL-3.0](https://img.shields.io/badge/License-LGPL--3.0-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)

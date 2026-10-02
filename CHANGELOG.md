@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Documentation links pointed to `grand-mother.github.io/grand-docs`, an old
+  site where the pages do not exist; the README, `pyproject.toml`,
+  `CITATION.cff`, `CONTRIBUTING.md`, the issue templates and the notebooks now
+  point to `grand-mother.github.io/grand`, where the documentation is
+  published.
+
 - The T1 trigger's `t_sepmax` rule can be varied (#233, item 3): two
   parameters, off by default so results are unchanged, select the other
   readings the trigger group has to choose between: `sepmax_inclusive=1`

@@ -267,8 +267,7 @@ Not supported yet
   (`#142 <https://github.com/grand-mother/grand/issues/142>`_) and the
   terrain's shadow (`#141 <https://github.com/grand-mother/grand/issues/141>`_).
 * A test suite free of tests that cannot fail and of tests that depend on
-  untracked files (`#271 <https://github.com/grand-mother/grand/issues/271>`_);
-  see :doc:`testing`.
+  untracked files (`#271 <https://github.com/grand-mother/grand/issues/271>`_).
 
 Documentation and repository
 ----------------------------

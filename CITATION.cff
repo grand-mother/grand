@@ -8,7 +8,7 @@ authors:
   - name: The GRAND Collaboration
     website: 'http://grand.cnrs.fr'
 repository-code: 'https://github.com/grand-mother/grand'
-url: 'https://grand-mother.github.io/grand-docs/'
+url: 'https://grand-mother.github.io/grand/'
 abstract: >-
   Offline data handling, simulation and analysis for the Giant Radio Array for
   Neutrino Detection. GRANDlib applies the instrument response of a GRAND
