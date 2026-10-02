@@ -135,6 +135,9 @@ grand = ["dataio/version", "dataio/vector_filling.C", "sim/detector/rf_chain_con
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# An expected failure that starts passing fails the run, so that a fix is
+# noticed and its marker removed (#271).
+xfail_strict = true
 
 [tool.ruff]
 line-length = 100

@@ -6,6 +6,8 @@ Tests high-level file and directory management classes:
 - DataFile - Single/multiple file handling with TChain
 """
 
+import pathlib
+
 import pytest
 
 from grand.dataio.data_handling import DataDirectory, DataFile
@@ -15,6 +17,10 @@ from grand.dataio import TRun, TADC
 # ============================================================================
 # DataDirectory Tests
 # ============================================================================
+
+
+SAMPLE = (pathlib.Path(__file__).resolve().parents[2] / "sim2root" / "Common"
+          / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
 
 class TestDataDirectory:
     """Tests for DataDirectory class."""
@@ -59,17 +65,19 @@ class TestDataDirectory:
         result = data_dir.trun_l0
         assert result is None
 
-    def test_print_method(self, tmp_path):
-        """Test print method doesn't raise."""
-        data_dir = DataDirectory(str(tmp_path))
-        # Should not raise
+    def test_print_method(self, capsys):
+        """print lists the directory's files (it asserted nothing, #271)."""
+        data_dir = DataDirectory(str(SAMPLE))
         data_dir.print(verbose=False)
+        assert "11  files" in capsys.readouterr().out
 
-    def test_close_method(self, tmp_path):
-        """Test close method."""
-        data_dir = DataDirectory(str(tmp_path))
-        # Should not raise
+    def test_close_method(self):
+        """After close, the trees refuse to be read (#271)."""
+        data_dir = DataDirectory(str(SAMPLE))
+        tshower = data_dir.tshower
         data_dir.close()
+        with pytest.raises(RuntimeError, match="closed"):
+            tshower.get_number_of_entries()
 
 
 # ============================================================================
@@ -115,6 +123,8 @@ class TestDataFile:
         trun = TRun(_file_name=str(filepath))
         trun.write()
         trun.close_file()
+        with pytest.raises(RuntimeError, match="closed"):           # (#271)
+            trun.get_number_of_entries()
 
         data_file = DataFile(str(filepath))
         # Should not raise

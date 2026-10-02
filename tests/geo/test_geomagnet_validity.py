@@ -10,6 +10,7 @@ string ``"2020-01-01"``, which is inside the range -- which is why this went
 unnoticed for over a year after the model lapsed.
 """
 
+import numpy as np
 import pytest
 
 from grand import Geodetic, LTP
@@ -37,7 +38,8 @@ def _magnetic_frame(obstime):
 @pytest.mark.parametrize('obstime', ['2020-01-01', '2024-06-01'])
 def test_dates_inside_the_model_range_work(obstime):
     r"""A magnetic frame can be built for a date the model covers."""
-    _magnetic_frame(obstime)
+    frame = _magnetic_frame(obstime)
+    assert np.isfinite(frame.declination).all()               # (#271)
 
 
 @pytest.mark.parametrize('obstime', ['2025-01-01', '2026-01-01'])

@@ -17,12 +17,14 @@ import grand.dataio as groot
 class ShowerTest(TestCase):
     """Unit tests for the shower module"""
 
-    path = Path(grand_get_path_root_pkg()) / "data" / "test_efield.root"
+    # The committed sample: data/test_efield.root is untracked (#271)
+    path = (Path(grand_get_path_root_pkg()) / "sim2root" / "Common"
+            / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
 
     def test_showerevent(self):
-        self.tevents = groot.TEfield(str(self.path))                # traces and du_pos are stored here
-        self.trun = groot.TRun(str(self.path))                      # site_long, site_lat info is stored here. Used to define shower frame.
-        self.tshower = groot.TShower(str(self.path))                # shower info (like energy, theta, phi, xmax etc) are stored here.
+        self.tevents = groot.TEfield(str(self.path / "efield_1618-13790_L0_0000.root"))   # traces and du_pos are stored here
+        self.trun = groot.TRun(str(self.path / "run_1_L0_0000.root"))                      # site_long, site_lat info is stored here. Used to define shower frame.
+        self.tshower = groot.TShower(str(self.path / "shower_1618-13790_L0_0000.root"))    # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.tevents.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.event_number = self.events_list[0][0]
         self.run_number = self.events_list[0][1]

@@ -33,15 +33,16 @@ largest; ``tests/sim/`` is the thinnest relative to what it guards.
 Known failures are marked, not hidden
 -------------------------------------
 
-Eight tests fail for reasons that need a decision rather than a patch.  They
+Three tests fail for reasons that need a decision rather than a patch.  They
 are registered in ``tests/conftest.py`` with the reason for each and who can
 settle it, so that the suite can be a required check in CI — a permanently red
 gate is a gate nobody looks at.
 
-They are marked ``xfail`` with ``strict=False``, so a test that starts passing
-is reported as ``xpassed`` rather than failing the run.  That is the signal to
-delete its entry, and it earns its keep: ``test_antenna`` xpassed as soon as
-the missing-frame guard was fixed.
+They are marked ``xfail`` strictly (``xfail_strict = true`` in
+``pyproject.toml``), so a test that starts passing fails the run until its
+entry is deleted.  With ``strict=False`` that went unnoticed: three tests
+passed for a while only where an untracked ``data/test_efield.root`` happened
+to lie (#271).
 
 Read the registry rather than a summary of it — it is the authority, it is
 short, and it says what each failure actually is.

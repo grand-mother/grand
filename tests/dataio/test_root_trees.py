@@ -26,7 +26,11 @@ class RootTreesTest(TestCase):
         self.assertTrue(ss.string=='GRAND')
 
     def test_datatree(self):
-        efield_file = Path(grand_get_path_root_pkg()) / "data" / "test_efield.root"
+        # The committed sample: data/test_efield.root is untracked, and a
+        # test that needs it only passes where a stale copy lies (#271)
+        efield_file = (Path(grand_get_path_root_pkg()) / "sim2root" / "Common"
+                       / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000"
+                       / "efield_1618-13790_L0_0000.root")
         self.assertTrue((efield_file).exists())
         fi = groot.DataTree(str(efield_file))
         self.assertTrue(fi._file is not None)

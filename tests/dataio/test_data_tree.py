@@ -5,6 +5,8 @@ Tests the DataTree base class that all tree classes inherit from.
 This is the foundational class for all GRAND ROOT tree operations.
 """
 
+import pathlib
+
 import pytest
 import datetime
 
@@ -214,20 +216,28 @@ class TestDataTreeIteration:
 # DataTree Branch Operations Tests
 # ============================================================================
 
+SAMPLE = (pathlib.Path(__file__).resolve().parents[2] / "sim2root" / "Common"
+          / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+
+
 class TestDataTreeBranches:
     """Tests for branch operations."""
 
     def test_create_branches(self):
-        """Test creating branches."""
-        tree = DataTree()
-        # Should not raise
+        """Creating branches gives the tree one per field (it only checked nothing raised, #271)."""
+        from grand.dataio import TShower
+        tree = TShower()
         tree.create_branches()
+        names = {branch.GetName() for branch in tree._tree.GetListOfBranches()}
+        assert {"run_number", "event_number", "zenith"} <= names
 
     def test_assign_branches(self):
-        """Test assigning branches."""
-        tree = DataTree()
-        # Should not raise - may log warnings
-        tree.assign_branches()
+        """Assigned branches read the file's values into the fields (#271)."""
+        from grand.dataio import TShower
+        with TShower(str(SAMPLE / "shower_1618-13790_L0_0000.root")) as tree:
+            tree._tree.GetEntry(0)
+            tree.assign_branches()
+            assert int(tree.run_number) == 1 and int(tree.event_number) == 13790
 
 
 # ============================================================================
@@ -244,11 +254,12 @@ class TestDataTreeUtilities:
         result = tree.print()
         assert result is not None or result is None
 
-    def test_print_metadata(self):
-        """Test print_metadata method."""
-        tree = DataTree()
-        # Should not raise
-        tree.print_metadata()
+    def test_print_metadata(self, capsys):
+        """print_metadata prints the tree's metadata (#271)."""
+        from grand.dataio import TShower
+        with TShower(str(SAMPLE / "shower_1618-13790_L0_0000.root")) as tree:
+            tree.print_metadata()
+        assert "modification_software" in capsys.readouterr().out
 
     def test_get_metadata_as_dict(self):
         """Test static get_metadata_as_dict method."""
@@ -262,11 +273,12 @@ class TestDataTreeUtilities:
         # Should return a string
         assert isinstance(name, str) or name == ""
 
-    def test_scan_method(self):
-        """Test scan method."""
-        tree = DataTree()
-        # Should not raise
-        tree.scan()
+    def test_scan_method(self, capfd):
+        """scan prints the values ROOT's Scan gives (#271)."""
+        from grand.dataio import TShower
+        with TShower(str(SAMPLE / "shower_1618-13790_L0_0000.root")) as tree:
+            tree.scan("event_number")
+        assert "13790" in capfd.readouterr().out
 
     def test_stop_using(self):
         """Test stop_using removes tree from global list."""
@@ -297,14 +309,17 @@ class TestDataTreeFriends:
         tree1 = DataTree(_tree_name="tree1")
         tree2 = DataTree(_tree_name="tree2")
         # RemoveFriend expects a TTree object, not a string
-        # Should not raise
+        tree1._tree.AddFriend(tree2._tree)
         tree1.remove_friend(tree2._tree)
+        friends = tree1._tree.GetListOfFriends()
+        assert not friends or friends.GetSize() == 0           # it asserted nothing (#271)
 
     def test_add_proper_friends(self):
-        """Test add_proper_friends method."""
+        """add_proper_friends is a no-op in the base class: no friend is added (#271)."""
         tree = DataTree()
-        # Should not raise
-        tree.add_proper_friends()
+        assert tree.add_proper_friends() is None
+        friends = tree._tree.GetListOfFriends()
+        assert not friends or friends.GetSize() == 0
 
 
 # ============================================================================
@@ -315,10 +330,10 @@ class TestDataTreeSpecialMethods:
     """Tests for special methods and edge cases."""
 
     def test_fill_method(self):
-        """Test fill method (base implementation)."""
+        """The base fill adds no entry (#271)."""
         tree = DataTree()
-        # Base implementation does nothing
         tree.fill()
+        assert tree._tree.GetEntries() == 0
 
     def test_fill_entry_list(self):
         """Test fill_entry_list method."""
@@ -342,11 +357,13 @@ class TestDataTreeSpecialMethods:
         assert current_file is not None
 
     def test_copy_contents(self):
-        """Test copy_contents method."""
-        tree1 = DataTree()
-        tree2 = DataTree()
-        # Should not raise
-        tree1.copy_contents(tree2)
+        """copy_contents copies the field values (#271)."""
+        from grand.dataio import TShower
+        source, target = TShower(), TShower()
+        source.run_number, source.event_number, source.zenith = 3, 7, 42.0
+        target.copy_contents(source)
+        assert (int(target.run_number), int(target.event_number)) == (3, 7)
+        assert float(target.zenith) == pytest.approx(42.0)
 
     def test_is_tchain_flag(self):
         """Test is_tchain flag."""

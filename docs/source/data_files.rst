@@ -61,8 +61,9 @@ holds roughly:
 .. note::
 
    ``data/test_efield.root`` appears on many developer machines and is **not**
-   tracked or downloaded by anything.  A test that needs it is marked xfail for
-   that reason; see :doc:`testing`.
+   tracked or downloaded by anything.  No test reads it any more: they use the
+   committed samples under ``sim2root/Common`` and write into temporary
+   folders, never into ``data/``.
 
 The download scripts
 --------------------

@@ -25,6 +25,9 @@ from grand.dataio.descriptors import NotUniqueEvent
 # MotherRunTree Tests
 # ============================================================================
 
+
+SAMPLE_RUN = "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/run_1_L0_0000.root"
+
 class TestMotherRunTree:
     """Tests for MotherRunTree base class."""
 
@@ -67,16 +70,18 @@ class TestMotherRunTree:
         assert isinstance(result, bool)
 
     def test_build_index(self):
-        """Test build_index method."""
-        tree = MotherRunTree()
-        # Should not raise
-        tree.build_index("run_number")
+        """build_index makes get_run find a run (#271)."""
+        from grand.dataio import TRun
+        with TRun(SAMPLE_RUN) as tree:
+            tree.build_index("run_number")
+            assert tree.get_run(1) > 0 and int(tree.run_number) == 1
 
-    def test_print_list_of_runs(self):
-        """Test print_list_of_runs method."""
-        tree = MotherRunTree()
-        # Should not raise
-        tree.print_list_of_runs()
+    def test_print_list_of_runs(self, capsys):
+        """print_list_of_runs lists the runs (#271)."""
+        from grand.dataio import TRun
+        with TRun(SAMPLE_RUN) as tree:
+            tree.print_list_of_runs()
+        assert "1" in capsys.readouterr().out
 
 
 # ============================================================================

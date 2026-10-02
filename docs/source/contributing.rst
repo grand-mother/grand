@@ -132,9 +132,9 @@ not ``np.random.seed(0)``, so a test does not disturb global state that another
 test depends on.  An unseeded draw here failed about one run in six.
 
 Expected failures are a record, not a silencer.  ``tests/conftest.py`` holds a
-``KNOWN_FAILURES`` table with a reason per entry, applied with
-``strict=False``; the reason is the part that matters, and an xfail that starts
-passing is information.  See :doc:`testing`.
+``KNOWN_FAILURES`` table with a reason per entry, applied strictly: the reason
+is the part that matters, and an xfail that starts passing fails the run until
+its entry is removed.  See :doc:`testing`.
 
 Notebooks
 ---------

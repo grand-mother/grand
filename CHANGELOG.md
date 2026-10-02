@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The test suite can fail when it should (#271): expected failures are
+  strict (`xfail_strict = true`), so a fixed test can no longer stay
+  silently green; the three tests that read the untracked
+  `data/test_efield.root` (`test_datatree`, `test_Efield2Voltage`,
+  `test_showerevent`) and the pipeline test now run on the committed
+  sample and write only to temporary folders, and are no longer expected
+  failures; about twenty tests that asserted nothing now check results;
+  the logger tests no longer write into `tests/`; every script is checked
+  to answer `-h` without writing a file. Three expected failures remain.
+
 - The remaining entry points of #267 check their input: `ParticleCode`
   accepts a name (`ParticleCode('proton')`) and otherwise lists the valid
   ones; T1 parameters with `th2 > th1`, `nc_min > nc_max` or a negative

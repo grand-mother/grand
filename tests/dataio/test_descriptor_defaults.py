@@ -39,7 +39,8 @@ def test_run_tree_constructs(name):
     cls = getattr(run_trees, name, None)
     if cls is None:
         pytest.skip('%s is not defined in this version' % name)
-    cls()
+    tree = cls()
+    assert isinstance(tree, cls) and tree._tree is not None        # (#271)
 
 
 @pytest.mark.parametrize('name', EVENT_TREES)
@@ -48,7 +49,8 @@ def test_event_tree_constructs(name):
     cls = getattr(event_trees, name, None)
     if cls is None:
         pytest.skip('%s is not defined in this version' % name)
-    cls()
+    tree = cls()
+    assert isinstance(tree, cls) and tree._tree is not None        # (#271)
 
 
 def test_scalar_default_is_the_declared_default():

@@ -1,36 +1,35 @@
 """
-Unit tests for the grand.sim.efield2voltage module. 
+Unit tests for the grand.sim.efield2voltage module.
 
-Jun 19, 2023.
+Jun 19, 2023.  Rewritten on the committed sample, in a temporary folder: it
+read the untracked data/test_efield.root and wrote into data/ (#271).
 """
-import os
-import unittest
-from tests import TestCase
-from pathlib import Path
+import pathlib
+import shutil
 
-from grand import grand_get_path_root_pkg
+import pytest
+
 from grand import Efield2Voltage
+from grand.dataio import TVoltage
 
-class Efield2VoltageTest(TestCase):
-    """Unit tests for the module to compute voltage from electric field."""
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+SAMPLE = ROOT / "sim2root" / "Common" / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000"
 
-    infile = Path(grand_get_path_root_pkg()) / "data" / "test_efield.root"
-    outfile = Path(grand_get_path_root_pkg()) / "data" / "test_voltage1.root"
+pytestmark = pytest.mark.skipif(not (ROOT / "data" / "detector").exists() or not SAMPLE.is_dir(),
+                                reason="needs the data model and the RUN1 sample")
 
-    def test_Efield2Voltage(self):
-        if self.outfile.exists():
-            os.remove(str(self.outfile))
-        self.assertFalse(self.outfile.exists())
 
-        master = Efield2Voltage(str(self.infile), str(self.outfile))
-        self.assertTrue(master.params["add_noise"])
-        self.assertTrue(master.params["add_rf_chain"])
-        self.assertTrue(master.params["lst"]==18)
+def test_Efield2Voltage(tmp_path):
+    folder = tmp_path / "sample"
+    shutil.copytree(SAMPLE, folder)
+    master = Efield2Voltage(str(folder), "out_voltage.root", output_directory=str(tmp_path), seed=1)
+    assert master.params["add_noise"]
+    assert master.params["add_rf_chain"]
+    assert master.params["lst"] == 18
 
-        master.compute_voltage()    # saves automatically
+    master.compute_voltage()    # saves automatically
 
-        self.assertTrue(self.outfile.exists())
-        os.remove(str(self.outfile))
-
-if __name__ == "__main__":
-    unittest.main()
+    out = tmp_path / "out_voltage.root"
+    assert out.exists()
+    with TVoltage(str(out)) as voltage:
+        assert sorted(voltage.get_list_of_events()) == [(1618, 1), (13790, 1)]

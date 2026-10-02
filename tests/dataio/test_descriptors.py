@@ -154,7 +154,7 @@ class TestStdVectorList:
         svl = StdVectorList("float")
         arr = np.array([1, 2, 3], dtype=dtype)
         svl += arr
-        # Should handle conversion
+        assert list(svl) == [1.0, 2.0, 3.0]                       # (#271)
 
 
 # ============================================================================
@@ -183,29 +183,20 @@ class TestStdVectorListDesc:
         # Basic assignment should work
 
     def test_set_with_numpy_array(self):
-        """Test setting descriptor with numpy array."""
-        from dataclasses import dataclass, field
+        """A vector field takes a numpy array (on a real tree: the dataclass
+        built here before did not install the descriptor, #271)."""
+        from grand.dataio import TRun
 
-        @dataclass
-        class TestClass:
-            vec_field: StdVectorList = field(default_factory=lambda: StdVectorListDesc("float"))
-
-        obj = TestClass()
-        arr = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-        obj.vec_field = arr
-        # Should handle numpy arrays
+        run = TRun()
+        run.t_bin_size = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        assert list(run.t_bin_size) == [1.0, 2.0, 3.0]
 
     def test_set_with_invalid_type(self):
-        """Test that invalid types are handled."""
-        from dataclasses import dataclass, field
+        """A vector field refuses what is not a sequence of numbers (#271)."""
+        from grand.dataio import TRun
 
-        @dataclass
-        class TestClass:
-            vec_field: StdVectorList = field(default_factory=lambda: StdVectorListDesc("float"))
-
-        obj = TestClass()
-        # Descriptors handle type validation internally
-        # This test verifies the descriptor can be created
+        with pytest.raises((TypeError, ValueError)):
+            TRun().t_bin_size = "abc"
 
 
 # ============================================================================

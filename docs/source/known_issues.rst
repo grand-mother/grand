@@ -872,7 +872,8 @@ physics is no longer loaded to read a file.
 The end-to-end test has no input
 ---------------------------------
 
-:Status: open
+:Status: fixed (the numerical regression is covered by
+         ``tests/sim/test_pipeline_golden.py``)
 :Affects: the only test that exercises the whole pipeline
 :Test: ``tests/sim/test_efield2voltage.py``
 
@@ -900,9 +901,9 @@ That needs agreed reference values, which in turn needs the Galactic-noise
 normalisation settled, so it is blocked on
 :ref:`issue-galactic-noise-normalisation` rather than on the fixture.
 
-``tests/sim/test_efield2voltage.py`` still reads the absent
-``data/test_efield.root`` and is still marked xfail; it should be retired in
-favour of the built fixture.
+``tests/sim/test_efield2voltage.py`` now runs on the committed RUN1 sample in
+a temporary folder and checks the events written; it is no longer an
+expected failure.
 
 .. _issue-vga-gain-ignored:
 
