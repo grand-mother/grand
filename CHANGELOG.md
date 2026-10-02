@@ -1403,6 +1403,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- Glossary definitions appear on hover (sphinx-tippy); every page links to a
+  prefilled GitHub issue to report a problem with it, and shows the date its
+  source last changed.
+
 - Three documentation pages: a tutorial that follows one shower from the
   antennas to its reconstructed direction, a one-page cheat sheet, and a
   validation page showing GRANDlib's checks against independent

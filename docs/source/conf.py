@@ -92,7 +92,16 @@ extensions = [
     'myst_parser',              # lets changelog.rst include CHANGELOG.md
     'jupyter_sphinx',           # runs the .. jupyter-execute:: blocks
     'sphinxcontrib.bibtex',     # the References page, from refs.bib
+    'sphinx_tippy',             # glossary definitions on hover
 ]
+
+# Tooltips on glossary links only: the definition appears on hover.  Links to
+# whole pages and to the API stay plain, and nothing is fetched from the web
+# (Wikipedia and DOI lookups are off).
+tippy_skip_urls = [r'^(?!(\.\./)*glossary\.html#term-|#term-)']
+tippy_enable_wikitips = False
+tippy_enable_doitips = False
+tippy_props = {'placement': 'auto-start', 'maxWidth': 400, 'interactive': False}
 
 # One bibliography file, whose entries come from INSPIRE so that keys and
 # metadata match what the literature uses.
@@ -189,10 +198,46 @@ def _write_data_format(app):
     module.write()
 
 
+def _last_updated(app, pagename, templatename, context, doctree):
+    r"""Gives each page the date of the last commit that changed its source.
+
+    The theme prints ``last_updated`` in the footer.  Sphinx's own setting
+    would print the build date on every page, which says nothing about the
+    page.  Pages generated from the code (the API reference and the data
+    format reference) get no date, since their source file is not their
+    content.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+    pagename : str
+    templatename : str
+    context : dict
+        The template context, updated in place.
+    doctree : docutils.nodes.document or None
+    """
+    import datetime
+    import subprocess
+
+    if doctree is None or pagename.startswith('api') or pagename == 'data_format':
+        return
+    source = app.env.doc2path(pagename)
+    try:
+        date = subprocess.run(['git', 'log', '-1', '--format=%cs', '--', str(source)],
+                              cwd=app.srcdir, capture_output=True, text=True,
+                              timeout=20).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return
+    if date:
+        day = datetime.date.fromisoformat(date)
+        context['last_updated'] = '%s %d, %d' % (day.strftime('%B'), day.day, day.year)
+
+
 def setup(app):
-    r"""Sphinx entry point: registers the generated stylesheet and data-format page."""
+    r"""Sphinx entry point: registers the generated files and the page dates."""
     app.connect('builder-inited', _write_version_css)
     app.connect('builder-inited', _write_data_format)
+    app.connect('html-page-context', _last_updated)
 
 html_theme_options = {
     'logo_only': True,          # the logo already says "GRANDlib"

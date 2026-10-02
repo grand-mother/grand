@@ -87,7 +87,7 @@ dev = [
 analysis = ["iminuit"]
 docs = [
     "sphinx", "sphinx-rtd-theme", "sphinx-copybutton", "numpydoc",
-    "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel",
+    "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel", "sphinx-tippy",
     # jupyter-sphinx executes the docstring examples in a real kernel, so
     # what those examples import has to be installed too.
     "numpy", "scipy", "matplotlib",

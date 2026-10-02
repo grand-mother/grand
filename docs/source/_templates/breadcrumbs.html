@@ -1,0 +1,12 @@
+{#- Adds "Report a problem with this page" beside "Edit on GitHub": a new
+    GitHub issue, its title and first lines filled in with the page. -#}
+{%- extends "!breadcrumbs.html" %}
+{%- block breadcrumbs_aside %}
+  {{ super() }}
+  {%- if hasdoc(pagename) %}
+      <li class="wy-breadcrumbs-aside">
+        <a href="https://github.com/grand-mother/grand/issues/new?labels=documentation&amp;title={{ ('Docs: ' ~ (title|striptags))|urlencode }}&amp;body={{ ('Page: https://grand-mother.github.io/grand/' ~ pagename ~ '.html\n\nWhat is wrong or unclear:\n')|urlencode }}"
+           class="fa fa-exclamation-circle"> {{ _('Report a problem with this page') }}</a>&nbsp;&nbsp;
+      </li>
+  {%- endif %}
+{%- endblock %}

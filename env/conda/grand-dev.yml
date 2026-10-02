@@ -57,6 +57,7 @@ dependencies:
   - myst-parser
   - jupyter-sphinx
   - sphinxcontrib-bibtex   # the References page
+  - sphinx-tippy           # glossary definitions on hover
   - ipykernel
   # --- grand.analysis, the reconstruction package (from dev_marion) ---
   # Every fitting module imports it.  Not needed by `import grand` or by
