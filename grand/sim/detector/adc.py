@@ -16,6 +16,14 @@ class ADC:
     - a sampling rate of 500 MHz
     - 14 bits centered around 0 V <-> 0 ADC counts, with 13 positive and 13 negative bits
     - a saturation at an input voltage of +/- 0.9 V
+
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Computes the voltages the ADC digitizes.
+    grand.sim.detector.trigger.t1_du_triggers
+        The T1 trigger on the digitized traces.
+
     '''
 
     def __init__(self):

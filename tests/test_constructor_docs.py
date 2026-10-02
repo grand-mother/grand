@@ -96,5 +96,5 @@ def test_the_parameters_come_before_the_examples():
     from grand.dataio.event_trees import TShower
 
     doc = TShower.__doc__
-    assert doc.index("\nParameters\n") < doc.index("\nExamples\n")
-    assert doc.count("\nExamples\n") == 1
+    assert doc.index("\nParameters\n") < doc.index("\nSee Also\n") < doc.index("\nExamples\n")
+    assert doc.count("\nExamples\n") == 1 and doc.count("\nSee Also\n") == 1

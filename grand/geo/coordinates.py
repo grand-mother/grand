@@ -1275,6 +1275,13 @@ class Geodetic(GeodeticRepresentation):
     Conversions to and from the local frames (:class:`LTP`, :class:`GRANDCS`)
     pass through :class:`ECEF`, whose origin is the center of the Earth.
 
+    See Also
+    --------
+    grand.geo.coordinates.GRANDCS
+        The array frame.
+    grand.geo.topography.geoid_undulation
+        Between the ellipsoid and sea level.
+
     Examples
     --------
     Conversion to any local frame passes through :class:`ECEF`, and the round
@@ -1922,6 +1929,11 @@ class LTP(CartesianRepresentation):
     Basis and origin is calculated in ECEF frame.
     'location' and 'orientation' are required.
 
+    See Also
+    --------
+    grand.geo.coordinates.GRANDCS
+        The array frame: north, west, up, from magnetic north.
+
     Examples
     --------
     The same three numbers name different places in different orientations: 1 km
@@ -2290,6 +2302,13 @@ class GRANDCS(LTP):
 
     Use inverse (transpose) of rotational matrix to convert from GRANDCS cs to ECEF. Then
     convert from ECEF to Geodetic.
+
+    See Also
+    --------
+    grand.geo.coordinates.LTP
+        A local frame with a chosen orientation.
+    grand.geo.coordinates.Geodetic
+        Latitude, longitude and height.
 
     Examples
     --------

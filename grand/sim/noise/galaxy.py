@@ -99,6 +99,13 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         not one of the three tabulated models, or if `freqs_mhz` is not
         uniformly spaced and increasing.
 
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Adds this noise to simulated voltages.
+    grand.sim.detector.rf_chain.RFChain
+        The chain the noise passes through.
+
     Examples
     --------
     One realization of the noise spectrum for two units at 18 h local sidereal

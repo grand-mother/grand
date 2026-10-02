@@ -268,6 +268,15 @@ def t1_du_triggers(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     numpy.ndarray of bool
         One value per DU.
 
+    See Also
+    --------
+    grand.sim.detector.trigger.t1_channel_trigger
+        T1 on one channel.
+    grand.sim.detector.trigger.extract_trigger_parameters
+        The quantities T1 decides on.
+    grand.sim.detector.adc.ADC.process
+        Produces the ADC traces T1 reads.
+
     Examples
     --------
     Which units of a digitized event pass T1 with the default parameters:

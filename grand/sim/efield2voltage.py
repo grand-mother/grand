@@ -230,6 +230,17 @@ class Efield2Voltage:
         Unknown keys and invalid values are refused when the computation
         starts.
 
+    See Also
+    --------
+    grand.sim.detector.adc.ADC
+        Digitizes the voltages this class writes.
+    grand.sim.detector.rf_chain.RFChain
+        The RF chain applied to the open-circuit voltage.
+    grand.sim.noise.galaxy.galactic_noise
+        The Galactic noise it adds.
+    grand.sim.detector.antenna_model.AntennaModel
+        The antenna response it uses.
+
     Examples
     --------
     Simulate the voltages of the shower that ships with the repository, with the

@@ -143,10 +143,13 @@ def document_fields(cls):
         section.append("%s : %s" % (name, kind))
         if text:
             section.extend("    " + line for line in text.splitlines())
-    # numpydoc puts Examples last, so the parameters go before them
-    head, sep, examples = doc.partition("\nExamples\n--------\n")
+    # numpydoc's order: Parameters before See Also, Notes and Examples
+    later = [m.start() for m in (re.search(r"\n%s\n-{%d}\n" % (name, len(name)), doc)
+                                 for name in ("See Also", "Notes", "Examples")) if m]
+    cut = min(later) if later else len(doc)
+    head, tail = doc[:cut], doc[cut:]
     text = (head.rstrip() + "\n\n" if head.strip() else "") + "\n".join(section) + "\n"
-    if sep:
-        text += "\nExamples\n--------\n" + examples + "\n"
+    if tail.strip():
+        text += "\n" + tail.strip("\n") + "\n"
     cls.__doc__ = text
     return cls

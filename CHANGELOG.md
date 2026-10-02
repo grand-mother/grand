@@ -1582,6 +1582,9 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The main entry points' docstrings link to related functions in a See Also
+  section: the simulation chain, the trees, the frames and the plane-wave fit.
+
 - The documentation uses one name per concept: *detection unit* (or *unit*)
   for the station and *antenna* for the antenna itself, *arm* for the three
   antenna arms and *channel* only for the ADC's inputs, *electric field* in

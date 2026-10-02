@@ -411,7 +411,16 @@ class MotherEventTree(DataTree):
 @dataclass
 ## The class for storing ADC traces and associated values for each event
 class TADC(MotherEventTree):
-    """Digitized traces of each event, in ADC counts, with each detection unit's status and firmware settings."""
+    """Digitized traces of each event, in ADC counts, with each detection unit's status and firmware settings.
+
+    See Also
+    --------
+    grand.sim.detector.adc.ADC
+        Digitizes simulated voltages into these traces.
+    grand.sim.detector.trigger.t1_du_triggers
+        The T1 trigger on these traces.
+
+    """
 
     _type: str = "adc"
 
@@ -865,7 +874,16 @@ class TRawVoltage(MotherEventTree):
 @dataclass
 ## The class for storing voltage traces and associated values for each event
 class TVoltage(MotherEventTree):
-    """Voltage traces of each event, in µV, as simulated by ``Efield2Voltage``."""
+    """Voltage traces of each event, in µV, as simulated by ``Efield2Voltage``.
+
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Writes this tree.
+    grand.dataio.event_trees.TADC
+        The digitized traces.
+
+    """
 
     _type: str = "voltage"
 
@@ -937,6 +955,13 @@ class TVoltage(MotherEventTree):
 ## The class for storing Efield traces and associated values for each event
 class TEfield(MotherEventTree):
     """Electric-field traces of each event at each detection unit, in µV/m.
+
+    See Also
+    --------
+    grand.dataio.run_trees.TRun
+        The positions of the units, by ``du_id``.
+    grand.sim.efield2voltage.Efield2Voltage
+        Turns these traces into voltages.
 
     Examples
     --------
@@ -1016,6 +1041,13 @@ class TEfield(MotherEventTree):
 ## The class for storing reconstructed shower data common for each event
 class TShower(MotherEventTree):
     """The shower of each event: primary, energy, direction, core and shower maximum.
+
+    See Also
+    --------
+    grand.dataio.event_trees.TShowerSim
+        What a simulation adds about the shower.
+    grand.dataio.event_trees.TEfield
+        The electric field of the same event.
 
     Examples
     --------

@@ -20,6 +20,13 @@ class EventList:
     that one object several times, showing the last event. Copy what you need
     from each event before reading the next.
 
+    See Also
+    --------
+    grand.aoi.event.Event
+        The event each iteration gives.
+    grand.dataio.data_handling.DataDirectory
+        The trees of a folder, without joining them into events.
+
     Examples
     --------
     Loop over the events of a simulation folder.  The same ``Event`` object is

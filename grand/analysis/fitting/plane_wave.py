@@ -28,6 +28,13 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     ndarray: Theta in [0, pi] and phi in [0, 2*pi), in radians: the direction
     the shower comes from.
 
+    See Also
+    --------
+    grand.analysis.fitting.spherical.recons_swf
+        The spherical-wave fit, which also gives the distance to the source.
+    grand.analysis.fitting.adf.recons_ADF
+        The amplitude fit.
+
     Examples
     --------
     Recover the direction of a plane wave from the times it reaches 30 antennas.

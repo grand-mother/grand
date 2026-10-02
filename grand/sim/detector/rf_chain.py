@@ -1935,6 +1935,13 @@ class RFChain(GenericProcessingDU):
     """
     Facade for all elements in RF chain
 
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Applies this chain to simulated voltages.
+    grand.sim.detector.rf_chain.s2abcd
+        Converts measured S-parameters to the cascadable form.
+
     Examples
     --------
     The magnitude of the transfer function, from the open-circuit voltage to the

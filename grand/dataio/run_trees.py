@@ -167,6 +167,13 @@ class MotherRunTree(DataTree):
 class TRun(MotherRunTree):
     """What stays the same over a run: the site, the layout and the detection units.
 
+    See Also
+    --------
+    grand.geo.coordinates.GRANDCS
+        The array frame of ``du_xyz``.
+    grand.dataio.event_trees.TEfield
+        The traces of the units it lists.
+
     Examples
     --------
     Read the site and the antenna layout of a run:

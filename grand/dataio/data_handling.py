@@ -31,6 +31,13 @@ _ABSENT_TREE = re.compile(r"^f?t(run|runvoltage|runrawvoltage|rawvoltage|adc|vol
 class DataDirectory:
     """Class holding the information about GRAND data in a directory
 
+    See Also
+    --------
+    grand.aoi.event_list.EventList
+        Events joined from these trees.
+    grand.dataio.event_trees.TEfield
+        One of the trees it opens.
+
     Examples
     --------
     Open every tree of a folder, and pick one by type and analysis level:

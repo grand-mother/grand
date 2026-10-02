@@ -141,6 +141,13 @@ class AntennaModel:
     Loads the tabulated response and provides it on whatever frequency and
     direction grid the caller needs.
 
+    See Also
+    --------
+    grand.sim.detector.process_ant.AntennaProcessing
+        Interpolates this response for a direction.
+    grand.sim.efield2voltage.Efield2Voltage
+        Uses it to compute the open-circuit voltage.
+
     Examples
     --------
     The tables of one arm.  The frequency axis is in **Hz**, unlike the rest of
