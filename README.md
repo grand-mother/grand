@@ -1,105 +1,86 @@
 # GRANDlib
 
-[![tests](https://github.com/grand-mother/grand/actions/workflows/tests.yml/badge.svg)](https://github.com/grand-mother/grand/actions/workflows/tests.yml)
-[![Code Quality](https://github.com/grand-mother/grand/actions/workflows/lint.yml/badge.svg)](https://github.com/grand-mother/grand/actions/workflows/lint.yml)
-[![codecov](https://codecov.io/gh/grand-mother/grand/branch/main/graph/badge.svg)](https://codecov.io/gh/grand-mother/grand)
-[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://grand-mother.github.io/grand-docs)
-[![PyPI](https://img.shields.io/pypi/v/grand.svg)](https://pypi.org/project/grand/)
+[![tests](https://github.com/grand-mother/grand/actions/workflows/tests-conda.yml/badge.svg?branch=dev-next)](https://github.com/grand-mother/grand/actions/workflows/tests-conda.yml)
+[![Code Quality](https://github.com/grand-mother/grand/actions/workflows/lint.yml/badge.svg?branch=dev-next)](https://github.com/grand-mother/grand/actions/workflows/lint.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://grand-mother.github.io/grand)
 [![arXiv](https://img.shields.io/badge/arXiv-2408.10926-orange.svg)](https://arxiv.org/abs/2408.10926)
 [![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.cpc.2024.109461-blue.svg)](https://doi.org/10.1016/j.cpc.2024.109461)
-[![INSPIRE](https://img.shields.io/badge/INSPIRE-cited%20by-003a6c.svg)](https://inspirehep.net/literature?q=refersto%20recid%202821264)
 [![License: LGPL-3.0](https://img.shields.io/badge/License-LGPL--3.0-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-Offline data handling, simulation and analysis for the
-[Giant Radio Array for Neutrino Detection](http://grand.cnrs.fr).
+GRANDlib is the software library of the
+[Giant Radio Array for Neutrino Detection](http://grand.cnrs.fr) (GRAND).
+It takes the radio pulse that an air-shower code (ZHAireS or CoREAS) computes
+at each antenna and turns it into the voltages and ADC counts that a GRAND
+detection unit records: antenna response, Galactic noise, RF chain and
+digitization.  It also defines the ROOT data format the collaboration stores
+simulated and measured data in, the coordinate frames, terrain and
+geomagnetic field that tie them to real sites and tools to reconstruct a
+shower from recorded signals.
 
-> **Some badges above are not green yet.** Continuous integration is being
-> rebuilt and the package is not yet on PyPI. They are here so that they turn
-> green as each piece lands rather than being added after the fact. See
-> [`resources/dev/dev-next/RECOVERY_PLAN.md`](resources/dev/dev-next/RECOVERY_PLAN.md).
-
-## Work is happening on `dev-next`, and nothing is being deleted
-
-`dev-next` is the integration branch for the repository overhaul, cut from
-`dev`. All new work lands there.
-
-**If it goes wrong, the recovery is one step: unfreeze `dev` and carry on.**
-
-That is true because `dev`, `master` and all thirty-eight branches stay
-untouched until the final phase of the plan, months from now — and `master`
-is already tagged `archive/master-2025-03`, so it is recoverable from any
-clone whatever happens to the branch name. Nothing in this overhaul is
-irreversible, and nothing is thrown away to make it work.
-
-## What it does
-
-GRANDlib performs end-to-end simulation of the detector: from an electric
-field produced by an external air-shower simulation, through the antenna
-response, the Galactic noise and the radio-frequency chain, to the digitized
-voltage a detection unit records. It also defines the data format the
-collaboration uses, and the coordinate systems everything is expressed in.
-
-It deliberately does little physics itself. Air showers and their radio
-emission come from ZHAireS or CoREAS, tau propagation from DANTON, terrain
-from TURTLE, the geomagnetic field from GULL. What GRANDlib owns is the
-schema, the frame conversions, and the instrument response.
+Development happens on the `dev-next` branch.
 
 ## Installation
 
+GRANDlib runs on Linux x86-64 with Python 3.10 or later and needs ROOT.  The
+conda environment in this repository provides everything:
+
 ```bash
+git clone https://github.com/grand-mother/grand.git
+cd grand
 conda env create -f env/conda/grand-dev.yml --solver=libmamba
 conda activate grand-dev
 source env/setup.sh
 ```
 
-`env/setup.sh` compiles the TURTLE and GULL bindings and downloads the data
-model. Full instructions, including what the environment provides and what
-does not work yet, are on the [installation
-page](docs/source/installation.rst).
+`env/setup.sh` compiles the TURTLE and GULL libraries and downloads about 1 GB
+of model data.  With ROOT already installed, `pip install -e ".[dev]"`
+followed by `source env/setup.sh` works too; GRANDlib is not on PyPI yet.  The
+[installation page](docs/source/installation.rst) covers both routes and
+Docker.
 
-## Quickstart
+## Quick start
 
-The input is a simulation directory as sim2root writes it (`efield_*`,
-`run_*` and `shower_*` files), for example
-`sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000`; a single
-e-field file is not enough, since the run and shower trees are needed too.
+Simulate the voltages of the shower that ships with the repository, from the
+repository root:
 
 ```python
 from grand import Efield2Voltage
 
-signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
-signal.params["add_noise"]    = True
-signal.params["add_rf_chain"] = True
-signal.compute_voltage()
+sim = Efield2Voltage("sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000",
+                     "voltage.root", output_directory=".", seed=1, efield_level=0)
+sim.compute_voltage()        # 44 antennas, about 10 s on one core
 ```
 
-or from a shell:
+or, from a shell, voltage then ADC counts:
 
 ```bash
-python scripts/convert_efield2voltage.py my_simulation -o voltage.root -od .
+python scripts/convert_efield2voltage.py <simulation folder> --lst 18
+python scripts/convert_voltage2adc.py <simulation folder>
 ```
+
+The [quick start guide](docs/source/quickstart.rst) continues from here.
 
 ## Documentation
 
-Build it locally:
+The documentation covers installation, a quick start, recipes for common
+tasks, the coordinate conventions and units, the data format, the simulation
+chain and an API reference.  Build it locally with
 
 ```bash
-cd docs && make html
+cd docs && make html         # then open docs/build/html/index.html
 ```
 
-The narrative pages cover [coordinate
-systems](docs/source/coordinates.rst) — the largest source of user error —
-the [data model](docs/source/datamodel.rst), the [code
-architecture](docs/source/architecture.rst), and [known
-issues](docs/source/known_issues.rst).
+Twelve worked [notebooks](notebooks/) show each part of the library with
+figures and can be read on GitHub without running them.
 
-## Contributing
+## Reporting problems and contributing
 
-Issues can be [reported on
-GitHub](https://github.com/grand-mother/grand/issues). Pull requests are
-welcome; fork and clone first.
+Report problems in the [issue tracker](https://github.com/grand-mother/grand/issues);
+the [known issues](docs/source/known_issues.rst) page lists the open ones that
+affect results.  Pull requests are welcome; the
+[contributing guide](docs/source/contributing.rst) describes the checks a
+change must pass.
 
 ## Citing
 
@@ -126,11 +107,11 @@ If GRANDlib contributes to work you publish, please cite:
 }
 ```
 
-## Acknowledgements
+## Acknowledgments
 
 The GRAND Collaboration acknowledges the support from the National Science
 Centre Poland for NCN OPUS grant no. 2022/45/B/ST2/02889.
 
 ## License
 
-LGPL-3.0. See [LICENSE](LICENSE) and [COPYING.LESSER](COPYING.LESSER).
+LGPL-3.0-or-later.  See [LICENSE](LICENSE) and [COPYING.LESSER](COPYING.LESSER).

@@ -44,7 +44,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 CONVERTER = ROOT / 'sim2root' / 'ZHAireSRawRoot' / 'ZHAireSRawToRawROOT.py'
 
 #: The abandoned copy of the ZHAireS tooling.  See the tests at the end of this
-#: file and ``issue-src-outlib-conflict`` in the documentation.
+#: file and the note on ``src_outlib/`` in the Contributing page.
 OUTLIB = ROOT / 'src_outlib'
 LIVE_AIRES = ROOT / 'sim2root' / 'ZHAireSRawRoot' / 'AiresInfoFunctionsGRANDROOT.py'
 STALE_AIRES = OUTLIB / 'AiresInfoFunctionsGRANDROOT.py'

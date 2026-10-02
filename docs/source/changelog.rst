@@ -1,9 +1,9 @@
 Changelog
 =========
 
-This page renders the project's root `CHANGELOG.md
-<https://github.com/grand-mother/grand/blob/main/CHANGELOG.md>`_ directly, so
-there is one source of truth kept up to date in one place.
+Every change to GRANDlib, with the reason for it and the issue it closes, is
+recorded in `CHANGELOG.md
+<https://github.com/grand-mother/grand/blob/dev-next/CHANGELOG.md>`_ in the
+repository.  It is written for developers, so it is long and detailed.
 
-.. include:: ../../CHANGELOG.md
-   :parser: myst
+For the changes that matter when using GRANDlib, see :doc:`whatsnew`.

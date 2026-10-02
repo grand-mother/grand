@@ -51,8 +51,7 @@ class Snapshot:
         ----------
         filename : str or Path, optional
             The file holding the model coefficients (IGRF13.COF or
-            WMM2020.COF); the shipped IGRF13 by default.  The default was an
-            empty name, so ``Snapshot()`` failed, and a Path was refused (#267).
+            WMM2020.COF); the shipped IGRF13 by default.
         date : str or datetime.date
             The day at which the snapshot is taken
 
@@ -185,7 +184,7 @@ class Snapshot:
         Returns
         -------
         tuple of float
-            Altitude range the snapshot is valid over, in metres.
+            Altitude range the snapshot is valid over, in meters.
         """
         return self._altitude
 

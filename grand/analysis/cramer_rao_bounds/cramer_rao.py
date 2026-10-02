@@ -24,7 +24,7 @@ def _warn_if_ill_conditioned(fisher, where, threshold=_ILL_CONDITIONED):
     r"""Warns when the Fisher matrix is close to singular.
 
     The matrix is first scaled to unit diagonal, so that parameters in very
-    different units (radians, metres, seconds) do not make every case look
+    different units (radians, meters, seconds) do not make every case look
     ill-conditioned.
     """
     diag = np.sqrt(np.abs(np.diag(fisher)))
@@ -56,7 +56,7 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
     phi_adf : float
         Azimuth angle from ADF reconstruction (radians).
     delta_omega : float
-        Width parameter of the ADF, in radians (not an uncertainty, #216).
+        Width parameter of the ADF, in radians (not an uncertainty).
     scaling_factor : float
         Scaling factor for the amplitude model.
     Xants : np.ndarray
@@ -73,9 +73,8 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
         inverse Fisher matrix) an unbiased fit can reach, for the parameters
         in the order of the arguments: theta_swf, phi_swf (radians),
         r_xsource (m), t_s (s), theta_adf, phi_adf, delta_omega (radians),
-        scaling_factor.  All NaN if the Fisher matrix cannot be inverted
-        (#261).  They are bounds for the joint time-and-amplitude model, so
-        lower than a time-only spherical fit can reach (#216).
+        scaling_factor.  All NaN if the Fisher matrix cannot be inverted.  They are bounds for the joint time-and-amplitude model, so
+        lower than a time-only spherical fit can reach.
     """
     # Number of antennas
     where = "CRB_ADF_SWF"
@@ -181,9 +180,9 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
     np.ndarray, shape (2,)
         The smallest standard deviations of theta_pwf and phi_pwf an unbiased
         fit can reach, in radians (square roots of the diagonal of the
-        inverse Fisher matrix) (#261).  At zenith 0 or pi the azimuth is
+        inverse Fisher matrix).  At zenith 0 or pi the azimuth is
         undefined: its bound is ``inf``, with a warning, and the zenith bound
-        is the one for a known azimuth (#288).
+        is the one for a known azimuth.
     """
     # Number of antennas
     where = "CRB_PWF"

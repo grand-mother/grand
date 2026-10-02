@@ -5,7 +5,7 @@ The conversion scripts paired an event with its run by run number and its
 units by ``du_id`` deep inside the computation, so an inconsistent folder
 failed far from the cause -- "operands could not be broadcast together with
 shapes (0,) (44,)", ``IndexError``, ``AttributeError`` on ``None`` -- or was
-accepted silently (#249).  :func:`check_event_trees` is called by
+accepted silently.  :func:`check_event_trees` is called by
 ``Efield2Voltage`` and the conversion scripts after opening their input and
 before computing anything.
 """

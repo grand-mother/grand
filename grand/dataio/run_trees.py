@@ -15,6 +15,7 @@ class MotherRunTree(DataTree):
     """A mother class for classes with Run values"""
 
     run_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run number, which identifies the entry"""
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
@@ -86,8 +87,7 @@ class MotherRunTree(DataTree):
         Raises
         ------
         LookupError
-            When the tree has no such run.  It returned 0 and left the
-            previous run's values loaded (#206).
+            When the tree has no such run.
         """
         self._check_open("get_run")
         # Make sure we have an int; int() gave a bare ValueError for 'x' (#236)
@@ -165,7 +165,35 @@ class MotherRunTree(DataTree):
 @dataclass
 ## A class wrapping around a TTree holding values common for the whole run
 class TRun(MotherRunTree):
-    """A class wrapping around a TTree holding values common for the whole run"""
+    """What stays the same over a run: the site, the layout and the detection units.
+
+    See Also
+    --------
+    grand.geo.coordinates.GRANDCS
+        The array frame of ``du_xyz``.
+    grand.dataio.event_trees.TEfield
+        The traces of the units it lists.
+
+    Examples
+    --------
+    Read the site and the antenna layout of a run:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import numpy as np
+        import grand
+        from grand.dataio import TRun
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        with TRun(str(sample / "run_1_L0_0000.root")) as trun:
+            trun.get_entry(0)
+            print("site %s, origin (lat, lon, height) %s" % (trun.site, np.asarray(trun.origin_geoid)))
+            print("%d antennas; the first at %s m (x north, y west, z up)"
+                  % (len(trun.du_id), np.round(np.asarray(trun.du_xyz)[0], 1)))
+    """
 
     _type: str = "run"
 
@@ -173,16 +201,16 @@ class TRun(MotherRunTree):
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
     run_mode: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment"""
+    """Run mode (calibration, test or physics).  The values are not yet defined."""
     ## Run's first event
     first_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Run's first event"""
+    """Number of the run's first event."""
     ## First event time
     first_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """Time of the first event, in Unix seconds"""
     ## Run's last event
     last_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Run's last event"""
+    """Number of the run's last event."""
     ## Last event time
     last_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """Time of the last event, in Unix seconds"""
@@ -190,61 +218,61 @@ class TRun(MotherRunTree):
     # These are not from the hardware
     ## Data source: detector, sim, other
     data_source: StdStringDesc = field(default=StdStringDesc("detector"))
-    """Data source: detector, sim, other"""
+    """Where the data come from: ``detector``, ``sim`` or ``other``."""
     ## Data generator: gtot (in this case)
     data_generator: StdStringDesc = field(default=StdStringDesc("GRANDlib"))
-    """Data generator: gtot (in this case)"""
+    """Name of the program that produced the data."""
     ## Generator version: gtot version (in this case)
     data_generator_version: StdStringDesc = field(default=StdStringDesc("0.1.0"))
-    """Generator version: gtot version (in this case)"""
+    """Version of the program that produced the data."""
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
     event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
+    """Trigger type: 0x1000 for the 10-second trigger, 0x8000 for a random trigger; any other value is a shower trigger."""
     ## Event format version of the DAQ
     event_version: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Event format version of the DAQ"""
+    """Version of the DAQ's event format."""
     ## Site name
     # _site: StdVectorList("string") = StdVectorList("string")
     site: StdStringDesc = field(default=StdStringDesc())
-    """Site name"""
+    """Name of the site, such as ``Dunhuang`` or ``Xiaodushan``."""
     ## Site layout
     site_layout: StdStringDesc = field(default=StdStringDesc())
-    """Site layout"""
+    """Name of the antenna layout, such as ``GP300``."""
     ## Origin of the coordinate system used for the array
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32, component_limits=(
         ("latitude", -90, 90, "degrees"), ("longitude", -360, 360, "degrees"), None)))
-    """Origin of the array frame: (latitude in degrees, longitude in degrees, height in metres).  du_xyz is relative to it"""
+    """Origin of the array frame: (latitude in degrees, longitude in degrees, height in meters).  du_xyz is relative to it"""
 
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int", minimum=0, maximum=65535))
-    """Detector unit (antenna) ID"""
+    """Identifier of each detection unit."""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in metres) per DU"""
+    """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in meters) per DU"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
     du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>", inner_length=3))
-    """Detector unit (antenna) (x,y,z) position in site's referential"""
+    """Position of each unit in the array frame, in meters: x north, y west and z up, relative to ``origin_geoid``."""
     ## Detector unit type
     du_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
-    """Detector unit type"""
+    """Antenna type of each unit."""
     ## Detector unit (antenna) angular tilt
     du_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Detector unit (antenna) angular tilt"""
+    """Tilt of each antenna, as two angles."""
     ## Angular tilt of the ground at the antenna
     du_ground_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Angular tilt of the ground at the antenna"""
+    """Tilt of the ground at each antenna, as two angles."""
     ## Detector unit (antenna) nut ID
     du_nut: StdVectorListDesc = field(default=StdVectorListDesc("int"))
-    """Detector unit (antenna) nut ID"""
+    """Identifier of each unit's nut, the antenna head that holds the low-noise amplifier."""
     ## Detector unit (antenna) FrontEnd Board ID
     du_feb: StdVectorListDesc = field(default=StdVectorListDesc("int"))
-    """Detector unit (antenna) FrontEnd Board ID"""
+    """Identifier of each unit's front-end board."""
     ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
     t_bin_size: StdVectorListDesc = field(default=StdVectorListDesc("float", positive=True, unit="ns"))
-    """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
+    """Sampling interval of each unit's traces, in ns: the inverse of the sampling frequency."""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -260,7 +288,7 @@ class TRun(MotherRunTree):
 @dataclass
 ## General info on the voltage common to all events.
 class TRunVoltage(MotherRunTree):
-    """General info on the voltage common to all events."""
+    """Settings of the voltage traces, common to all events of a run."""
 
     _type: str = "runvoltage"
 
@@ -316,7 +344,7 @@ class TRunVoltage(MotherRunTree):
     """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -332,7 +360,7 @@ class TRunVoltage(MotherRunTree):
 @dataclass
 ## General info on the raw voltage common to all events.
 class TRunRawVoltage(MotherRunTree):
-    """General info on the voltage common to all events."""
+    """Settings of the raw voltage traces, common to all events of a run."""
 
     _type: str = "runrawvoltage"
 
@@ -399,7 +427,7 @@ class TRunRawVoltage(MotherRunTree):
     """ADC to voltage conversion factor"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -415,7 +443,7 @@ class TRunRawVoltage(MotherRunTree):
 @dataclass
 ## The class for storing Efield sim-only data common for a whole run
 class TRunEfieldSim(MotherRunTree):
-    """The class for storing Efield sim-only data common for a whole run"""
+    """Simulation settings of the electric-field traces, common to all events of a run."""
 
     _type: str = "runefieldsim"
 
@@ -425,6 +453,7 @@ class TRunEfieldSim(MotherRunTree):
     refractivity_model: StdStringDesc = field(default=StdStringDesc())
     """Name of the atmospheric index of refraction model"""
     refractivity_model_parameters: StdVectorListDesc = field(default=StdVectorListDesc("double"))
+    """Parameters of ``refractivity_model``; their meaning depends on the model (the CoREAS converter writes the placeholder [1, 1, 1])"""
     ## Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)
     t_pre: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Start of the antenna data window before the trigger, in ns (it can be shorter than the voltage trace, so this can differ from the voltage's)"""
@@ -443,7 +472,7 @@ class TRunEfieldSim(MotherRunTree):
     """Simulator version string"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -459,7 +488,7 @@ class TRunEfieldSim(MotherRunTree):
 @dataclass
 ## The class for storing shower sim-only data common for a whole run
 class TRunShowerSim(MotherRunTree):
-    """Run-level info associated with simulated showers"""
+    """Simulation settings of the showers, common to all events of a run."""
 
     _type: str = "runshowersim"
 
@@ -503,7 +532,7 @@ class TRunShowerSim(MotherRunTree):
     """Simulator version string"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -519,7 +548,7 @@ class TRunShowerSim(MotherRunTree):
 @dataclass
 ## General info on the noise generation
 class TRunNoise(MotherRunTree):
-    """General info on the noise generation"""
+    """Settings of the Galactic-noise generation for a run."""
 
     _type: str = "runnoise"
 
@@ -536,7 +565,7 @@ class TRunNoise(MotherRunTree):
     """Galactic-noise standard deviation for each arm of each antenna, in µV"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()

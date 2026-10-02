@@ -16,6 +16,14 @@ class ADC:
     - a sampling rate of 500 MHz
     - 14 bits centered around 0 V <-> 0 ADC counts, with 13 positive and 13 negative bits
     - a saturation at an input voltage of +/- 0.9 V
+
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Computes the voltages the ADC digitizes.
+    grand.sim.detector.trigger.t1_du_triggers
+        The T1 trigger on the digitized traces.
+
     '''
 
     def __init__(self):
@@ -46,6 +54,17 @@ class ADC:
         downsampled_voltage_trace : np.ndarray[double]
             Array of downsampled voltage traces, with shape (N_du,3,N_samples), in µV.
 
+        Examples
+        --------
+        Simulated voltages are sampled at 2 GHz; the ADC samples at 500 MHz:
+
+        .. jupyter-execute::
+
+            import numpy as np
+            from grand import ADC
+
+            voltage = np.zeros((1, 3, 8192))                     # one unit, 4.096 µs at 2 GHz
+            print(ADC().downsample(voltage, 2000.0).shape)
         '''
         # A rate of 0, NaN or below 0 failed with a bare ZeroDivisionError or
         # a negative dimension (#289)

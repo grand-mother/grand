@@ -1,221 +1,51 @@
 API reference
 =============
 
-Generated from the docstrings.
-
-Of the 702 functions and methods in the package, 691 carry a description.
-60 % also carry a ``Parameters`` section and 55 % a ``Returns`` section; the
-remainder are functions that take no arguments or return nothing, where
-numpydoc asks for neither.  17 carry a worked example, concentrated on the
-entry points where an example earns its keep.
-
-Run ``python quality/docstring_coverage.py`` to reproduce those figures.
-
-.. note::
-
-   The modules below are grouped by what they are for, not by their import
-   path.  All of the package's modules are here except
-   ``grand/sim/noise/Compute_Plot_Galactic_Noise.py``, which is a script rather
-   than a module -- it plots on import -- and would execute during the build.  ``grand.geo.gull`` and ``grand.geo.turtle`` are the ``cffi`` bindings
-   to the compiled libraries and are documented here for completeness; most
-   users reach them through :mod:`grand.geo.geomagnet` and
-   :mod:`grand.geo.topography` instead.
-
-Geometry and frames
--------------------
-
-.. automodule:: grand.geo.coordinates
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: grand.geo.topography
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.geo.geomagnet
-   :members:
-
-Data model
-----------
-
-The ROOT schema and the layer that reads and writes it.  See :doc:`datamodel`
-for the conventions these classes assume.
-
-.. automodule:: grand.dataio.run_trees
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.dataio.event_trees
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.dataio.data_tree
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.dataio.descriptors
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.dataio.root_files
-   :members:
-
-.. automodule:: grand.dataio.data_handling
-   :members:
-
-.. automodule:: grand.dataio.protocol
-   :members:
-
-.. automodule:: grand.dataio.xmax_frame
-   :members:
-
-Simulation
-----------
-
-.. automodule:: grand.sim.efield2voltage
-   :members:
-
-.. automodule:: grand.sim.detector.antenna_model
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.sim.detector.process_ant
-   :members:
-
-.. automodule:: grand.sim.detector.rf_chain
-   :members: db2reim, s2abcd, matmul, interpol_at_new_x, RFChain
-
-.. automodule:: grand.sim.noise.galaxy
-   :members:
-
-.. automodule:: grand.sim.detector.adc
-   :members:
-
-.. automodule:: grand.sim.detector.trigger
-   :members:
-
-.. automodule:: grand.sim.shower.gen_shower
-   :members:
-
-.. automodule:: grand.sim.shower.pdg
-   :members:
-
-Signals and traces
-------------------
-
-.. automodule:: grand.basis.traces_event
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.basis.signal
-   :members:
-
-.. automodule:: grand.basis.type_trace
-   :members:
-
-.. automodule:: grand.basis.du_network
-   :members:
-
-.. automodule:: grand.basis.pipeline
-   :members:
-
-Input checks
-------------
-
-The checks behind GRANDlib's ``GRANDlib:`` errors and warnings, for use in
-new code: see :doc:`troubleshooting`.
-
-.. automodule:: grand.basis.validate
-   :members:
-
-Analysis-oriented interface
----------------------------
-
-A higher-level view of the same data: events, antennas and showers as objects,
-without the caller handling ROOT trees directly.
-
-.. automodule:: grand.aoi.event
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.aoi.event_list
-   :members:
-   :show-inheritance:
-
-.. automodule:: grand.aoi.antenna
-   :members:
-
-.. automodule:: grand.aoi.shower
-   :members:
-
-.. automodule:: grand.aoi.timetrace
-   :members:
-
-Reconstruction
---------------
-
-:mod:`grand.analysis` reconstructs arrival direction, the distance to
-:term:`Xmax` and an electromagnetic-energy proxy from recorded times and
-amplitudes. It needs the optional ``iminuit`` dependency
-(``pip install -e ".[analysis]"``; it is in the conda environment).
-Notebook 11 (see :doc:`notebooks`) runs the chain step by step, on showers
-with a known answer and on ten GP13 candidates.
-
-.. note::
-
-   New in 2026-09, from ``dev_marion``. Its tests show that each fit recovers
-   what its own forward model generates; agreement with simulated or measured
-   showers is not yet tested. It replaced ``grand.recon``, a placeholder of
-   two empty constructors.
-
-.. automodule:: grand.analysis.fitting.plane_wave
-   :members:
-
-.. automodule:: grand.analysis.fitting.spherical
-   :members:
-
-.. automodule:: grand.analysis.fitting.adf
-   :members:
-
-.. automodule:: grand.analysis.energy_reco.voltage
-   :members:
-
-.. automodule:: grand.analysis.signals.extraction
-   :members:
-
-.. automodule:: grand.analysis.cramer_rao_bounds.cramer_rao
-   :members:
-
-.. automodule:: grand.analysis.physics.cherenkov_angle
-   :members:
-
-.. automodule:: grand.analysis.physics.atmosphere
-   :members:
-
-.. automodule:: grand.analysis.coords.array_shower
-   :members:
-
-.. automodule:: grand.analysis.geom.angles
-   :members:
-
-.. automodule:: grand.analysis.geom.footprint
-   :members:
-
-.. automodule:: grand.analysis.constants
-   :members:
-
-Support
--------
-
-.. automodule:: grand.manage_log
-   :members:
-
-.. automodule:: grand.provenance
-   :members:
-
-.. automodule:: grand.geo.gull
-   :members:
-
-.. automodule:: grand.geo.turtle
-   :members:
+Every public module, class and function of GRANDlib, generated from the
+docstrings.  The modules are grouped by what they are for; each page opens
+with a table of its modules.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Page
+     - Contents
+   * - :doc:`api/geo`
+     - Coordinate frames and conversions, terrain and the geoid, the
+       geomagnetic field
+   * - :doc:`api/dataio`
+     - The ROOT trees and reading and writing files
+   * - :doc:`api/sim`
+     - The simulation chain: ``Efield2Voltage``, the antenna model, the RF
+       chain, Galactic noise, the ADC and the T1 trigger
+   * - :doc:`api/aoi`
+     - Events, antennas and showers as objects, read from files
+   * - :doc:`api/analysis`
+     - Reconstruction of the arrival direction, Xmax and energy
+   * - :doc:`api/basis`
+     - Traces, signal processing and detector layouts
+   * - :doc:`api/validate`
+     - The input checks behind ``GRANDlib:`` errors and warnings
+   * - :doc:`api/support`
+     - Logging, provenance and the bindings to the TURTLE and GULL libraries
+
+The most used entry points are :class:`~grand.sim.efield2voltage.Efield2Voltage`,
+the tree classes such as :class:`~grand.dataio.event_trees.TEfield` and
+:class:`~grand.dataio.event_trees.TVoltage`,
+:class:`~grand.aoi.event_list.EventList` and the frames
+:class:`~grand.geo.coordinates.Geodetic` and
+:class:`~grand.geo.coordinates.GRANDCS`.  ``grand`` itself re-exports the
+common names, so ``from grand import Efield2Voltage, Geodetic`` works.
+
+.. toctree::
+   :hidden:
+
+   api/geo
+   api/dataio
+   api/sim
+   api/aoi
+   api/analysis
+   api/basis
+   api/validate
+   api/support

@@ -1,16 +1,17 @@
-Coordinate systems
-==================
+Coordinates and conventions
+===========================
+
+Air showers are computed in shower coordinates, antennas sit at geodetic
+positions on curved terrain and the radio emission depends on the local
+geomagnetic field.  :mod:`grand.geo.coordinates` converts between the frames
+these quantities are expressed in.  Mixing up frames is the most common source
+of wrong results in GRANDlib and rarely raises an error, so this page states
+each convention and shows it executing.  Units are listed in the
+:ref:`cheat sheet <units>`.
 
 .. contents::
    :local:
    :depth: 2
-
-Getting a simulated electric field onto a real antenna is, more than anything
-else, a coordinate problem.  Air showers are computed in shower coordinates;
-antennas sit at geodetic positions on curved, uneven terrain; the radio
-emission is driven by the local geomagnetic field.  Reconciling those is what
-:mod:`grand.geo.coordinates` is for, and it is the single largest source of
-user error in the library.
 
 .. image:: _static/frames.svg
    :target: _static/frames.svg
@@ -23,21 +24,21 @@ The frames
 ============  ==========================================================
 Frame         What it is
 ============  ==========================================================
-``Geodetic``  Latitude, longitude, height. Degrees and metres.
-``ECEF``      Earth-Centred Earth-Fixed Cartesian; the common pivot.
+``Geodetic``  Latitude, longitude, height. Degrees and meters.
+``ECEF``      Earth-centered, Earth-fixed Cartesian; the common pivot.
 ``LTP``       Local tangent plane at a given origin and orientation.
 ``GRANDCS``   The array frame: an ``LTP`` with GRAND's conventions.
 ============  ==========================================================
 
 Every conversion between a local frame and geodetic passes through ``ECEF``.
-There is no direct path, and that is deliberate: one pivot means one place
-for the ellipsoid constants to live.
+There is no direct path, so the ellipsoid constants are defined in one
+place.
 
 Converting between them
 -----------------------
 
 A frame is constructed *from* another frame by passing it to the
-constructor.  Starting from the GRANDProto300 site at Dunhuang:
+constructor.  Starting from the :term:`GRANDProto300 <GP300>` site at Dunhuang:
 
 .. jupyter-execute::
 
@@ -49,8 +50,7 @@ constructor.  Starting from the GRANDProto300 site at Dunhuang:
     ecef = ECEF(site)
     print("ECEF (m):", np.round(np.asarray(ecef).ravel(), 1))
 
-The round trip returns what went in, which is the property every test in
-``tests/geo`` leans on:
+The round trip returns the input:
 
 .. jupyter-execute::
 
@@ -64,11 +64,10 @@ A local frame needs an origin, supplied as ``location``:
     point = GRANDCS(x=1000.0, y=0.0, z=0.0, location=site)
     print("1 km along GRANDCS x:", np.round(np.asarray(Geodetic(point)).ravel(), 6))
 
-Compare that with the site itself — latitude 40.98, longitude 93.95.  Moving
-1 km along ``x`` changed the **latitude**, so **GRANDCS x points North**.
+The site is at latitude 40.98, longitude 93.95.  Moving 1 km along ``x``
+changed the **latitude**: **GRANDCS x points north**.
 
-The reverse -- a geodetic position into the array frame -- passes the
-position as the first argument:
+To go the other way, pass the geodetic position as the first argument:
 
 .. jupyter-execute::
 
@@ -77,17 +76,30 @@ position as the first argument:
     print("0.01 deg north, in GRANDCS (m):", np.round(np.asarray(local).ravel(), 1))
 
 The point is due north, yet ``y`` is not zero: ``GRANDCS`` measures ``x``
-from **magnetic** north, 0.3° from geographic north at Dunhuang, and ``z`` is
+from **magnetic** north, 0.3° from geographic north at Dunhuang and ``z`` is
 slightly negative because the Earth curves away below the tangent plane.
 
 Every frame stores its components as ``(3, n)`` arrays, so a single point
-comes back with shape ``(3, 1)``.  That is why the examples here print
-``np.asarray(x).ravel()``: it flattens one point to three numbers.
+comes back with shape ``(3, 1)``; ``np.asarray(x).ravel()`` flattens it to
+three numbers.
+
+Frames are NumPy arrays
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Every frame subclasses :class:`numpy.ndarray`, so arithmetic and broadcasting
+work as for any array.  Two consequences:
+
+* :func:`copy.copy` loses the origin, the basis and the height reference,
+  which NumPy does not carry through a copy.  Use
+  :func:`grand.geo.coordinates.copy`.
+* A component is an array, not a number.  ``float(position.x)`` works only
+  for a single point; use ``np.ravel(position.x)[0]`` where a number is
+  needed.
 
 .. _coordinates-the-trap:
 
-The trap: x is not x
---------------------
+GRANDCS and LTP axes differ
+---------------------------
 
 .. warning::
 
@@ -95,7 +107,7 @@ The trap: x is not x
    things by them.
 
 ``LTP`` with ``orientation='ENU'`` is the usual east-north-up convention, so
-its ``x`` runs **East**.  ``GRANDCS`` follows GRAND's array convention, and
+its ``x`` runs **East**.  ``GRANDCS`` follows GRAND's array convention and
 its ``x`` runs **North**.  The same triple therefore names two different
 places:
 
@@ -109,13 +121,10 @@ places:
                                 - np.asarray(enu).ravel())
     print("same numbers, different frame: %.1f m apart" % separation)
 
-No exception, no warning, and both answers are perfectly valid — they simply
-answer different questions.  A detector position mixed up this way lands
-outside the array footprint, and a shower axis mixed up this way points at
-the wrong patch of sky.
-
-The habit that prevents it is to name the frame in the variable rather than
-relying on the constructor alone: ``du_grandcs``, ``axis_enu``.
+Neither raises an error or a warning.  A detector position mixed up this way
+lands outside the array; a shower axis points at the wrong part of the
+sky.  Naming the frame in the variable (``du_grandcs``, ``axis_enu``) makes
+the mistake visible.
 
 Orientation strings
 -------------------
@@ -135,16 +144,15 @@ Orientation strings
 
 ``magnetic=True`` measures the horizontal axes from **magnetic** north rather
 than geographic north, using the geomagnetic model at that place and date.
-The declination at Dunhuang is small -- about 0.3° in 2020 by the shipped
-IGRF-13 model, roughly 50 m at the edge of a 10 km array -- and it changes
-with the date.  Elsewhere it reaches several degrees, so it is still a choice
-to make deliberately, not a default to inherit.
+The declination at Dunhuang is small, about 0.3° in 2020 by the IGRF-13
+model, or roughly 50 m at the edge of a 10 km array.  Elsewhere it reaches
+several degrees.
 
 Heights need a reference
 ------------------------
 
 A height is meaningless without saying what it is measured from.  The
-ellipsoid is a smooth mathematical figure; the geoid is mean sea level, and
+ellipsoid is a smooth mathematical figure; the geoid is mean sea level and
 the two differ by up to about 100 m worldwide.
 
 .. jupyter-execute::
@@ -161,7 +169,7 @@ above the ellipsoid is about 1261 m above sea level.  Use
 Angles are in degrees
 ---------------------
 
-Every angle in this module — polar, azimuth, latitude, longitude, elevation —
+Every angle in this module (polar, azimuth, latitude, longitude, elevation)
 is in **degrees**, not radians.  The representation helpers convert among
 Cartesian, spherical and horizontal descriptions of the same vector:
 
@@ -178,31 +186,26 @@ Cartesian, spherical and horizontal descriptions of the same vector:
     print("straight up, horizontal : azimuth=%.1f deg, elevation=%.1f deg"
           % (az, el))
 
-Note what changed: the spherical polar angle is measured **down from the
-zenith**, while horizontal elevation is measured **up from the horizon**, and
-azimuth is measured from **north**, not from the :math:`+x` axis.  The
-horizontal frame is fixed to geographic north, so converting into it assumes
-an ENU basis and a shared origin — components expressed in another Cartesian
-basis give a silently wrong azimuth.
+The spherical polar angle is measured **down from the zenith**; elevation is
+measured **up from the horizon**.  Azimuth is measured from **north**; the
+spherical :math:`\phi` from the :math:`+x` axis.  The horizontal frame is
+fixed to geographic north, so converting into it assumes an ENU basis and a
+shared origin.  Components in another Cartesian basis give a wrong azimuth
+without any warning.
 
 A shower's angles say where it comes from
 -----------------------------------------
 
 A shower's ``zenith`` and ``azimuth`` name the direction it **arrives from**,
-not the direction it travels: a vertical shower has zenith 0, and the shower
-maximum lies *upstream*, at those angles as seen from the core.  The files
-GRANDlib reads, the converters that write them, and the paper's Appendix A
-all use this, and the spherical transform above agrees with it:
-``_cartesian_to_spherical`` applied to Xmax's position relative to the core
-returns the stored zenith and azimuth.  ``tests/geo/test_angle_convention.py``
-checks exactly that against the ZHAireS summaries committed with the example
-events.
+not the direction it travels.  A vertical shower has zenith 0°; the shower
+maximum lies upstream, at those angles as seen from the core.  The files
+GRANDlib reads, the converters that write them and Appendix A of the GRANDlib
+paper all follow this convention.  ``_cartesian_to_spherical`` applied to the
+position of :term:`Xmax` relative to the core returns the stored zenith and azimuth;
+``tests/geo/test_angle_convention.py`` checks this against the :term:`ZHAireS`
+summaries of the committed example events.
 
-Code that needs the direction of travel should negate the arrival vector
-where it needs it, not change the transforms.  A 2024 branch
-(``snonis_sim2root_test_merge``) proposed flipping them to "travels towards";
-it was not merged, on 2026-09-24, because every stored angle would then
-disagree with every computed one.
+Where the direction of travel is needed, negate the arrival vector.
 
 Common mistakes
 ---------------
@@ -215,9 +218,9 @@ Common mistakes
      - Cause
    * - A detector lands outside the array
      - ``GRANDCS`` and ``LTP`` axes confused; see :ref:`coordinates-the-trap`
-   * - Positions off by tens of metres (more at sites with a larger declination)
+   * - Positions off by tens of meters (more at sites with a larger declination)
      - ``magnetic=True`` where geographic north was meant, or the reverse
-   * - Heights off by a few metres
+   * - Heights off by a few meters
      - Ellipsoid and geoid references mixed
    * - Angles wrong by a factor of about 57
      - Radians passed where degrees are expected
@@ -228,13 +231,19 @@ Common mistakes
 
 .. note::
 
-   Notebook 01, *Coordinate systems* (see :doc:`notebooks`), works through this
-   page end to end: the frames and conversions, a detector layout drawn in
-   ``GRANDCS`` and again in geodetic coordinates, and a shower axis in both.
+   Notebook 01, *Coordinate systems* (:doc:`notebooks`), works through this
+   page with figures: a detector layout drawn in ``GRANDCS`` and in geodetic
+   coordinates and a shower axis in both.
 
 Reference
 ---------
 
-Appendix A of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_ gives
-the transformation matrix and the WGS-84 constants.  The API reference for
-this module is in :doc:`api`.
+Appendix A of :cite:`GRAND:2024atu` gives the transformation matrix and the
+WGS-84 constants.  :doc:`api` documents :mod:`grand.geo.coordinates`.
+
+Where next
+----------
+
+* :doc:`datamodel` for how positions are stored in the files.
+* :doc:`recipes` for converting the antenna positions of a run.
+* Notebook 01 (:doc:`notebooks`) for the frames at length, with figures.

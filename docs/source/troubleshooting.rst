@@ -1,60 +1,47 @@
 Troubleshooting
 ===============
 
+Problems grouped by what you see: an error message, a ``nan``, a number that
+looks wrong, or a message that only looks like an error.  For known defects,
+see :doc:`known_issues`.
+
 .. contents::
    :local:
    :depth: 1
 
-Things that go wrong, in rough order of how often they catch someone new.
-
-Most of these are not exceptions.  GRANDlib's characteristic failure is a
-``nan`` or a silently wrong number that stays plausible for several steps, so
-the entries below are grouped by what you *see*, not by what raised.
-
 Errors and warnings that start with ``GRANDlib:``
 -------------------------------------------------
 
-Since 2026-10 the public functions check their input, and say what is wrong
-in a message that starts with ``GRANDlib:``, names the function and the
-argument, gives what was expected and shows what was given::
+Public functions check their input.  A message that starts with
+``GRANDlib:`` names the function and the argument, what was expected and what
+was given::
 
     ValueError: GRANDlib: Geodetic: 'latitude' must be between -90 and 90 degrees, got 200.0
     TypeError: GRANDlib: TRun.run_number: must be an integer, got 1.7
     FileNotFoundError: GRANDlib: EventList: no such file or directory: /data/run_1
 
-The exceptions are the standard ones, so ``except ValueError`` and the like
-work as usual:
+:ref:`troubleshooting-messages` below lists the common ones, with what to do.
 
-- ``TypeError``: the wrong kind of value (a string where a number is
-  expected, a fraction for an integer field);
-- ``ValueError``: the right kind but out of range, or the wrong shape or
-  length (antenna positions that are not (N, 3), fewer antennas than a fit
-  needs);
-- ``FileNotFoundError``, ``OSError``: a missing file or directory, or a file
-  that is not a ROOT file.
+They are the standard exceptions (``TypeError`` for the wrong kind of value,
+``ValueError`` for a value out of range or of the wrong shape,
+``FileNotFoundError`` for a missing file), so ``except`` works as usual.
 
-Values that are suspicious but usable give a :class:`~grand.basis.validate.GRANDlibWarning`
-instead, and are used as given.  A tree field outside its physical range is
-one: reading a file goes through the same code as writing one, and existing
-files hold placeholders such as ``xmax_grams = -201``, which must stay
-readable.  ``NaN`` in a coordinate is another.  To find where they come from,
-turn them into errors::
+A value that is suspicious but usable, such as a tree field outside its
+physical range, gives a :class:`~grand.basis.validate.GRANDlibWarning` and is
+used as given.  To find where warnings come from, turn them into errors::
 
     import warnings
     from grand.basis.validate import GRANDlibWarning
     warnings.simplefilter("error", GRANDlibWarning)
 
-Two things are deliberately *not* errors.  Opening a tree on a file that does
-not exist creates it, because that is how trees are written, so a mistyped
-file name gives an empty tree; only a directory that does not exist is
-refused.  And an empty directory is a valid :class:`~grand.dataio.DataDirectory`
-for the same reason; :class:`~grand.aoi.event_list.EventList`, which only
-reads, refuses it.
+Opening a tree on a file that does not exist is *not* an error: it creates
+the file, because that is how trees are written.  A mistyped file name
+therefore gives an empty tree.
 
 Nothing raised, but the answer is ``nan``
 -----------------------------------------
 
-**An elevation lookup returned ``nan``.**  There is no SRTM tile for that
+**An elevation lookup returned ``nan``.**  There is no :term:`SRTM` tile for that
 one-degree square.  Tiles are not in version control and a fresh checkout has
 none:
 
@@ -70,159 +57,180 @@ The ``nan`` propagates through ``elevation(..., reference='sea')``, which
 subtracts the undulation from it.  **Check for ``nan`` after every elevation
 lookup.**
 
-**A geoid undulation returned ``nan`` and the coordinates look fine.**  The
-site is west of Greenwich and you are on a version before the fix for
-:ref:`issue-geoid-longitude-convention`: the keyword form did not wrap a
-negative longitude.  Upgrade, or pass a ``Geodetic``.
-
 The numbers are wrong but nothing failed
 ----------------------------------------
 
-**The three trace channels do not match the field components you put in.**
-They are not meant to.  ``trace[:, 2]`` is the Z antenna arm, not
-:math:`E_z`: the response is the projection of the field onto the effective
-length in the spherical basis of the *arrival direction*, so which arm sees
-what depends on the geometry.  A field with components 1.0 : 0.6 : 0.2 can come
-out as 600 : 400 : 1.  See :doc:`simulation` and notebook 06.
+The most common causes (arms read as field components, hertz for megahertz,
+degrees for radians, mixed-up frames) are in the :ref:`cheat sheet's table
+<cheatsheet-symptoms>`.  The others:
 
 **Changing ``vga_gain`` changes nothing.**  It is ignored.  See
 :ref:`issue-vga-gain-ignored`.
 
 **Two noise levels disagree by a factor of two.**  If either was simulated
-before 2026-09-07, compare the ``du_type``: until then the three values
-resolved to two distinct sets of numbers, differing by up to 2.1×, and two of
-the three read a byte-identical file (:ref:`issue-galactic-noise-tables`).
-Since then each reads its own table, and the three agree to about 10 %.
-
-**A frequency is out by** :math:`10^6`.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
-stores its frequency axis in **hertz**; everything in
-:mod:`grand.sim.detector.rf_chain` uses **megahertz**, and the attribute name
-carries no unit suffix.  Divide by ``1e6`` when crossing between them.
-
-**An angle is out by a factor of 57.3.**  The trees, the simulation chain and
-the antenna tables take angles in **degrees** — ``zenith``, ``azimuth``, and
-the ``phi``/``theta`` axes of the tables — while :mod:`grand.analysis` and the
-event viewer work in **radians**.  The analysis functions warn when given a
-value larger than :math:`2\pi`.
+before 7 September 2026, see :ref:`issue-galactic-noise-tables`.  Since then
+the three antenna models agree to about 10%.
 
 **``leff_theta`` is ``None``.**  The loaded tables hold the real/imaginary form
 in ``leff_theta_reim``; the polar attributes ``leff_theta``, ``leff_phi``,
 ``phase_theta`` and ``phase_phi`` exist and are never populated.
 
-Exceptions
-----------
+.. _troubleshooting-messages:
 
-``KeyError`` on the first ``compute_voltage()``
-    Fixed.  Four parameters — ``resample_to_mhz``, ``extend_to_us``,
-    ``calibration_smearing_sigma`` and ``add_jitter_ns`` — used to be set only
-    by ``scripts/convert_efield2voltage.py``, so the command line worked while
-    the documented Python usage raised.  If you still see this, you are on an
-    older revision; pin it with
-    ``tests/sim/test_pipeline_end_to_end.py::test_default_params_are_complete``.
+Error and warning messages
+--------------------------
 
-``NotUniqueEvent: An event with (run_number,event_number)=(0,0) already exists``
-    You wrote two events with the same key into one tree, most often by running
-    a simulation twice into the same output file.  Give each run its own output
-    path, or advance ``event_number``.
+The messages GRANDlib gives most often, as they appear.  Search this page for
+a few words of the message you got; ``…`` stands for the part that changes.
 
-``OSError: ... is being written by another process`` (or ``was changed by another process``)
+Files and folders
+~~~~~~~~~~~~~~~~~
+
+``no such file or directory: …``
+    The path does not exist.  A relative path is relative to the directory
+    Python runs in; in a notebook, that is ``notebooks/``.
+
+``no ROOT files (*.root) in …``
+    The folder exists but holds no ROOT file: check that it is the folder
+    ``sim2root.py`` wrote, not its parent.
+
+``no GRAND event files recognized in …; files must be named <type>_<events>_L<level>_<serial>.root``
+    The folder holds ROOT files whose names do not follow GRAND's convention,
+    such as ``efield_1-2_L0_0000.root``, so their trees cannot be found.
+    Rename the files, or open each one with its tree class
+    (:class:`~grand.dataio.event_trees.TEfield`, ...).
+
+``… holds no efield file`` / ``… holds no run file`` / ``… holds no shower file``
+    :class:`~grand.sim.efield2voltage.Efield2Voltage` needs the whole folder
+    ``sim2root.py`` wrote, with its ``efield_*``, ``run_*`` and ``shower_*``
+    files; a single e-field file is not enough.
+
+``… holds efield files at levels 0, 1: reading the highest`` (warning)
+    The folder holds several :term:`analysis levels <analysis level>`.  Choose
+    one with ``efield_level=0`` in Python or ``--level 0`` on the command line.
+
+``… holds an efield file at level … but no run file at that level``
+    The run file carries the sampling interval, so it must exist at the level
+    of the e-field file.  Convert the simulation again, or choose another
+    level.
+
+``cannot tell which run and shower trees belong to …: a GRAND filename carries its analysis level as '_L0_' or '_L1_'``
+    The file readers of :mod:`grand.dataio.root_files` find a file's run and
+    shower trees by its name, which must carry ``_L0_`` or ``_L1_``.  Rename
+    the file, or read its trees directly (:ref:`issue-reader-directory-coupling`).
+
+``DataDirectory: … is named level … but its … tree is level …`` (warning)
+    The ``_L0_`` or ``_L1_`` in a file name disagrees with the
+    ``analysis_level`` stored in its trees; the trees' level is used.  Rename
+    the file to match.
+
+``convert_voltage2adc: no voltage_*_L<level>_*.root in …``
+    Run ``convert_efield2voltage.py`` on the folder first (:doc:`commands`).
+
+Writing files
+~~~~~~~~~~~~~
+
+``… is being written by another process`` / ``… was changed by another process``
     Two processes tried to write the same ROOT file, for example two batch
     jobs with the same output name.  Only one process may write a file at a
     time; the other is refused rather than allowed to lose events or corrupt
     the file.  Give each job its own output file, or wait for the first to
     finish and run the second again.
 
+``NotUniqueEvent: An event with (run_number,event_number)=(…) already exists``
+    Two events with the same run and event numbers were written into one
+    tree, most often by running a simulation twice into the same output file.
+    Give each run its own output file, or change ``event_number``.
+
+Reading events
+~~~~~~~~~~~~~~
+
+``no event … in run … in the input; it holds (event, run) …`` / ``no event with event number … and run number …``
+    The numbers are wrong, or swapped: GRANDlib takes the event number first.
+    ``tree.get_list_of_events()`` lists the (event, run) pairs a file holds.
+
+Values
+~~~~~~
+
+``'lst' must be 0 to 24 h`` / ``'f_lst' (local sidereal time) must satisfy 0 <= f_lst < 24 hours``
+    The local sidereal time is in hours, not degrees.
+
+``'…' = … is outside -6.28319 to 6.28319 rad; is it an angle in degrees?`` (warning)
+    :mod:`grand.analysis` works in radians; convert with ``np.radians``.
+    The trees and the simulation use degrees.
+
+``the peak times span … s, more than a shower front takes to cross any array; are they in ns rather than s?`` (warning)
+    The reconstruction takes times in seconds; divide nanoseconds by ``1e9``.
+
+``Source direction at zenith … deg, outside the antenna table (…; below the antenna's horizon): its effective length is taken as zero`` (warning)
+    The shower maximum is below the antenna's horizon, so the antenna is
+    taken to see nothing from it.  This happens for nearly horizontal
+    showers over uneven ground, or when Xmax is wrong in the input.
+
+Installation
+~~~~~~~~~~~~
+
+``data model incomplete: … is missing`` / ``data model damaged: … has … bytes``
+    A file of the model data is missing or was not downloaded completely.
+    Run ``python data/download_data_grand.py`` (``source env/setup.sh`` does
+    it).
+
 ``ModuleNotFoundError: No module named 'ROOT'``
     The environment is not active, or ROOT is not installed.  ``import grand``
-    requires ROOT at import time, not lazily; see
-    :ref:`issue-import-requires-root`.
+    works without ROOT, but reading files, topography and the simulation need
+    it (:ref:`issue-import-requires-root`).
 
     .. code-block:: bash
 
         conda activate grand-dev
 
 ``ImportError`` for ``turtle`` or ``gull``
-    The C extensions are not built.  They compile from source and are not on
-    PyPI:
+    The C extensions are not built.  They compile from source:
 
     .. code-block:: bash
 
         source env/setup.sh
 
-    That script needs ``make``, which the conda environment does not declare —
-    install it from your distribution if it is missing.
-
-``ValueError`` naming a file and the ``_L0_``/``_L1_`` convention
-    A file name's analysis level does not match the ``analysis_level`` stored
-    in its tree.  Rename the file, or fix the tree.  The two must agree; see
-    :doc:`datamodel`.
-
 Messages that look like errors and are not
 ------------------------------------------
 
 ``No valid trun TTree in the file ...  Creating a new one.``
-    Expected when writing, and logged only at debug level now (older versions
-    printed it as a warning).  Constructing a tree class on a file that does
-    not yet contain that tree creates it.  Only worry if you see it while *reading*
-    a file you expected to be populated — that means the tree is absent or
-    named differently.
+    Expected when writing: constructing a tree class on a file that does not
+    yet contain that tree creates it.  When *reading* a file you expected to
+    hold the tree, it means the tree is absent or named differently.
 
 ``TClass::Init:0: RuntimeWarning: no dictionary for class ... is available``
     ROOT could not find a dictionary for a class it does not need.  Harmless.
 
-A CPU-feature warning on stderr during a documentation build
-    ROOT's JIT writes it once at first use.  It is on stderr, so
-    ``jupyter-sphinx`` reports it as a warning and ``sphinx-build -W`` would
-    make it fatal.  The documentation build therefore does not use ``-W``; the
-    log is grepped instead, with that one line filtered.  See :doc:`ci`.
-
 Reading files
 -------------
 
-**``DataDirectory`` returned fewer handles than I have runs.**  It groups by
-tree type and analysis level, not by run.  Two runs in one directory do not
-give two handles.  This is the trap notebook 02 works through, and it is
-written down nowhere else.
+**``DataDirectory`` returned fewer handles than there are runs.**  It groups
+by tree type and analysis level, not by run, so two runs in one folder do not
+give two handles.  Notebook 02 works through this.
 
-**A bare attribute gave me the wrong level.**  Both levels are returned, and a
-bare attribute follows the highest one present.  Ask for the level you want
-explicitly.
+**A bare attribute gave the wrong level.**  A bare attribute such as
+``tefield`` follows the highest level present.  Ask for the level explicitly,
+as ``tefield_l0``.
 
 **A reader wants a directory, not a file.**  Some readers are coupled to
 directory layout rather than taking a path; see
 :ref:`issue-reader-directory-coupling`.
 
-**Memory grows with every file and the job is killed out of memory.**  Tree
-instances are kept alive in ``grand_tree_list``, together with the ROOT files
-they opened, until you release them.  Use ``with TADC(path) as tadc:`` or call
-``tadc.stop_using()`` at the end of each iteration; see
-:ref:`datamodel-releasing-trees`.
+**Memory grows with every file.**  Release each tree when done with it: use
+``with TADC(path) as tadc:`` or call ``tadc.stop_using()`` at the end of each
+iteration (:ref:`datamodel-releasing-trees`).
 
 Environment and build
 ---------------------
 
-**The conda solve takes forever or fails.**  Use libmamba:
+**The installation fails.**  See :doc:`installation`.
 
-.. code-block:: bash
-
-    conda env create -f env/conda/grand-dev.yml --solver=libmamba
-
-**A result changed after a ROOT upgrade.**  Check first that the computation is
-deterministic.  A difference between two runs on different ROOT versions was
-once recorded here as a ROOT effect and turned out to be an unseeded random
-draw in the test itself — see :ref:`issue-root-638-numerical-difference`, which
-is retained as a worked example of the mistake.  Seed everything, reproduce the
-difference twice, and only then look at ROOT.
-
-**A test fails only in a full run, never alone.**  Look for unseeded
-randomness.  One such test existed in this repository and failed about one run
-in six; it is now seeded through a local generator so it does not disturb
-global random state.
+**A result changed after a ROOT upgrade.**  Check first that the computation
+is deterministic: seed every random draw and reproduce the difference twice
+before attributing it to ROOT.
 
 Still stuck
 -----------
 
-:doc:`known_issues` lists what is known to be wrong, with what was measured and
-what would settle it.  If the behaviour is not there and not here, it is worth
-reporting — and worth writing a test that reproduces it, because most of the
-entries on that page began as one.
+Check :doc:`known_issues`, then see :doc:`help` for how to ask on GitHub.

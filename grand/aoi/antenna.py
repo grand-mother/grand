@@ -5,11 +5,17 @@ from typing import Any
 import numpy as np
 
 from grand import CartesianRepresentation
+from grand.basis.fielddoc import document_fields
+from grand.basis import validate as _validate
 
 
+@document_fields
 @dataclass
-class Antenna:
+class Antenna(_validate.CheckedFields):
     """A class describing a single antenna"""
+
+    # -1 means "not set" (#267)
+    _field_checks = {"id": _validate.field_check("int", minimum=-1, refuse=True)}
 
     id: int = -1
     """Antenna ID - the du_id from the trees"""
@@ -39,11 +45,11 @@ class Antenna:
 
     @property
     def position(self):
-        """Antenna position in the array frame (GRANDCS), in metres.
+        """Antenna position in the array frame (GRANDCS), in meters.
 
         x runs north (magnetic), y west and z up, from the frame's origin;
         z is relative to the origin's height, not to sea level.  The origin
-        is the event's ``antennas_origin`` (#215).
+        is the event's ``antennas_origin``.
 
         Returns
         -------
@@ -59,7 +65,7 @@ class Antenna:
         Parameters
         ----------
         v : array_like
-            Position in the array frame, in metres.
+            Position in the array frame, in meters.
         """
         self._position = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 

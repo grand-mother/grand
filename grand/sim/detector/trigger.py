@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 r"""Offline, DAQ-style first-level (T1) trigger on ADC traces.
 
-This is the logic of ``scripts/T1_trigger_offline.py`` (snonis,
-2024-10), moved here so that it can be imported, tested, and applied by
-``scripts/convert_voltage2adc.py`` (issue #139).  The algorithm and the
-default parameters are unchanged.
+The algorithm and default parameters are those of
+``scripts/T1_trigger_offline.py``; ``scripts/convert_voltage2adc.py
+--t1_trigger`` applies them.
 
 .. warning::
 
@@ -66,6 +65,12 @@ DEFAULT_T1_CONFIG = {
     "q_max": 255,
     "th1": 100,
     "th2": 50,
+    # How T2 crossings further apart than t_sepmax are treated, for the
+    # trigger group to compare (#233): 0, 0 is the offline script's rule (a
+    # strict "<" and the channel rejected); sepmax_inclusive=1 accepts a
+    # separation equal to t_sepmax, sepmax_ends_count=1 ends the count there.
+    "sepmax_inclusive": 0,
+    "sepmax_ends_count": 0,
     # Configs of readout timewindow
     "t_pretrig": 960,
     "t_overlap": 64,
@@ -85,7 +90,7 @@ T1_TRIGGER_FLAG = 1
 def _check_config(config, where="T1 trigger"):
     r"""Refuses T1 parameters that cannot describe a trigger.
 
-    They were used as given (#267): a second threshold above the first, a
+    They were used as given: a second threshold above the first, a
     coincidence range with ``nc_min > nc_max``, negative windows.
 
     Raises
@@ -101,6 +106,9 @@ def _check_config(config, where="T1 trigger"):
     if config["th2"] > config["th1"]:
         fail("th2 (%r) must not exceed th1 (%r): T2 crossings are counted after a T1 crossing"
              % (config["th2"], config["th1"]))
+    for key in ("sepmax_inclusive", "sepmax_ends_count"):
+        if config[key] not in (0, 1):
+            fail("%s must be 0 or 1, got %r" % (key, config[key]))
     if config["nc_min"] > config["nc_max"]:
         fail("nc_min (%r) must not exceed nc_max (%r)" % (config["nc_min"], config["nc_max"]))
     # At 2 ns per sample, a period under 2 ns is an empty window, which
@@ -135,7 +143,7 @@ def extract_trigger_parameters(trace, trigger_config=None, baseline=0):
         Trigger parameters overriding :data:`DEFAULT_T1_CONFIG`.
     baseline : float, optional
         Subtracted from the peak when computing ``Q``.  The thresholds are
-        applied to the raw trace, so it must already be centred on 0.
+        applied to the raw trace, so it must already be centered on 0.
 
     Returns
     -------
@@ -201,8 +209,11 @@ def extract_trigger_parameters(trace, trigger_config=None, baseline=0):
     j = 1
     for i, j in zip(index_t2[:-1], index_t2[1:]):
         separation = (j - i) * 2  # ns
-        if separation < config["t_sepmax"]:
+        if separation < config["t_sepmax"] or (config["sepmax_inclusive"]
+                                               and separation == config["t_sepmax"]):
             kept.append(int(j))
+        elif config["sepmax_ends_count"]:
+            break
         else:
             raise ValueError(f"Violating Tsepmax, the separation is {separation} ns.")
     n_crossings = len(kept)
@@ -256,6 +267,38 @@ def t1_du_triggers(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     -------
     numpy.ndarray of bool
         One value per DU.
+
+    See Also
+    --------
+    grand.sim.detector.trigger.t1_channel_trigger
+        T1 on one channel.
+    grand.sim.detector.trigger.extract_trigger_parameters
+        The quantities T1 decides on.
+    grand.sim.detector.adc.ADC.process
+        Produces the ADC traces T1 reads.
+
+    Examples
+    --------
+    Which units of a digitized event pass T1 with the default parameters:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import numpy as np
+        import grand
+        from grand.dataio import TADC
+        from grand.sim.detector.trigger import t1_du_triggers
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        with TADC(str(sample / "adc_1618-13790_L1_0000.root")) as tadc:
+            tadc.get_entry(0)
+            counts = np.asarray(tadc.trace_ch)
+            du_id = np.asarray(tadc.du_id)
+
+        passed = t1_du_triggers(counts)
+        print("units passing T1:", du_id[passed])
     """
     # One DU's (3, N) channels were taken for three DUs of one channel each,
     # and none triggered (#289)
@@ -309,7 +352,7 @@ def t1_config_from_params(params):
     ValueError
         For a string that is not ``KEY=VALUE`` with an integer value, an
         unknown key, or values that cannot describe a trigger (``th2 > th1``,
-        ``nc_min > nc_max``, a negative window; #267).
+        ``nc_min > nc_max``, a negative window).
     """
     config = dict(DEFAULT_T1_CONFIG)
     for param in params or []:

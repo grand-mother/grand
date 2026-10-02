@@ -1,113 +1,48 @@
 #! pylint: disable=line-too-long
-"""
-brief:
-  Define output logger (file/stdout) for given level of message and some tools to use 
-  logger in script.
+r"""Logging for GRANDlib and for the scripts that use it.
 
-note:
-  This module can be copied and used in other projects by modifying the following 2 variables:
-       - NAME_PKG_GIT
-       - NAME_ROOT_LIB
+Library modules only create a logger and write to it; they never configure
+where the messages go.  That is left to the script that runs them, as the
+`Python logging guide
+<https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library>`_
+recommends.  In a library module::
 
-Log_mod How used python logger in library module:
+    from logging import getLogger
 
-The best practice is indicated in
-<a href="https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial">
-python documentation</a> 
-In particular this note:
+    logger = getLogger(__name__)
 
-note:
-  It is strongly advised that you do not add any handlers other than NullHandler to 
-  your library’s loggers. This is because the configuration of handlers is the 
-  prerogative of the application developer who uses your library. The application 
-  developer knows their target audience and what handlers are most appropriate for 
-  their application: if you add handlers ‘under the hood’, you might well interfere 
-  with their ability to carry out unit tests and deliver logs which suit their 
-  requirements.
-  
-and this one
+    def foo(var):
+        logger.debug("call foo()")
+        logger.info(f"var={var}")
 
-note:
-  A good convention to use when naming loggers is to use a module-level logger, 
-  in each module which uses logging, named as follows:
- 
- 
-from logging import getLogger
+A script chooses the output and the level with
+:func:`create_output_for_logger`, and gets its own logger with
+:func:`get_logger_for_script`, since ``__name__`` is ``"__main__"`` there.
+:func:`string_begin_script`, :func:`string_end_script`, :func:`chrono_start`
+and :func:`chrono_string_duration` format the usual start, end and timing
+lines.
 
-logger = getLogger(__name__)
+Examples
+--------
+A script that logs to the terminal and to ``log.txt`` at debug level::
 
-def foo(var):
-  logger.debug('call foo()')
-  logger.info(f"var={var}")
-  ...
- 
+    import grand.manage_log as mlg
 
-:warning:
-  Use always f-string to include current value of variables in message, or create a 
-  string message with ".format" before and give it to logger.
+    logger = mlg.get_logger_for_script(__file__)
+    mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-and that's all. Nothing in "__init__.py". Now in a script
+    logger.info(mlg.string_begin_script())
+    logger.info(mlg.chrono_start())
+    ...                                   # the work
+    logger.info(mlg.chrono_string_duration())
+    logger.info(mlg.string_end_script())
 
-Log_script How to define logger in a script and outputs:
+Each line of the log reads::
 
-So the job of script is to define handler for logger, but script can also write log ans 
-the value of "__name__" is "__main__" so a specific logger definition is 
-provided by this module by the function @link get_logger_for_script 
-get_logger_for_script() @endlink called with "__file__" value.
+    11:28:09.621  INFO [grand.sim.efield2voltage 412] message
 
-The function @link create_output_for_logger create_output_for_logger() @endlink alllows to define 
-output file/stdout and level of message.
-
-A couple of function  can be useful to:
-  - define message at the beginning and the end of script @link string_begin_script 
-    string_xxx_script() @endlink
-  - easily have chronometer @link chrono_start chrono_xxx() @endlink
-
-Example:
-
-
-import grand.manage_log as mlg
-
-# specific logger definition for script because __mane__ is "__main__"
-logger = mlg.get_logger_for_script(__file__)
-
-# define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
-
-logger.info(mlg.string_begin_script())
-...
-
-logger.info(mlg.chrono_start())
-
-# Xmax, Efield, and input frame are all in shower frame.
-field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
-
-logger.info(mlg.chrono_string_duration())
-...
-
-
-logger.info(mlg.string_end_script())
-plt.show()
-
-
-Result log file
-
-11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
-11:28:09.621  INFO [grand.examples.simulation.shower-event 27] ===========> begin at 2022-01-17T11:28:09Z <===========
-11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
-11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
-11:28:09.622  INFO [grand.simu.shower.gen_shower 102] Loading shower data from ../../tests/simulation/data/zhaires:/
-11:28:09.625  INFO [grand.simu.shower.zhaires 104] ### zhaires.py: reading groundaltitude from. inp file.
-11:28:10.030  INFO [grand.simu.shower.gen_shower 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/
-11:28:10.030  INFO [grand.io.file_leff 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
-11:28:10.077  INFO [grand.io.file_leff 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
-11:28:10.183  INFO [grand.examples.simulation.shower-event 99] -----> Chrono start
-11:28:10.183 DEBUG [grand.simu.du.process_ant 180] call compute_voltage()
-11:28:10.244  INFO [grand.examples.simulation.shower-event 103] -----> Chrono Duration (h:m:s): 0:00:00.060869
-11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
-11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
-11:28:10.396  INFO [grand.examples.simulation.shower-event 121] ===========> End at 2022-01-17T11:28:10Z <===========
-11:28:10.396  INFO [grand.examples.simulation.shower-event 121] Duration (h:m:s): 0:00:00.775352
+To reuse this module in another project, change ``NAME_PKG_GIT`` and
+``NAME_ROOT_LIB``.
 """
 # pylint: enable=line-too-long
 

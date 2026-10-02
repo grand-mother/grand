@@ -4,8 +4,7 @@ r"""Which vertical frame a file's ``xmax_pos_shc`` is in, read from the file.
 ``xmax_pos_shc`` is Xmax in shower-core coordinates, so its ``z`` should be a
 height above the ground.  Files written before the ZHAireS converter
 subtracted the ground altitude -- including every sample committed under
-``sim2root/Common/`` -- carry the height above sea level instead
-(grand-mother/grand#160).  Nothing in a file says which it is.
+``sim2root/Common/`` -- carry the height above sea level instead.  Nothing in a file says which it is.
 
 The geometry does.  Xmax lies on the shower axis, so the vector from the core
 to Xmax points where the shower comes from, which the same tree stores as
@@ -14,8 +13,8 @@ altitude still in ``z`` they do not.  On all twelve committed ZHAireS events
 the ground-relative vector matches the stored direction to 0.001 degrees and
 the raw one misses by 0.49 to 7.0 degrees.
 
-Decided 2026-09-24: readers detect the frame, rather than the samples being
-regenerated.  Data from DC2 was written under the old convention too.
+Readers detect the frame, so files written under either convention, including
+the DC2 data, read correctly.
 """
 
 import logging
@@ -107,11 +106,11 @@ def xmax_above_ground(xmax_pos_shc, zenith, azimuth, ground_altitude):
     Parameters
     ----------
     xmax_pos_shc : array-like, shape (3,)
-        As stored, in metres, x North, y West, z Up.
+        As stored, in meters, x North, y West, z Up.
     zenith, azimuth : float
         The shower's stored direction, in degrees, "comes from".
     ground_altitude : float
-        The site's ground altitude in metres, ``origin_geoid[2]``.
+        The site's ground altitude in meters, ``origin_geoid[2]``.
 
     Returns
     -------
@@ -160,13 +159,13 @@ def xmax_in_site_frame(xmax_pos_shc, zenith, azimuth, ground_altitude, shower_co
     Parameters
     ----------
     xmax_pos_shc : array-like, shape (3,)
-        As stored, in metres, in either vertical frame.
+        As stored, in meters, in either vertical frame.
     zenith, azimuth : float
         The shower's stored direction, in degrees, "comes from".
     ground_altitude : float
-        The ground altitude in metres that a sea-level ``z`` would carry.
+        The ground altitude in meters that a sea-level ``z`` would carry.
     shower_core_pos : array-like, shape (3,)
-        The core in the site frame, in metres.
+        The core in the site frame, in meters.
 
     Returns
     -------

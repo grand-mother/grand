@@ -19,6 +19,31 @@ class EventList:
     returns the *same* :class:`Event` object, so ``list(EventList(d))`` holds
     that one object several times, showing the last event. Copy what you need
     from each event before reading the next.
+
+    See Also
+    --------
+    grand.aoi.event.Event
+        The event each iteration gives.
+    grand.dataio.data_handling.DataDirectory
+        The trees of a folder, without joining them into events.
+
+    Examples
+    --------
+    Loop over the events of a simulation folder.  The same ``Event`` object is
+    reused, so copy out what you need rather than keeping ``event``:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import grand
+        from grand.aoi.event_list import EventList
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        for event in EventList(str(sample)):
+            print("event %5d: zenith %5.2f deg, %2d antennas"
+                  % (event.event_number, event.simshower.zenith, len(event.antennas)))
     """
 
     ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
@@ -28,7 +53,7 @@ class EventList:
     directory: DataDirectory = None
     """The instance of the directory with files with TTrees containing the event."""
 
-    def __init__(self, inp_name, start_event = None, start_entry = None, tefield_level = None, **kwargs):
+    def __init__(self, inp_name, start_event = None, start_entry = None, tefield_level = None, gps_origin = None, **kwargs):
 
         r"""Opens a file or directory and prepares to iterate its events.
 
@@ -43,6 +68,9 @@ class EventList:
         tefield_level : int, optional
             Analysis level of the electric field to read, for every event
             unless a call to :meth:`get_event` asks for another.
+        gps_origin : None, "run" or (float, float, float), optional
+            Origin of antenna positions computed from GPS (GP300, GP80,
+            GP13): see :attr:`grand.aoi.event.Event.gps_origin`.
         """
         self.event_list = None
 
@@ -81,12 +109,12 @@ class EventList:
                         "EventList", "no ROOT files (*.root) in %s" % inp_name))
                 self.directory = DataDirectory(inp_name)
                 self.event_list = self.directory.get_max_list_of_events()
-                # Nothing recognised: this failed later on None, as "'NoneType'
+                # Nothing recognized: this failed later on None, as "'NoneType'
                 # object has no attribute 'f'" (#236)
                 if self.event_list is None:
                     names = [os.path.basename(name) for name in self.directory.unrecognised_files]
                     raise FileNotFoundError(_validate.message(
-                        "EventList", "no GRAND event files recognised in %s%s; files must be named "
+                        "EventList", "no GRAND event files recognized in %s%s; files must be named "
                         "<type>_<events>_L<level>_<serial>.root, e.g. efield_1-2_L0_0000.root, or be "
                         "opened one at a time" % (inp_name, " (found %s)" % ", ".join(names[:5]) if names else "")))
             else:
@@ -108,7 +136,7 @@ class EventList:
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
 
-        self.event = Event(tefield_level = tefield_level)
+        self.event = Event(tefield_level = tefield_level, gps_origin = gps_origin)
         self.init_trees = True
 
         # No need to init trees if using a DataDirectory (which inits the trees)
@@ -140,8 +168,7 @@ class EventList:
             If both an entry and an event/run number are given, or a run
             number without an event number.
         LookupError
-            If the input holds no such event.  (These used to be printed, and
-            ``None`` returned into the caller's loop, #256.)
+            If the input holds no such event.
         """
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?
@@ -184,7 +211,7 @@ class EventList:
             if event_number is not None:
                 # An event that is not in the input used to crash deep in the
                 # reader (a zero-size minimum) or, after a valid event, to
-                # come back labelled with the requested number but holding
+                # come back labeled with the requested number but holding
                 # the previous event's traces (issue #95).  The list of events
                 # is known when a file or directory name was given.
                 if (self.event_list is not None

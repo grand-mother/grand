@@ -71,12 +71,12 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         Local sidereal time in hours. Must satisfy ``0 <= f_lst < 24``.
     size_out : int
         Length, in samples, of the time trace the spectrum belongs to.  It
-        sets the normalisation, so it must be the length the spectrum will be
+        sets the normalization, so it must be the length the spectrum will be
         inverted to, whatever part of the frequency axis `freqs_mhz` covers.
     freqs_mhz : ndarray, shape (nb_freq,)
         Uniformly spaced output-frequency grid, in MHz: the full rFFT axis
         of `size_out` samples (``size_out // 2 + 1`` points), or a band of it.
-        It is not checked against `size_out` (#261).
+        It is not checked against `size_out`.
     nb_ant : int
         Number of detector units for which independent noise is generated.
     seed : int or None, optional
@@ -98,6 +98,29 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         If `f_lst` is not finite or lies outside ``[0, 24)``, if `du_type` is
         not one of the three tabulated models, or if `freqs_mhz` is not
         uniformly spaced and increasing.
+
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Adds this noise to simulated voltages.
+    grand.sim.detector.rf_chain.RFChain
+        The chain the noise passes through.
+
+    Examples
+    --------
+    One realization of the noise spectrum for two units at 18 h local sidereal
+    time, on a 1 MHz grid from 30 to 250 MHz:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.noise.galaxy import galactic_noise
+
+        freqs_mhz = np.arange(30.0, 251.0)
+        spectrum = galactic_noise(18.0, 2048, freqs_mhz, nb_ant=2, seed=1)
+        print(spectrum.shape)                                # (units, arms, frequencies)
+        print("|V| at 30, 100 and 250 MHz on unit 0, arm X:",
+              np.round(np.abs(spectrum[0, 0, [0, 70, 220]]), 1), "µV")
     """
     _validate.plausible(freqs_mhz, "freqs_mhz", "galactic_noise", "frequency_mhz")   # Hz gave all zeros (#266)
     # The Galactic-noise tables sample LST every 20 minutes (72 bins/24 h).

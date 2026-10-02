@@ -43,6 +43,6 @@ Citing the components
 GRANDlib orchestrates external packages that do most of the physics.  Work
 that leans on them should cite them too: ZHAireS :cite:`Alvarez-Muniz:2010hbb`
 or CoREAS :cite:`Huege:2013vt` for the air-shower simulation, DANTON
-:cite:`Niess:2018opy` for :math:`\nu_\tau` propagation, and TURTLE
+:cite:`Niess:2018opy` for :math:`\nu_\tau` propagation and TURTLE
 :cite:`Niess:2019hdn` for topography.  The full list is in
 :doc:`references`.

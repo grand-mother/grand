@@ -21,7 +21,7 @@ def find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max):
     r"""Returns the interpolated maximum of a trace, from a parabola through 3 points.
 
     Fits :math:`ax^2 + bx + c` through the largest sample and its two
-    neighbours, offset to :math:`(x_0, y_0)`, and returns the vertex:
+    neighbors, offset to :math:`(x_0, y_0)`, and returns the vertex:
 
     .. math::
 

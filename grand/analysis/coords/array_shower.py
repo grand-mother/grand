@@ -7,15 +7,15 @@ def shower_direction_vector(theta, phi):
     Returns the unit vector the shower *propagates* along.
 
     It points away from where the shower comes from: the opposite of
-    :func:`grand.dataio.xmax_frame.arrival_direction`, which points towards
-    the source (#261).
+    :func:`grand.dataio.xmax_frame.arrival_direction`, which points toward
+    the source.
 
     Parameters
     ----------
     theta : float
         Zenith angle of the direction the shower comes from, in radians.
     phi : float
-        Azimuth of that direction, in radians, from north towards west.
+        Azimuth of that direction, in radians, from north toward west.
 
     Returns
     -------

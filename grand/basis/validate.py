@@ -41,6 +41,8 @@ __all__ = [
     "existing_file",
     "existing_directory",
     "coerce_to_dtype",
+    "field_check",
+    "CheckedFields",
 ]
 
 
@@ -508,7 +510,7 @@ def plausible(value, name, where, kind):
 
     Type and range checks cannot tell 500 MHz given as 500e6 from a real
     500e6 MHz; this catches the unit mistakes that silently give results
-    wrong by orders of magnitude (#266), with a `GRANDlibWarning` rather than
+    wrong by orders of magnitude, with a `GRANDlibWarning` rather than
     an error, since the ranges are generous but not physical limits.
 
     Parameters
@@ -534,3 +536,84 @@ def plausible(value, name, where, kind):
                               % (name, bad, low, high, unit, likely)),
                       GRANDlibWarning, stacklevel=3)
     return value
+
+
+def field_check(kind, minimum=None, maximum=None, unit="", refuse=False):
+    r"""A check for one field of a :class:`CheckedFields` dataclass.
+
+    The checks match the data-tree setters: a value of the wrong kind raises
+    ``TypeError``; a value outside the limits warns and is stored as given,
+    or raises ``ValueError`` when `refuse` is set.  ``None`` is always
+    accepted (an unset field), and NaN is accepted for reals (unknown).
+
+    Parameters
+    ----------
+    kind : {"real", "int", "str", "vector3"}
+        What the field holds: a real number, a whole number, a string, or
+        three real numbers.
+    minimum, maximum : float, optional
+        Inclusive limits, for "real", "int" and each value of "vector3".
+    unit : str, optional
+        Unit of the limits, for the message.
+    refuse : bool, optional
+        Raise rather than warn for a value outside the limits.
+
+    Returns
+    -------
+    callable
+        ``check(value, where)``, returning the value to store.
+    """
+    def outside(values):
+        values = np.asarray(values, dtype=float).ravel()
+        values = values[np.isfinite(values)]
+        low = values < minimum if minimum is not None else np.zeros(values.shape, bool)
+        high = values > maximum if maximum is not None else np.zeros(values.shape, bool)
+        bad = values[low | high]
+        return bad[0] if bad.size else None
+
+    def check(value, where):
+        if value is None:
+            return value
+        if kind == "str":
+            if not isinstance(value, str):
+                raise TypeError(message(where, "must be a string, got %s" % type(value).__name__))
+            return value
+        # Checked, but stored with its own type: a tree's np.float32 stays one
+        if kind == "int":
+            as_integer(value, where.rsplit(".", 1)[-1], where.rsplit(".", 1)[0])
+        elif kind == "real":
+            as_real(value, where.rsplit(".", 1)[-1], where.rsplit(".", 1)[0], finite=False)
+        elif kind == "vector3":
+            value = as_array(value, where.rsplit(".", 1)[-1], where.rsplit(".", 1)[0])
+            if value.size != 3:
+                raise ValueError(message(where, "must hold 3 values, got %d" % value.size))
+        bad = outside(value)
+        if bad is not None:
+            shown = int(bad) if kind == "int" else bad
+            text = "%s %s, got %s" % ("must be" if refuse else "should be",
+                                      _limits(minimum, maximum, unit), shown)
+            if refuse:
+                raise ValueError(message(where, text))
+            warn(where, text + "; stored as given", stacklevel=4)
+        return value
+
+    return check
+
+
+class CheckedFields:
+    r"""Mixin: checks the fields named in ``_field_checks`` whenever they are set.
+
+    For dataclasses that hold the same quantities as the data trees -- the
+    ``grand.aoi`` classes and ``ShowerEvent`` -- so they accept and refuse
+    what the tree setters do.  ``_field_checks`` maps a field name to
+    a :func:`field_check`.
+    """
+
+    _field_checks = {}
+
+    def __setattr__(self, name, value):
+        r"""Checks `value` if `name` has a check, then sets it."""
+        check = type(self)._field_checks.get(name)
+        if check is not None:
+            value = check(value, "%s.%s" % (type(self).__name__, name))
+        object.__setattr__(self, name, value)

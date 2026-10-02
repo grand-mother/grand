@@ -17,23 +17,34 @@ import numpy as np
 
 from grand.basis import validate as _validate
 import os
+from grand.basis.fielddoc import document_fields
 
 logger = getLogger(__name__)
 
+@document_fields
 @dataclass
 class DataTable:
     r"""The tabulated antenna response, on a grid of frequency, azimuth and zenith.
 
     """
     frequency: Union[Number, np.ndarray]
+    """Frequencies of the table, in Hz"""
     theta: Union[Number, np.ndarray]
+    """Zenith angles of the table, in degrees, in the antenna frame"""
     phi: Union[Number, np.ndarray]
+    """Azimuths of the table, in degrees, in the antenna frame"""
     leff_theta: Union[Number, np.ndarray] = None
+    """Modulus of the effective length along e_theta, shape (n_freq, n_phi, n_theta), in m"""
     phase_theta: Union[Number, np.ndarray] = None
+    """Phase of the effective length along e_theta, in degrees"""
     leff_phi: Union[Number, np.ndarray] = None
+    """Modulus of the effective length along e_phi, shape (n_freq, n_phi, n_theta), in m"""
     phase_phi: Union[Number, np.ndarray] = None
+    """Phase of the effective length along e_phi, in degrees"""
     leff_phi_reim: Union[Number, np.ndarray] = None
+    """Complex effective length along e_phi (real and imaginary parts), in m"""
     leff_theta_reim: Union[Number, np.ndarray] = None
+    """Complex effective length along e_theta (real and imaginary parts), in m"""
 
     #def __post_init__(self):
     #    logger.info(f"size phase {self.phase_theta.shape}")
@@ -129,6 +140,28 @@ class AntennaModel:
 
     Loads the tabulated response and provides it on whatever frequency and
     direction grid the caller needs.
+
+    See Also
+    --------
+    grand.sim.detector.process_ant.AntennaProcessing
+        Interpolates this response for a direction.
+    grand.sim.efield2voltage.Efield2Voltage
+        Uses it to compute the open-circuit voltage.
+
+    Examples
+    --------
+    The tables of one arm.  The frequency axis is in **Hz**, unlike the rest of
+    the simulation, which works in MHz:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import AntennaModel
+
+        model = AntennaModel()                       # 'GP300', the HFSS simulation
+        sn = model.leff_sn                           # the south-north arm
+        print("frequencies from %.0f to %.0f MHz" % (sn.frequency[0] / 1e6, sn.frequency[-1] / 1e6))
+        print("table shape (frequency, azimuth, zenith):", np.shape(sn.leff_theta_reim))
     """
     def __init__(self, du_type="GP300"):
 

@@ -256,10 +256,8 @@ class _FileEventBase:
 
         Notes
         -----
-        .. versionchanged:: 0.1.0
-           The docstring previously said this returns a single ``ndarray``.  It
-           returns a two-element tuple and always has; ``np.asarray`` on the
-           result raises rather than giving the times.
+        The result is a two-element tuple, not an array: ``np.asarray`` on it
+        raises rather than giving the times.
         """
         du_s = self.tt_event.du_seconds.asnumpy().astype(np.float64)
         if du_s.size == 0:
@@ -281,7 +279,7 @@ class _FileEventBase:
         Raises
         ------
         ValueError
-            If the event has no antenna (``du_count`` 0, issue #91): there
+            If the event has no antenna (``du_count`` 0): there
             are no traces to wrap, and no sampling rate to give them.
         """
         if self.traces.shape[0] == 0:
@@ -325,7 +323,7 @@ class _FileEventBase:
           * shower_core_pos, xmax_pos_shc, xmax_pos (m), magnetic_field
           * origin_geoid, from ``TRun``
 
-        Derived (#261):
+        Derived:
           * FIX_xmax_pos_grandlib: xmax_pos_shc + shower_core_pos
           * FIX_xmax_pos: Xmax in the site frame, from the file's own geometry
           * xmax_frame: which frame xmax_pos_shc was found to be in (see
@@ -371,7 +369,7 @@ def get_file_event(f_name):
     """Event factory.
 
     Returns a reader for an event ROOT file, with ``trun`` and ``tshower``
-    synchronised on the same event.  Which reader depends on the trees the
+    synchronized on the same event.  Which reader depends on the trees the
     file holds, and there are three, tried in this order: ``tefield`` gives a
     :class:`FileEfield`, ``tvoltage`` a :class:`FileVoltage`, and ``tadc`` a
     :class:`FileAdc`.  A file holding none of them raises.

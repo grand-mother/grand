@@ -87,7 +87,7 @@ dev = [
 analysis = ["iminuit"]
 docs = [
     "sphinx", "sphinx-rtd-theme", "sphinx-copybutton", "numpydoc",
-    "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel",
+    "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel", "sphinx-tippy",
     # jupyter-sphinx executes the docstring examples in a real kernel, so
     # what those examples import has to be installed too.
     "numpy", "scipy", "matplotlib",
@@ -104,7 +104,7 @@ viewer = ["panel", "holoviews", "bokeh", "pandas", "seaborn"]
 
 [project.urls]
 Homepage = "https://github.com/grand-mother/grand"
-Documentation = "https://grand-mother.github.io/grand-docs"
+Documentation = "https://grand-mother.github.io/grand"
 Paper = "https://arxiv.org/abs/2408.10926"
 Issues = "https://github.com/grand-mother/grand/issues"
 

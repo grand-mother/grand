@@ -6,11 +6,12 @@ failed: the CoREAS converter without ``-d``, ``sim2root.py`` without ``-sl``,
 and the voltage and ADC steps on a single file.  These tests read the
 commands out of the pages, fill in the placeholders with the committed
 samples, and run them, so that the pages cannot drift from the scripts again.
+The voltage and ADC commands are now on ``commands.rst``; the quick start is
+executed when the documentation is built.
 """
 
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import sys
@@ -86,7 +87,7 @@ def test_the_coreas_converter_command(tmp_path):
 
 
 def test_the_voltage_and_adc_commands(simulation):
-    commands = [c for c in _commands("simulation.rst")
+    commands = [c for c in _commands("commands.rst")
                 if c[1].startswith("scripts/convert_")]
     assert [c[1] for c in commands] == ["scripts/convert_efield2voltage.py",
                                         "scripts/convert_voltage2adc.py"]
@@ -98,15 +99,16 @@ def test_the_voltage_and_adc_commands(simulation):
     assert list(simulation.glob("adc_*_L1_*.root"))
 
 
-@pytest.mark.parametrize("page", ["quickstart.rst", "simulation.rst"])
+@pytest.mark.parametrize("page", ["commands.rst"])
 def test_the_python_example(simulation, page, tmp_path):
     (block,) = [b for b in _blocks(page, "python") if any("Efield2Voltage(" in line for line in b)][:1]
-    code = "\n".join(block).replace('"my_simulation"', repr(str(simulation)))
-    code = re.sub(r"output_directory=\"\.\"", "output_directory=%r" % str(tmp_path), code)
+    # A copy without the voltage files, so the file found is the one the example wrote
+    folder = tmp_path / "my_simulation"
+    shutil.copytree(simulation, folder, ignore=shutil.ignore_patterns("voltage_*", "adc_*"))
     script = tmp_path / "example.py"
-    script.write_text(code + "\n")
+    script.write_text("\n".join(block) + "\n")
     _run([sys.executable, str(script)], tmp_path)
-    assert (tmp_path / "voltage.root").is_file()
+    assert [p.name.split("_")[-2] for p in folder.glob("voltage_*.root")] == ["L0"]
 
 
 def test_voltage2adc_says_what_it_needs(tmp_path):

@@ -16,6 +16,7 @@ from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent 
 import grand.dataio
 from grand.dataio.xmax_frame import xmax_above_ground
+from grand.basis.fielddoc import document_fields
 
 #: Origin (latitude, longitude, height) of the GRANDCS frame in which
 #: :meth:`Event.fill_antennas` places GP300, GP80 and GP13 antennas computed
@@ -51,9 +52,17 @@ except ImportError:
         return func
 
 
+@document_fields
 @dataclass
-class Event:
+class Event(_validate.CheckedFields):
     """A class for holding an event"""
+
+    # Event and run numbers as the trees store them (#267)
+    _field_checks = {
+        "event_number": _validate.field_check("int", minimum=0, refuse=True),
+        "run_number": _validate.field_check("int", minimum=0, refuse=True),
+        "tefield_level": _validate.field_check("int", minimum=0, refuse=True),
+    }
 
     # ToDo: this should allow for multiple files holding different TTrees and TChains in the future
     _file: ROOT.TFile = None
@@ -103,7 +112,14 @@ class Event:
     antennas_origin: tuple = None
     """(latitude, longitude, height) of the GRANDCS frame the positions in
     ``antennas`` are given in: the run's ``origin_geoid``, or
-    :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS (#215)."""
+    :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS."""
+
+    gps_origin: object = None
+    """Origin for antenna positions computed from GPS (GP300, GP80, GP13):
+    None for :data:`GPS_ANTENNA_ORIGIN`, ``"run"`` for the run's
+    ``origin_geoid``, or ``(latitude, longitude, height)``.  Which one the
+    data intend is for their owners to say; the default keeps the
+    positions as they were."""
 
     ## ToDo: what is it?
     L: int = 0
@@ -229,6 +245,7 @@ class Event:
 
     # Choose the level of the efield
     tefield_level: int  = None
+    """Analysis level of the Efield tree to read (``tefield_l<level>``); None takes the directory's default"""
 
     # Trees filled for writing with auto_file_close False, written by close_files()
     _pending_writes: list = None
@@ -236,7 +253,7 @@ class Event:
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         if self._file:
@@ -341,7 +358,7 @@ class Event:
         Returns
         -------
         CartesianRepresentation, shape (3, 1)
-            Latitude and longitude in degrees and height in metres, as x, y
+            Latitude and longitude in degrees and height in meters, as x, y
             and z; ``np.ravel`` gives three numbers.
         """
         return self._origin_geoid
@@ -437,7 +454,7 @@ class Event:
         # *** Check what TTrees are available and fill according to their availability
 
         #if self.trecons is not None:
-            # If initialising trees requested
+            # If initializing trees requested
         #    if init_trees:
                 # Check the TRecons tree existence
         #        if trecons:= self.trecons.Get("trecons"):
@@ -445,7 +462,7 @@ class Event:
         #        else:
         #            print("No TRecons tree. Reconstructed event information will not be available.")
         #            self.trecons = None
-        # If initialising trees requested
+        # If initializing trees requested
         if init_trees:
             # Check the Run tree existence
             if trun := self.file_trun.Get("trun"):
@@ -455,7 +472,7 @@ class Event:
                 # Make trun really None
                 self.trun = None
 
-        # If self.trun was successfully initialised
+        # If self.trun was successfully initialized
         if self.trun is not None:
             # Fill part of the event from trun
             ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
@@ -466,7 +483,7 @@ class Event:
 
         # Check the TRunRawVoltage file existence
         if self.file_trunrawvoltage is not None:
-            # If initialising trees requested
+            # If initializing trees requested
             if init_trees:
                 # Check the TRunRawVoltage tree existence
                 if trunrawvoltage := self.file_trunrawvoltage.Get("trunrawvoltage"):
@@ -476,7 +493,7 @@ class Event:
                     # Make trunrawvoltage really None
                     self.trunrawvoltage = None
 
-        # If self.trunrawvoltage was successfully initialised
+        # If self.trunrawvoltage was successfully initialized
         if self.trunrawvoltage is not None:
             # Fill part of the event from trunrawvoltage
             ret = self.fill_event_from_runrawvoltagetree(run_entry_number=run_entry_number)
@@ -501,7 +518,7 @@ class Event:
                 use_trawvoltage = True
             # Use standard voltage tree
             if not use_trawvoltage:
-                # If initialising trees requested
+                # If initializing trees requested
                 if init_trees:
                     # Check the Voltage tree existence
                     if tvoltage := self.file_tvoltage.Get("tvoltage"):
@@ -511,7 +528,7 @@ class Event:
                         # Make tvoltage really None
                         self.tvoltage = None
 
-                # If self.tvoltage was successfully initialised
+                # If self.tvoltage was successfully initialized
                 if self.tvoltage is not None:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree()
@@ -524,7 +541,7 @@ class Event:
 
             # Use trawvoltage tree if requested or tvoltage tree not found
             if use_trawvoltage or self.tvoltage==None:
-                # If initialising trees requested
+                # If initializing trees requested
                 if init_trees:
                     # Check the Voltage tree existence
                     if tvoltage := self.file_tvoltage.Get("trawvoltage"):
@@ -535,7 +552,7 @@ class Event:
                         # Make tvoltage really None
                         self.tvoltage = None
 
-                # If self.tvoltage was successfully initialised
+                # If self.tvoltage was successfully initialized
                 if self.tvoltage is not None:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
@@ -564,7 +581,7 @@ class Event:
             # No level asked: the directory's default, not the last one asked for
             elif self.directory is not None and not init_trees:
                 self.tefield = self.directory.tefield
-            # If initialising trees requested
+            # If initializing trees requested
             elif init_trees:
                 # Check the Efield tree existence
                 if tefield := self.file_tefield.Get("tefield"):
@@ -584,7 +601,7 @@ class Event:
                     # Make tefield really None
                     self.tefield = None
 
-            # If self.tefield was successfully initialised
+            # If self.tefield was successfully initialized
             if self.tefield is not None:
                 # Fill part of the event from tefield
                 ret = self.fill_event_from_efield_tree()
@@ -602,7 +619,7 @@ class Event:
             # L1 file handle, None when there is only L0, and crashed (#277)
             if self.directory is not None:
                 pass
-            # If initialising trees requested
+            # If initializing trees requested
             elif init_trees:
                 # Check the Shower tree existence
                 shower_file = self.file_tsimshower if simshower else self.file_tshower
@@ -619,7 +636,7 @@ class Event:
                     else:
                         self.tshower = None
 
-            # If self.t(sim)shower was successfully initialised
+            # If self.t(sim)shower was successfully initialized
             if (simshower and self.tsimshower is not None) or (not simshower and self.tshower is not None):
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(simshower)
@@ -635,7 +652,7 @@ class Event:
 
         # Check the sim Shower file existence
         if self.file_tsimshower:
-            # If initialising trees requested
+            # If initializing trees requested
             if init_trees:
                 # Check the SimShower tree existence
                 if tsimshower := self.file_tsimshower.Get("tshower"):
@@ -645,7 +662,7 @@ class Event:
                     # Make tsimshower really None
                     self.tsimshower = None
 
-            # If self.tsimshower was successfully initialised
+            # If self.tsimshower was successfully initialized
             if self.tsimshower is not None:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(True)
@@ -664,6 +681,13 @@ class Event:
                 self.event_number = t.event_number
                 self.run_number = t.run_number
                 break
+
+        # An event needs traces: without them fill_t_vector failed with a bare IndexError
+        if self.voltages is None and self.efields is None:
+            raise ValueError(_validate.message(
+                "Event.fill_event_from_trees", "the input holds no traces this reads: it reads "
+                "TVoltage, TRawVoltage and TEfield trees.  For ADC counts (TADC), use "
+                "grand.dataio.DataFile"))
 
         # Fill the time vector
         self.fill_t_vector()
@@ -753,6 +777,27 @@ class Event:
 
 
     ## Fill event's antennas
+    def _gps_origin(self):
+        r"""The origin GPS positions are expressed against, per ``gps_origin``."""
+        choice = self.gps_origin
+        if choice is None:
+            return GPS_ANTENNA_ORIGIN
+        if isinstance(choice, str):
+            if choice != "run":
+                raise ValueError(_validate.message(
+                    "Event.gps_origin", "must be None, \"run\" or (latitude, longitude, "
+                    "height), got %r" % choice))
+            if self.trun is None:
+                raise ValueError(_validate.message(
+                    "Event.gps_origin", "\"run\" needs the run tree, and this event has none"))
+            return tuple(float(v) for v in np.ravel(np.asarray(self.trun.origin_geoid)))
+        values = np.asarray(choice, dtype=float).ravel()
+        if values.size != 3 or not np.all(np.isfinite(values)):
+            raise ValueError(_validate.message(
+                "Event.gps_origin", "must be None, \"run\" or three finite numbers "
+                "(latitude, longitude, height), got %r" % (choice,)))
+        return tuple(float(v) for v in values)
+
     def fill_antennas(self, gp300_workaround=True):
         """Fill event's antennas
 
@@ -779,9 +824,10 @@ class Event:
                     "Event.fill_antennas", "cannot calculate the antenna positions: the event "
                     "has neither an efield nor a voltage tree"))
 
+            origin_geoid = self._gps_origin()
             # If this is the first time we calculate antennas positions, or
-            # the ones we hold were not built from GPS for this same site
-            if not self._all_antennas or self._all_antennas_key != ("gps", self.site):
+            # the ones we hold were not built from GPS for this same site and origin
+            if not self._all_antennas or self._all_antennas_key != ("gps", self.site, origin_geoid):
                 logger.debug("GP300 workaround: calculating all antennas positions")   # (#194)
                 from grand import Geodetic, GRANDCS
 
@@ -807,7 +853,7 @@ class Event:
                 du_alts = du_alts[unique_dus_idx]
 
                 # Get lat/lon/alt from xyz
-                latitude, longitude, height = GPS_ANTENNA_ORIGIN
+                latitude, longitude, height = origin_geoid
                 origin = Geodetic(latitude=latitude, longitude=longitude, height=height)
 
                 geod_ant = Geodetic(latitude=du_lats, longitude=du_lons, height=du_alts)
@@ -826,9 +872,9 @@ class Event:
 
                     self._all_antennas[a.id] = a
 
-                self._all_antennas_key = ("gps", self.site)
+                self._all_antennas_key = ("gps", self.site, origin_geoid)
 
-            self.antennas_origin = GPS_ANTENNA_ORIGIN
+            self.antennas_origin = origin_geoid
 
             # Fill the antenna part
             event_dus = cur_tree.du_id
@@ -1280,7 +1326,7 @@ class Event:
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1297,7 +1343,7 @@ class Event:
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1314,7 +1360,7 @@ class Event:
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1331,7 +1377,7 @@ class Event:
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         tree_name : str, optional
@@ -1347,7 +1393,7 @@ class Event:
 
     ## Fill the run tree from this Event
     def fill_run_tree(self, overwrite=False, filename=None):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the run tree from this event's contents, ready to be written.
 
         Parameters
@@ -1408,7 +1454,7 @@ class Event:
 
     ## Fill the voltage tree from this Event
     def fill_voltage_tree(self, overwrite=False, filename=None):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the voltage tree from this event's contents, ready to be written.
 
         Parameters
@@ -1477,7 +1523,7 @@ class Event:
 
     ## Fill the efield tree from this Event
     def fill_efield_tree(self, overwrite=False, filename=None):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the electric-field tree from this event's contents, ready to be written.
 
         Parameters
@@ -1542,7 +1588,7 @@ class Event:
 
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the shower tree from this event's contents.
 
         Parameters
@@ -1631,8 +1677,7 @@ class Event:
         """Writes and closes the files of the trees written with auto_file_close False.
 
         Only trees this event filled for writing are written: the trees it was
-        read from are left untouched (this used to write them too, changing
-        the input files, #234).
+        read from, and so the input files, are left untouched.
         """
         pending = [tree for tree in self._pending_writes or [] if tree.tree is not None]
         # All written before any file is closed: the trees usually share one

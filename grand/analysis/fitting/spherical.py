@@ -20,7 +20,7 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
     where `Xants` are the antenna positions (shape (N, 3)), `tants` the
     trigger times (shape (N,)) and n_i the mean refractive index along the
     path.  The source lies at -r_xmax * K, on the side the shower
-    *comes from* (K is the propagation direction; #216).
+    *comes from* (K is the propagation direction).
 
     Parameters
     ----------
@@ -39,7 +39,7 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
     sigma : float, ndarray of shape (N,) or (N, N), optional
         Timing uncertainty (seconds): one for all antennas, one per antenna,
         or their covariance matrix (seconds squared).  If provided, each
-        residual is divided by its uncertainty (#289).
+        residual is divided by its uncertainty.
     cr : float, optional
         Propagation speed of the signal (default: speed of light).
 
@@ -70,7 +70,7 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
 
     if sigma is None:
         return float(res @ res)
-    # Residuals are in metres: the timing uncertainty becomes cr*sigma.  A
+    # Residuals are in meters: the timing uncertainty becomes cr*sigma.  A
     # vector of per-antenna uncertainties gave an array, not a chi2 (#289)
     sigma = np.asarray(sigma, dtype=float)
     if sigma.ndim == 2:
@@ -93,12 +93,12 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tants : np.ndarray
         Measured antenna times (seconds).
     Xants : np.ndarray
-        Antenna positions, shape (N, 3), in metres: x North, y West, z above
+        Antenna positions, shape (N, 3), in meters: x North, y West, z above
         sea level.
     sigma : float, ndarray of shape (N,) or (N, N), optional
         Timing uncertainty (seconds), as for :func:`SWF_loss`.  A single
         value scales the chi2 without moving its minimum; per-antenna values
-        weight the antennas (#289).
+        weight the antennas.
     maxiter : int, optional
         Maximum number of iterations for differential evolution.
     seed : int, optional
@@ -109,8 +109,8 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tuple
         ``(theta_swf, phi_swf, r_xmax_swf, t_s_swf)``: the direction the
         shower comes from, in radians; the distance from the source to
-        ``(0, 0, groundAltitude)``, in metres; and the emission time, in
-        seconds (#261).
+        ``(0, 0, groundAltitude)``, in meters; and the emission time, in
+        seconds.
     """
     where = "recons_swf"
     _checks.angles(where, theta_pwf=theta_pwf, phi_pwf=phi_pwf)
@@ -166,7 +166,7 @@ def compute_Xsource_cartesian_coords(theta_swf, phi_swf, r_xmax, groundAltitude=
         Height above sea level of the frame's origin, where the source
         distance is measured from (meters).  The default, 1231 m, is the GP13
         site; for simulation files pass the ground altitude
-        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns.
 
     Returns
     -------
@@ -206,7 +206,7 @@ def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltit
         Height above sea level of the frame's origin, where the source
         distance is measured from (meters).  The default, 1231 m, is the GP13
         site; for simulation files pass the ground altitude
-        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns.
     cr : float, optional
         Propagation speed of the signal (default: speed of light).
 

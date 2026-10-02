@@ -5,11 +5,22 @@ import numpy as np
 from scipy.signal import hilbert
 
 from grand.geo.coordinates import *
+from grand.basis.fielddoc import document_fields
+from grand.basis import validate as _validate
 
 
+@document_fields
 @dataclass
-class Timetrace3D:
+class Timetrace3D(_validate.CheckedFields):
     """A class for holding x,y,z single antenna traces over time"""
+
+    # As the trees' sampling fields are checked (#267); du_id -1 means "not set"
+    _field_checks = {
+        "n_points": _validate.field_check("int", minimum=0, refuse=True),
+        "time_step": _validate.field_check("real", minimum=0, unit="ns"),
+        "t_bin_size": _validate.field_check("real", minimum=0, unit="ns"),
+        "du_id": _validate.field_check("int", minimum=-1, refuse=True),
+    }
 
     n_points: int = 0
     """The trace length"""
@@ -65,7 +76,7 @@ class Timetrace3D:
         ----------
         time_offset : float
             Subtracted from ``t0`` to give the time of the first sample, in
-            nanoseconds.  Required (#261).
+            nanoseconds.  Required.
         """
         # ToDo: t0 is at the moment the trigger time, not the start time...
         self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
@@ -77,7 +88,7 @@ class Timetrace3D:
         ----------
         time_offset : float
             The time, in nanoseconds, on the axis of ``t_vector``.  (The
-            docstring called it ``t``, #261.)
+            docstring called it ``t``.)
 
         Returns
         -------
@@ -100,7 +111,7 @@ class Timetrace3D:
         ----------
         time_offset : float
             The time, in nanoseconds, on the axis of ``t_vector``.  (The
-            docstring called it ``t``, #261.)
+            docstring called it ``t``.)
 
         Returns
         -------
@@ -167,6 +178,7 @@ class Timetrace3D:
         """
         self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
+@document_fields
 @dataclass
 class Voltage(Timetrace3D):
     """A class for holding voltage traces + additional information"""
@@ -176,6 +188,7 @@ class Voltage(Timetrace3D):
     is_triggered: bool = True
     """Is this a triggered trace? - not sure if it should be here or in Timetrace3D, or perhaps further up in the event"""
 
+@document_fields
 @dataclass
 class Efield(Timetrace3D):
     """A class for holding Efield traces + additional information"""

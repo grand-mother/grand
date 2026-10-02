@@ -29,7 +29,33 @@ _ABSENT_TREE = re.compile(r"^f?t(run|runvoltage|runrawvoltage|rawvoltage|adc|vol
 
 
 class DataDirectory:
-    """Class holding the information about GRAND data in a directory"""
+    """Class holding the information about GRAND data in a directory
+
+    See Also
+    --------
+    grand.aoi.event_list.EventList
+        Events joined from these trees.
+    grand.dataio.event_trees.TEfield
+        One of the trees it opens.
+
+    Examples
+    --------
+    Open every tree of a folder, and pick one by type and analysis level:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import grand
+        from grand.dataio import DataDirectory
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        folder = DataDirectory(str(sample))
+        tshower = folder.tshower_l0
+        tshower.get_entry(0)
+        print("primary %s, Xmax %.1f g/cm2" % (tshower.primary_type, tshower.xmax_grams))
+    """
 
     def __init__(self, dir_name: str, recursive: bool = False, analysis_level: int = -1, sim2root_structure: bool = True):
         """Indexes the GRAND files of a directory.
@@ -175,11 +201,8 @@ class DataDirectory:
             Notes
             -----
             A name matching neither layout is grouped under its first field
-            with an empty level, rather than raising.  It used to index the
-            fields unconditionally, so a single file whose name did not follow
-            the convention -- which nothing enforces -- aborted the scan of the
-            whole directory with ``IndexError: list index out of range`` and no
-            indication of which file was at fault.
+            with an empty level, rather than raising, so one misnamed file
+            does not stop the scan of the whole directory.
             """
             name = Path(x).name
             el = name.split("_")
@@ -220,7 +243,7 @@ class DataDirectory:
         The level is read from ``_L<n>_<serial>.root``.  A file of the type
         whose name does not end that way (``efield_copy.root``) is skipped
         with a warning naming it: the level was taken from a fixed position
-        with ``int()``, and one such file aborted the whole folder (#204).
+        with ``int()``, and one such file aborted the whole folder.
         """
         prefix = flistname[2:-1] + "_"
         files = {}
@@ -382,7 +405,7 @@ class DataDirectory:
                     return tree_inst.get_list_of_events()
 
 class _TreeInfo(dict):
-    r"""A tree's metadata, some of it computed on first access (#283).
+    r"""A tree's metadata, some of it computed on first access.
 
     ``info["dus"]`` and ``info.get("dus")`` work as before; the value is
     computed when first asked for, and is absent (``KeyError``, or the
@@ -417,6 +440,21 @@ class _TreeInfo(dict):
     def __contains__(self, key):
         self._load(key)
         return dict.__contains__(self, key)
+
+
+def _draw_du_lengths(tree):
+    r"""Draws ``Length$(du_id)`` over every entry of `tree`; returns the number of entries.
+
+    The draw is sized by the draw itself: calling ``GetEntries()`` first was
+    one more pass opening every file of a chain.  If the tree's
+    estimate holds fewer entries than there are, it is raised and the draw
+    repeated, so the values read back with ``GetV1()`` are always complete.
+    """
+    count = tree.Draw("Length$(du_id)", "", "goff")
+    if count > tree.GetEstimate():
+        tree.SetEstimate(count)
+        count = tree.Draw("Length$(du_id)", "", "goff")
+    return count
 
 
 def _open_root_file(name):
@@ -559,8 +597,7 @@ class DataFile:
 
                 # Need to tell ROOT what buffer size to use for Draw - this is approximated by the total number of DUs
                 # ToDo: probably better to switch all the 1D GetV...() to RDataFrame::AsNumpy, to save memory
-                t.SetEstimate(t.GetEntries())
-                count = t.Draw("Length$(du_id)", "", "goff")
+                count = _draw_du_lengths(t)
                 total_elements = int(np.sum(np.frombuffer(t.GetV1(), dtype=np.float64, count=count)))
                 t.SetEstimate(total_elements+1)
 

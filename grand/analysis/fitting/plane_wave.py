@@ -21,12 +21,38 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     c (float): Speed of light in m/s, default is  299792458 m/s
     n (float or ndarray): Indices of refraction (vector or constant), default is 1.000136
     sigma (float or ndarray, optional): Timing uncertainty of each antenna, in
-        seconds; weights the antennas (#216).
+        seconds; weights the antennas.
 
     Returns
     -------
     ndarray: Theta in [0, pi] and phi in [0, 2*pi), in radians: the direction
     the shower comes from.
+
+    See Also
+    --------
+    grand.analysis.fitting.spherical.recons_swf
+        The spherical-wave fit, which also gives the distance to the source.
+    grand.analysis.fitting.adf.recons_ADF
+        The amplitude fit.
+
+    Examples
+    --------
+    Recover the direction of a plane wave from the times it reaches 30 antennas.
+    Positions are in meters, times in seconds, angles in radians:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.analysis.fitting.plane_wave import PWF_model, PWF_semianalytical
+
+        rng = np.random.default_rng(0)
+        xants = np.column_stack([rng.uniform(-2000, 2000, 30),
+                                 rng.uniform(-2000, 2000, 30),
+                                 np.full(30, 1264.0)])
+        tants = PWF_model((np.radians(70.0), np.radians(30.0)), xants)
+
+        theta, phi = PWF_semianalytical(xants, tants)
+        print("zenith %.2f deg, azimuth %.2f deg" % (np.degrees(theta), np.degrees(phi)))
     """
     where = "PWF_semianalytical"
     Xants = _checks.antennas(Xants, where, min_ants=3)
@@ -140,7 +166,7 @@ def PWF_loss(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n_atm,
     tants = _checks.per_antenna(tants, Xants, "tants", where)
     if sigma is None:
         raise TypeError(_validate.message(
-            where, "'sigma', the timing uncertainty in seconds, is required to normalise the chi2"))
+            where, "'sigma', the timing uncertainty in seconds, is required to normalize the chi2"))
     sigma = _checks.sigma(sigma, where)
     residuals = PWF_residuals(params, Xants, tants, verbose=verbose, c=c, n=n)
     chi2 = (residuals**2).sum()
@@ -178,7 +204,7 @@ def PWF_model(params, Xants, c=cons.c_light,  n=cons.n_atm, groundAltitude=cons.
         Height above sea level of the frame's origin, where the source
         distance is measured from (meters).  The default, 1231 m, is the GP13
         site; for simulation files pass the ground altitude
-        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns.
         For the plane wave it only shifts all times by one constant.
 
     Returns

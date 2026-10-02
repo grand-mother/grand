@@ -15,6 +15,98 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The default name of the voltage file carried the wrong analysis level when
+  a folder held electric fields at several levels: with `efield_level=0`
+  (`--level 0`), `Efield2Voltage` read the level-0 field but named the output
+  `voltage_*_L1_*`, while the tree inside said level 0.  The name now comes
+  from the file actually read.
+
+- `EventList` on a file without traces it reads, such as one holding only ADC
+  counts (`TADC`), failed with a bare `IndexError`.  It now raises a
+  `ValueError` that names the trees it reads and points to `DataFile` for
+  ADC counts.
+
+- Documentation links pointed to `grand-mother.github.io/grand-docs`, an old
+  site where the pages do not exist; the README, `pyproject.toml`,
+  `CITATION.cff`, `CONTRIBUTING.md`, the issue templates and the notebooks now
+  point to `grand-mother.github.io/grand`, where the documentation is
+  published.
+
+- The T1 trigger's `t_sepmax` rule can be varied (#233, item 3): two
+  parameters, off by default so results are unchanged, select the other
+  readings the trigger group has to choose between: `sepmax_inclusive=1`
+  accepts a separation equal to `t_sepmax`, `sepmax_ends_count=1` ends the
+  count at a wider gap instead of rejecting the channel (also as
+  `--t1_param`).  The known issue records what they show on clean pulses:
+  the count then exceeds `nc_max`, so the gap rule is not the only
+  obstacle.
+
+- The origin of GPS antenna positions can be chosen (#215): `EventList`
+  and `Event` take `gps_origin`, which is None for the fixed
+  `GPS_ANTENNA_ORIGIN` (the default, so positions are unchanged),
+  `"run"` for the run's `origin_geoid` (about 3.8 km away for GP80), or
+  an explicit (latitude, longitude, height); `antennas_origin` records the
+  one used.  Which origin the GP80 data intend is still for their owners
+  to say.
+
+- `sim2root.py -ef N` no longer keeps every file set in memory (#223, the
+  last item): a tree that a closing `write()` takes out of its file, so
+  that closing the file does not delete it, is now freed by
+  `stop_using()`; it stayed allocated with its baskets, about 4.4 MB per
+  file set.  80 events in 40 file sets peak at 692 MB instead of 847 MB
+  (one file set: 674 MB); what remains, under 0.5 MB per set, is ROOT's
+  own per-file share.
+
+- No committed sample stores a fake 1976 event time where it can be
+  avoided (#225, the last item): the two ZHAireS `.rawroot` samples are
+  regenerated with today's converter, which changes `unix_second` from
+  200854920 to 0 and nothing else, so sim2root dates their events to the
+  simulation day.  The four `sim2root/Common` folders keep the old time,
+  for reasons now given in the known issues (two are the 2024
+  backward-compatibility fixtures; regenerating the others changes far
+  more than the time); a test lists them.
+
+- `DataDirectory` opens one pass faster (#283): each chain's
+  `Length$(du_id)` draw is sized by the draw itself, instead of by a
+  `GetEntries()` that opened every file first; a chain longer than the
+  default estimate is drawn again.  At 2000 one-event files the chain setup
+  takes 3.3 s instead of 4.1 s.  Two passes remain (the draw and
+  `BuildIndex`), each opening every file once; together with the lazy unit
+  lists, the cost stays linear in the number of files.
+
+- Less memory for long traces (#284, items 2 and 3): `Efield2Voltage`
+  computes each RF chain's transfer function once per frequency axis and
+  keeps it, instead of recomputing it for every unit, then releases the
+  chain's per-frequency arrays with the new `release_arrays()` (a stage
+  used on its own keeps them, so plots of its S-parameters work as
+  before).  For one event of 5 units at 524,288 samples the memory above
+  the baseline falls from 1087 to 798 MB, with identical voltages.  The
+  per-event growth of item 3 no longer reproduces: 50, 200 and 800 events
+  peak at 1116, 1158 and 1135 MB.
+
+- The `grand.aoi` classes and `ShowerEvent` check their fields as the tree
+  setters do (#267, the last item): `Shower`, `Antenna`, the timetraces,
+  `Event` and `ShowerEvent` refuse a string or boolean for a number, a
+  fraction or negative value for an id or a count, and three values that
+  are not three; angles, energies, Xmax, sampling steps and the origin's
+  latitude and longitude outside their ranges warn and are stored, as in
+  the trees.  Values keep their type (a tree's `float32` stays one).  The
+  aoi `Shower`'s angles were documented as "pointing to"; they are the
+  direction the shower comes from, as in `TShower`.
+
+- Every dataclass constructor documents its parameters (#261, the last
+  item): the 16 data trees, `Event`, `Shower`, `Antenna`, the timetraces,
+  `ElectricField`, `Voltage`, `DataTable`, `AntennaProcessing`,
+  `PreComputeInterpol` and `ShowerEvent` now have a Parameters section in
+  `help()` and the API reference.  It is built when the class is created,
+  from the documentation each field already carries where it is declared
+  (`grand.basis.fielddoc.document_fields`), so the two cannot drift; tree
+  fields show their dtype and unit.  Fields that had no description got one
+  (the ids, the atmosphere and refractivity tables, the antenna table,
+  `ShowerEvent`); the 50 DAQ firmware parameters of `TADC` and
+  `TRunRawVoltage` are listed with their types, and wait on the firmware's
+  documentation for a description.
+
 - `CRB_PWF` at zenith 0 or 180° (#288, the last item): it returned
   `[nan nan]` and printed, because the azimuth is undefined there and a
   central difference in zenith crossed the pole.  The zenith bound is now
@@ -1322,6 +1414,43 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- Documentation for eleven tasks it did not cover: measured data (files,
+  channels, counts to volts, times, GPS positions, trigger types); producing
+  simulations from shower parameters; measured noise in simulations; running
+  at scale; sites and layouts; the `examples/` folder; writing your own
+  files; logging; getting help; platforms, versions and stability.  Code on the measured-data, sites and
+  file-writing pages runs at each build; points only the collaboration can
+  settle are marked "to confirm".
+
+- Glossary definitions appear on hover (sphinx-tippy); every page links to a
+  prefilled GitHub issue to report a problem with it, and shows the date its
+  source last changed.
+
+- Three documentation pages: a tutorial that follows one shower from the
+  antennas to its reconstructed direction, a one-page cheat sheet, and a
+  validation page showing GRANDlib's checks against independent
+  calculations as figures, computed at each build.
+
+- A weekly link check (`linkcheck.yml`, `docs/dev/check_links.py`) of the
+  external links in the documentation, the README and the package metadata.
+  Its first run found the changelog page linking to a branch that does not
+  exist.
+
+- A data format reference in the documentation: every field of every tree,
+  with its type, unit and description, generated from the tree classes at
+  each build (`docs/dev/make_data_format.py`).
+
+- Executed examples in the docstrings of the most used entry points:
+  `Efield2Voltage`, `EventList`, `DataDirectory`, `TShower`, `TEfield`,
+  `TRun`, `LTP`, `RFChain`, `galactic_noise`, `t1_du_triggers`,
+  `AntennaModel`, `PWF_semianalytical` and `ADC.downsample`.  They run on the
+  committed sample when the documentation is built.
+
+- `notebooks/import_notebook.py` brings a notebook edited in Jupyter, or a
+  new one, into `make_notebooks.py`: it checks that the cells compile and use
+  no absolute paths, writes the notebook's generator block, executes it
+  through the generator and restores both files if anything fails.
+
 - **Files record the code that wrote them** (#137). Every new tree's
   `modification_software` and `modification_software_version` hold
   "GRANDlib" and the package version with the git branch, commit and whether
@@ -1480,6 +1609,67 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   ignore list may shrink and must never grow.
 
 ### Changed
+
+- The documentation was revised after a newcomer's read-through.  The cheat
+  sheet's code had two errors; it now runs as written and a test runs it.
+  Analysis levels are explained before they are used, and the examples pass
+  `efield_level=0` (`--level 0`).  The measured-data page says where the data
+  are kept and how to get access.  The sidebar is grouped by task, with a
+  section for developers.  Developer detail moved from the user pages to
+  Contributing and the Recovery plan.  The glossary gained ADF, GP80, gtot,
+  PWF, SWF, T1, TRecons and the 10-second trigger.  Units and conventions
+  are kept on the cheat sheet only.
+
+- The documentation is shorter: developer detail moved out of the user pages
+  (sim2root, continuous integration, contributing, architecture, data
+  files), repeated conventions replaced by links, the notebook descriptions
+  and the known issues condensed, and the changelog page replaced by a link
+  to this file.
+
+- The main entry points' docstrings link to related functions in a See Also
+  section: the simulation chain, the trees, the frames and the plane-wave fit.
+
+- The documentation uses one name per concept: *detection unit* (or *unit*)
+  for the station and *antenna* for the antenna itself, *arm* for the three
+  antenna arms and *channel* only for the ADC's inputs, *electric field* in
+  prose.  The glossary defines *arm* and *channel*.
+
+- The documentation's landing page says which pages to read for analysis,
+  simulation or development; every Using page opens with what it covers and
+  ends with where to go next.  A style check, `docs/dev/check_style.py`, run by
+  the lint job, keeps the pages in American English and free of the
+  constructions the contributing guide lists; the pages are edited to pass it.
+
+- The troubleshooting page lists the common error and warning messages as
+  they appear, each with its cause and what to do, so that searching for a
+  message finds it.
+
+- The field descriptions of `TShower`, `TEfield`, `TVoltage`, `TADC` and
+  `TRun` are rewritten: each says what the field holds, in which unit and
+  frame, and the 38 undescribed `TADC` firmware fields are described.
+
+- Docstrings no longer cite issue numbers or narrate fixed bugs; that history
+  is in this changelog and in the commit messages.
+
+- The first mention of a glossary term on each page links to its entry.
+
+- A What's new page summarizes the changes users notice, those that alter
+  results first.
+
+- The API reference is split into one page per subpackage, each opening with
+  a table of its modules, under an overview page.  Every documentation page
+  links to its source on GitHub ("Edit on GitHub").
+
+- The documentation is reorganized into Getting started, Using GRANDlib, How
+  it works and Reference, and its pages rewritten.  New: a quick start and a
+  recipes page whose examples run on the committed sample when the
+  documentation is built, and a page on the command-line tools.  Docker is
+  now part of the installation page, which also says what pip can install.
+  The implementation notes are distributed to the pages they concern, with
+  the units in the quick start.  Known issues lists only open problems, each
+  linked to its GitHub issue.  The ``grand.manage_log`` module docstring,
+  which rendered with a raw HTML link and an unformatted example, is
+  rewritten.
 
 - **Public functions check their input, with messages that start with
   `GRANDlib:`.** A review found that only 18 % of the 328 public functions

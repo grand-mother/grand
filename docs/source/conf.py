@@ -83,6 +83,7 @@ version = release if any(mark in release for mark in ('dev', 'a', 'b', 'rc')) \
 
 extensions = [
     'sphinx.ext.autodoc',       # API reference, generated from the docstrings
+    'sphinx.ext.autosummary',   # the table of modules atop each API page
     'sphinx.ext.napoleon',      # tolerates the legacy :param: docstrings
     'sphinx.ext.mathjax',       # renders LaTeX in the docstrings
     'sphinx.ext.viewcode',      # links API entries to highlighted source
@@ -91,11 +92,24 @@ extensions = [
     'myst_parser',              # lets changelog.rst include CHANGELOG.md
     'jupyter_sphinx',           # runs the .. jupyter-execute:: blocks
     'sphinxcontrib.bibtex',     # the References page, from refs.bib
+    'sphinx_tippy',             # glossary definitions on hover
 ]
+
+# Tooltips on glossary links only: the definition appears on hover.  Links to
+# whole pages and to the API stay plain, and nothing is fetched from the web
+# (Wikipedia and DOI lookups are off).
+tippy_skip_urls = [r'^(?!(\.\./)*glossary\.html#term-|#term-)']
+tippy_enable_wikitips = False
+tippy_enable_doitips = False
+tippy_props = {'placement': 'auto-start', 'maxWidth': 400, 'interactive': False}
 
 # One bibliography file, whose entries come from INSPIRE so that keys and
 # metadata match what the literature uses.
 bibtex_bibfiles = ['refs.bib']
+
+# The module tables only: the modules are documented on the same page, so no
+# stub pages are generated.
+autosummary_generate = False
 bibtex_default_style = 'plain'
 
 # CHANGELOG.md is included by changelog.rst; without this, myst also picks it
@@ -166,12 +180,78 @@ def _write_version_css(app):
                       '.wy-side-nav-search::after { content: "%s"; }\n' % release)
 
 
+def _write_data_format(app):
+    r"""Writes ``data_format.rst`` from the tree classes, so the reference cannot drift.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        The running Sphinx application; not used.
+    """
+    import importlib.util
+    import pathlib
+
+    script = pathlib.Path(__file__).resolve().parents[1] / 'dev' / 'make_data_format.py'
+    spec = importlib.util.spec_from_file_location('make_data_format', script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.write()
+
+
+def _last_updated(app, pagename, templatename, context, doctree):
+    r"""Gives each page the date of the last commit that changed its source.
+
+    The theme prints ``last_updated`` in the footer.  Sphinx's own setting
+    would print the build date on every page, which says nothing about the
+    page.  Pages generated from the code (the API reference and the data
+    format reference) get no date, since their source file is not their
+    content.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+    pagename : str
+    templatename : str
+    context : dict
+        The template context, updated in place.
+    doctree : docutils.nodes.document or None
+    """
+    import datetime
+    import subprocess
+
+    if doctree is None or pagename.startswith('api') or pagename == 'data_format':
+        return
+    source = app.env.doc2path(pagename)
+    try:
+        date = subprocess.run(['git', 'log', '-1', '--format=%cs', '--', str(source)],
+                              cwd=app.srcdir, capture_output=True, text=True,
+                              timeout=20).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return
+    if date:
+        day = datetime.date.fromisoformat(date)
+        context['last_updated'] = '%s %d, %d' % (day.strftime('%B'), day.day, day.year)
+
+
 def setup(app):
-    r"""Sphinx entry point: registers the generated stylesheet."""
+    r"""Sphinx entry point: registers the generated files and the page dates."""
     app.connect('builder-inited', _write_version_css)
+    app.connect('builder-inited', _write_data_format)
+    app.connect('html-page-context', _last_updated)
 
 html_theme_options = {
     'logo_only': True,          # the logo already says "GRANDlib"
     'navigation_depth': 3,      # deep enough to reach the handbook subsections
     'collapse_navigation': False,
+}
+
+# "Edit on GitHub" at the top of every page, pointing at its source on the
+# integration branch.  Generated pages (the API's members, the Handbook) are
+# edited through their own sources; the link still shows where they live.
+html_context = {
+    'display_github': True,
+    'github_user': 'grand-mother',
+    'github_repo': 'grand',
+    'github_version': 'dev-next',
+    'conf_py_path': '/docs/source/',
 }

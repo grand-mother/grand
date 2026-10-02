@@ -10,6 +10,8 @@ import numpy as np
 
 from grand.dataio.xmax_frame import xmax_above_ground
 from grand.sim.shower.pdg import ParticleCode
+from grand.basis.fielddoc import document_fields
+from grand.basis import validate as _validate
 #from grand.basis.type_trace import ElectricField, Voltage
 #from grand.dataio import io_node as io
 
@@ -64,23 +66,61 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
     pass
 
 """
+def _primary(value, where):
+    r"""A primary given as a name or a ``ParticleCode``; anything else is refused."""
+    if value is not None and not isinstance(value, (str, ParticleCode)):
+        raise TypeError(_validate.message(
+            where, "must be a particle name or a ParticleCode, got %s" % type(value).__name__))
+    return value
+
+
+def _origin_geoid(value, where):
+    r"""``[latitude, longitude, height]``, with the ranges ``TRun.origin_geoid`` warns about."""
+    if value is None:
+        return value
+    values = _validate.field_check("vector3")(value, where)
+    _validate.field_check("real", minimum=-90, maximum=90, unit="degrees")(values[0], where + "[0] (latitude)")
+    _validate.field_check("real", minimum=-360, maximum=360, unit="degrees")(values[1], where + "[1] (longitude)")
+    return value
+
+
+@document_fields
 @dataclass
-class ShowerEvent:
+class ShowerEvent(_validate.CheckedFields):
     r"""The parameters of one air shower.
 
     Direction, energy, core position, depth of maximum and primary type,
     together with the frame they are expressed in.
     """
+
+    # As the TShower and TRun setters check them (#267)
+    _field_checks = {
+        "energy": _validate.field_check("real", minimum=0, unit="GeV"),
+        "zenith": _validate.field_check("real", minimum=0, maximum=180, unit="degrees"),
+        "azimuth": _validate.field_check("real", minimum=0, maximum=360, unit="degrees"),
+        "primary": lambda value, where: _primary(value, where),
+        "origin_geoid": lambda value, where: _origin_geoid(value, where),
+    }
     energy: Optional[float] = None
+    """Energy of the primary, in GeV (``TShower.energy_primary``)"""
     zenith: Optional[float] = None
+    """Zenith angle of the direction the shower comes from, in degrees"""
     azimuth: Optional[float] = None
+    """Azimuth of the direction the shower comes from, in degrees, from north toward west"""
     primary: Optional[ParticleCode] = None
+    """Primary particle type"""
     frame: Optional[Union[GRANDCS, LTP]] = None
+    """The shower frame: NWU, centered on the core, magnetic north"""
     core: Optional[CartesianRepresentation] = None
+    """Shower core, in m, in GRANDCS"""
     geomagnet: Optional[CartesianRepresentation] = None
+    """Geomagnetic field vector, if set; ``load_root`` does not set it"""
     maximum: Optional[CartesianRepresentation] = None
+    """Position of Xmax, in m, in `frame`"""
     origin_geoid: Optional[list, np.ndarray] = None
+    """Origin of GRANDCS as [latitude (deg), longitude (deg), height (m)]; set it before ``load_root``"""
     fields: Optional[OrderedDict] = None
+    """Electric fields by antenna, if set; ``load_root`` does not set it"""
 
     # Since ROOT is the only format in which GRAND data will be stored in, 
     # so the code to deal with other formats are deleted.
@@ -225,7 +265,7 @@ class ShowerEvent:
             logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
 
     def shower_frame(self):
-        # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
+        # Idea: Change the basis vectors by vectors pointing toward evB, evvB, and ev
         ev = self.core - self.maximum
         ev /= np.linalg.norm(ev)
         ev = ev.T[0]  # [[x], [y], [z]] --> [x, y, z]

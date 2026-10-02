@@ -1,1333 +1,180 @@
 Known issues
 ============
 
+Problems known to affect results or to need a decision, with what to do in
+the meantime.  The linked GitHub issues hold the details and the latest
+status; the `open issues on GitHub
+<https://github.com/grand-mother/grand/issues>`_ include problems reported
+since this page was updated.  Fixed problems are in :doc:`whatsnew`.
+
 .. contents::
    :local:
    :depth: 1
 
-Open problems that affect results or block work, with what is measured, what
-is not, and what would settle each one.  Fixed issues move to the changelog
-rather than staying here.
-
-.. _issue-t1-clean-simulations:
-
-The offline T1 trigger passes no unit on clean simulations
-------------------------------------------------------------
-
-:Status: open, for the trigger group (#233, item 3)
-:Affected: ``convert_voltage2adc.py --t1_trigger``,
-  :func:`grand.sim.detector.trigger.t1_du_triggers`
-
-A beta tester found that T1 with the default parameters passed 0 of 44 and
-0 of 5 units on clean, strong simulated events (ADC peak 850), and none
-either with ``th1=5, th2=2, nc_min=1``.  Measured on synthetic damped pulses
-of amplitude 850 ADC counts (2026-10-02), the two reasons are:
-
-- **The quiet time.** Only the first T1 crossing is tried, and it is rejected
-  if it lies within the first ``t_quiet/2`` samples: with ``t_quiet = 512``
-  ns, a pulse before sample 256 never triggers.
-- **The crossing separation.** Consecutive T2 crossings must be closer than
-  ``t_sepmax = 10`` ns, strictly, and one crossing too far apart rejects the
-  channel rather than ending the count.  A clean pulse at 60, 100, 150 or
-  200 MHz has its crossings 16, 10, 14 and 10 ns apart, so every channel is
-  rejected; noise adds crossings close together, which is why noisy events
-  sometimes pass.
-
-Whether the firmware ends the count or rejects the channel, and whether the
-comparison is strict, are for the trigger group to confirm, with the other
-open points listed in :func:`~grand.sim.detector.trigger.extract_trigger_parameters`.
-Until then, offline T1 results on noise-free simulations are not meaningful.
-
-.. _issue-galactic-noise-normalisation:
-
-Galactic-noise normalisation: resolved, RMS
----------------------------------------------
-
-:Status: **resolved 2026-09-07.** Merged from ``dev_snonis`` @ ``0205c15``
-:Affected: every simulated voltage and everything downstream — trigger
-           studies, sensitivity estimates, Data Challenge outputs
-:Test: ``tests/sim/test_galactic_noise_normalisation.py``
-
-**The question was:** ``galaxy.py`` scaled the noise spectrum by
-``size_out / 2``; PR 153 proposed ``size_out / sqrt(2)``; and which was right
-turned on whether the tabulated ``Vocmax_...`` quantity was an RMS or a
-maximum. Measured against the table each ``du_type`` actually read, the
-simulated RMS came out at exactly :math:`1/\sqrt2` of the tabulated value —
-consistent with the table being an RMS and the code treating it as a maximum.
-But the filename said *max*, and nothing in the repository could settle it.
-
-**The answer is RMS.** Stavros Nonis re-derived the chain: the calculation
-starts from the available power spectral density :math:`P_L`, from which the
-open-circuit voltage is reconstructed as
-
-.. math::  V_{\rm oc,RMS}^2 = 4 P_L \,\mathrm{Re}(Z_{\rm ant})
-
-so the quantity used as the Gaussian standard deviation is an RMS **by
-construction**, not by convention. ``size_out / sqrt(2)`` is therefore
-correct, and every simulated voltage produced before this merge was low by
-:math:`\sqrt2`.
-
-**What changed with it.** ``0205c15`` also supplies matching :math:`P_L`
-tables for ``GP300_nec`` and ``GP300_mat``, so all three antenna models now
-follow one calculation, each reading one distinct table of its own. That
-retires the separate table defect recorded below: ``nec`` and ``mat`` used to
-be byte-identical files, the default ``GP300`` recomputed its own from a
-MATLAB file through ``h5py``, and the ``hfss`` tables were reachable from no
-``du_type``.
-
-**How the tables were made** — recorded 2026-09-07, so it is no longer
-outside the repository. ``Compute_Plot_Galactic_Noise.py`` integrates the
-LFMap sky temperature against the antenna effective length and converts to
-available power by :math:`P_L = V_{\rm oc,RMS}^2 / [4\,\mathrm{Re}(Z_{\rm ant})]`.
-The full chain, including which effective-length file each model reads, is in
-:doc:`data_files`. The simulation inverts exactly that relation, and the test
-rebuilds it independently, so the round trip is closed at both ends.
-
-**What is still not verified here.** Nothing in this repository re-derives the
-LFMap sky model itself. The FFT
-normalisation, LST selection, RMS level for all three models and the
-integration through ``Efield2Voltage`` including the RF chain were validated
-by their author. The test file asserts what this repository can check —
-Parseval, seed reproducibility, all three arms populated, a level independent
-of transform length — and pins the resulting RMS per model as a regression
-guard, saying explicitly that a pin is not a validation.
-
-**Reprocessing.** Anything simulated with the old constant is low by
-:math:`\sqrt2` in the noise, and the plan still carries the open item of
-deciding what, if anything, is reprocessed.
-
-.. _issue-galactic-noise-tables:
-
-The shipped Galactic-noise tables do not say what the docstring says
---------------------------------------------------------------------
-
-:Status: **resolved 2026-09-07** by the same merge as the entry above
-:Affected: any study that selected a ``du_type`` before that date
-:Test: ``tests/sim/test_galactic_noise_normalisation.py``
-
-.. note::
-
-   Everything below describes the state before ``dev_snonis`` @ ``0205c15``.
-   Each model now reads one distinct :math:`P_L` table of its own; the
-   ``h5py`` path and the unreachable ``hfss`` tables are gone. It is kept
-   because files simulated before that date were produced under exactly the
-   conditions described here, and knowing which ``du_type`` was nominally
-   selected does not tell you which table was actually read.
-
-Three separate problems with the data files under ``data/noise/``, all found
-while settling the normalisation question above.
-
-**The NEC and MATLAB tables are the same file.**
-:func:`~grand.sim.noise.galaxy.galactic_noise` documents ``GP300_nec`` and
-``GP300_mat`` as the NEC and MATLAB variants of the antenna response.  All
-three pairs of shipped tables are byte-identical:
-
-=================================  ================================
-Table                              ``nec`` and ``mat`` SHA-256
-=================================  ================================
-``Vocmax_30-250MHz_uVperMHz``      identical
-``Pocmax_30-250_Watt_per_MHz``     identical
-``Voutmax_30-250MHz_uVperMHz``     identical
-=================================  ================================
-
-So the two options select the same numbers, and one of the files was
-presumably copied over the other.  Which one is the survivor is not
-recoverable from the repository.
-
-**The default is not the model the docstring names.**  ``du_type='GP300'``
-does not read any ``Vocmax_*.npy`` table: it recomputes the voltage from
-``PG_ALL_jifen.mat`` as :math:`V_{\rm oc}^2 = 4 P R_{\rm ant}`.  The result
-is a nearly constant 0.463 times the ``hfss`` table — the ratio is flat
-across the band to 2.4 %, which is what a normalisation difference looks
-like, whereas the ratio to the ``nec`` table varies by 11 %, which is what a
-genuinely different antenna model looks like.  ``GP300`` and ``hfss`` are
-therefore one model at two normalisations differing by a factor of about
-2.16.
-
-**The highest-level tables are unreachable.**  The three ``*_hfss.npy`` files
-ship but no ``du_type`` opens them.  A study that wanted them would have to
-load them by hand.
-
-**Consequence.**  The four nominal antenna models resolve to two distinct sets
-of numbers, differing in band-integrated level by up to a factor of 2.1:
-
-=====================  =========================  =====================
-Selector               Reads                      Band RMS at LST 18 h
-=====================  =========================  =====================
-``GP300`` (default)    ``PG_ALL_jifen.mat``       27.8, 35.6, 31.4 µV
-``GP300_nec``          ``Vocmax_..._nec.npy``     44.5, 55.6, 53.4 µV
-``GP300_mat``          the same file as ``nec``   44.5, 55.6, 53.4 µV
-*(unreachable)*        ``Vocmax_..._hfss.npy``    59.6, 75.5, 66.9 µV
-=====================  =========================  =====================
-
-A noise level quoted without its ``du_type`` is ambiguous by a factor of two.
-This is independent of the :math:`\sqrt2` question above: that one is a single
-constant applied to all models alike.
-
-.. _issue-handbook-arm-naming:
-
-The Handbook has the X/Y antenna-arm mapping backwards
---------------------------------------------------------
-
-:Status: erratum in ``resources/GRANDlib_Handbook.pdf``; the code is correct
-:Affects: anyone reading the Handbook to interpret a trace
-:Test: ``tests/sim/test_antenna_arm_identity.py``
-
-The GRANDlib Handbook, in its description of the antenna models, says the
-effective-length files hold the
-
-    "East--West arm, denoted as EW or X arm, South--North denoted as SN or Y
-    arm and Vertical denoted as Zarm"
-
-The code assigns them the other way round.
-:class:`~grand.sim.detector.antenna_model.AntennaModel` reads
-``Light_GP300Antenna_nec_Xarm_leff.npz`` into ``leff_sn`` and
-``..._nec_Yarm_leff.npz`` into ``leff_ew``.
-
-**The code is right.**  The HFSS files are named after the physical arm
-(``EWarm``, ``SNarm``) and carry no X/Y ambiguity, so the NEC and MATLAB files
-can be identified by correlating their patterns against them over 60-200 MHz:
-
-===========  =================  =================  ==============
-File         vs ``hfss_EW``     vs ``hfss_SN``     identified as
-===========  =================  =================  ==============
-``nec_X``    −0.176             **+0.722**         south-north
-``nec_Y``    **+0.651**         −0.170             east-west
-``mat_X``    −0.128             **+0.716**         south-north
-``mat_Y``    **+0.618**         −0.143             east-west
-===========  =================  =================  ==============
-
-The two reference arms correlate with each other at +0.003, so they are
-independent and the identification is not an artefact of the method.
-
-So **X is the south-north arm and Y is the east-west arm**, which is also what
-:class:`~grand.geo.coordinates.GRANDCS` implies: its ``x`` axis points north.
-
-**Why it matters.**  Following the Handbook would swap two of the three
-channels for every event simulated with ``du_type='GP300_nec'`` or
-``'GP300_mat'``.  A channel swap does not look like a bug — it looks like a
-polarisation measurement.
-
-The output channel order is fixed by :mod:`grand.sim.efield2voltage`, which
-fills ``voc[:, 0]`` from the SN arm, ``voc[:, 1]`` from EW and ``voc[:, 2]``
-from Z.  With the identification above, that is X, Y, Z in that order, which is
-how the documentation and the notebooks label them.
-
-.. _issue-geoid-longitude-convention:
-
-``geoid_undulation`` returned NaN for a negative longitude
------------------------------------------------------------
-
-:Status: **fixed** 2026-10-01 (grand-mother/grand#251); kept here until it appears in a release changelog
-:Affects: any site west of Greenwich
-:Test: ``tests/geo/test_topography_conventions.py``
-
-The EGM96 undulation map shipped as ``data/egm96.png`` is indexed over
-longitude 0-360 degrees.  :func:`grand.geo.topography.geoid_undulation` has two
-calling conventions, and only the :class:`~grand.geo.coordinates.Geodetic` one
-normalised the longitude: ``geoid_undulation(latitude=-35.20,
-longitude=-69.32)`` returned ``nan``, with nothing raised.  Both forms now wrap
-the longitude into :math:`[0, 360)` and agree:
-
-.. code-block:: python
-
-    >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
-    25.583896785168232
-    >>> topography.geoid_undulation(
-    ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
-    25.583896785168232
-
-This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
-point with no SRTM tile also returns ``nan`` rather than raising.  Both are
-pinned in ``tests/geo/test_topography_conventions.py``.
-
-.. _issue-setup-sh-swallows-errors:
-
-Fixed: ``env/setup.sh`` used to report success when the build failed
-----------------------------------------------------------------------
-
-:Status: **fixed**, September 2026
-:Found: building the proposed Docker image
-
-``env/setup.sh`` compiles TURTLE and GULL through ``src/Makefile``.  When that
-failed it printed the traceback and **exited zero anyway**, because the script
-ended on a ``cd`` and nothing checked a status:
-
-.. code-block:: text
-
-    PYTHON   _core.abi3.so
-    ModuleNotFoundError: No module named 'setuptools'
-
-    $ echo $?
-    0
-
-The failure therefore surfaced later and somewhere unrelated — a CI stage named
-"run env/setup.sh" passed, and the next one failed with ``No module named
-'grand._core'``, which reads as a broken package rather than a missing build
-dependency two steps earlier.
-
-**The fix**, in three places, and the shape of it matters:
-
-``src/install_ext_lib.bash``
-    ``set -e``.  Correct here because the script is *executed*: aborting ends
-    the script and nothing else.  Previously a failed ``make`` was followed by
-    ``cp`` regardless, and the script's status became the ``cp``'s.
-``env/_setup_lib.sh``
-    Captures the build's status and returns it, rather than ending on ``cd``.
-``env/setup.sh``
-    Checks each step, prints which ones failed, and returns non-zero.  It does
-    **not** use ``set -e``: the script is sourced, so that would leak into the
-    caller's interactive shell and abort it on the next failing command —
-    closing a terminal because a ``grep`` found nothing.
-
-Verified both directions: a normal run returns 0, and a deliberately broken
-build returns 2 with
-
-.. code-block:: text
-
-    env/setup.sh FAILED. These steps did not succeed:
-      - compiling TURTLE and GULL (src/install_ext_lib.bash) (exit 2)
-
-A second bug was fixed alongside it.  ``_setup_lib.sh`` tested
-``if [ ! -z $CONDA_PREFIX ]`` — unquoted, so with no conda active the test
-became ``[ ! -z ]``, which asks whether the literal string ``-z`` is non-empty.
-It is, so the branch ran anyway and appended a bare ``:include`` and ``:lib`` to
-the compiler search paths.  Now ``[ -n "$CONDA_PREFIX" ]``.
-
-.. _issue-docker-unmaintained:
-
-The Docker installation route is unmaintained
-----------------------------------------------
-
-:Status: open — needs a decision, not a patch
-:Affects: anyone following the Handbook's installation chapter
-:Verified: from the files, the build scripts and Docker Hub.  **Not** by
-           building an image: no container runtime was available.
-
-The Handbook presents Docker as the first installation route and names
-published images.  Those images exist and still pull — and they are the newest
-there are:
-
-===============  ========  ==============  ==============
-Tag              Size      Last updated    Architecture
-===============  ========  ==============  ==============
-``1.2``          944 MB    2023-01-14      amd64
-``2.0``          812 MB    2022-11-18      arm64
-``1.1``          944 MB    2022-05-13      amd64
-``1.0``          940 MB    2022-05-12      amd64
-===============  ========  ==============  ==============
-
-Nothing about the route is *broken* in the sense of refusing to run.  The
-Handbook's steps end at ``source env/setup.sh``, which sets ``PYTHONPATH`` and
-never invokes pip, so the ``requires-python = ">=3.10"`` in ``pyproject.toml``
-is not reached — and the package uses no syntax or standard-library module
-newer than 3.8, so the code itself would import.  What is wrong is that the
-environment has drifted three years from the one everybody else uses.
-
-*ROOT is ten minor versions behind.*  The images and
-``env/docker_*/base.dockerfile`` pin ROOT 6.26.02, against 6.36.04 in the conda
-environment and a CI matrix of 6.36 and 6.38.  Someone three releases further back is not running the same software as
-anybody else, and nothing would tell them.
-
-*The base image is out of support.*  ``rootproject/root:6.26.02-ubuntu20.04``
-— Ubuntu 20.04 left standard support in April 2025.  The tag does still exist
-upstream, so a build would still start.
-
-*The requirements are unpinned.*  ``env/docker_*/requirements.txt`` lists 53
-packages with no version constraint at all, so a rebuild resolves to whatever
-pip offers that day.  That is the opposite of what a container is for, and it
-is how this set drifted from the conda environment — it was the only one
-carrying ``numba`` and ``lmfit`` until those were folded in.
-
-**Why it drifted, from the repository's own run history.**  There *was* a CI
-job — ``tests_with_docker.yml`` — and it has not executed since at least
-2025-08-07.  All 41 runs in that window ended ``cancelled`` after ``24h0m2s``:
-
-.. code-block:: text
-
-    The job has exceeded the maximum execution time while awaiting a runner
-
-It pinned ``runs-on: ubuntu-20.04``, a runner image GitHub has since retired,
-so the job queued forever for a label that no longer exists.  **It never
-failed; it stopped being scheduled.**  That is the whole explanation, and it
-matters for how a failure in the new workflow should be read: there is no
-evidence Docker broke for any reason to do with Docker, only that nothing has
-checked in over a year.
-
-Two consequences.  34 of the 36 branches still carry that file, so every push
-to them still burns a 24-hour queue slot and shows a red cross — retiring it
-repo-wide belongs with the Phase 10 cleanup.  And the last commits touching
-``env/docker_amd64/`` and ``env/docker_arm64/`` are 2023-09-13 and 2023-02-13,
-with no file outside those directories referencing either.
-
-**Four images exist, and they are not interchangeable.**
-
-.. list-table::
-   :header-rows: 1
-   :widths: 30 14 56
-
-   * - Image
-     - Date
-     - What it is
-   * - ``grandlib/dev:1.2``
-     - 2023-01-14
-     - what the Handbook tells users to pull
-   * - ``grandlib/dev:2.0``
-     - 2022-11-18
-     - the arm64 build
-   * - ``jcolley/grandlib_ci:0.1``
-     - 2022-01-31
-     - what the old CI used
-   * - ``grand_docker_handson_2025``
-     - 2025
-     - newest that exists, but distributed as a tarball on Google Drive rather
-       than a registry, so CI cannot pull it
-
-That last one is the interesting one: the Handbook's hands-on chapter
-distributes a **2025** image, two years newer than anything on Docker Hub.  If
-a working modern image already exists, publishing it to a registry would be a
-far smaller job than rebuilding the Dockerfiles.
-
-.. note::
-
-   **A regression introduced on this branch, and fixed.**  ``build_dev.sh``
-   assembles its two requirements files by copying them out of the repository
-   before building.  One of its sources was
-   ``docs/apidoc-only/doxygen-rtd/requirements.txt``, which this branch deleted
-   when the Sphinx tree was rebuilt — so ``build_dev.sh`` would have failed at
-   the ``cp`` on ``dev-next`` while working on the 34 other branches that still
-   have that file.  Both architectures now copy ``docs/requirements.txt``
-   instead.
-
-   The wider point stands: nothing would have caught this.  A build script with
-   no CI behind it is a script that is already broken and has not been told.
-
-**What this needs is a decision, not a patch.**  Is Docker a supported
-installation route?
-
-*If yes*, the work is: repin the base to
-``rootproject/root:6.36.00-ubuntu25.04`` to match the conda environment, pin
-the requirements from that environment rather than listing names, rebuild and
-publish the images, and — the part that prevents a repeat — add a CI job that
-builds them.
-
-*If no*, say so on the installation page and retire ``env/docker_*`` with the
-bulk cleanup in Phase 10.
-
-Deleting it is not proposed here.  ``tian-conda-arm`` carries ARM install
-notes, so that path has a user, and containers are the right answer for
-reproducibility if anyone maintains them.  Merge exposure is low either way:
-``env/docker_arm64`` is touched by no branch and ``env/docker_amd64`` by two.
-
-**It has now been run, and the answer is better than expected.**
-``.github/workflows/docker.yml`` pulled ``grandlib/dev:1.2`` and ran
-``env/setup.sh``, ``import grand``, the ``dataio`` suite and the full suite
-against both branches.  Measured 2 September 2026:
-
-.. code-block:: text
-
-    grand    /work/grand/__init__.py
-    ROOT     6.26/02 (int 62602)
-    numpy    1.23.5
-    python   3.8.10
-    high_root_version = False
-
-=============  ==========================================================
-Branch         Full suite inside the 2023 image
-=============  ==========================================================
-``dev-next``   **459 passed**, 13 skipped, 9 xfailed, 2 xpassed
-``dev``        11 failed, 12 passed
-=============  ==========================================================
-
-So **the code does work under Docker**, on ROOT 6.26, Python 3.8 and NumPy
-1.23 — and it exercises ``high_root_version = False``, a branch the conda
-matrix never reaches, since both of its legs are ROOT >= 6.36.  That path is
-not merely present, it is functional, which nothing had established before.
-
-There are in fact **two** thresholds in ``grand/dataio/descriptors.py`` and so
-three paths, which is worth stating because "the old ROOT path" is not one
-thing:
-
-.. code-block:: python
-
-    high_root_version   = ROOT.gROOT.GetVersionInt() >= 63600   # 6.36.00
-    higher_root_version = ROOT.gROOT.GetVersionInt() >= 63004   # 6.30.04
-
-The 2023 image is at 6.26.02, so it takes the outermost branch — below *both*
-thresholds.  CI covers only the innermost.  The middle band, 6.30.04 up to
-6.36, is covered by nothing at all.
-
-``dev-next`` is also markedly *better* under Docker than ``dev``, which fails
-eleven tests to its one.  The drift is real but it has not broken the library.
-
-**The single failure was the test's fault, and it is fixed.**
-``tests/basis/test_signal.py::test_get_peakamptime_norm_hilbert`` checks where
-a Hilbert envelope peaks, with two adjacent assertions:
-
-.. code-block:: python
-
-    assert np.isclose(t_max[1], true_t_max, atol=delta_t)   # one sample of slack
-    assert idx_max[1] == int(true_t_max / 1000)             # exact
-
-``delta_t`` is one sample.  The first passed; the second failed by exactly one,
-``array([512]) == 511``.
-
-The cause is arithmetic rather than NumPy.  The trace is built on
-``linspace(-20, 20, 1024)``, whose midpoint falls on a half-sample: the peak
-sits at index **511.5**, exactly between two samples, so which one ``argmax``
-returns is decided by floating-point noise and implementations legitimately
-differ.  ``int(511.5)`` truncates to 511 — picking one of two equally correct
-answers for no reason.
-
-The assertion now brackets the true position, ``floor <= idx <= ceil``, which
-accepts 511 and 512 and still rejects 510 and 513.  With that, ``dev-next``
-passes its whole suite inside the 2023 image.
-
-**What this does to the recommendation.**  Reviving Docker is a smaller job
-than it looked.  The images are stale rather than incompatible, so the work is
-to repin the base, pin the requirements from the conda environment, rebuild and
-publish — not to fix the library for old ROOT, which already works.
-
-**In the meantime**, the supported route is the conda environment; see
-:doc:`installation`.
-
-.. _issue-src-outlib-conflict:
-
-``src_outlib/`` carries an unresolved merge conflict from 2023
----------------------------------------------------------------
-
-:Status: open, not blocking — the directory is unreachable
-:Affects: anyone who edits ``src_outlib/``, and anyone merging the four
-          branches that still touch it
-:Test: ``tests/sim2root/test_converter_defects.py``
-
-``src_outlib/ZHAireSRawToGRANDROOT.py`` contains committed conflict markers and
-has not been valid Python since the day they landed:
-
-.. code-block:: text
-
-    $ python -c "import ast; ast.parse(open('src_outlib/ZHAireSRawToGRANDROOT.py').read())"
-    SyntaxError: invalid syntax
-      <<<<<<<< HEAD:examples/dataio/ZHAireSRawToGRANDROOT.py
-
-.. code-block:: text
-
-    358967a  2023-06-30  lwpiotr  Merging master into this branch
-
-Both sides of the conflict import modules that no longer exist —
-``grand.io.root.run`` and ``grand.dataio.root_trees`` — so neither branch of it
-would run even once the markers were removed.
-
-**Why it went unnoticed.**  Nothing imports the directory from outside itself,
-it is not packaged (``pyproject.toml`` includes only ``grand*``), and the
-linter does not cover it.  There is no path by which the syntax error could
-reach anybody.
-
-**It also duplicates a live file.**
-``src_outlib/AiresInfoFunctionsGRANDROOT.py`` is a diverged copy of
-``sim2root/ZHAireSRawRoot/AiresInfoFunctionsGRANDROOT.py`` — 1814 lines against
-2095, with the sim2root copy carrying a series of ``Get*FromSry`` functions
-this one lacks.  Two versions of the same ZHAireS reader, one of them stale.
-Editing the wrong one is an easy mistake and would fail silently, since nothing
-imports this copy.
-
-**Not deleted here, deliberately.**  Four branches still touch
-``src_outlib/``.  Removing a directory that unmerged work modifies converts a
-clean merge into a delete/modify conflict on each of them, which is a poor
-trade for tidying code that cannot execute.  It belongs with the bulk cleanup
-in Phase 10, once the merge queue has drained — the same reasoning that defers
-branch deletion.
-
-**What to do in the meantime.**  Treat ``sim2root/ZHAireSRawRoot/`` as the live
-copy and ``src_outlib/`` as abandoned.  If you find yourself editing the
-latter, you are almost certainly in the wrong file.
-
-.. _issue-coreas-xmax-unbound:
-
-The CoREAS converter crashes on the repository's own test fixture
-------------------------------------------------------------------
-
-:Status: **fixed** 2026-09-24 (grand-mother/grand#159), with a choice the
-         owners of ``sim2root/`` may want to revisit — see *The fix* below
-:Found: 2026-09-08, while checking whether branch
-        ``147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root``
-        was superseded
-:Test: ``tests/sim2root/test_xmax_frame.py``, which runs the conversion
-
-The normal invocation of the CoREAS converter, on the CoREAS simulation
-committed in this repository, fails:
-
-.. code-block:: text
-
-    $ cd sim2root/CoREASRawRoot
-    $ python CoreasToRawROOT.py -d proton
-    ...
-      File "CoreasToRawROOT.py", line 361, in CoreasToRawRoot
-        RawShower.xmax_pos_shc = Xmax_NWU
-                                 ^^^^^^^^
-    UnboundLocalError: cannot access local variable 'Xmax_NWU' where it is
-    not associated with a value
-    $ echo $?
-    1
-
-It also leaves a **447-byte** ``Coreas_004100.rawroot`` behind — the file is
-opened before the crash — where a complete one is about 1.4 MB. A caller that
-checks for the file rather than the exit status sees output.
-
-**The cause.** ``Xmax_NWU`` is computed at line 154, inside
-
-.. code-block:: python
-
-    if read_params(reas_input, "ShowerZenithAngle"):
-
-and used unconditionally at line 361. The ``else`` branch never assigns it.
-Both lines came in together, in ``b4baed1``, *"add calculation of Xmax cart.
-position to rawroot"*.
-
-**Why the else branch is the normal path.** CoREAS writes two kinds of
-``.reas``. The short ``SIMxxxxxx.reas`` holds the CoREAS settings — core
-coordinates, time resolution, refractive index — and has no
-``ShowerZenithAngle``. The long per-event ``SIMxxxxxx-<id>-<id>.reas`` does.
-Directory mode globs
-
-.. code-block:: python
-
-    available_reas_files = glob.glob(path + "SIM??????.reas")
-
-which is exactly six characters and therefore matches **only the short file**.
-So ``read_params`` returns ``None``, the ``else`` branch runs — reading zenith
-and azimuth from the ``.inp`` instead, which is what it is there for — and the
-unconditional use at line 361 raises. The author of the ``else`` branch knew
-the short file lacks these keys; the Xmax work was simply added to the other
-branch only.
-
-**The fix is not obvious, which is why this is filed rather than patched.**
-The ``else`` branch cannot compute an Xmax position: it hard-codes
-
-.. code-block:: python
-
-    DepthOfShowerMaximum = -1
-    DistanceOfShowerMaximum = -1
-
-so the spherical vector would be built from a distance of -1 m. Computing
-``Xmax_NWU`` there would store a confidently wrong position rather than a
-missing one. The options are to write the converter's ``-1`` sentinel, to read
-the long ``.reas`` when it is present, or to refuse the conversion — and which
-is right is a question for whoever owns ``sim2root/``.
-
-**The fix, and the choice it makes.** The ``else`` branch now assigns
-
-.. code-block:: python
-
-    Xmax_NWU = np.full(3, np.nan)
-
-with a printed warning. Of the options above, this is closest to the
-sentinel, except that it uses NaN rather than ``-1``: a ``-1`` or zero
-vector is a valid-looking position, and nothing downstream checks its
-range, whereas NaN propagates visibly. The conversion now completes (a
-1.4 MB file), and the whole CoREAS chain runs through ``sim2root.py``,
-writing ``origin_geoid[2] = 1200`` — metres, from the observation level.
-
-This settles the crash, not the design question. The fixture also carries
-the long per-event ``SIM004100-001004105-000000001.reas``, so the option
-that yields a *real* Xmax — read the long file when it is present — remains
-open, and it belongs to the owners of ``sim2root/``.
-
-The same commit changes the branch test to
-``read_params(...) is not None``. Tested for truth, a genuine
-``ShowerZenithAngle`` of 0.0 — a vertical shower — was falsy and took the
-hard-coded Dunhuang branch. No fixture has a vertical shower, so that change
-is reasoned from ``read_params``, not measured.
-
-**Why it survived.** Nothing ran this converter. ``tests/sim2root/`` read the
-sources with :mod:`ast` and never imported them, for the reasons given at the
-top of ``test_converter_defects.py``, so a crash on the committed fixture was
-invisible to the test suite. ``test_xmax_frame.py`` now runs it as a
-subprocess on the committed fixture, and was checked to fail with the fix
-removed.
-
-.. _issue-xmax-sample-vintage:
-
-The committed ZHAireS samples carry Xmax 1264 m too high, and only one reader corrects it
-------------------------------------------------------------------------------------------
-
-:Status: **fixed** 2026-09-24 — the readers detect the frame; kept here until it appears in a release changelog
-:Found: 2026-09 (grand-mother/grand#160); cause settled 2026-09-24
-:Affects: ``grand/sim/shower/gen_shower.py``, ``grand/aoi/event.py`` and the
-          event viewer's angular plane on the committed samples; ``grand/dataio/root_files.py`` on any
-          regenerated sample
-:Test: ``tests/sim2root/test_xmax_frame.py``
-
-``xmax_pos_shc`` is Xmax in shower-core coordinates, whose origin is the core
-on the ground, so its ``z`` is a height *above the ground*. In every
-ZHAireS-derived sample under ``sim2root/Common/``, ``z`` is instead the AIRES
-value measured from sea level: 1264 m too high, exactly ``origin_geoid[2]``.
-
-**The converter is not the cause.** Run today on the ``.sry`` files committed
-for events 1618 and 13790, ``ZHAireSRawToRawROOT.py`` writes the
-ground-relative value exactly, checked against the ``.sry`` itself rather than
-the converter's arithmetic:
-
-==========  ==================  ===================  ===========================
-Event       ``.sry`` Xmax *z*   Written today        Committed sample
-==========  ==================  ===================  ===========================
-1618        5763.41 m           4499.41 m            5763.4 m
-13790       13927.77 m          12663.77 m           13927.8 m
-==========  ==================  ===================  ===========================
-
-The ground is at 1264.0 m in both ``.sry`` files and in ``origin_geoid``.
-``sim2root.py`` copies the field through unchanged. The samples predate the
-``- GroundAltitude`` in the converter; both arrived in one squashed import,
-so history cannot date the change.
-
-**One reader compensates.** ``get_simu_parameters`` in
-``grand/dataio/root_files.py`` computes
-
-.. code-block:: python
-
-    FIX_xmax_pos = xmax_pos_shc + shower_core_pos - [0, 0, origin_geoid[2]]
-
-under the comment "DC2 FIX" (collab-issues#34). On the committed samples the
-two errors cancel and ``FIX_xmax_pos`` is right. The other readers take the
-raw field: ``gen_shower.py`` builds the shower maximum that feeds the antenna
-response from it, and ``aoi/event.py`` stores it as ``Xmaxpos``. On the
-committed samples, those are 1264 m high.
-
-The event viewer (``examples/eventviewer/``) also reads the raw field, and
-its *Angular Plane* panel is where the offset is most visible: measured on
-the committed sample, each antenna's angle from Xmax moves by up to 6.5
-degrees for event 1618 and 1.0 degree for the inclined event 13790 once the
-1264 m is removed — against a Cherenkov ring about a degree wide, which is
-what that panel exists to show.
-
-**Regenerating the samples does not fix it; it moves it.** On fresh output
-the raw field is right, so ``gen_shower.py`` and ``aoi/event.py`` become
-correct, and ``FIX_xmax_pos`` lands at 3235.4 m for event 1618 — 1264 m below
-Xmax. No vintage of the data makes every reader correct; the samples and the
-DC2 FIX have to change together.
-
-**How it was settled.** Decided 2026-09-24: keep the samples, and have the
-readers detect the convention, since data from DC2 itself was written under
-the old one. ``grand/dataio/xmax_frame.py`` reads it from the file's own
-geometry: Xmax lies on the shower axis, so the vector from the core to Xmax
-must point along the stored zenith and azimuth. On all twelve committed
-ZHAireS events the ground-relative reading does so to 0.001 degrees and the
-raw one misses by 0.49 to 7.0 degrees. A value that follows neither -- NaN
-from the CoREAS converter, or a synthetic test shower -- is left as stored,
-with a warning.
-
-``root_files.py``, ``gen_shower.py``, ``aoi/event.py`` and the event viewer
-all use it, so every reader is right on both vintages.
-``test_the_reader_places_xmax_right_on_both_vintages`` runs the real reader on
-the committed sample and on fresh converter output, and fails, 1264 m low on
-the fresh file, if the unconditional subtraction is put back.
-
-A vertical shower cannot be told apart this way -- both readings point
-straight up -- and is left as stored.
-
-
-.. _issue-magnetic-field-units:
-
-``magnetic_field`` holds two angles and a strength, in a unit nothing records
-------------------------------------------------------------------------------
-
-:Status: open — one reader fixed 2026-09-24
-:Affects: anything that reads ``TShower.magnetic_field``
-:Test: ``tests/examples/test_eventviewer.py`` (the viewer's use of it)
-
-``magnetic_field`` is not a vector. Both converters store
-``[inclination, declination, strength]``, as ``sim2root.py`` says in a
-comment, but the strength's unit differs between them and is recorded
-nowhere:
-
-==============================================  ===========================
-Sample                                          ``magnetic_field``
-==============================================  ===========================
-``sim_Xiaodushan_..._ZHAireS_0000``             ``[61.6, 0.13, 56.482]`` (µT)
-``sim_Dunhuang_..._CoREAS-NJ_0000``             ``[61.605, 0.125, 0.565]`` (G)
-==============================================  ===========================
-
-The CoREAS converter's comment says it converts gauss to mT, which would
-give 0.0565; the path this fixture takes hard-codes 0.5648 with no
-conversion.
-
-**It has already misled one reader.** The event viewer normalised the three
-numbers as if they were Bx, By, Bz, which at Xiaodushan gives a direction
-104 degrees from the real field and turned the vxB axes of its shower-plane
-and angular-plane panels by 91 to 114 degrees. Fixed on 2026-09-24: it now
-builds the direction from the two angles, and a test compares it with
-GRANDlib's geomagnetic model at the site. The field name, and the absence
-of a unit, invite the same mistake elsewhere.
-
-**What would settle it.** Store one unit (the schema has no place for one),
-or split the field into named components; either is a data-format change
-and belongs to whoever owns ``grand/dataio/``.
-
-.. _issue-nutrig-field-names:
-
-Two names for the NUTRIG correlation fields
---------------------------------------------
-
-:Status: open, blocking
-:Blocks: ``dev_fix_root_warnings_lwp_new_fields`` and, behind it,
-         ``dev_fix_root_warnings_aoi_levels_lwp``
-:Test: ``tests/dataio/test_schema_snapshot.py``
-
-Two branches add the same NUTRIG correlation quantity to
-:class:`~grand.dataio.event_trees.TADC`, by the same author, with the same
-type, under different names:
-
-===========================================  ==================================
-Branch                                       Fields
-===========================================  ==================================
-``dev_nutrig_fields`` *(merged)*             ``nutrig_rhox``, ``nutrig_rhoy``
-``dev_fix_root_warnings_lwp_new_fields``     ``correlation_x``, ``correlation_y``
-===========================================  ==================================
-
-Field names enter the ROOT schema and become part of the data contract, so
-only one may exist.  The choice belongs to the author and to whoever writes
-the NUTRIG analysis code that reads them.
-
-``tests/dataio/test_schema_snapshot.py`` fails if both spellings ever appear
-together, so the collision cannot be merged past silently.
-
-.. _issue-numpy2-descriptors:
-
-Tree classes cannot be constructed under NumPy 2
---------------------------------------------------
-
-:Status: **fixed** 2026-08-30 — kept here until it appears in a release changelog
-:Affects: the whole data layer — ``TRun()`` raises
-:Test: visible in ``tests/dataio/`` (271 tests)
-
-**Symptom.**  Constructing any run or event tree fails::
-
-    >>> from grand.dataio.run_trees import TRun
-    >>> TRun()
-    ValueError: setting an array element with a sequence.
-
-**Cause.**  In :mod:`grand.dataio.descriptors`, ``TTreeScalarDesc.__set__``
-receives the descriptor object itself as ``value`` when a dataclass field
-takes its default.  The guard for that case reassigns the instance array to
-itself:
-
-.. code-block:: python
-
-    if isinstance(value, TTreeScalarDesc):
-        value = getattr(obj, self.attrname)   # same array as `inst` below
-    inst = getattr(obj, self.attrname)
-
-    inst[0] = value                           # inst[0] = inst
-
-``arr[0] = np.array([x])`` was tolerated by NumPy 1 and is rejected by NumPy 2:
-
-.. code-block:: text
-
-    numpy 2.5.2: arr[0] = array([x])  ->  ValueError
-
-This is why it appears now.  Nothing in the code changed; the environment
-moved.  The CI container that last ran successfully dates from January 2022
-and carried NumPy 1.
-
-**Fix.**  The instance array is already populated by ``create_default(obj)``
-on the preceding line, so the assignment is a no-op in intent and is now
-skipped:
-
-.. code-block:: python
-
-    if isinstance(value, TTreeScalarDesc):
-        return          # default already installed by create_default()
-
-**Measured effect** on the full suite, 30 August 2026:
-
-=====================  ==========  ==========
-Suite                  failed      passed
-=====================  ==========  ==========
-before                 123         216
-after                  **15**      **324**
-=====================  ==========  ==========
-
-Guarded by ``tests/dataio/test_descriptor_defaults.py``, which constructs
-every run and event tree with no arguments and checks that the default
-survives as a scalar.  That the default is still correct after skipping the
-assignment is the part worth testing: it confirms ``create_default`` was
-always doing the work.
-
-
-.. _issue-import-requires-root:
-
-The package cannot be imported without ROOT
---------------------------------------------
-
-:Status: open — **partly fixed** 2026-09-24: ``import grand`` and the coordinate
-         code no longer need ROOT; the data layer, topography and simulation
-         still do
-:Affects: documentation builds, and anything using topography or simulation
-          without ROOT
-:Test: ``tests/test_lazy_imports.py``
-
-``grand/dataio/descriptors.py`` evaluates ``ROOT.gROOT.GetVersionInt() >= 63600``
-at module import time, and :mod:`grand.geo.topography` imports
-:mod:`grand.dataio.protocol`.  The result is that importing anything under
-``grand`` requires a full ROOT runtime, including importing it in order to
-document it — the Sphinx configuration carries a typed mock for this reason.
-
-Deferring the version check to first use, and breaking the geometry-to-dataio
-dependency, are part of the interface work.
-
-**What changed on 2026-09-24.** ``grand/__init__.py`` imported the geometry
-and simulation code eagerly, so *every* import pulled in ROOT through the
-chain above. It now loads its public names on first use (PEP 562). Measured
-with ROOT made unimportable:
-
-===================================  ==========  ==========
-Import                               Before      After
-===================================  ==========  ==========
-``import grand``                     fails       works
-``import grand.geo.coordinates``     fails       works
-``import grand.geo.topography``      fails       fails
-``import grand.dataio``              fails       fails
-``import grand.sim.efield2voltage``  fails       fails
-===================================  ==========  ==========
-
-The data layer needing ROOT is expected: it *is* the ROOT I/O. The last two
-rows are the chain described above, and still open. Separately, with ROOT
-present but the compiled C core absent, ``import grand.dataio`` now works
-(it used to fail with ``No module named 'grand._core'``), because the
-physics is no longer loaded to read a file.
-
-.. _issue-missing-endtoend-fixture:
-
-The end-to-end test has no input
----------------------------------
-
-:Status: fixed (the numerical regression is covered by
-         ``tests/sim/test_pipeline_golden.py``)
-:Affects: the only test that exercises the whole pipeline
-:Test: ``tests/sim/test_efield2voltage.py``
-
-``tests/sim/test_efield2voltage.py`` reads ``data/test_efield.root``.  That
-file is not in version control: ``data/.gitignore`` excludes everything except
-the readme, the download scripts and itself.  Nor is it produced by
-``env/setup.sh``, which fetches the topography, geomagnetic and antenna data
-but no test input.
-
-So the test cannot pass on a fresh checkout or in CI.  The copy that happens to
-exist in this working tree is 615 bytes and contains no trees at all.
-
-This is also why the test asserts so little.  Its only check after
-``compute_voltage()`` is that an output file exists -- which is all you can
-assert when there is no reliable input to compare against.
-
-**Partly resolved.**  ``tests/sim/test_pipeline_end_to_end.py`` now builds its
-input in a pytest fixture from the tree classes themselves, which costs nothing
-in repository size, cannot drift from the schema, and puts the fixture's
-contents in front of the reader.  Six tests exercise the whole chain on it.
-
-What remains is the *numerical* regression described in the recovery plan --
-peak voltage, trace RMS and band-integrated power against stored references.
-That needs agreed reference values, which in turn needs the Galactic-noise
-normalisation settled, so it is blocked on
-:ref:`issue-galactic-noise-normalisation` rather than on the fixture.
-
-``tests/sim/test_efield2voltage.py`` now runs on the committed RUN1 sample in
-a temporary folder and checks the events written; it is no longer an
-expected failure.
+Physics and simulation
+----------------------
 
 .. _issue-vga-gain-ignored:
 
 The VGA gain setting has no effect
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:Status: open
-:Affects: any study that varies the amplifier gain
-:Test: ``tests/sim/test_rf_chain_physics.py::test_gain_setting_changes_the_transfer_function``
+``RFChain(vga_gain=...)`` accepts 20, 5, 0 or -5 dB, but every setting gives
+the same transfer function: the stage reads a front-end-board table whatever
+the gain and the per-gain tables are never opened.
 
-``RFChain(vga_gain=...)`` accepts 20, 5, 0 or -5 dB (any other value raises
-``ValueError``), stores the value and logs it — and then loads the same S-parameter
-file whatever it was.  The transfer function is identical for every setting:
+*Meanwhile:* do not compare gain settings.
 
-.. code-block:: text
+.. _issue-t1-clean-simulations:
 
-    vga_gain= 0   max|TF| = 94.7612
-    vga_gain= 5   max|TF| = 94.7612
-    vga_gain=20   max|TF| = 94.7612
+The offline T1 trigger passes few units on clean simulations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Cause.**  In ``VGAFilter._set_name_data_file`` the line that used the gain
-is commented out, and the replacement reads a single fixed path from a
-component configuration:
+:Issue: `#233 <https://github.com/grand-mother/grand/issues/233>`_
 
-.. code-block:: python
+With the default parameters, T1 rejects most clean, strong simulated pulses:
+it tries only the first threshold crossing and it rejects a channel whose
+crossings are more than ``t_sepmax`` apart.  Noise adds closely spaced
+crossings, which is why noisy events pass more often.  Two parameters,
+``sepmax_inclusive`` and ``sepmax_ends_count``, select the other readings of
+the rule the trigger group has to choose between.
 
-    assert self.gain in [-5, 0, 5, 20]
-    logger.info(f"vga gain: {self.gain} dB")
-    #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
-    filename = components["Filter"]["s2p_file"] if components["Filter"]["enabled"] else None
+*Meanwhile:* offline T1 results on noise-free simulations are not meaningful.
 
-``components["Filter"]["s2p_file"]`` resolves to
-``detector/RFchain_v2/feb+amfitler+biast.s2p``.  That is worth stating plainly:
-the stage is not loading the *wrong* VGA table, it is **not loading a VGA table
-at all** — that file is a front-end board with an AM filter and a bias tee, a
-different component.  The three per-gain files ship in
-``data/detector/RFchain_v2/`` and are never opened:
+Smaller physics defects
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 60 40
+:Issue: `#254 <https://github.com/grand-mother/grand/issues/254>`_
 
-   * - File
-     - Read by anything?
-   * - ``filter+vga0db+filter.s2p``
-     - no
-   * - ``filter+vga5db+filter.s2p``
-     - no
-   * - ``filter+vga20db+filter.s2p``
-     - no
+* The ADF fit's geomagnetic asymmetry factor is always 1.
+* At the default ``padding_factor=1.0``, the antenna response wraps around the
+  end of the trace, changing the open-circuit voltage by 3 to 5%.
+* The ADC truncates instead of rounding and its positive full scale is one
+  count too high.
+* The effective refractive index is up to 3.4% off for nearby sources and
+  NaN when source and antenna are at the same altitude.
 
-Note also the mismatch between the assertion and the data: four values are
-accepted, ``[-5, 0, 5, 20]``, and only three files exist.  There is no
-``filter+vga-5db+filter.s2p``.  Uncommenting the line above would therefore fix
-three of the four accepted settings and turn the fourth into a missing-file
-error, so the assertion needs narrowing at the same time.
+*Meanwhile:* pass ``padding_factor=2`` to
+:class:`~grand.sim.efield2voltage.Efield2Voltage` where the trace shape
+matters.
 
-**Why it matters.**  Section 8.3 of `arXiv:2408.10926
-<https://arxiv.org/abs/2408.10926>`_ states that the total transfer function
-changes with the choice of VGA gain, and one of the library's stated purposes
-is assessing the effect of changes to the detector design.  A comparison
-across gain settings currently returns the same answer three times, with no
-error and no warning.
+.. _issue-galactic-noise-normalisation:
+.. _issue-galactic-noise-tables:
 
-**Not fixed here.**  Restoring the commented line would bypass the component
-configuration that replaced it, which appears to be deliberate and part of
-other work.  Whoever introduced that configuration should decide how the gain
-selects a file within it.
+Voltages simulated before 7 September 2026
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _issue-reader-directory-coupling:
+Before that date, the simulated noise was :math:`\sqrt{2}` too low and the
+three antenna models read noise tables that differed by up to a factor of two.
 
-The file readers depend on an undocumented naming convention
--------------------------------------------------------------
-
-:Status: open
-:Affects: :mod:`grand.dataio.root_files`, and anything that opens a file
-          through it
-:Test: ``tests/dataio/test_root_files_reading.py``
-
-``_FileEventBase.__init__`` does not read the file it is given in isolation.
-It constructs a :class:`~grand.dataio.data_handling.DataDirectory` for the
-*containing directory*, then looks up the run and shower trees by attribute
-names chosen from a substring of the filename:
-
-.. code-block:: python
-
-    if f_name.find("_L0_") > 0:
-        self.tt_shower = data_dir.tshower_l0
-        self.tt_run = data_dir.trun_l0
-    elif f_name.find("_L1_") > 0:
-        self.tt_shower = data_dir.tshower
-        self.tt_run = data_dir.trun
-
-So opening one voltage file requires that its name carry ``_L0_`` or ``_L1_``,
-that the analysis level recorded *inside* its trees agree with the one in the
-name, and that the directory also hold matching run and shower trees grouped
-under the naming scheme :meth:`DataDirectory.get_list_of_files_handles`
-expects.  None of that is documented, validated or stated in an error message.
-
-**Consequences.**  A user who renames a file, or writes one from the tree
-classes directly, gets an ``AttributeError`` naming an attribute they have
-never heard of.  (``DataDirectory`` itself no longer does: since #187 it warns
-about a name level that disagrees with the trees and uses the trees' level,
-and warns about a file no tree type claims.  This reader still expects the
-naming above.)
-
-The module was at 21 % test coverage when this was written, not because it is
-unimportant but because a valid input was difficult to construct.  It is now at
-75 %: ``tests/dataio/test_root_files_reader.py`` builds a conforming
-three-file set in a fixture, and documents the convention above by
-constructing it.  The coupling itself is unchanged — the tests encode the
-requirement rather than removing it, and one of them asserts that the
-single-file layout still fails, so that the day the reader looks inside the
-file it was handed, the suite says so.
-
-**What it needs.**  The reader should take the trees it needs, or accept them
-explicitly, rather than rediscovering them from a directory listing.  That is
-the sort of change Phase 6 of the recovery plan exists to make; until then the
-convention should at least be written down and checked with a clear error.
-
-One part of this is already improved: a bare ``raise`` with no active
-exception, which produced ``RuntimeError: No active exception to reraise`` for
-any file lacking the level marker, now raises a :class:`ValueError` naming the
-file and the convention.
-
-**The mechanism, measured.**  ``DataDirectory`` groups files by **filename
-prefix**, not by the trees a file contains: ``ftshowers`` collects files whose
-name begins with ``shower_``.  So a single file holding ``TRun``, ``TEfield``
-and ``TShower`` is only ever seen as an efield file, and
-:class:`~grand.dataio.root_files.FileEfield` then fails on it with
-
-.. code-block:: text
-
-    AttributeError: 'NoneType' object has no attribute 'file_name'
-
-Three conditions must hold together for a file to be readable:
-
-1. the run, efield and shower trees are in **separate files**, named
-   ``run_*``, ``efield_*`` and ``shower_*``;
-2. each name carries its analysis level as ``_L0_`` or ``_L1_``;
-3. the ``analysis_level`` stored *in each tree* matches the name.
-
-None of that is stated anywhere in the code.  It is now pinned by
-``tests/dataio/test_root_files_reader.py``, which builds a conforming fixture
-and also asserts that the single-file layout fails — so that the day the reader
-looks inside the file it was handed, the test says so.
-
-**Two smaller defects found while writing those tests.**
-``get_du_count()`` returns 0 on a file whose ``TRun`` was written with
-``du_id`` set, while the traces carry the right number of units; a caller
-sizing an array from it gets nothing.  Recorded as an expected failure.  And
-``get_du_nanosec_ordered()`` returns a ``(times, origin)`` tuple, not the
-``ndarray`` its docstring claimed — ``np.asarray`` on the result raises.  The
-docstring is corrected.
-
-.. _issue-root-638-numerical-difference:
-
-Withdrawn: ROOT 6.38 does not change the result of a NumPy-only test
-----------------------------------------------------------------------
-
-:Status: **withdrawn.** The observation was real; the explanation was wrong.
-:Test: ``tests/basis/test_traces_event.py::test_remove_trace_low_signal``
-
-This entry used to report that ``test_remove_trace_low_signal`` kept two traces
-under ROOT 6.36.04 and three under 6.38.02, and reasoned that since the
-function is pure NumPy and never touches ROOT, importing ROOT might be changing
-floating-point behaviour process-wide — "a much broader problem than one test".
-
-**It is not.  The test was flaky.**
-
-It added *unseeded* unit-variance noise to traces of amplitude 1, 10, 0.5, 11
-and 1 and then counted how many exceeded a threshold of 5.  The three quiet
-traces sit far enough below the threshold to survive most draws and not all of
-them.  Measured over 400 draws with ROOT imported and never called:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 60 40
-
-   * - Surviving traces
-     - Frequency
-   * - 2 (the expected count)
-     - 93.5 %
-   * - 3
-     - 6.2 %
-   * - 4
-     - 0.2 %
-
-So "three survived on one leg" is what this test did roughly one run in
-fifteen, on any ROOT version.  The two CI legs simply drew different noise.
-Nothing about ROOT is required to explain it, and no evidence for a ROOT effect
-survives.
-
-The test is now seeded through a local generator and the flakiness is gone; it
-had been failing about one full suite run in six before that.
-
-**What was actually wrong** was the test, and it is fixed.  What was wrong with
-this entry was reaching for a dramatic explanation of a difference between two
-runs without first asking whether the measurement was repeatable.  A
-single-sample difference between two runs is not evidence of anything until the
-runs are shown to be deterministic.
-
-If someone does observe a genuine ROOT-version-dependent numerical difference,
-it needs a deterministic reproducer — the same seeded input giving different
-output on two ROOT versions — before it is written down as one.
+*Meanwhile:* do not compare noise levels across that date.  Files written
+since record the GRANDlib version (``grandlib_version``); older ones carry
+``0.1.0.dev0`` or nothing.
 
 .. _issue-geomagnetic-model-expired:
 
-The geomagnetic model expired on 1 January 2025
--------------------------------------------------
+The geomagnetic model ends in 2025
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:Status: open
-:Affects: any use of the geomagnetic field, or of a magnetic-north frame, at
-          a present-day date
-:Test: ``tests/geo/test_geomagnet_validity.py``
+GRANDlib ships IGRF-13, valid to 2025; a later date raises
+``LibraryError: missing data``.  Without a date, the field of 1 January 2020
+is used.
 
-``data/geomagnet/IGRF13.COF`` is the thirteenth generation of the
-International Geomagnetic Reference Field, which is defined from 1900 to
-**2025**.  GULL rejects any date at or beyond the end of that range:
+*Meanwhile:* use a date before 2025.  The fix is to ship IGRF-14.
 
-.. code-block:: text
+Data and file format
+--------------------
 
-    2020-01-01: OK
-    2024-06-01: OK
-    2025-01-01: LibraryError: missing data in file .../IGRF13.COF
-    2026-01-01: LibraryError: missing data in file .../IGRF13.COF
+.. _issue-sample-event-times:
+.. _issue-xmax-sample-vintage:
 
-So a magnetic-north frame, or a field evaluation, at any date since the start
-of 2025 fails outright.
+The sample simulations are dated May 1976
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Why nobody noticed.**  The default observation time throughout
-:mod:`grand.geo.coordinates` is the literal string ``"2020-01-01"``:
+:Issue: `#225 <https://github.com/grand-mother/grand/issues/225>`_
 
-.. code-block:: python
+The committed samples under ``sim2root/Common/`` were converted with a fixed
+placeholder time, 13 May 1976.  The converters now use the simulation date;
+the samples are kept as written because tests read them.
 
-    obstime: Union[str, datetime] = "2020-01-01",  # calculate declination of what date?
+*Meanwhile:* take their date from ``event_date`` or the folder name.
 
-That default sits comfortably inside the valid range, so everything works
-until someone passes a real date -- at which point it stops working, more than
-a year after the model lapsed.  The trailing comment in the source suggests
-the choice of epoch was never settled.
+.. _issue-magnetic-field-units:
 
-**Why it matters.**  The geomagnetic field is one of the three physics inputs
-the library owns, and it drives the radio emission.  A simulation of data
-taken in 2025 or 2026 cannot currently evaluate the field at the time the data
-were taken; it can only use a stale epoch, silently, via the default.
+``magnetic_field`` is not a vector and its unit is not recorded
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**The fix.**  IGRF-14 was released at the end of 2024 and covers 2025 to 2030.
-Shipping it, and reconsidering whether a hard-coded default epoch is wanted at
-all, would resolve both halves of this. A default that is a fixed date in the
-past is the kind of thing that works for years and then quietly stops being
-right.
+``TShower.magnetic_field`` holds inclination and declination in degrees, then
+the strength: in µT from ZHAireS, in mT or gauss from older CoREAS
+conversions.
 
-.. _issue-unsigned-char-fields:
+*Meanwhile:* build the direction from the two angles, or use
+:mod:`grand.geo.geomagnet`.
 
-Fourteen fields change Python type when a file is read back
--------------------------------------------------------------
+.. _issue-reader-directory-coupling:
 
-:Status: open, low severity — a trap rather than a defect
-:Affects: any code that does arithmetic on an ``unsigned char`` field of
-          :class:`~grand.dataio.event_trees.TADC` or
-          :class:`~grand.dataio.run_trees.TRunRawVoltage`
-:Test: ``tests/dataio/test_tree_roundtrip.py``
+The file readers depend on file names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Fourteen fields in the data model are declared ``unsigned char``, and PyROOT
-presents ``std::vector<unsigned char>`` as characters rather than as numbers.
-The same field therefore has one Python type before a write and another after
-a read:
+The readers of :mod:`grand.dataio.root_files` find a file's run and shower
+trees by name: the three must be separate files named ``run_*``, ``efield_*``
+and ``shower_*``, with the analysis level in the name.
 
-.. code-block:: python
+*Meanwhile:* keep the layout ``sim2root.py`` writes, or read the trees
+directly with :mod:`grand.dataio`.
 
-    tadc.test_pulse_rate_divider = [3, 5]
-    ...                                        # fill, write, reopen, get_entry
-    tadc.test_pulse_rate_divider               # ['\x03', '\x05'] -- strings
+Fourteen fields change type when a file is read back
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``sum()`` over that field works on the writing side and raises ``TypeError``
-on the reading side. The affected fields are ``adc_input_channels_ch``,
-``test_pulse_rate_divider``, ``selector_readout_ch``, ``offset_correction_ch``,
-``qmax_ch``, ``qmin_ch``, ``notch_filters_no_ch``, ``gps_receiver_mode``,
-``gps_disciplining_mode``, ``gps_self_survey`` and ``gps_gnss_decoding`` on
-``TADC``, and three of the same names on ``TRunRawVoltage``.
+The ``unsigned char`` fields of ``TADC`` and ``TRunRawVoltage`` read back as
+characters: ``[3, 5]`` becomes ``['\x03', '\x05']``.
 
-**No data is lost.** ``ord()`` recovers the number exactly, and the
-round-trip test asserts that it does. Nothing inside the package currently
-reads these fields numerically, so the problem is latent rather than live —
-it is waiting for the first piece of analysis code to treat a mode flag as a
-number.
+*Meanwhile:* apply ``ord()`` to each element.
 
-**Why it is not simply fixed.** The declared C++ type is part of the on-disk
-format. Changing ``unsigned char`` to ``unsigned short`` would widen eleven
-branches of ``TADC`` and make new files unreadable by older code, for a
-cosmetic gain. The alternative — decoding in the descriptor's ``__get__`` —
-is contained but changes what every existing reader sees, which is the same
-compatibility question in a different place.
+Antenna positions from GPS use a fixed origin by default
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**What is done instead.** ``tests/dataio/test_tree_roundtrip.py`` pins the
-behaviour, so it is documented rather than surprising, and the test fails if
-a future ROOT version changes it. That failure is the moment to decide, since
-at that point the compatibility break has happened anyway.
+:Issue: `#215 <https://github.com/grand-mother/grand/issues/215>`_
 
-.. _issue-coreas-site-table:
+For GP80 data, :mod:`grand.aoi` computes GPS positions relative to a fixed
+origin, about 3.8 km from the run's ``origin_geoid``.  ``EventList`` and
+``Event`` accept ``gps_origin="run"`` or an explicit origin.  Which one the
+GP80 data intend is for their owners to confirm.
 
-The CoREAS site table knows two sites, and stores their altitudes in centimetres
----------------------------------------------------------------------------------
+Installation and environment
+----------------------------
 
-:Status: **fixed** 2026-09-24 — kept here until it appears in a release changelog
-:Affects: converting any CoREAS simulation of a site other than Dunhuang or
-          Lenghu (now a clear error); the altitudes are now in metres
-:Test: ``tests/sim2root/test_converter_defects.py``
+.. _issue-import-requires-root:
 
-``read_lat_long_alt`` in ``sim2root/CoREASRawRoot/CorsikaInfoFuncs.py`` maps a
-site name to its coordinates:
+Topography, the data layer and the simulation need ROOT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+``import grand`` and :mod:`grand.geo.coordinates` work without ROOT;
+:mod:`grand.geo.topography` and the simulation still import the data layer
+and so need it.
 
-    def read_lat_long_alt(site):
-        if site == "Dunhuang":
-            latitude, longitude, altitude = [40.142132, 94.661880, 114200] # alt in cm
-        elif site == "Lenghu":
-            latitude, longitude, altitude = [38.7348, 93.3306, 280000] # alt in cm
-        else:
-            latitude, longitude, altitude = []
-        return latitude, longitude, altitude
+Not supported yet
+-----------------
 
-**The live defect: every other site raises.** The ``else`` branch unpacks an
-empty list, so an unrecognised site does not fall back, warn or return
-``None``:
+* Topography in the input generation of ``sim2root``: antenna and core
+  positions on the terrain
+  (`#142 <https://github.com/grand-mother/grand/issues/142>`_) and the
+  terrain's shadow (`#141 <https://github.com/grand-mother/grand/issues/141>`_).
 
-.. code-block:: text
+Documentation
+-------------
 
-    Dunhuang     -> (40.142132, 94.66188, 114200)
-    Lenghu       -> (38.7348, 93.3306, 280000)
-    Xiaodushan   -> ValueError: not enough values to unpack (expected 3, got 0)
+.. _issue-handbook-arm-naming:
 
-Xiaodushan is the case that matters. It is a real GRAND site, the ZHAireS
-fixtures in this repository are simulations of it, and a CoREAS simulation of
-the same site cannot be converted. The error names neither the site nor the
-table, so the report will be about an unpacking error deep in a conversion
-run.
+The Handbook has the X and Y antenna arms swapped
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**The dormant landmine: the altitudes are in centimetres.** Dunhuang is at
-1142 m and the table says 114200; Lenghu is at 2800 m and the table says
-280000. The comments say so, and the unit matches CORSIKA's own — but the
-value is handed to ``RawShower.site_alt``, whose other producer, the ZHAireS
-reader, writes metres. Nothing in the schema records which.
+X is the south-north arm and Y the east-west arm (:doc:`validation`).  The
+Handbook says the opposite; the PDF in this documentation carries the
+erratum.
 
-It is currently harmless because ``CoreasToRawROOT.py`` throws the value away
-three lines after reading it:
+Where next
+----------
 
-.. code-block:: python
-
-    latitude, longitude, altitude = read_lat_long_alt(site)
-
-    # set altitude to simulations obslevel
-    altitude = CorePosition[2]          # metres: the reas file is /100 on read
-
-That override arrived in ``0694fa9`` (2024-11-04, "save obs level as site
-altitude"). Before it, the centimetre value reached the output — which is
-still visible in the fixtures, and is asserted in
-``tests/dataio/test_backward_compatibility.py``:
-
-===============================================  ==============  =============
-Fixture                                          Committed       Origin altitude
-===============================================  ==============  =============
-``sim_Dunhuang_..._CoREAS-NJ_0000``              2024-04-04      ``114200``
-``sim_Xiaodushan_..._ZHAireS_0000``              2024-10-03      ``1264``
-===============================================  ==============  =============
-
-Delete or reorder that one line and every CoREAS conversion is wrong by a
-factor of 100 in the array origin, silently, because nothing downstream checks
-whether an altitude is plausible.
-
-**The fix.** The table is now a dictionary, ``SITES``, with altitudes in
-metres (1142.0 and 2800.0), and an unknown site raises::
-
-    ValueError: unknown site 'Xiaodushan': the CoREAS converter knows only
-    Dunhuang, Lenghu. Add it to SITES in .../CorsikaInfoFuncs.py, with its
-    altitude in metres.
-
-Metres, rather than keeping CORSIKA's centimetres, because the value's only
-consumer is ``RawShower.site_alt``, which the ZHAireS reader fills in
-metres; converting at the source removes the factor of 100 instead of
-depending on the override line staying put. The override stays: it sets
-``site_alt`` to the simulation's observation level, which is the height the
-shower was simulated at. Xiaodushan was not added to the table: the only
-coordinates for it in the repository are the ZHAireS runs' two-decimal
-``origin_geoid``, too coarse to put beside the six-decimal entries, and
-adding a site is a one-line change once its surveyed coordinates are known.
-
-**Why it was not fixed earlier.** ``dev_io_root_testmerges`` was believed to be
-in flight over ``sim2root/``. On 2026-09-24 its only commit outside
-``dev-next`` proved to be a 2025 merge of ``dev``, with no patch of its own,
-and merging it conflicts in nothing under ``sim2root/``, so that reason has
-lapsed. The fix is small — raise something that
-names the site, and either convert in the table or record the unit — and it
-is left to whoever owns ``sim2root/``, because which unit the table should
-hold is their call. Five tests pin both halves in the meantime, including
-one that fails if the override line moves away from the read.
+* :doc:`troubleshooting` for errors and surprising numbers.
+* The `open issues on GitHub <https://github.com/grand-mother/grand/issues>`_.

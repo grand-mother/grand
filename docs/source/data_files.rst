@@ -1,16 +1,15 @@
 Data files
 ==========
 
+GRANDlib relies on about 1 GB of tabulated models: antenna effective lengths,
+RF-chain measurements, Galactic-noise tables, terrain and the geomagnetic
+field.  Most of it is downloaded by ``env/setup.sh`` rather than kept in
+version control.  This page describes each file, where it comes from and what
+reads it.
+
 .. contents::
    :local:
    :depth: 2
-
-GRANDlib is about a gigabyte of tabulated measurements with a Python package
-around it.  Almost none of that is in version control, and nothing else in this
-documentation says what any of it is.  This page does.
-
-Everything here was checked against the files on disk rather than taken from
-the download scripts or the Handbook, both of which are out of date in places.
 
 What is in version control
 --------------------------
@@ -58,13 +57,6 @@ holds roughly:
      - ~160 kB
      - The two coefficient files above
 
-.. note::
-
-   ``data/test_efield.root`` appears on many developer machines and is **not**
-   tracked or downloaded by anything.  No test reads it any more: they use the
-   committed samples under ``sim2root/Common`` and write into temporary
-   folders, never into ``data/``.
-
 Checking the installation
 -------------------------
 
@@ -83,30 +75,14 @@ included::
 An installation from before the manifest gets one the next time the
 downloader runs.
 
-The download scripts
+Where they come from
 --------------------
 
-Four scripts, four archives.
-
-============================================  =================================
-Script                                        Fetches
-============================================  =================================
-``download_data_grand.py``                    ``grand_model_<version>.tar.gz``,
-                                              the version taken from
-                                              ``model_version.flag``
-``download_grand_antenna_models.py``          ``grand_model_20241218.tar.gz``
-``download_LFmap_grand.py``                   ``LFmap.tar.gz``
-``download_new_RFchain.py``                   ``RF_chain_20241218.tar.gz``
-============================================  =================================
-
-All of them fetch from ``forge.in2p3.fr``, which requires
-no credentials but is not a mirror-backed host: if it is down, a fresh
-environment cannot be built.
-
-``env/setup.sh`` runs only ``download_data_grand.py``; the line for
-``download_new_RFchain.py`` is commented out.  So the versioned bundle is what
-a normal setup gets, and the other three archives are fetched by hand when
-someone needs them.
+``env/setup.sh`` runs ``data/download_data_grand.py``, which fetches the model
+release named in ``data/model_version.flag`` from ``forge.in2p3.fr``.  That
+host has no mirror: when it is down, a new installation cannot download the
+data.  The other ``download_*.py`` scripts fetch older or separate archives
+by hand and are not needed for a normal installation.
 
 Antenna effective length
 ------------------------
@@ -130,22 +106,22 @@ File                                 Model    Arm
 
 .. warning::
 
-   The X/Y column above is measured, not read off the file names.  **X is the
-   south-north arm and Y is the east-west arm**, which is the opposite of what
-   the GRANDlib Handbook says.  See :ref:`issue-handbook-arm-naming`; the
+   The arm column above comes from correlating each pattern with the named
+   HFSS arms, not from the file names.  **X is the south-north arm and Y is
+   the east-west arm**, the opposite of what the GRANDlib Handbook says.  See :ref:`issue-handbook-arm-naming`; the
    measurement is in ``tests/sim/test_antenna_arm_identity.py``.
 
 Each archive holds ``freq_mhz`` (221 bins, 30–250 MHz) and the complex
 ``leff_theta`` and ``leff_phi``, each of shape ``(361, 91, 221)`` indexed by
 azimuth, zenith and frequency.
 
-Two things catch people out.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
+Two details matter when reading them.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
 transposes on load, so the in-memory arrays are indexed ``[frequency, azimuth,
 zenith]`` and are named ``leff_theta_reim``; the attributes ``leff_theta`` and
 ``phase_theta`` exist on the loaded object but are ``None``, because the polar
 form is never populated.  And the in-memory frequency axis is in **hertz**,
-while everything in :mod:`grand.sim.detector.rf_chain` uses megahertz — see
-:doc:`implementation`.
+while everything in :mod:`grand.sim.detector.rf_chain` uses megahertz
+(:ref:`units`).
 
 Notebook 03 works through all of this.
 
@@ -198,11 +174,10 @@ Six files are read by no chain at all:
 - ``balun13in20230612.s2p``
 - ``zload_balun_200ohm.s1p``
 
-The first three are the variable-gain amplifier tables, and their absence from
-the read set is the whole of :ref:`issue-vga-gain-ignored`.  Note the ``vgaf``
-row above: the stage named for the VGA loads ``feb+amfitler+biast.s2p``, a
-front-end board with an AM filter and a bias tee.  It is not reading the wrong
-VGA table; it is reading a different component.
+The first three are the :term:`variable-gain amplifier <VGA>` tables; that no chain reads
+them is :ref:`issue-vga-gain-ignored`.  The stage named for the VGA,
+``vgaf``, loads ``feb+amfitler+biast.s2p``, a front-end board with an AM
+filter and a bias tee.
 
 Which files the chain reads is set by an XML component configuration parsed at
 import; ``grand.sim.detector.rf_chain.components`` holds the result and is the
@@ -211,37 +186,23 @@ quickest way to see the current mapping.
 Galactic noise
 --------------
 
-``data/noise/`` holds two generations of the model.
+The tables in use are ``noise/galactic_PL_per_Hz_gp13_GP300.npy`` and its
+``_nec`` and ``_mat`` counterparts, one per antenna model.  Each has shape
+``(221, 72, 3)``: 30 to 250 MHz in 1 MHz steps, 72 local-sidereal-time bins
+of 20 minutes and the three arms.  They hold the **available power spectral
+density** :math:`P_L`, in W/Hz.
 
-.. note::
-
-   **Superseded on 2026-09-07.**  Galactic noise now reads
-   ``galactic_PL_per_Hz_gp13_GP300{,_nec,_mat}.npy`` — available power
-   spectral density, one distinct table per antenna model.  The ``Vocmax_``
-   and ``Pocmax_`` tables below are still shipped and still describe files
-   simulated before that date, but no code path opens them.
-
-The Galactic-noise tables in use
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``noise/galactic_PL_per_Hz_gp13_GP300.npy`` and its ``_nec`` and ``_mat``
-counterparts.  Each is shape ``(221, 72, 3)`` — 30-250 MHz in 1 MHz steps,
-72 local-sidereal-time bins at 20-minute spacing, and the three antenna
-ports — holding **available power spectral density**, in W/Hz.
-
-**How they were produced** (Stavros Nonis, September 2026).
-``grand/sim/noise/Compute_Plot_Galactic_Noise.py`` integrates the LFMap
-Galactic sky temperature over direction against the antenna effective-length
-response, as :math:`|h_\theta|^2 + |h_\phi|^2`, giving
-:math:`V_{\rm oc,RMS}^2/\mathrm{Hz}`, then converts to available power:
+They were computed by ``grand/sim/noise/Compute_Plot_Galactic_Noise.py``,
+which integrates the :term:`LFMap` sky temperature over direction against the
+antenna's :term:`effective length`, :math:`|\ell_\theta|^2 + |\ell_\phi|^2` and
+converts the resulting :term:`open-circuit voltage` to available power:
 
 .. math::  P_L = \frac{V_{\rm oc,RMS}^2}{4\,\mathrm{Re}(Z_{\rm ant})}
 
 with :math:`Z_{\rm ant}` from ``detector/RFchain_v2/Z_ant_3.2m.csv``.  The
 LFMap inputs, ``noise/LFmap/LFmapshort<frequency>.npy``, are fetched by
-``data/download_LFmap_grand.py``.
-
-The three models differ only in which effective-length files they read:
+``data/download_LFmap_grand.py``.  The three models differ only in the
+effective-length files they read:
 
 =============  ===================================================
 ``du_type``    Effective length
@@ -251,71 +212,43 @@ The three models differ only in which effective-length files they read:
 ``GP300_mat``  ``Light_GP300Antenna_mat_{X,Y,Z}arm_leff.npz``
 =============  ===================================================
 
-The ``_nec`` and ``_mat`` tables were generated during the September 2026
-validation.  The ``GP300`` table was regenerated at the same time and came
-out bit-for-bit identical to the copy already committed.
+:func:`~grand.sim.noise.galaxy.galactic_noise` inverts the last step,
+:math:`V_{\rm oc,RMS}^2 = 4 P_L \mathrm{Re}(Z_{\rm ant})` and
+``tests/sim/test_galactic_noise_normalisation.py`` checks the simulated level
+against the same relation, computed independently.
 
-Note that :func:`~grand.sim.noise.galaxy.galactic_noise` inverts the last
-step — :math:`V_{\rm oc,RMS}^2 = 4 P_L \mathrm{Re}(Z_{\rm ant})` — and
-``tests/sim/test_galactic_noise_normalisation.py`` rebuilds the expected
-level from the same relation, independently of the module.  So the
-round trip from sky temperature to simulated voltage is closed at both ends.
-
-Superseded Galactic-noise tables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**The tables.**  ``Vocmax_30-250MHz_uVperMHz_{hfss,nec,mat}.npy``, with
-matching ``Pocmax_...`` (power) and ``Voutmax_...`` (after the chain) sets.
-Each is shape ``(221, 24, 3)`` — frequency, LST hour, arm — and
-:func:`~grand.sim.noise.galaxy.galactic_noise` transposes to
-``(frequency, arm, LST)``.
-
-**The source data.**  ``PG_ALL_jifen.mat``, integrated sky power, and
-``LFmap/``, the LFMap sky maps the tables were built from.
-
-Until 2026-09-07 these tables had three problems, all in
-:ref:`issue-galactic-noise-tables`, which matter for files simulated before
-then:
-
-- the ``_nec`` and ``_mat`` files were **byte-identical**, so ``du_type='GP300_nec'``
-  and ``'GP300_mat'`` selected the same numbers;
-- the default ``du_type='GP300'`` read none of the ``.npy`` tables — it
-  recomputed :math:`V_{\rm oc}^2 = 4 P R_{\rm ant}` from ``PG_ALL_jifen.mat``;
-- the ``_hfss`` tables, the highest-level ones shipped, were opened by nothing.
-
-Band-integrated level at LST 18 h, per arm, in microvolts, as it was then:
-
-=====================  =========================  =====================
-Selector               Reads                      X, Y, Z
-=====================  =========================  =====================
-``GP300`` (default)    ``PG_ALL_jifen.mat``       27.8, 35.6, 31.4
-``GP300_nec``          ``Vocmax_..._nec.npy``     44.5, 55.6, 53.4
-``GP300_mat``          the same file as ``nec``   44.5, 55.6, 53.4
-*(unreachable)*        ``Vocmax_..._hfss.npy``    59.6, 75.5, 66.9
-=====================  =========================  =====================
-
-**For files from before 2026-09-07, quote the** ``du_type`` **with any absolute
-noise level.**  Without it the number is ambiguous by a factor of two, quite apart from the separate
-:math:`\sqrt2` question of :ref:`issue-galactic-noise-normalisation`.
+**Older tables.**  ``Vocmax_30-250MHz_uVperMHz_{hfss,nec,mat}.npy``, with the
+matching ``Pocmax_`` and ``Voutmax_`` sets and ``PG_ALL_jifen.mat``, are the
+tables used before 7 September 2026.  They are still shipped, to describe
+files simulated before then, but no code reads them.  The ``_nec`` and
+``_mat`` files of that set are identical, while the default model read
+``PG_ALL_jifen.mat`` instead, so the three models gave two sets of numbers
+differing by up to a factor of two (:ref:`issue-galactic-noise-tables`).
 
 Topography
 ----------
 
-``data/topography/`` holds SRTM tiles, one ``.hgt`` per one-degree square,
+``data/topography/`` holds :term:`SRTM` tiles, one ``.hgt`` per one-degree square,
 named after the south-west corner: ``N41E096.hgt`` covers 41–42 °N, 96–97 °E.
 They are a few megabytes each and are **not** in version control, so a fresh
 checkout has none.
 
 :func:`grand.geo.topography.update_data` downloads what a region needs.  A
-lookup with no tile returns ``nan`` rather than raising — see
+lookup with no tile returns ``nan`` rather than raising; see
 :doc:`troubleshooting`.
 
 Geomagnetic field
 -----------------
 
-``data/geomagnet/`` holds the two coefficient files, and both **are** in version
+``data/geomagnet/`` holds the two coefficient files.  Both **are** in version
 control, so :mod:`grand.geo.geomagnet` works on a fresh checkout.
 
 ``IGRF13.COF`` is IGRF-13, whose published validity ended on 1 January 2025.
 It still evaluates outside that window, silently.  IGRF-14 was released in
 2024 and has not been adopted here; see :doc:`known_issues`.
+
+Where next
+----------
+
+* :doc:`installation` to download and check the model data.
+* :doc:`simulation` for how each stage uses these files.

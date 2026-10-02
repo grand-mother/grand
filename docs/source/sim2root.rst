@@ -1,20 +1,18 @@
-sim2root: the input boundary
-============================
+Converting simulations: sim2root
+================================
+
+GRANDlib starts from an electric field.  The air shower and its radio
+emission are simulated by :term:`ZHAireS` or CoREAS, outside GRANDlib.  The converters
+in ``sim2root/`` turn the output of those codes into GRAND's ROOT format, which
+the rest of the library reads.
 
 .. contents::
    :local:
    :depth: 1
 
-GRANDlib starts from an electric field.  Producing that field — simulating the
-air shower and its radio emission — is done by ZHAireS or CoREAS, neither of
-which is part of GRANDlib.  ``sim2root/`` is the seam between them: it converts
-the output of those codes into the GRAND schema so the rest of the library can
-read it.
-
-It is in this repository but it is not part of the ``grand`` package.  It is
-not imported by it, not covered by its tests, and not checked by its linter.
-This page says what it does and what state it is in, because using it without
-knowing either is how people lose an afternoon.
+``sim2root/`` is in this repository but is not part of the ``grand`` package:
+its tools are scripts, run from the command line.  To change them, see
+:doc:`contributing`.
 
 Where it sits
 -------------
@@ -31,9 +29,8 @@ Where it sits
         v
     GRANDRoot                              TRun, TEfield, TShower  ->  grand
 
-Two steps, deliberately.  *RawRoot* exists so that the two shower codes reach a
-common format before anything GRAND-specific happens; ``sim2root.py`` then
-produces the trees :doc:`datamodel` describes.
+The first step brings both shower codes to a common intermediate format,
+*RawRoot*; ``sim2root.py`` then writes the trees :doc:`datamodel` describes.
 
 Running it
 ----------
@@ -76,97 +73,8 @@ made in the current directory or in the one ``-o`` names.
 authoritative usage document and is kept by the people who wrote the
 converters.
 
-What is in it
--------------
+Where next
+----------
 
-About 8600 lines, none of it small:
-
-=========================================================  ======  ================================
-File                                                       Lines   What it does
-=========================================================  ======  ================================
-``ZHAireSRawRoot/AiresInfoFunctionsGRANDROOT.py``           2095   Reads ZHAireS output files
-``Common/raw_root_trees.py``                                1434   The RawRoot schema
-``ZHAireSRawRoot/ZHAireSRawToRawROOT.py``                   1049   ZHAireS to RawRoot
-``Common/sim2root.py``                                      1122   RawRoot to GRANDRoot
-``CoREASRawRoot/CoreasToRawROOT.py``                         733   CoREAS to RawRoot
-``Common/IllustrateSimPipe.py``                              574   Plots for the pipeline example
-``ZHAireSRawRoot/ZHAireSInputGenerator.py``                  492   Generates ZHAireS inputs
-``Common/EventParametersGenerator.py``                       353   Event parameter files
-``CoREASRawRoot/CorsikaInfoFuncs.py``                        455   Reads CORSIKA output
-``ZHAireSRawRoot/ZHAireSCompressEvent.py``                   219   Compresses an event
-``Common/RunSimPipe*.py``                                    287   Three pipeline examples
-=========================================================  ======  ================================
-
-``Common/raw_root_trees.py`` is worth knowing about independently: it is a
-second schema, parallel to ``grand/dataio``, describing the intermediate
-format.  A schema change on one side does not automatically reach the other.
-
-State of the code
------------------
-
-Said plainly, because the alternative is finding out by accident.
-
-**It is outside the quality gates.**  The CI lint job checks ``grand/``,
-``tests/``, ``quality/``, ``notebooks/`` and ``docs/dev/``.  It does not check
-``sim2root/``.  The test suite does cover it, from outside: ``tests/sim2root/``
-runs the converters on the committed samples (conversion, the trace window,
-Xmax, the no-antenna case, the documented commands), but nothing tests the
-modules piece by piece.
-
-**Ruff reports 837 findings there**, against zero in the gated scope.
-The largest groups are ``F405`` (372, names possibly undefined from star
-imports), ``D103`` (104, missing docstrings) and ``F821`` (98, undefined
-names).
-
-**Ninety-eight of those undefined names are in one block.**
-``ZHAireSRawToRawROOT.py`` has a longitudinal-tables section guarded by
-``if(NLongitudinal):`` that calls ``SimShower.*`` and ``HDF5handle``, neither of
-which exists anywhere in the file — they are leftovers from an HDF5-based
-predecessor.  The block is dead as written, because ``NLongitudinal=False`` is
-hard-coded at line 85 and the parameter that set it is commented out of the
-signature above it.  A commented usage example further down the same file
-passes ``NLongitudinal=True``; doing that would raise ``NameError`` on the
-first call.  The comment above the block says "not implemented yet", which is
-accurate.
-
-None of this means the converters are wrong — they are what produced the Data
-Challenge datasets.  It means they have not been through the same cleanup as
-the package, so treat a change there as unguarded: nothing will tell you if you
-break it.
-
-A stale twin: ``src_outlib/``
-------------------------------
-
-``src_outlib/`` holds an abandoned copy of part of this tooling, and it is worth
-knowing about before you edit anything named ``AiresInfo*``.
-
-``src_outlib/AiresInfoFunctionsGRANDROOT.py`` is a diverged copy of the file of
-the same name under ``ZHAireSRawRoot/`` — 1814 lines against 2095, missing a
-series of ``Get*FromSry`` functions the live one has.  And
-``src_outlib/ZHAireSRawToGRANDROOT.py`` has not been valid Python since 30 June
-2023, when a merge conflict was committed unresolved and never cleaned up.
-
-**Treat ``sim2root/ZHAireSRawRoot/`` as the live copy.**  If you find yourself
-editing something under ``src_outlib/``, you are almost certainly in the wrong
-file, and nothing will tell you: the directory is not packaged, nothing imports
-it from outside itself, and the linter does not cover it.
-
-It is not deleted yet because four branches still touch it; see
-:ref:`issue-src-outlib-conflict`.
-
-If you work on it
------------------
-
-- Read ``sim2root/README.md`` first; it is more current than the Handbook.
-- Test by round-tripping.  Convert, then read the result back with
-  ``grand.dataio`` and check the fields you touched.  Notebook 02 shows the
-  reading side, and ``tests/sim/test_pipeline_end_to_end.py`` shows how to
-  build a small file from the tree classes rather than shipping one.
-- If you add a field on one side, check the other.  The RawRoot and GRANDRoot
-  schemas are maintained separately, and
-  :ref:`issue-nutrig-field-names` is what happens when two branches name one
-  quantity twice.
-- Adding ``sim2root/`` to the lint gate would be worth doing, but not by
-  recording 900 findings in the ratchet — that would defeat the ratchet's
-  purpose.  The undefined-name block is the place to start, since it is the
-  only group that is a latent error rather than a style finding.
+* :doc:`commands` for the next steps: voltage, then ADC counts.
+* :doc:`datamodel` for the trees the converters write.

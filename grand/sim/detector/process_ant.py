@@ -22,6 +22,7 @@ from grand.geo.coordinates import (
     ECEF,
 )
 from grand.basis.type_trace import ElectricField, Voltage
+from grand.basis.fielddoc import document_fields
 
 logger = getLogger(__name__)
 
@@ -30,6 +31,7 @@ class MissingFrameError(ValueError):
     """Error class"""
 
 
+@document_fields
 @dataclass
 class PreComputeInterpol:
     """
@@ -104,6 +106,7 @@ class PreComputeInterpol:
         return a_itp
 
 
+@document_fields
 @dataclass
 class AntennaProcessing:
     """
@@ -111,12 +114,14 @@ class AntennaProcessing:
     """
 
     model_leff: Any
+    """The antenna response of one arm, as ``tabulated_antenna_model`` returns it"""
     pos: Union[LTP, GRANDCS]
+    """Position of the antenna, in m"""
     pre_cpt: ClassVar[PreComputeInterpol]
 
     def __post_init__(self):
         #assert isinstance(self.model_leff, TabulatedAntennaModel)
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         self.size_fft = 0

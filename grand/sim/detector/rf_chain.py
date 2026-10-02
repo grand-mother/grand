@@ -16,13 +16,13 @@ logger = getLogger(__name__)
 
 
 def _require(condition, what):
-    r"""Checks an internal condition; unlike ``assert``, it is not removed by ``python -O`` (#255)."""
+    r"""Checks an internal condition; unlike ``assert``, it is not removed by ``python -O``."""
     if not condition:
         raise RuntimeError(_validate.message("rf_chain", "internal check failed: %s" % what))
 
 
 def _loadtxt(path, *args, **kwargs):
-    r"""``np.loadtxt`` of a data-model file, checked first (#279)."""
+    r"""``np.loadtxt`` of a data-model file, checked first."""
     return np.loadtxt(_data_model.check(path, "RF chain"), *args, **kwargs)
 
 """
@@ -159,12 +159,6 @@ def get_axis_filename(component_name, axis):
         If the component is disabled there, or the axis is not one of the above.
     FileNotFoundError
         If the configuration gives no file for the component.
-
-    Notes
-    -----
-    Every problem used to be printed as "ERROR: ..." and answered with
-    ``None``, which the callers passed on until an unrelated TypeError; the
-    missing-component path even ended in ``NameError: Nonec`` (#255).
     """
     where = "rf_chain.get_axis_filename"
     components, _ = _config()
@@ -260,7 +254,7 @@ def db2reim(dB, phase):
     form.  This converts that pair to Cartesian form, using the voltage
     convention :math:`|z| = 10^{dB/20}` rather than the power convention
     :math:`10^{dB/10}`, because the S-parameters this module reads are
-    measured as voltage ratios by a vector network analyser.
+    measured as voltage ratios by a vector network analyzer.
 
     Parameters
     ----------
@@ -303,9 +297,9 @@ def db2reim(dB, phase):
     return re, im
 
 def s2abcd(s11, s21, s12, s22):
-    r"""Returns the normalised ABCD matrix of a two-port from its S-parameters.
+    r"""Returns the normalized ABCD matrix of a two-port from its S-parameters.
 
-    Scattering parameters are what a vector network analyser measures, but
+    Scattering parameters are what a vector network analyzer measures, but
     they do not cascade: the S-matrix of two networks in series is not the
     product of their S-matrices.  The ABCD (transmission) representation
     does cascade, which is the whole reason for this conversion — it is what
@@ -313,7 +307,7 @@ def s2abcd(s11, s21, s12, s22):
     multiplying the matrices of the LNA, the baluns, the cable and the
     VGA-plus-filter in order.
 
-    The normalised form returned here assumes equal reference impedances at
+    The normalized form returned here assumes equal reference impedances at
     both ports, which holds for the 50 :math:`\Omega` measurements this
     module reads.
 
@@ -479,6 +473,36 @@ class GenericProcessingDU:
         self.freqs_mhz = freqs_mhz
         self.nb_freqs = freqs_mhz.shape[0]
         self.size_sig = (self.nb_freqs - 1) * 2
+        self._released = False
+
+    #: Measured tables a stage reads in ``__init__``; :meth:`release_arrays` keeps them
+    _INPUTS = ("freqs_mhz", "freqs_in", "sparams")
+
+    def release_arrays(self):
+        r"""Frees the arrays computed for the current frequencies.
+
+        Every array whose last axis runs over the frequencies is dropped, in
+        this stage and in the stages it holds; the measured input tables are
+        kept.  A chain over a million-sample trace holds about 1 GB of them,
+        while a caller such as :class:`grand.sim.efield2voltage.Efield2Voltage`
+        needs only the transfer function.  Call :meth:`compute_for_freqs`
+        again before using the stage.
+        """
+        n = self.nb_freqs
+        for name, value in list(vars(self).items()):
+            if isinstance(value, GenericProcessingDU):
+                value.release_arrays()
+            elif (name not in self._INPUTS and isinstance(value, np.ndarray)
+                  and value.ndim and value.shape[-1] == n):
+                setattr(self, name, None)
+        self._released = True
+
+    def _check_computed(self, action):
+        r"""Refuses `action` after :meth:`release_arrays`, with a message rather than a crash."""
+        if getattr(self, "_released", False):
+            raise RuntimeError(_validate.message(
+                "%s.%s" % (type(self).__name__, action), "the arrays were released; call "
+                "compute_for_freqs() again first"))
 
 class MatchingNetwork(GenericProcessingDU):
     
@@ -489,8 +513,7 @@ class MatchingNetwork(GenericProcessingDU):
     def __init__(self):
         """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        Takes no parameters (the ``size_sig`` it documented does not exist,
-        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
+        Takes no parameters (the ``size_sig`` it documented does not exist); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -650,8 +673,7 @@ class gaa_frontend0db(GenericProcessingDU):
     def __init__(self):
         """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        Takes no parameters (the ``size_sig`` it documented does not exist,
-        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
+        Takes no parameters (the ``size_sig`` it documented does not exist); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -797,8 +819,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
     def __init__(self):
         """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        Takes no parameters (the ``size_sig`` it documented does not exist,
-        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
+        Takes no parameters (the ``size_sig`` it documented does not exist); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -1281,7 +1302,7 @@ class BalunBeforeADC(GenericProcessingDU):
     def __init__(self):
         """Loads the balun's measured S-parameters, used for all three arms.
 
-        Takes no parameters (#261).  After :meth:`compute_for_freqs`, it holds
+        Takes no parameters.  After :meth:`compute_for_freqs`, it holds
         ``s11``, ``s21``, ``s12``, ``s22`` (shape ``(3, n_freq)``) and the
         unnormalised ``ABCD_matrix`` (shape ``(2, 2, 3, n_freq)``).
         """
@@ -1843,7 +1864,7 @@ class Zload(GenericProcessingDU):
     def __init__(self):
         """Loads the load's reflection coefficient, measured with a VNA.
 
-        Takes no parameters (#261).  The same load is used for all three
+        Takes no parameters.  The same load is used for all three
         arms.  After :meth:`compute_for_freqs`, it holds the reflection
         coefficient ``s`` and ``Z_load``, the total impedance of the balun,
         200 ohm resistor and ADC chip, each of shape ``(n_freq,)``.
@@ -1913,6 +1934,27 @@ class Zload(GenericProcessingDU):
 class RFChain(GenericProcessingDU):
     """
     Facade for all elements in RF chain
+
+    See Also
+    --------
+    grand.sim.efield2voltage.Efield2Voltage
+        Applies this chain to simulated voltages.
+    grand.sim.detector.rf_chain.s2abcd
+        Converts measured S-parameters to the cascadable form.
+
+    Examples
+    --------
+    The magnitude of the transfer function, from the open-circuit voltage to the
+    ADC input, for the three arms, at frequencies in MHz:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.detector.rf_chain import RFChain
+
+        chain = RFChain()
+        chain.compute_for_freqs(np.array([50.0, 100.0, 150.0, 200.0]))
+        print(np.round(np.abs(chain.get_tf()), 1))           # (arms, frequencies)
     """
 
     def __init__(self, vga_gain=20):
@@ -2034,6 +2076,7 @@ class RFChain(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2210,6 +2253,7 @@ class RFChainNut(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2347,6 +2391,7 @@ class RFChain_gaa(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2513,6 +2558,7 @@ class RFChain_Balun1(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2675,6 +2721,7 @@ class RFChain_Match_net(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2838,6 +2885,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2997,6 +3045,7 @@ class RFChain_VGA(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -3157,6 +3206,7 @@ class RFChain_in_Balun1(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
