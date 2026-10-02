@@ -52,6 +52,10 @@ def check_event_trees(events, run, where, folder="", event_kind="efield"):
         run.get_entry(entry)
         number = int(run.run_number)
         bins = np.asarray(run.t_bin_size, dtype=float)
+        # A run whose showers hit no antenna has no units and no bins (#91)
+        if bins.size == 0 and len(run.du_id) == 0:
+            units[number] = set()
+            continue
         if bins.size == 0 or not np.all(np.isfinite(bins)) or not np.all(bins > 0):
             raise ValueError(_validate.message(
                 where, "run %d: t_bin_size must be positive, got %s" % (number, _short(bins))))
