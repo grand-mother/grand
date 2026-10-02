@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 r"""Builds every tutorial notebook in this directory, executes it, and stores its outputs.
 
-**The notebooks are generated.  Edit this file, not the ``.ipynb``** -- anything
-written into a notebook by hand is lost the next time this runs.
+**The notebooks are generated.**  Anything written into a notebook by hand is
+lost the next time this runs.  Edit this file, or edit the ``.ipynb`` in Jupyter
+and bring the change back with ``python notebooks/import_notebook.py``, which
+rewrites the notebook's block here and checks that it executes.  New notebooks
+are added the same way.
 
 Why generate them.  The notebooks share a title format, a navigation footer
 and a set of conventions about units and frames that the reader is meant to

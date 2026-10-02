@@ -30,20 +30,41 @@ Jupyter): notebook 08 imports
    stored outputs.  CI executes them every week and on every change, so the
    stored outputs stay current.
 
-Editing a notebook
-------------------
+Editing a notebook, or adding one
+---------------------------------
 
 The notebooks are written by ``notebooks/make_notebooks.py``, which holds
-their source, executes each one and stores its outputs.  **Edit that file, not
-the** ``.ipynb``: a change made in a notebook directly is lost on the next
-rebuild::
+their source, executes each one and stores its outputs.  A change made only in
+the ``.ipynb`` is lost the next time the notebooks are rebuilt.  To keep it,
+edit the notebook in Jupyter as usual, then bring it back into the generator:
+
+.. code-block:: bash
+
+    python notebooks/import_notebook.py notebooks/05_galactic_noise.ipynb
+
+A new notebook is added the same way.  Give it the next free number, start it
+with a ``# NN — Title`` heading, and keep its data paths relative to
+``notebooks/``:
+
+.. code-block:: bash
+
+    python notebooks/import_notebook.py ~/my_analysis.ipynb --name 13_my_analysis.ipynb
+
+The script checks that every code cell compiles and that no cell uses an
+absolute path such as ``/home/...``, which would not exist on another machine.
+It then writes the notebook's block in ``make_notebooks.py``, executes the
+notebook and stores its outputs.  If anything fails, it restores both files
+and says why.  For a new notebook, it also reminds you to add it to the list
+below.  Commit ``make_notebooks.py`` and the ``.ipynb`` together.
+
+To rebuild notebooks from the generator directly::
 
     python notebooks/make_notebooks.py                # rebuild and execute all
     python notebooks/make_notebooks.py --only 03,05   # just those two
-    python notebooks/make_notebooks.py --no-execute   # while drafting
+    python notebooks/make_notebooks.py --check        # check, writing nothing
 
-The script stops if a notebook fails to execute or comes back without
-outputs, and CI fails if a committed notebook does not match the script.
+CI fails if a committed notebook does not match the generator or does not
+execute.
 
 The notebooks
 -------------

@@ -1397,6 +1397,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- `notebooks/import_notebook.py` brings a notebook edited in Jupyter, or a
+  new one, into `make_notebooks.py`: it checks that the cells compile and use
+  no absolute paths, writes the notebook's generator block, executes it
+  through the generator and restores both files if anything fails.
+
 - **Files record the code that wrote them** (#137). Every new tree's
   `modification_software` and `modification_software_version` hold
   "GRANDlib" and the package version with the git branch, commit and whether

@@ -126,9 +126,11 @@ its entry is removed.  See :doc:`testing`.
 Notebooks
 ---------
 
-**Edit** ``notebooks/make_notebooks.py``, **never the** ``.ipynb``: the
-script writes the notebooks, and a change made in a notebook directly is lost
-on the next rebuild.
+``notebooks/make_notebooks.py`` writes the notebooks, so a change made only in
+an ``.ipynb`` is lost on the next rebuild.  Edit the generator, or edit the
+notebook in Jupyter and run ``python notebooks/import_notebook.py
+<notebook>``, which brings the change into the generator and executes it
+(:doc:`notebooks`).
 
 .. code-block:: bash
 
