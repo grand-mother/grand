@@ -3,8 +3,8 @@
 # Manual only.  This is a diagnostic, not a gate: the Handbook presents Docker
 # as the first installation route while the published images date from January
 # 2023 and pin ROOT 6.26.02 against 6.36/6.38 everywhere else, and nobody knows
-# whether the combination still runs.  See issue-docker-unmaintained in the
-# documentation.
+# whether the combination still runs.  See the Installation and Recovery plan
+# pages of the documentation.
 #
 # It runs here rather than on a developer machine for a practical reason: the
 # image is ~3 GB uncompressed and the data model another ~2 GB at peak, and a

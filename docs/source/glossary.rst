@@ -12,10 +12,19 @@ in field names, arguments and these pages.
       scale, giving a quantization step of 109.9 µV.  Also the name of the
       tree that stores what a unit actually recorded, :class:`~grand.dataio.event_trees.TADC`.
 
+   ADF
+      Angular distribution function: a model of the radio amplitude around
+      the shower axis.  :mod:`grand.analysis` fits it to the units'
+      amplitudes to estimate the energy.  Its results are the ``*_adf``
+      fields of ``TRecons``.
+
    analysis level
       How far a file has been processed, written into the file name as ``_L0_``
-      or ``_L1_`` and into the tree as ``analysis_level``.  The two must agree;
-      see :doc:`datamodel`.
+      or ``_L1_`` and into the tree as ``analysis_level``.  In a simulation,
+      level 0 is the simulator's electric field and the voltages computed from
+      it.  Level 1 is what the detector would record: the ADC counts, plus an
+      electric field filtered, resampled and given noise.  See
+      :doc:`datamodel`.
 
    balun
       *Balanced-to-unbalanced* transformer.  Converts between the antenna's
@@ -66,6 +75,10 @@ in field names, arguments and these pages.
       A thirteen-unit GRAND prototype array.  Appears as a ``du_type`` and in
       several file names.
 
+   GP80
+      A GRAND prototype array of about 80 units, which took data in 2025.
+      Its files are named ``GP80_...``; see :doc:`measured_data`.
+
    GP300
       GRANDProto300: the 300-unit prototype array at Dunhuang, China and the
       default ``du_type`` throughout the simulation.
@@ -75,6 +88,10 @@ in field names, arguments and these pages.
       **north**, ``y`` west and ``z`` up.  Distinct from
       :class:`~grand.geo.coordinates.LTP` with ``orientation='ENU'``, where
       ``x`` is east.  Getting these two confused rotates a layout by 90°.
+
+   gtot
+      The collaboration's converter from the binary files the detectors write
+      to ROOT files in GRANDlib's format.  It is not part of GRANDlib.
 
    GULL
       The geomagnetic-field library GRANDlib compiles from source, wrapping
@@ -103,14 +120,18 @@ in field names, arguments and these pages.
       ``'NWU'``.
 
    NUTRIG
-      The GRAND online trigger project.  Several tree fields carry
-      correlation quantities produced by it; their naming is
-      :ref:`an open question <issue-nutrig-field-names>`.
+      The GRAND online trigger project.  The ``nutrig_*`` fields of ``TADC``
+      carry correlation quantities produced by it.
 
    open-circuit voltage
       :math:`V_{\mathrm{oc}}`, the voltage at the antenna terminals before any
       electronics.  The output of the antenna stage and the input to the RF
       chain.
+
+   PWF
+      Plane-wave fit: the arrival direction from the times at which the pulse
+      reaches each unit, for a flat wave front.  Its results are the
+      ``*_pwf`` fields of ``TRecons``.
 
    RF chain
       The cascade of two-port networks between the antenna and the ADC:
@@ -123,14 +144,31 @@ in field names, arguments and these pages.
       to an ABCD matrix first.
 
    sim2root
-      The tools that convert ZHAireS or CoREAS output into the GRAND schema.
-      They live in ``sim2root/`` and are outside the lint and test gates; see
-      :doc:`ci`.
+      The tools that convert ZHAireS or CoREAS output into the GRAND format.
+      They live in ``sim2root/``; see :doc:`sim2root`.
 
    SRTM
       Shuttle Radar Topography Mission.  The elevation dataset TURTLE reads,
       shipped as one ``.hgt`` file per one-degree square.  Not in version
       control.
+
+   SWF
+      Spherical-wave fit: like the :term:`PWF`, for a curved wave front, which
+      also gives the distance to where the emission comes from, near
+      :term:`Xmax`.  Its results are the ``*_swf`` fields of ``TRecons``.
+
+   T1
+      The first-level trigger: each unit decides from its own trace whether
+      to record an event.  :func:`~grand.sim.detector.trigger.t1_du_triggers`
+      applies an offline version to ADC traces.
+
+   10-second trigger
+      A trigger that records the units every ten seconds whatever the signal,
+      to measure the background.  ``trigger_pattern_10s`` marks its events.
+
+   TRecons
+      The tree that stores reconstruction results: for each event, the
+      direction, the distance to the emission and the energy estimate.
 
    TTree
       A ROOT data structure: a table whose columns (*branches*) can hold

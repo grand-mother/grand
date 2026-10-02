@@ -7,7 +7,8 @@ change in detail.
 ``dev-next``, not yet released
 ------------------------------
 
-Compared with the ``dev`` branch of 2025.
+Compared with the version most collaborators used in 2025, the ``dev``
+branch.
 
 Changes that alter results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

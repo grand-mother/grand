@@ -90,10 +90,40 @@ over stored values, seeded random draws and an entry in
 Notebooks
 ---------
 
-``notebooks/make_notebooks.py`` writes the notebooks.  Edit it, or edit a
-notebook in Jupyter and bring the change back with
-``notebooks/import_notebook.py``; :doc:`notebooks` describes both.  Commit
-the executed notebooks and comment their code cells: they are tutorials.
+The notebooks are written by ``notebooks/make_notebooks.py``, which holds
+their source, executes each one and stores its outputs.  A change made only in
+the ``.ipynb`` is lost the next time the notebooks are rebuilt.  To keep it,
+edit the notebook in Jupyter as usual, then bring it back into the generator:
+
+.. code-block:: bash
+
+    python notebooks/import_notebook.py notebooks/05_galactic_noise.ipynb
+
+A new notebook is added the same way.  Give it the next free number, start it
+with a ``# NN — Title`` heading and keep its data paths relative to
+``notebooks/``:
+
+.. code-block:: bash
+
+    python notebooks/import_notebook.py ~/my_analysis.ipynb --name 13_my_analysis.ipynb
+
+The script checks that every code cell compiles and that no cell uses an
+absolute path such as ``/home/...``, which would not exist on another machine.
+It then writes the notebook's block in ``make_notebooks.py``, executes the
+notebook and stores its outputs.  If anything fails, it restores both files
+and says why.  For a new notebook, it also reminds you to add it to the list
+in :doc:`notebooks`.  Commit ``make_notebooks.py`` and the ``.ipynb`` together.
+
+To rebuild notebooks from the generator directly::
+
+    python notebooks/make_notebooks.py                # rebuild and execute all
+    python notebooks/make_notebooks.py --only 03,05   # just those two
+    python notebooks/make_notebooks.py --check        # check, writing nothing
+
+CI fails if a committed notebook does not match the generator or does not
+execute.
+
+Comment the notebooks' code cells: they are tutorials.
 
 Documentation
 -------------
@@ -144,6 +174,17 @@ find each line range and edit only within it; a regular expression over
 Python source can land inside a loop or a string.  Check every file you
 touched with ``python -c "import ast; ast.parse(open(f).read())"`` before
 committing.
+
+The sim2root converters
+-----------------------
+
+``sim2root/README.md`` documents the converters in detail.  Their code is not
+yet linted and the tests check them end to end only, by converting the
+committed samples (``tests/sim2root/``).  After a change, convert a sample and
+read the result back with :mod:`grand.dataio`.  ``Common/raw_root_trees.py``
+defines the RawRoot format separately from ``grand/dataio``, so a field added
+to one must be added to the other.  Edit the files under ``sim2root/``, not
+the stale copy in ``src_outlib/``, which nothing imports.
 
 Branches and merging
 --------------------

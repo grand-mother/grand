@@ -91,15 +91,10 @@ Build it from the repository root, since the build copies the source in:
     source env/setup.sh && pytest tests/ -q
 
 The model data are not in the image; ``env/setup.sh`` downloads them on first
-run, or mount a directory that already holds them.  When last checked, on
-2 September 2026, the full test suite passed inside this image and inside
-``grandlib/dev:1.2``, the 2023 image the Handbook refers to, which carries
-ROOT 6.26 and Python 3.8.
+run, or mount a directory that already holds them.
 
-No image is currently published to a registry and arm64 images are untested.
-Whether the collaboration maintains Docker images is an open decision
-(:ref:`issue-docker-unmaintained`); the conda environment is the supported
-route.
+No image is maintained or published; the images the Handbook names date from
+2022 and 2023.  The conda environment is the supported route.
 
 Verifying the installation
 --------------------------
@@ -110,22 +105,9 @@ Verifying the installation
     python -m grand.basis.data_model        # checks the model data against its manifest
     pytest tests/ -q
 
-The test suite has about 1270 tests and takes about 20 minutes on one core.
+The test suite has over 1300 tests and takes about 20 minutes on one core.
 :doc:`testing` explains what it checks and what a skip or an expected failure
-means.
-
-The last full verification of this procedure, on 30 August 2026, used:
-
-=================  ==========
-Component          Version
-=================  ==========
-Python             3.12.14
-ROOT               6.36.04
-NumPy              2.5.2
-SciPy              1.16.1
-cffi               2.1.1
-=================  ==========
-
+means.  :doc:`compatibility` lists the versions that are tested.
 If the installation fails
 -------------------------
 

@@ -11,8 +11,8 @@ the rest of the library reads.
    :depth: 1
 
 ``sim2root/`` is in this repository but is not part of the ``grand`` package:
-it is not imported by it.  Its code is not linted.  The tests run the
-converters on the committed samples.
+its tools are scripts, run from the command line.  To change them, see
+:doc:`contributing`.
 
 Where it sits
 -------------
@@ -72,17 +72,6 @@ made in the current directory or in the one ``-o`` names.
 ``sim2root.py --help`` lists the rest.  ``sim2root/README.md`` is the
 authoritative usage document and is kept by the people who wrote the
 converters.
-
-Changing the converters
------------------------
-
-``sim2root/README.md`` documents the converters in detail.  Their code is not
-yet linted and the tests check them end to end only, by converting the
-committed samples (``tests/sim2root/``).  After a change, convert a sample and
-read the result back with :mod:`grand.dataio`.  ``Common/raw_root_trees.py``
-defines the RawRoot format separately from ``grand/dataio``, so a field added
-to one must be added to the other.  Edit the files under ``sim2root/``, not
-the stale copy in ``src_outlib/`` (:ref:`issue-src-outlib-conflict`).
 
 Where next
 ----------

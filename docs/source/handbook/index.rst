@@ -19,12 +19,12 @@ searchable alongside the rest of the documentation.
 
 .. note::
 
-   This is somebody else's document, reproduced.  It is **not**
-   maintained as part of this documentation, it describes a Docker-based
-   workflow this repository no longer uses, and where it disagrees with
-   the code the code is right.  Read :doc:`../quickstart` and
-   :doc:`../installation` first; come here for the material nothing else
-   covers, chiefly ``sim2root``, ``granddb`` and the example scripts.
+   The Handbook was written separately and is not updated with this
+   documentation.  It describes a Docker-based installation that is
+   no longer maintained.  Where it disagrees with the code, the code
+   is right.  Read :doc:`../quickstart` and :doc:`../installation`
+   first; come here for ``sim2root``, ``granddb`` and the example
+   scripts, which it covers in more detail.
 
 .. toctree::
    :maxdepth: 2
@@ -63,7 +63,7 @@ Every entry below was checked against the package rather than assumed.
    * - Docker install
      - Presents Docker as the first installation route, naming the published images grandlib/dev:1.x and 2.0.
      - Unmaintained. Those images are the newest published — 1.2 dates from 2023-01-14 — and pin ROOT 6.26.02 against 6.36 in the conda environment and 6.36/6.38 in CI, on an Ubuntu 20.04 base out of support since April 2025. Nothing builds them and no CI covers them. The supported route is the conda environment.
-     - :ref:`issue-docker-unmaintained`
+     - :doc:`../installation`
    * - Reconstruction
      - Describes ``grand/recon/`` as "Reconstruction Algorithms" and ``grand.aoi`` as providing "filtering and reconstruction".
      - ``grand.recon`` was a placeholder: two classes with a constructor and no other method. It was removed in 2026-09, when reconstruction arrived as ``grand.analysis``: direction, Xmax distance and an energy proxy.

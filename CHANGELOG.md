@@ -1610,6 +1610,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The documentation was revised after a newcomer's read-through.  The cheat
+  sheet's code had two errors; it now runs as written and a test runs it.
+  Analysis levels are explained before they are used, and the examples pass
+  `efield_level=0` (`--level 0`).  The measured-data page says where the data
+  are kept and how to get access.  The sidebar is grouped by task, with a
+  section for developers.  Developer detail moved from the user pages to
+  Contributing and the Recovery plan.  The glossary gained ADF, GP80, gtot,
+  PWF, SWF, T1, TRecons and the 10-second trigger.  Units and conventions
+  are kept on the cheat sheet only.
+
 - The documentation is shorter: developer detail moved out of the user pages
   (sim2root, continuous integration, contributing, architecture, data
   files), repeated conventions replaced by links, the notebook descriptions

@@ -156,7 +156,7 @@ adds it to the digitized traces:
 
 .. code-block:: bash
 
-    python scripts/convert_efield2voltage.py my_simulation --no_noise --seed 1234
+    python scripts/convert_efield2voltage.py my_simulation --level 0 --no_noise --seed 1234
     python scripts/convert_voltage2adc.py my_simulation \
         --add_noise_from sim2root/Common/LongNoiseTraces/ --seed 1234
 

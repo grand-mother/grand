@@ -131,16 +131,6 @@ characters: ``[3, 5]`` becomes ``['\x03', '\x05']``.
 
 *Meanwhile:* apply ``ord()`` to each element.
 
-.. _issue-nutrig-field-names:
-
-Two names for the NUTRIG correlation fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``TADC`` has ``nutrig_rhox`` and ``nutrig_rhoy``; the unmerged branch
-``dev_fix_root_warnings_lwp_new_fields`` adds the same quantity as
-``correlation_x`` and ``correlation_y``.  Only one pair can be part of the
-format; the choice is the author's.
-
 Antenna positions from GPS use a fixed origin by default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -163,15 +153,6 @@ Topography, the data layer and the simulation need ROOT
 :mod:`grand.geo.topography` and the simulation still import the data layer
 and so need it.
 
-.. _issue-docker-unmaintained:
-
-No Docker image is maintained
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The published images date from 2022 and 2023 and nobody maintains them.  The
-Docker route works (:doc:`installation`); whether the collaboration publishes
-an image is undecided.
-
 Not supported yet
 -----------------
 
@@ -179,11 +160,9 @@ Not supported yet
   positions on the terrain
   (`#142 <https://github.com/grand-mother/grand/issues/142>`_) and the
   terrain's shadow (`#141 <https://github.com/grand-mother/grand/issues/141>`_).
-* A test suite free of tests that cannot fail and of tests that depend on
-  untracked files (`#271 <https://github.com/grand-mother/grand/issues/271>`_).
 
-Documentation and repository
-----------------------------
+Documentation
+-------------
 
 .. _issue-handbook-arm-naming:
 
@@ -193,16 +172,6 @@ The Handbook has the X and Y antenna arms swapped
 X is the south-north arm and Y the east-west arm (:doc:`validation`).  The
 Handbook says the opposite; the PDF in this documentation carries the
 erratum.
-
-.. _issue-src-outlib-conflict:
-
-``src_outlib/`` is a stale copy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``src_outlib/`` holds an older copy of part of the ZHAireS converter, one file
-of it with merge-conflict markers.  Nothing imports it; edit the files under
-``sim2root/``.  It will be removed once the branches that modify it are
-merged.
 
 Where next
 ----------

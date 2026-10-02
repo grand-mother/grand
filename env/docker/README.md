@@ -25,7 +25,7 @@ skips when it is already current, so baking it in would quadruple the image to
 freeze something on its own release schedule.
 
 **Status.** This is a proposal, not the supported route. Whether GRANDlib
-supports Docker at all is an open question — see `issue-docker-unmaintained` in
-the documentation. Nothing publishes this image to a registry; the CI job
+supports Docker at all is an open question, listed on the Recovery plan page
+of the documentation. Nothing publishes this image to a registry; the CI job
 `build-modern` in `.github/workflows/docker.yml` builds it and runs the suite
 inside it, which is enough to know whether it works.

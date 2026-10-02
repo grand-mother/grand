@@ -61,18 +61,19 @@ Many files without memory growth
 --------------------------------
 
 Release each tree when you are done with it.  The ``with`` form does it even if
-the loop raises:
+the loop raises.  Here, every ADC file of the simulations in the repository:
 
-.. code-block:: python
+.. jupyter-execute::
 
-    from pathlib import Path
     from grand.dataio import TADC
 
-    for path in Path("data").rglob("adc_*.root"):
+    n_events = 0
+    for path in sorted(SAMPLE.parent.glob("sim_*/adc_*.root")):
         with TADC(str(path)) as tadc:
             for event, run in tadc.get_list_of_events():
                 tadc.get_event(event, run)
-                ...
+                n_events += 1               # your analysis of one event goes here
+    print(n_events, "events read")
 
 The antennas in latitude and longitude
 --------------------------------------

@@ -47,8 +47,12 @@ Before the promotion (Phase 9):
 * Verify the installation on a clean machine.
 * Decide whether files simulated before the Galactic-noise correction of
   7 September 2026 are reprocessed (:ref:`issue-galactic-noise-normalisation`).
-* Decide whether a Docker image is published and maintained
-  (:ref:`issue-docker-unmaintained`).
+* Decide whether a Docker image is published and maintained.  The published
+  images date from 2022 and 2023 and nobody maintains them.
+* Choose one name for the NUTRIG correlation fields: ``TADC`` has
+  ``nutrig_rhox`` and ``nutrig_rhoy``, while the unmerged branch
+  ``dev_fix_root_warnings_lwp_new_fields`` adds the same quantity as
+  ``correlation_x`` and ``correlation_y``.
 * Fix a first version number and its date.
 
 After it:

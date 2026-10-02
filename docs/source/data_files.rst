@@ -121,7 +121,7 @@ zenith]`` and are named ``leff_theta_reim``; the attributes ``leff_theta`` and
 ``phase_theta`` exist on the loaded object but are ``None``, because the polar
 form is never populated.  And the in-memory frequency axis is in **hertz**,
 while everything in :mod:`grand.sim.detector.rf_chain` uses megahertz
-(:ref:`quickstart-units`).
+(:ref:`units`).
 
 Notebook 03 works through all of this.
 

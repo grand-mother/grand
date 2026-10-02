@@ -451,7 +451,7 @@ Measured 2026-09-08.
 - [ ] Delete `src_outlib/` — abandoned, unpackaged, imported by nothing, and
       `ZHAireSRawToGRANDROOT.py` has not parsed since a conflict was committed
       unresolved on 2023-06-30. Held to Phase 10 because four branches still
-      touch it. See `issue-src-outlib-conflict`.
+      touch it. See the note in the Contributing page.
 - [ ] Delete `lib/` (contains only a readme saying "directory for C library")
       and untrack `.vscode/settings.json`
 - [ ] Reorganise the tree, if wanted, only *after* the queue drains: 14 of 36
@@ -657,7 +657,7 @@ This is a decision for the collaboration, not a patch:
 - **Not supported** → say so on the installation page and retire
   `env/docker_*` in Phase 10.
 
-Documented meanwhile in `issue-docker-unmaintained`, with an erratum in the
+Documented meanwhile on the Recovery plan page, with an erratum in the
 Handbook and a note on the installation page. Merge exposure is low either way:
 `env/docker_arm64` is touched by no branch, `env/docker_amd64` by two.
 

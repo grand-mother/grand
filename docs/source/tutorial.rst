@@ -90,7 +90,7 @@ The ADC samples at 500 MHz with 14 bits:
     from grand import ADC
 
     adc = ADC()
-    counts = adc.process(adc.downsample(voltage, 2000.0))      # (units, 3, samples)
+    counts = adc.process(adc.downsample(voltage, 2000.0))      # 2000 to 500 MHz; (units, 3, samples)
     dt_ns = 1e3 / adc.sampling_rate                            # 2 ns per sample
 
     loudest = np.abs(counts).max(axis=(1, 2)).argmax()

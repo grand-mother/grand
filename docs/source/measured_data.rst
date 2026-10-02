@@ -9,9 +9,8 @@ a GP13 sample that ships with the repository.
 
 .. note::
 
-   Points marked **(to confirm)** are read from the code and the examples,
-   not from a specification of the data.  If you know the answer, please say
-   so in a `GitHub issue <https://github.com/grand-mother/grand/issues>`_.
+   A few points, marked **(to confirm)**, come from the code and the examples
+   rather than from a specification of the data; the last section lists them.
 
 .. contents::
    :local:
@@ -39,6 +38,22 @@ File names follow ``SITE_DATE_TIME_RUNn_MODE_...root``, for example
 Files whose name contains ``-10s-`` hold the 10-second triggers; the
 production pipeline monitors the detector with them.  The older GP13 files
 are named ``GRAND.TEST-RAW.20230307174423.001.root``.
+
+Getting the data
+----------------
+
+The converted files are kept at CC-IN2P3, the computing center of CNRS/IN2P3
+in Lyon, by site, year and month: for example
+``/sps/grand/data/gp80/GrandRoot/2025/07/``.  Reading them needs a CC-IN2P3
+account with access to GRAND's storage; your GRAND group leader can tell you
+how to request one.
+
+With an account, work on the CC-IN2P3 machines, or copy the files you need
+with ``scp`` or ``rsync`` from ``cca.in2p3.fr``.  ``granddb``, GRAND's data
+catalog, can find files by name and copy them for you; notebook 10
+(:doc:`notebooks`) shows how.
+
+Without an account, use the GP13 sample in the repository, as this page does.
 
 Opening a file
 --------------
@@ -182,15 +197,22 @@ with the units' positions and traces together:
     for voltage in event.voltages:
         print(voltage.t0, voltage.trace.x.max())      # trigger time, X arm in µV
 
+Pass ``trawvoltage_channels``: the default, ``[0, 1, 2]``, matches
+simulated files, not the four-channel measured ones.  ``EventList`` reads
+voltages, so it does not open the GP13 sample above, which holds ADC counts
+only.
+
 ``examples/analysis/main_AOI.py`` continues from there to peak times,
-amplitudes and the fits of :mod:`grand.analysis`, on ten GP80 cosmic-ray
-candidates.  Pass ``trawvoltage_channels``: the default, ``[0, 1, 2]``,
-matches simulated files, not the four-channel measured ones.
+amplitudes and the fits of :mod:`grand.analysis`, on the GP80 events listed
+in ``examples/analysis/Flagged_events_July_October.txt``.  It needs the GP80
+data from CC-IN2P3.
 
 To confirm
 ----------
 
-These need an answer from the people who run the detectors:
+These need an answer from the people who run the detectors.  If you know
+one, please say so in a `GitHub issue
+<https://github.com/grand-mother/grand/issues>`_.
 
 * The channel-to-arm mapping for each site and period.
 * The units and storage of ``gps_lat``, ``gps_long`` and ``gps_alt`` in

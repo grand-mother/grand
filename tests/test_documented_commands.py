@@ -12,7 +12,6 @@ executed when the documentation is built.
 
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import sys
@@ -103,12 +102,13 @@ def test_the_voltage_and_adc_commands(simulation):
 @pytest.mark.parametrize("page", ["commands.rst"])
 def test_the_python_example(simulation, page, tmp_path):
     (block,) = [b for b in _blocks(page, "python") if any("Efield2Voltage(" in line for line in b)][:1]
-    code = "\n".join(block).replace('"my_simulation"', repr(str(simulation)))
-    code = re.sub(r"output_directory=\"\.\"", "output_directory=%r" % str(tmp_path), code)
+    # A copy without the voltage files, so the file found is the one the example wrote
+    folder = tmp_path / "my_simulation"
+    shutil.copytree(simulation, folder, ignore=shutil.ignore_patterns("voltage_*", "adc_*"))
     script = tmp_path / "example.py"
-    script.write_text(code + "\n")
+    script.write_text("\n".join(block) + "\n")
     _run([sys.executable, str(script)], tmp_path)
-    assert (tmp_path / "voltage.root").is_file()
+    assert [p.name.split("_")[-2] for p in folder.glob("voltage_*.root")] == ["L0"]
 
 
 def test_voltage2adc_says_what_it_needs(tmp_path):

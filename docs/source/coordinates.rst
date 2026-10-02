@@ -7,7 +7,7 @@ geomagnetic field.  :mod:`grand.geo.coordinates` converts between the frames
 these quantities are expressed in.  Mixing up frames is the most common source
 of wrong results in GRANDlib and rarely raises an error, so this page states
 each convention and shows it executing.  Units are listed in the
-:ref:`Quick start guide <quickstart-units>`.
+:ref:`cheat sheet <units>`.
 
 .. contents::
    :local:

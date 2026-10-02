@@ -35,8 +35,8 @@ Python     3.12                              ``pyproject.toml`` accepts 3.10 and
                                              3.10 and 3.11 are not tested.
 ROOT       6.36.04                           6.38.02 is also tested; a failure there
                                              does not block a change.
-NumPy,     The versions pinned in            :doc:`installation` lists them.
-SciPy      ``env/conda/grand-dev.yml``
+NumPy,     The versions in                   Installed by the conda
+SciPy      ``env/conda/grand-dev.yml``       environment.
 =========  ================================  =========================================
 
 The conda environment in ``env/conda/grand-dev.yml`` pins these versions.

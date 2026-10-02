@@ -13,7 +13,7 @@ recorded signals to the shower.
 .. tip::
 
    **New here?**  Install it (:doc:`installation`), then simulate the voltages
-   of the shower that ships with the repository:
+   of the showers that ship with the repository:
 
    .. code-block:: python
 
@@ -21,11 +21,12 @@ recorded signals to the shower.
 
        sim = Efield2Voltage("sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000",
                             "voltage.root", output_directory=".", seed=1, efield_level=0)
-       sim.compute_voltage()        # 44 detection units, about 10 s on one core
+       sim.compute_voltage()        # two showers, about 10 s on one core
 
-   Run it from the repository root.  The :doc:`quickstart` continues from
-   here: reading the result back, the units, the frames, digitization and the
-   stages one by one.
+   Run it from the repository root.  ``efield_level=0`` reads the simulated
+   electric field rather than its noisy level-1 copy.  The :doc:`quickstart`
+   continues from here: reading the result back, switching stages off and
+   digitizing.
 
 .. important::
 
@@ -50,10 +51,9 @@ file records the GRANDlib version that computed it.
 
 **Tested against what it claims.**  Over 1200 tests check the package against
 independent calculations, the shower codes' own output and properties that
-must hold exactly (:doc:`testing`).  Inputs are checked
-when a function is called, so a wrong unit or a missing file stops with a
-message that names the argument rather than producing a plausible wrong
-number.
+must hold exactly (:doc:`testing`).  Most inputs are checked when a function
+is called: a wrong unit or a missing input usually stops with a message that
+names the argument, rather than producing a plausible wrong number.
 
 Which pages do I need?
 ----------------------
@@ -128,43 +128,42 @@ or later.
    quickstart
    tutorial
    cheatsheet
-   compatibility
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Using GRANDlib
-   :hidden:
-
    recipes
    notebooks
    examples
-   measured_data
-   simulation_production
-   at_scale
-   coordinates
-   sites
-   datamodel
-   data_files
-   writing_files
-   commands
-   sim2root
-   logging
-   troubleshooting
-   known_issues
-   help
 
 .. toctree::
    :maxdepth: 2
-   :caption: How it works
+   :caption: Analyzing data
    :hidden:
 
+   measured_data
+   datamodel
+   coordinates
+   sites
+   writing_files
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Running simulations
+   :hidden:
+
+   simulation_production
+   sim2root
+   commands
+   at_scale
    simulation
    validation
-   architecture
-   testing
-   ci
-   contributing
-   roadmap
+
+.. toctree::
+   :maxdepth: 2
+   :caption: When something goes wrong
+   :hidden:
+
+   troubleshooting
+   known_issues
+   logging
+   help
 
 .. toctree::
    :maxdepth: 2
@@ -173,9 +172,22 @@ or later.
 
    api
    data_format
-   handbook/index
+   data_files
    glossary
-   citing
-   references
+   handbook/index
+   compatibility
    whatsnew
    changelog
+   citing
+   references
+
+.. toctree::
+   :maxdepth: 2
+   :caption: For developers
+   :hidden:
+
+   contributing
+   architecture
+   testing
+   ci
+   roadmap

@@ -85,7 +85,7 @@ ERRATA = [
      'and 6.36/6.38 in CI, on an Ubuntu 20.04 base out of support since April '
      '2025. Nothing builds them and no CI covers them. The supported route is '
      'the conda environment.',
-     ':ref:`issue-docker-unmaintained`'),
+     ':doc:`../installation`'),
     ('Reconstruction',
      'Describes ``grand/recon/`` as "Reconstruction Algorithms" and '
      '``grand.aoi`` as providing "filtering and reconstruction".',
@@ -479,12 +479,12 @@ def main():
              '',
              '.. note::',
              '',
-             '   This is somebody else\'s document, reproduced.  It is **not**',
-             '   maintained as part of this documentation, it describes a Docker-based',
-             '   workflow this repository no longer uses, and where it disagrees with',
-             '   the code the code is right.  Read :doc:`../quickstart` and',
-             '   :doc:`../installation` first; come here for the material nothing else',
-             '   covers, chiefly ``sim2root``, ``granddb`` and the example scripts.',
+             '   The Handbook was written separately and is not updated with this',
+             '   documentation.  It describes a Docker-based installation that is',
+             '   no longer maintained.  Where it disagrees with the code, the code',
+             '   is right.  Read :doc:`../quickstart` and :doc:`../installation`',
+             '   first; come here for ``sim2root``, ``granddb`` and the example',
+             '   scripts, which it covers in more detail.',
              '',
              # The toctree goes *before* the Errata heading, not after it.
              # reStructuredText has no way to close a section, so anything

@@ -14,29 +14,31 @@ From electric field to :term:`ADC` counts, on one simulation folder:
 
 .. code-block:: bash
 
-    python scripts/convert_efield2voltage.py my_simulation --lst 18
+    python scripts/convert_efield2voltage.py my_simulation --level 0 --lst 18
     python scripts/convert_voltage2adc.py my_simulation
 
-The first writes ``voltage_*_L0_*.root``, the second ``adc_*_L1_*.root``.
-The same first step from Python:
+The first reads the level-0 electric field and writes
+``voltage_*_L0_*.root``; the second writes ``adc_*_L1_*.root``.  Without
+``--level``, the first reads the highest level in the folder.  That matters
+in folders that also hold a level-1 electric field, such as the sample folder
+and those ``RunSimPipe.py`` writes: the level-1 field already has noise.
+
+The first step from Python, writing the same file into the folder:
 
 .. code-block:: python
 
     from grand import Efield2Voltage
 
-    signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
-    signal.params["add_noise"]    = True
-    signal.params["add_rf_chain"] = True
-    signal.compute_voltage()
+    sim = Efield2Voltage("my_simulation", output_directory="my_simulation",
+                         seed=1, efield_level=0)
+    sim.compute_voltage()
 
 Where outputs go
 ~~~~~~~~~~~~~~~~
 
 Without ``-o``, each script names its output after its input and writes it
 into the simulation folder.  A bare name given with ``-o`` also goes into that
-folder, unless ``-od`` names another.  An existing output is replaced.  A
-folder holding electric-field files at several analysis levels is read at the
-highest, with a warning; ``--level`` chooses another.
+folder, unless ``-od`` names another.  An existing output is replaced.
 
 ``convert_efield2voltage.py``
 -----------------------------

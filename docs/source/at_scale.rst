@@ -70,7 +70,7 @@ One array task per simulation folder, listed one per line in
     source /path/to/grand/env/setup.sh
 
     folder=$(sed -n "${SLURM_ARRAY_TASK_ID}p" folders.txt)
-    python /path/to/grand/scripts/convert_efield2voltage.py "$folder" \
+    python /path/to/grand/scripts/convert_efield2voltage.py "$folder" --level 0 \
         --seed "$SLURM_ARRAY_TASK_ID" --verbose warning
     python /path/to/grand/scripts/convert_voltage2adc.py "$folder" \
         --seed "$SLURM_ARRAY_TASK_ID" -v warning
@@ -94,7 +94,7 @@ The same idea, with one process per core:
 
     def voltage(job):
         seed, folder = job
-        subprocess.run(["python", "scripts/convert_efield2voltage.py", str(folder),
+        subprocess.run(["python", "scripts/convert_efield2voltage.py", str(folder), "--level", "0",
                         "--seed", str(seed), "--verbose", "warning"], check=True)
 
     folders = sorted(Path("production").glob("sim_*"))

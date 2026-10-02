@@ -2,10 +2,31 @@ Quick start guide
 =================
 
 This page goes from an installed GRANDlib to the operations most users need:
-simulating the voltages of a shower, reading them back, digitizing them and
-running the stages of the chain on their own.  Every block on this page is
-executed when the documentation is built, in order, on the shower that ships
-with the repository.
+simulating the voltages of a shower, reading them back, switching stages off
+and digitizing.  Every block on this page is executed when the documentation
+is built, in order, on the simulation that ships with the repository.
+
+Terms used on this page
+-----------------------
+
+*Detection unit* (DU, or unit): one antenna with its three arms, its
+:term:`RF chain` and its :term:`ADC`.  ``du_id`` identifies it.
+
+*Run* and *event*: an event is one air shower; a run is a set of events
+recorded with the same configuration.  ``run_number`` and ``event_number``
+together identify an event.
+
+*Analysis level*: the ``L0`` or ``L1`` in a file name, also stored in the
+file.  Level 0 is the simulation: the simulator's electric field and the
+voltages computed from it.  Level 1 is what the detector would record: the
+ADC counts, plus an electric field filtered, resampled and given noise.
+
+*LST*: local sidereal time.  It sets which part of the Galaxy is above the
+horizon and therefore the level of the Galactic noise.
+
+The :doc:`glossary` defines the other terms; linked terms show their
+definition when you point at them.  The :doc:`cheatsheet` lists the units and
+the conventions for axes, arms and angles.
 
 Your first voltage
 ------------------
@@ -14,8 +35,9 @@ GRANDlib starts from the electric field that :term:`ZHAireS` or CoREAS computed 
 each antenna, converted to GRAND's format by ``sim2root`` (:doc:`sim2root`).
 The result of that conversion is a folder of ROOT files: ``efield_*`` holds the
 traces, ``shower_*`` the shower and ``run_*`` the detector layout.  The
-repository includes one such folder, a 3.9 EeV proton shower at
-zenith 79.4° seen by 44 :term:`GRANDProto300 <GP300>` detection units:
+repository includes one such folder, with two simulated showers seen by
+:term:`GRANDProto300 <GP300>` detection units.  The first, used below, is a
+3.9 EeV proton at zenith 79.4° seen by 44 units:
 
 .. jupyter-execute::
 
@@ -39,8 +61,9 @@ zenith 79.4° seen by 44 :term:`GRANDProto300 <GP300>` detection units:
 event in the folder through the antenna response, adds Galactic noise for a
 :term:`local sidereal time <LST>` of 18 h, applies the GRANDProto300 :term:`RF chain` and writes the
 voltage at the :term:`ADC` input to ``voltage.root``.  ``seed`` fixes the noise;
-without it, every run draws a new realization.  ``efield_level=0`` picks the
-simulated fields, since this folder also holds a level-1 copy.
+without it, every run draws a new realization.  ``efield_level=0`` reads the
+simulator's electric field.  This folder also holds a level-1 copy, already
+filtered and given noise; without the argument, the highest level is read.
 
 Reading the result
 ------------------
@@ -87,86 +110,6 @@ The ``with`` form closes the file when the block ends.  When a script reads
 many files, use it, or call ``stop_using()`` on each tree, so that memory does
 not grow with the number of files (:ref:`datamodel-releasing-trees`).
 
-.. _quickstart-units:
-
-Units
------
-
-GRANDlib uses the units below throughout.  A tree field that has a unit says
-so in its documentation and functions name it in the argument when they can
-(``freqs_mhz``, ``dt_ns``).
-
-======================================  ==========================================
-Quantity                                Unit
-======================================  ==========================================
-Electric field                          µV/m
-Voltage                                 µV
-Digitized trace                         ADC counts (one count is 109.9 µV)
-Time                                    ns; event times as Unix seconds plus ns
-Frequency                               MHz
-Position, distance                      m
-Angle (trees, coordinates, simulation)  degrees
-Angle (:mod:`grand.analysis`)           radians
-Energy                                  GeV
-Atmospheric depth (Xmax)                g/cm²
-======================================  ==========================================
-
-.. important::
-
-   **Two exceptions.**  The frequency axis that
-   :class:`~grand.sim.detector.antenna_model.AntennaModel` loads is in **Hz**,
-   not MHz; divide by ``1e6`` before passing it to the RF chain.  And the
-   reconstruction package :mod:`grand.analysis`, with the ``*_pwf`` and
-   ``*_swf`` fields of ``TRecons``, works in **radians**; it warns when given
-   an angle larger than 2π.
-
-Conventions
------------
-
-These are the ones that most often cause silent errors.  :doc:`coordinates`
-shows each of them executing.
-
-*Directions say where the shower comes from.*  A vertical shower has zenith 0°.
-Azimuth is measured in the array frame, from north toward west, so 90° is a
-shower from the west.
-
-*The array frame is north-west-up.*  In ``GRANDCS``, x points to magnetic
-north, y to west and z up.  A local ``LTP`` frame with ``orientation='ENU'``
-takes the same three numbers and means east, north, up.
-
-*The three traces are antenna arms, not field components.*  ``trace[:, 0]``
-is the south-north arm (X), ``trace[:, 1]`` the east-west arm (Y) and
-``trace[:, 2]`` the vertical arm (Z).  The voltage on an arm is the projection
-of the field on that arm's :term:`effective length`, so the ratio between arms is not
-the ratio between field components.
-
-*A height needs a reference.*  The ellipsoid and the geoid (mean sea level)
-differ by up to 100 m; at the GRANDProto300 site the geoid is 61 m below the
-ellipsoid.
-
-Terms used throughout
----------------------
-
-*Detection unit* (DU, or unit): one antenna with its three arms, its RF chain and
-ADC.  ``du_id`` identifies it.
-
-*Run* and *event*: an event is one candidate air shower, a run a set of events
-recorded with the same configuration.  ``run_number`` and ``event_number``
-together identify an event.
-
-*Analysis level*: the ``L0``, ``L1``, ... in a file name, also stored in its
-trees.  In a simulation, level 0 holds the converted simulator output and the
-voltages computed from it; level 1 holds what the detector would record, such
-as ADC counts.
-
-*Effective length*: the antenna's response to an incoming field, a vector that
-depends on direction and frequency.
-
-*RF chain*: the analog electronics between the antenna and the ADC.
-
-*LST*: local sidereal time, which sets how much of the Galaxy is above the
-horizon and therefore the noise level.
-
 Switching stages off
 --------------------
 
@@ -207,7 +150,7 @@ then convert:
     from grand import ADC
 
     adc = ADC()
-    counts = adc.process(adc.downsample(traces, 2000.0))
+    counts = adc.process(adc.downsample(traces, 2000.0))   # from 2000 MHz to 500 MHz
     print("shape", counts.shape, "- peak on unit %d: %d, %d, %d counts"
           % (du_id[best], *np.abs(counts[best]).max(axis=1)))
 
@@ -216,36 +159,10 @@ the simulation folder:
 
 .. code-block:: bash
 
-    python scripts/convert_efield2voltage.py <simulation folder> --lst 18 --seed 1
+    python scripts/convert_efield2voltage.py <simulation folder> --level 0 --lst 18 --seed 1
     python scripts/convert_voltage2adc.py <simulation folder>
 
 :doc:`commands` describes both scripts and their options.
-
-One stage at a time
--------------------
-
-Every stage can also run on arrays, with no file involved.  The RF chain's
-transfer function, from the open-circuit voltage to the ADC input, at
-frequencies in MHz:
-
-.. jupyter-execute::
-
-    from grand.sim.detector.rf_chain import RFChain
-
-    freqs_mhz = np.arange(30.0, 251.0)
-    chain = RFChain()
-    chain.compute_for_freqs(freqs_mhz)
-    gain = np.abs(chain.get_tf())                  # (arms, frequencies)
-    print("peak |V_out / V_oc| per arm: %.1f, %.1f, %.1f" % tuple(gain.max(axis=1)))
-
-and one realization of Galactic noise for four units at 18 h LST:
-
-.. jupyter-execute::
-
-    from grand.sim.noise.galaxy import galactic_noise
-
-    noise = galactic_noise(18.0, 1024, freqs_mhz, nb_ant=4, seed=0)
-    print("spectrum shape (units, arms, frequencies):", noise.shape)
 
 Positions
 ---------
@@ -269,8 +186,11 @@ Where next
 * :doc:`tutorial`: one shower followed from the antennas to its reconstructed
   direction.
 * :doc:`cheatsheet`: units, conventions and the common calls on one page.
+  Read its conventions before using your own data: they cause most silent
+  errors.
 * :doc:`recipes`: short code for the common tasks, from reading a shower to
-  reconstructing its direction.
+  reconstructing its direction, including the RF chain and the Galactic noise
+  on their own.
 * :doc:`notebooks`: twelve notebooks that work through each part of the
   library with figures.
 * :doc:`datamodel`: the trees, what they hold and how they fit together.

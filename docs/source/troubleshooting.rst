@@ -202,10 +202,6 @@ Messages that look like errors and are not
 ``TClass::Init:0: RuntimeWarning: no dictionary for class ... is available``
     ROOT could not find a dictionary for a class it does not need.  Harmless.
 
-A CPU-feature warning during a documentation build
-    ROOT's JIT compiler writes it on some processors.  It is harmless; see
-    :doc:`ci`.
-
 Reading files
 -------------
 
@@ -233,9 +229,6 @@ Environment and build
 **A result changed after a ROOT upgrade.**  Check first that the computation
 is deterministic: seed every random draw and reproduce the difference twice
 before attributing it to ROOT.
-
-**A test fails only in a full run, never alone.**  Look for an unseeded random
-draw, or one that uses NumPy's global generator.
 
 Still stuck
 -----------
