@@ -1403,6 +1403,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- Documentation for eleven tasks it did not cover: measured data (files,
+  channels, counts to volts, times, GPS positions, trigger types); producing
+  simulations from shower parameters; measured noise in simulations; running
+  at scale; sites and layouts; the `examples/` folder; writing your own
+  files; logging; getting help; platforms, versions and stability.  Code on the measured-data, sites and
+  file-writing pages runs at each build; points only the collaboration can
+  settle are marked "to confirm".
+
 - Glossary definitions appear on hover (sphinx-tippy); every page links to a
   prefilled GitHub issue to report a problem with it, and shows the date its
   source last changed.

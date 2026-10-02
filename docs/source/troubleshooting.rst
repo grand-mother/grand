@@ -240,6 +240,4 @@ draw, or one that uses NumPy's global generator.
 Still stuck
 -----------
 
-Check :doc:`known_issues` and the `open issues on GitHub
-<https://github.com/grand-mother/grand/issues>`_.  If the problem is not
-there, please open an issue with the code that reproduces it.
+Check :doc:`known_issues`, then see :doc:`help` for how to ask on GitHub.

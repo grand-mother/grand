@@ -33,8 +33,8 @@ recorded signals to the shower.
 
    * :doc:`quickstart` and :doc:`installation`
    * :doc:`recipes`: short code for common tasks
-   * `GitHub repository <https://github.com/grand-mother/grand>`_ and
-     `open issues <https://github.com/grand-mother/grand/issues>`_
+   * :doc:`help`: questions and bug reports, on `GitHub
+     <https://github.com/grand-mother/grand/issues>`_
    * :doc:`notebooks` (twelve worked notebooks)
    * :doc:`whatsnew`, :doc:`citing` and the :doc:`changelog`
 
@@ -59,13 +59,13 @@ Which pages do I need?
 ----------------------
 
 **I analyze GRAND data.**  :doc:`installation`, the :doc:`cheatsheet`, then
-:doc:`datamodel` and the
-:doc:`data_format`, :doc:`coordinates`, the reading recipes in :doc:`recipes`
+:doc:`measured_data`, :doc:`datamodel` and the :doc:`data_format`,
+:doc:`coordinates` and :doc:`sites`, the reading recipes in :doc:`recipes`
 and notebooks 02, 09 and 11 (:doc:`notebooks`).
 
 **I run simulations.**  :doc:`installation`, the :doc:`quickstart` and the
-:doc:`tutorial`, then
-:doc:`sim2root` to convert ZHAireS or CoREAS output, :doc:`commands`,
+:doc:`tutorial`, then :doc:`simulation_production` from shower parameters to
+ADC counts, :doc:`at_scale` for many showers, :doc:`commands`,
 :doc:`simulation` for what each stage does and :doc:`known_issues` before
 relying on absolute noise levels or the trigger.
 
@@ -128,6 +128,7 @@ or later.
    quickstart
    tutorial
    cheatsheet
+   compatibility
 
 .. toctree::
    :maxdepth: 2
@@ -136,13 +137,21 @@ or later.
 
    recipes
    notebooks
+   examples
+   measured_data
+   simulation_production
+   at_scale
    coordinates
+   sites
    datamodel
    data_files
+   writing_files
    commands
    sim2root
+   logging
    troubleshooting
    known_issues
+   help
 
 .. toctree::
    :maxdepth: 2
