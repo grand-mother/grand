@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The remaining entry points of #267 check their input: `ParticleCode`
+  accepts a name (`ParticleCode('proton')`) and otherwise lists the valid
+  ones; T1 parameters with `th2 > th1`, `nc_min > nc_max` or a negative
+  window are refused; `type_trace.Voltage` checks that `V` has one sample
+  per time; `DetectorUnitNetwork.init_pos_id` accepts a tuple of ids;
+  `get_handling3dtraces` / `get_simu_parameters` name a missing file (and
+  an event-less one, which raised a bare `AssertionError`);
+  `protocol.get(None)` no longer requests ".../None.gz"; and
+  `xmax_in_site_frame` checks its angles even when Xmax is unknown.
+
 - Tree setters report out-of-range values (#267, part 2): `TRun.origin_geoid`
   with a latitude beyond ±90 or a longitude beyond ±360, `du_nanoseconds` of
   a second or more, and `TShower.azimuth` outside 0–360 are warned about

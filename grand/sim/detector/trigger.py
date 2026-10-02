@@ -82,6 +82,31 @@ DEFAULT_T1_CHANNELS = (0, 1, 2)
 T1_TRIGGER_FLAG = 1
 
 
+def _check_config(config, where="T1 trigger"):
+    r"""Refuses T1 parameters that cannot describe a trigger.
+
+    They were used as given (#267): a second threshold above the first, a
+    coincidence range with ``nc_min > nc_max``, negative windows.
+
+    Raises
+    ------
+    ValueError
+        Naming the parameters and their values.
+    """
+    def fail(text):
+        raise ValueError("GRANDlib: %s: %s" % (where, text))
+    for key in ("t_quiet", "t_period", "t_sepmax", "nc_min", "nc_max", "th1", "th2"):
+        if not config[key] >= 0:
+            fail("%s must be >= 0, got %r" % (key, config[key]))
+    if config["th2"] > config["th1"]:
+        fail("th2 (%r) must not exceed th1 (%r): T2 crossings are counted after a T1 crossing"
+             % (config["th2"], config["th1"]))
+    if config["nc_min"] > config["nc_max"]:
+        fail("nc_min (%r) must not exceed nc_max (%r)" % (config["nc_min"], config["nc_max"]))
+    if config["t_period"] <= 0:
+        fail("t_period must be > 0, got %r" % (config["t_period"],))
+
+
 def _config(trigger_config):
     r"""The defaults, updated with `trigger_config`."""
     config = dict(DEFAULT_T1_CONFIG)
@@ -90,6 +115,7 @@ def _config(trigger_config):
         if unknown:
             raise KeyError(f"Unknown T1 trigger parameters: {sorted(unknown)}")
         config.update(trigger_config)
+        _check_config(config)
     return config
 
 
@@ -273,8 +299,9 @@ def t1_config_from_params(params):
     Raises
     ------
     ValueError
-        For a string that is not ``KEY=VALUE`` with an integer value, or an
-        unknown key.
+        For a string that is not ``KEY=VALUE`` with an integer value, an
+        unknown key, or values that cannot describe a trigger (``th2 > th1``,
+        ``nc_min > nc_max``, a negative window; #267).
     """
     config = dict(DEFAULT_T1_CONFIG)
     for param in params or []:
@@ -286,4 +313,5 @@ def t1_config_from_params(params):
             config[key] = int(value)
         except ValueError:
             raise ValueError(f'Bad --t1_param {param!r}: the value must be an integer') from None
+    _check_config(config, "--t1_param")
     return config

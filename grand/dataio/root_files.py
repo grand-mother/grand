@@ -17,6 +17,7 @@ import numpy as np
 import ROOT
 
 import grand.dataio as groot
+from grand.basis import validate as _validate
 from grand.dataio.xmax_frame import xmax_above_ground
 from grand.basis.traces_event import Handling3dTraces
 
@@ -386,8 +387,8 @@ def get_file_event(f_name):
         A reader of the appropriate kind for the trees the file holds.
     """
     if not os.path.exists(f_name):
-        logger.error(f"File {f_name} doesn't exist.")
-        raise FileNotFoundError
+        # It raised a FileNotFoundError with no message (#267)
+        raise FileNotFoundError(_validate.message("get_file_event", "no such file: %s" % f_name))
     trees_list = _get_ttree_in_file(f_name)
     if "tefield" in trees_list:  # File with Efield info as input
         return FileEfield(f_name)
@@ -395,11 +396,10 @@ def get_file_event(f_name):
         return FileVoltage(f_name)
     if "tadc" in trees_list:  # File with voltage info as input
         return FileAdc(f_name)
-    logger.error(
-        f"File {f_name} doesn't content TTree teventefield, teventvoltage, tadc"
-        " It contains {trees_list}."
-    )
-    raise AssertionError
+    # A bare AssertionError (#267)
+    raise ValueError(_validate.message(
+        "get_file_event", "%s holds no tefield, tvoltage or tadc tree; it holds %s"
+        % (f_name, ", ".join(trees_list) or "none")))
 
 
 def get_handling3dtraces(f_name, idx_evt=0):

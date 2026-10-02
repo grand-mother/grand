@@ -40,6 +40,9 @@ def get(name: str, tag: str = "101") -> bytes:
     bytes
         The downloaded contents.
     """
+    # None, or an empty name, became a request for ".../None.gz" (#267)
+    if not isinstance(name, str) or not name:
+        raise TypeError("GRANDlib: protocol.get: 'name' must be a non-empty file name, got %r" % (name,))
     base = "https://github.com/grand-mother/store/releases/download"
     url = f"{base}/{tag}/{name}.gz"
     try:

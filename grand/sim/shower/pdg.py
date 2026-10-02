@@ -40,3 +40,18 @@ class ParticleCode(IntEnum):
 
     # Atoms
     IRON = 1000260560
+
+    @classmethod
+    def _missing_(cls, value):
+        r"""Accepts a member name, case-insensitively; otherwise lists the valid codes.
+
+        ``ParticleCode('proton')`` raised "'proton' is not a valid
+        ParticleCode", without saying what is (#267).
+        """
+        if isinstance(value, str):
+            member = cls.__members__.get(value.strip().upper().replace("-", "_").replace(" ", "_"))
+            if member is not None:
+                return member
+        raise ValueError("GRANDlib: ParticleCode: %r is not a particle; give a PDG code or one of %s"
+                         % (value, ", ".join("%s (%d)" % (name, int(code))
+                                             for name, code in cls.__members__.items())))

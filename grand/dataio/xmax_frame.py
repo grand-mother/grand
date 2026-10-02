@@ -179,6 +179,9 @@ def xmax_in_site_frame(xmax_pos_shc, zenith, azimuth, ground_altitude, shower_co
     """
     stored = _vector3(xmax_pos_shc, "xmax_pos_shc", "xmax_in_site_frame")
     core = _vector3(shower_core_pos, "shower_core_pos", "xmax_in_site_frame")
+    # Before the unknown-Xmax shortcut, which skipped them (#267)
+    _angles(zenith, azimuth, "xmax_in_site_frame")
+    _validate.as_real(ground_altitude, "ground_altitude", "xmax_in_site_frame")
     if not np.all(np.isfinite(stored)):
         return np.full(3, np.nan), UNDETERMINED
     above_ground, frame = xmax_above_ground(stored, zenith, azimuth, ground_altitude)

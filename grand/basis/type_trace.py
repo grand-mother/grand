@@ -142,7 +142,19 @@ class Voltage:
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
 
+        Raises
+        ------
+        ValueError
+            If `t` is not 1-D, or the last axis of `V` does not have one
+            sample per time (nothing was checked, #267).
         """
+        t, v = np.asarray(self.t), np.asarray(self.V)
+        if t.ndim != 1:
+            raise ValueError(_validate.message("Voltage", "t must be 1-D, got shape %s" % (t.shape,)))
+        if v.ndim == 0 or v.shape[-1] != t.shape[0]:
+            raise ValueError(_validate.message(
+                "Voltage", "V must have %d samples on its last axis, one per time, got shape %s"
+                % (t.shape[0], v.shape)))
         self.v_fft = None
 
     def get_fft(self, size_sig_pad):

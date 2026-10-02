@@ -78,6 +78,9 @@ class DetectorUnitNetwork:
         """
         if du_id is None:
             du_id = list(range(du_pos.shape[0]))
+        # A tuple was refused as "not a list or array" (#267)
+        if isinstance(du_id, tuple):
+            du_id = list(du_id)
         self.du_pos = du_pos
         self.area_km2 = -1
         self.idx2idt = du_id
