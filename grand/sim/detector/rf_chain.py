@@ -15,6 +15,12 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
+def _require(condition, what):
+    r"""Checks an internal condition; unlike ``assert``, it is not removed by ``python -O`` (#255)."""
+    if not condition:
+        raise RuntimeError(_validate.message("rf_chain", "internal check failed: %s" % what))
+
+
 def _loadtxt(path, *args, **kwargs):
     r"""``np.loadtxt`` of a data-model file, checked first (#279)."""
     return np.loadtxt(_data_model.check(path, "RF chain"), *args, **kwargs)
@@ -239,7 +245,8 @@ def interpol_at_new_x(a_x, a_y, new_x):
         outside it rather than extrapolated -- the S-parameter tables are
         measured over 30-250 MHz and have no meaning beyond it.
     """
-    assert a_x.shape[0] > 0
+    if np.shape(a_x)[0] == 0:
+        raise ValueError(_validate.message("interpol_at_new_x", "'a_x' is empty: nothing to interpolate"))
     #func_interpol = interpolate.interp1d(
     #    a_x, a_y, "cubic", bounds_error=False, fill_value=(1.0, 1.0)
     #)
@@ -414,9 +421,10 @@ def matmul(A, B):
         print("cascading with the identity is a no-op:",
               np.allclose(matmul(stage, identity), stage))
     """
-    assert A.shape[0]==2
-    assert A.shape[1]==2
-    assert A.shape[1]==B.shape[0]
+    if A.shape[:2] != (2, 2) or B.shape[0] != A.shape[1]:
+        raise ValueError(_validate.message(
+            "matmul", "expects ABCD matrices of shape (2, 2, n_freq), got %s and %s"
+            % (A.shape, B.shape)))
 
     return np.asarray([
         [A[0,0]*B[0,0] + A[0,1]*B[1,0], A[0,0]*B[0,1] + A[0,1]*B[1,1]],
@@ -544,7 +552,7 @@ class MatchingNetwork(GenericProcessingDU):
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
         # shape = (antenna_port, nb_freqs)
@@ -705,7 +713,7 @@ class gaa_frontend0db(GenericProcessingDU):
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
         # shape = (antenna_port, nb_freqs)
@@ -854,7 +862,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
         # shape = (antenna_port, nb_freqs)
@@ -979,7 +987,7 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1086,7 +1094,7 @@ class Cable(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1210,7 +1218,7 @@ class VGAFilter(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1318,7 +1326,7 @@ class BalunBeforeADC(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1415,7 +1423,7 @@ class Rfchain_elements_db(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1517,7 +1525,7 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1619,7 +1627,7 @@ class Rfchain_elements(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1715,7 +1723,7 @@ class Rfchain_elements_rad(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1810,7 +1818,7 @@ class Zload_arb(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         # S1P File: Measurements: S22
@@ -1885,7 +1893,7 @@ class Zload(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
@@ -1963,13 +1971,13 @@ class RFChain(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
         
-        assert self.matcnet.nb_freqs > 0
-        assert self.matcnet.ABCD_matrix.shape[-1] > 0
-        assert self.matcnet.nb_freqs==self.balun1.nb_freqs
+        _require(self.matcnet.nb_freqs > 0, 'self.matcnet.nb_freqs > 0')
+        _require(self.matcnet.ABCD_matrix.shape[-1] > 0, 'self.matcnet.ABCD_matrix.shape[-1] > 0')
+        _require(self.matcnet.nb_freqs==self.balun1.nb_freqs, 'self.matcnet.nb_freqs==self.balun1.nb_freqs')
         
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2141,9 +2149,9 @@ class RFChainNut(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2291,8 +2299,8 @@ class RFChain_gaa(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.gaa.nb_freqs > 0
-        assert self.gaa.ABCD_matrix.shape[-1] > 0
+        _require(self.gaa.nb_freqs > 0, 'self.gaa.nb_freqs > 0')
+        _require(self.gaa.ABCD_matrix.shape[-1] > 0, 'self.gaa.ABCD_matrix.shape[-1] > 0')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2445,9 +2453,9 @@ class RFChain_Balun1(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2607,9 +2615,9 @@ class RFChain_Match_net(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2768,9 +2776,9 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2931,9 +2939,9 @@ class RFChain_VGA(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -3089,9 +3097,9 @@ class RFChain_in_Balun1(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)

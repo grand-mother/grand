@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The RF chain's checks survive `python -O` (#255, item 4): its 43
+  `assert` statements, removed under optimisation, are explicit checks;
+  `interpol_at_new_x` with an empty table and `matmul` with matrices that
+  are not (2, 2, n_freq) raise `ValueError` naming the function.
+
 - Numerical edges (#289): `Efield2Voltage.get_leff` refuses a position
   beyond ±22000 km on either side, or not finite, with a `GRANDlib:`
   message (it tested `x > 2.2e7` only); `recons_swf` passes `sigma` to the
