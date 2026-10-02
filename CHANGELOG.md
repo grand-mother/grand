@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `CRB_PWF` at zenith 0 or 180° (#288, the last item): it returned
+  `[nan nan]` and printed, because the azimuth is undefined there and a
+  central difference in zenith crossed the pole.  The zenith bound is now
+  finite (for a known azimuth, from a one-sided derivative), the azimuth
+  bound is `inf`, and both cases warn instead of printing.
+
 - `DataDirectory` opens many files faster (#283, in part): a tree's list of
   units, which read the whole chain (one more pass over every file) at
   every open, is computed on first use.  Measured on one-event files:
@@ -716,8 +722,8 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
     every call (each message printed once per call), changed the caller's
     list and truncated its log file each time; `logger.exception` was used
     outside `except` blocks, logging "NoneType: None". All fixed.
-  Still open in #256: the fallback chains in `descriptors.py`, and the
-  remaining informational prints in `grand.aoi`.
+  (The fallback chains in `descriptors.py` and the remaining informational
+  prints in `grand.aoi` are fixed in a later entry.)
 
 - **RF-chain configuration errors are raised, not printed (#255).** A
   component missing from `rf_chain_config.xml` printed "ERROR: ..." and then

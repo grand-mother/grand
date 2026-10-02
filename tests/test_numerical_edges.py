@@ -106,3 +106,17 @@ def test_float32_fields_refuse_overflow():
         warnings.simplefilter("error")
         shower.energy_primary = np.inf                  # inf given is inf stored
         shower.energy_primary = 1e30
+
+
+@pytest.mark.parametrize("theta", [0.0, np.pi])
+def test_crb_pwf_at_the_poles(theta):
+    r"""#288: CRB_PWF at zenith 0 or 180 gave [nan nan] (and printed)."""
+    pytest.importorskip("iminuit")
+    from grand.analysis.cramer_rao_bounds.cramer_rao import CRB_PWF
+
+    xants = np.random.default_rng(0).uniform(-1000, 1000, (10, 3))
+    xants[:, 2] = 1200.0
+    with pytest.warns(GRANDlibWarning, match="azimuth is undefined"):
+        bound = CRB_PWF(theta, 0.3, xants)
+    assert np.isfinite(bound[0]) and 0 < bound[0] < 2 * CRB_PWF(1e-3, 0.3, xants)[0]
+    assert bound[1] == np.inf
