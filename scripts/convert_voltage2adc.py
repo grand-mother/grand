@@ -31,7 +31,6 @@ import os
 import time
 import argparse
 import logging
-import psutil
 import numpy as np
 # import matplotlib.pyplot as plt
 
@@ -365,7 +364,13 @@ def manage_args(argv=None):
 if __name__ == '__main__':
     logger = manage_log.get_logger_for_script(__file__)
     pid = os.getpid()
-    process = psutil.Process(pid)    
+    # Imported here: it is only used for this memory report, and no dependency
+    # list declares it, so importing it at the top broke even -h (#279)
+    try:
+        import psutil
+        process = psutil.Process(pid)
+    except ImportError:
+        process = None    
     
 
     #-#-#- Get parser arguments -#-#-#
@@ -436,7 +441,8 @@ if __name__ == '__main__':
         logger.info(f'Reading {f_input_file} with the run file {getattr(trun, "file_name", "?")}')
 
         logger.info(f'Converting {entries} voltage traces from {f_input_file} to ADC traces')
-        print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
+        if process is not None:
+            print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
 
         if args.out_file is None:
             f_output = adc_file_path(f_input_file)

@@ -5,6 +5,7 @@ Simulation of Galactic radio noise.
 import numpy as np
 
 from grand.basis import validate as _validate
+from grand.basis import data_model as _data_model
 
 from grand import grand_add_path_data
 
@@ -126,7 +127,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     gala_file = grand_add_path_data(gala_files[du_type])
     zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
 
-    gala_power = np.load(gala_file)
+    gala_power = np.load(_data_model.check(gala_file, "galactic_noise"))  # (#279)
     if gala_power.shape != (221, 72, 3):
         raise ValueError(
             f"Unexpected Galactic-noise table shape {gala_power.shape} "
@@ -144,7 +145,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     poc_1mhz = 1e6 * poc_per_hz
 
     # Use the same antenna-resistance table used to construct the P_L tables.
-    zant = np.loadtxt(zant_file, delimiter=",", skiprows=1)
+    zant = np.loadtxt(_data_model.check(zant_file, "galactic_noise"), delimiter=",", skiprows=1)
     zant_complex = np.column_stack(
         [
             zant[:, 1] + 1j * zant[:, 2],  # Z(1,1)

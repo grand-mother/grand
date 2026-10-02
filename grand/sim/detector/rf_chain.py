@@ -9,8 +9,15 @@ from grand.basis import validate as _validate
 from pathlib import Path
 
 from grand import grand_add_path_data
+from grand.basis import data_model as _data_model
+
 from logging import getLogger
 logger = getLogger(__name__)
+
+
+def _loadtxt(path, *args, **kwargs):
+    r"""``np.loadtxt`` of a data-model file, checked first (#279)."""
+    return np.loadtxt(_data_model.check(path, "RF chain"), *args, **kwargs)
 
 """
 RF Chain Simulation with XML Configuration (modified by SN)
@@ -481,7 +488,7 @@ class MatchingNetwork(GenericProcessingDU):
         #self.data_lna = []
         self.sparams = []
         for axis in range(3):
-            matcnet = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            matcnet = _loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(matcnet)
         self.freqs_in = matcnet[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
         self.nb_freqs_in = len(self.freqs_in)
@@ -642,7 +649,7 @@ class gaa_frontend0db(GenericProcessingDU):
         #self.data_lna = []
         self.sparams = []
         for axis in range(3):
-            matcnet = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            matcnet = _loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(matcnet)
         self.freqs_in = matcnet[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
         #self.freqs_in = matcnet[:, 0]   # note: freqs_in for x and y ports is the same, but for z port is different.
@@ -789,7 +796,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
         #self.data_lna = []
         self.sparams = []
         for axis in range(3):
-            lna = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            lna = _loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(lna)
         self.freqs_in = lna[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
         self.nb_freqs_in = len(self.freqs_in)
@@ -922,8 +929,8 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         """ """
         super().__init__()
-        #self.data_cable = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        #self.data_cable = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1031,8 +1038,8 @@ class Cable(GenericProcessingDU):
         """
         """ """
         super().__init__()
-        #self.data_cable = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        #self.data_cable = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
 
         # shape = (antenna_port, nb_freqs)
@@ -1150,7 +1157,7 @@ class VGAFilter(GenericProcessingDU):
             raise ValueError(_validate.message(
                 "RFChain", "'vga_gain' must be one of -5, 0, 5 or 20 dB, got %r" % (gain,)))
         self.gain = gain
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
 
         # shape = (nports, nfreqs). self.nb_freqs here is 0.
@@ -1271,7 +1278,7 @@ class BalunBeforeADC(GenericProcessingDU):
         unnormalised ``ABCD_matrix`` (shape ``(2, 2, 3, n_freq)``).
         """
         super().__init__()
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1372,7 +1379,7 @@ class Rfchain_elements_db(GenericProcessingDU):
         super().__init__()
         self.filename = filename
 
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1474,7 +1481,7 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         super().__init__()
         self.filename = filename
 
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1576,7 +1583,7 @@ class Rfchain_elements(GenericProcessingDU):
         super().__init__()
         self.filename = filename
         
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1672,7 +1679,7 @@ class Rfchain_elements_rad(GenericProcessingDU):
         super().__init__()
         self.filename = filename
         
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1768,7 +1775,7 @@ class Zload_arb(GenericProcessingDU):
         """
         super().__init__()
         self.filename = filename
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
@@ -1834,7 +1841,7 @@ class Zload(GenericProcessingDU):
         200 ohm resistor and ADC chip, each of shape ``(n_freq,)``.
         """
         super().__init__()
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
@@ -1992,7 +1999,7 @@ class RFChain(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2168,7 +2175,7 @@ class RFChainNut(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2305,7 +2312,7 @@ class RFChain_gaa(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2471,7 +2478,7 @@ class RFChain_Balun1(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2633,7 +2640,7 @@ class RFChain_Match_net(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2796,7 +2803,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2955,7 +2962,7 @@ class RFChain_VGA(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -3115,7 +3122,7 @@ class RFChain_in_Balun1(GenericProcessingDU):
         # Antenna Impedance.
         filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.

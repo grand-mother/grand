@@ -65,6 +65,24 @@ holds roughly:
    committed samples under ``sim2root/Common`` and write into temporary
    folders, never into ``data/``.
 
+Checking the installation
+-------------------------
+
+``data/download_data_grand.py`` records the files it installs, with their
+sizes and SHA-256 sums, in ``data/data_model_manifest.json``.  The antenna,
+RF-chain and noise loaders check a file against it before reading: a missing
+file, or one whose size differs, stops with a message naming the file and the
+remedy, rather than a library traceback or, for a damaged file that still
+parses, silently different voltages.  The downloader re-downloads when the
+version matches but a directory or file is missing.  To check by hand, sums
+included::
+
+    python -m grand.basis.data_model            # verify
+    python -m grand.basis.data_model --write    # record the current files
+
+An installation from before the manifest gets one the next time the
+downloader runs.
+
 The download scripts
 --------------------
 

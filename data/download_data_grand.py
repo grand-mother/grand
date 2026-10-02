@@ -24,6 +24,7 @@ from urllib import request
 from urllib.error import URLError, HTTPError
 from grand import GRAND_DATA_PATH, grand_add_path_data
 from grand.basis.archive import safe_extract  # refuses members that escape the target
+from grand.basis import data_model
 
 # Paths for flag files
 REPO_FLAG_FILE = grand_add_path_data('model_version.flag')  # Inside the repository
@@ -62,11 +63,24 @@ else:
     else:
         detector_version = None
 
-# If detector_version is missing or different from repo_version, update the data
+# If detector_version is missing or different from repo_version, update the data.
+# The version alone said "up to date" with noise/ or topography/ deleted, so
+# the installation itself is checked too: the three directories, and every
+# file of the manifest the last download wrote, by size (#279).
 if detector_version == repo_version:
+    problems = data_model.verify(GRAND_DATA_PATH)
+    if not problems:
+        if not osp.exists(data_model.MANIFEST):
+            # An installation from before the manifest: record it as it is
+            data_model.write_manifest(GRAND_DATA_PATH, repo_version)
+        print("==============================")
+        print("Skip download: data model is up to date.")
+        sys.exit(0)
     print("==============================")
-    print("Skip download: data model is up to date.")
-    sys.exit(0)
+    print("The data model is version %s but incomplete or damaged:" % repo_version)
+    for problem in problems[:20]:
+        print("  " + problem)
+    print("Downloading it again.")
 
 # Download the new data model *before* removing the old one.
 #
@@ -241,6 +255,10 @@ for rel, blob in preserved.items():
 # Write new version to detector flag file
 with open(DETECTOR_FLAG_FILE, 'w') as f:
     f.write(repo_version)
+
+# What was installed, so that a missing or damaged file is noticed (#279)
+print("Recorded %d files in %s" % (data_model.write_manifest(GRAND_DATA_PATH, repo_version),
+                                    data_model.MANIFEST))
 
 print("Data model updated successfully!")
 sys.exit(0)

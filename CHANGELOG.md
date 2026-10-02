@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The data model is checked before use (#279): the downloader records a
+  manifest (sizes and SHA-256) of what it installs, and re-downloads when
+  the version matches but `noise/`, `topography/` or a file is missing (it
+  said "up to date"); the antenna, RF-chain and noise loaders refuse a
+  missing file, or one whose size differs from the manifest, with a message
+  naming the remedy; `python -m grand.basis.data_model` verifies an
+  installation. `convert_voltage2adc.py` imports `psutil` only for its
+  memory report, so `-h` works without it.
+
 - The test suite can fail when it should (#271): expected failures are
   strict (`xfail_strict = true`), so a fixed test can no longer stay
   silently green; the three tests that read the untracked

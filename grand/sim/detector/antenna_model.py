@@ -55,6 +55,9 @@ def tabulated_antenna_model(filename):
     DataTable
         The response, on its native grid.
     """
+    # A missing or damaged file failed in numpy, with no remedy (#279)
+    from grand.basis import data_model
+    data_model.check(filename, "tabulated_antenna_model")
     split_file = os.path.splitext(filename)
     if split_file[-1]==".npy": # for Horizon Antenna
         f, R, X, theta, phi, lefft, leffp, phaset, phasep = np.load(filename, mmap_mode="r")
