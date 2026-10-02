@@ -256,10 +256,8 @@ class _FileEventBase:
 
         Notes
         -----
-        .. versionchanged:: 0.1.0
-           The docstring previously said this returns a single ``ndarray``.  It
-           returns a two-element tuple and always has; ``np.asarray`` on the
-           result raises rather than giving the times.
+        The result is a two-element tuple, not an array: ``np.asarray`` on it
+        raises rather than giving the times.
         """
         du_s = self.tt_event.du_seconds.asnumpy().astype(np.float64)
         if du_s.size == 0:

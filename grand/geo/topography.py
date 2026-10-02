@@ -179,8 +179,7 @@ def _fill_elevation(n, finite, values):
     r"""Puts the computed elevations back among the skipped points.
 
     A point with a finite position that comes back NaN lies outside every
-    loaded tile. That used to be silent: the warning says how many and
-    how to get the tiles.
+    loaded tile; a warning says how many and how to get the tiles.
 
     Parameters
     ----------

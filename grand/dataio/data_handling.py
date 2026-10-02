@@ -201,11 +201,8 @@ class DataDirectory:
             Notes
             -----
             A name matching neither layout is grouped under its first field
-            with an empty level, rather than raising.  It used to index the
-            fields unconditionally, so a single file whose name did not follow
-            the convention -- which nothing enforces -- aborted the scan of the
-            whole directory with ``IndexError: list index out of range`` and no
-            indication of which file was at fault.
+            with an empty level, rather than raising, so one misnamed file
+            does not stop the scan of the whole directory.
             """
             name = Path(x).name
             el = name.split("_")
