@@ -22,10 +22,14 @@ plt.rcParams.update(params)
 
 # Load the radio shower simulation data
 shower = ShowerEvent()
-e_path = grand_add_path_data("test_efield.root")
-tefield = groot.TEfield(e_path)
-tshower = groot.TShower(e_path)
-trun = groot.TRun(e_path)
+# The committed RUN1 sample (the data/ file it read was neither shipped nor
+# downloaded, and opening the missing name created an empty file, #218)
+from pathlib import Path
+from grand import grand_get_path_root_pkg
+sample = Path(grand_get_path_root_pkg()) / "sim2root" / "Common" / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000"
+tefield = groot.TEfield(str(sample / "efield_1618-13790_L0_0000.root"))
+tshower = groot.TShower(str(sample / "shower_1618-13790_L0_0000.root"))
+trun = groot.TRun(str(sample / "run_1_L0_0000.root"))
 event_list = tefield.get_list_of_events()
 # Work on the first event
 event_number, run_number = event_list[0][0], event_list[0][1]

@@ -31,7 +31,15 @@ Rudimentary readout of an Event with event_number=0 and run_number=0 from a file
 For real data run:
 `python browse_gp13_events_example.py GRANDROOT_data_directory`
 
+It needs **measured GP13 data** (raw-voltage trees with `trace_ch`), which is
+not in this repository; on simulated data it fails with `'TVoltage' object has
+no attribute 'trace_ch'`.
+
 For simulated data run:
 `python browse_sim2root_events_example.py GRANDROOT_data_directory`
+
+for example on `../../sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000`.
+It is interactive: it waits for Enter between events (`input()`), so it needs
+a terminal and fails with `EOFError` when run without one.
 
 The scripts loop through the events using EventList class and then draw parts of the data of the event, such as traces, on the screen.

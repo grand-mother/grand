@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The examples run or say what they need (#218): `examples/README.md`
+  indexes them; `sim/shower_event` uses the committed sample (it needed an
+  untracked file, and created an empty one); `geo/local_topography.py`
+  downloads tiles only with `--download`; the Handling3dTraces notebook no
+  longer contains merge-conflict markers; the five stubs and outdated
+  notebooks moved to `examples/old/stubs/`; `rf_chain_example.py` lists
+  its real choices; `analysis/display.py` has `--savefig` and no
+  `SyntaxWarning`; `data_storing.py` draws zeniths in 0–180;
+  `datafile_use.py` exits 1 without a file; the AOI readme and the datalib
+  config say what the GP13 browser, the sim2root browser and the data
+  manager need.
+
 - `Event.close_files()` (with `auto_file_close=False`) no longer crashes
   the process when the event's trees share one file: it closed the file
   after writing the first tree, deleting the others (a regression of the

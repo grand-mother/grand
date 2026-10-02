@@ -1043,7 +1043,7 @@ Basis: Minimal Analysis Pipeline
 
 The **basis** folder contains a minimal analysis pipeline built on top of the GRANDlib infrastructure. It is ideal for new users seeking a clean and reproducible entry point into GRANDlib-based analysis.
 
-**The script ``run_pipeline.py`` is currently non-functional. For E-field to Voltage conversion, refer to ``scripts/convert_efield2voltage.py``.**
+**The script ``run_pipeline.py`` is non-functional and has moved to ``examples/old/stubs/`` (#218). For E-field to Voltage conversion, refer to ``scripts/convert_efield2voltage.py``.**
 
 ``class_Handling3dTraces.ipynb:``\ (at dev_sim2root_merge_merge_with_dev)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1614,6 +1614,7 @@ Manual E-field :math:`\rightarrow` Voltage (``efield2voltage_manually.py``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | 
+| Moved to ``examples/old/stubs/``: it only prints that it does not work (#218).
 | Applies antenna effective length and RF chain step-by-step for validation.
 
 *This script is not working at the moment. To check on how to convert Efield to Voltage, please check scripts/convert_efield2voltage.py*

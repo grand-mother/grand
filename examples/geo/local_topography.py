@@ -1,7 +1,23 @@
 #! /usr/bin/env python
+"""Plots the ground elevation around the GP13 centre station, in a local frame.
+
+It needs the SRTM topography tiles around the site: about two 26 MB files,
+downloaded into data/topography/ and cached there.  It did that without
+asking (#218); it now downloads only with --download, and otherwise uses the
+tiles already there (missing ones read as NaN, with a warning).
+
+    python local_topography.py --download
+"""
+import argparse
+
 from grand import ECEF, Geodetic, LTP, topography
 import matplotlib.pyplot as pl
 import numpy as np
+
+parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+parser.add_argument("--download", action="store_true",
+                    help="download the topography tiles of the area (about 50 MB) if not cached")
+args = parser.parse_args()
 
 
 # Set the local frame origin. Center station of GP13.
@@ -15,7 +31,9 @@ origin = Geodetic(
 # web and cached which might take some time. Reducing the area results in less
 # data to be downloaded, i.e. speeding up this step
 radius = 2000  # m
-topography.update_data(origin, radius=radius)
+if args.download:
+    print("Downloading the topography tiles around the site into data/topography/ (about 50 MB)")
+    topography.update_data(origin, radius=radius)
 
 
 # Generate a grid of local coordinates using numpy.meshgrid
