@@ -50,7 +50,7 @@ the Python packages:
     source env/setup.sh
 
 ``env/setup.sh`` compiles TURTLE and GULL, sets ``GRAND_ROOT`` and the search
-paths, and downloads the model data.  It takes a few minutes the first time.
+paths and downloads the model data.  It takes a few minutes the first time.
 Run it again (``source env/setup.sh``) in every new shell, or add the
 variables it sets to your shell profile.  The environment uses about 4 GB of
 disk.
@@ -62,7 +62,7 @@ the flag changes nothing.
 Does pip work?
 ~~~~~~~~~~~~~~
 
-Yes, for everything except ROOT.  GRANDlib is not yet published on PyPI, and
+Yes, for everything except ROOT.  GRANDlib is not yet published on PyPI and
 ROOT cannot be installed with pip.  With ROOT already available, from a conda
 package, a system package or the ROOT Docker image, pip installs the rest from
 the clone:
@@ -96,7 +96,7 @@ run, or mount a directory that already holds them.  When last checked, on
 ``grandlib/dev:1.2``, the 2023 image the Handbook refers to, which carries
 ROOT 6.26 and Python 3.8.
 
-No image is currently published to a registry, and arm64 images are untested.
+No image is currently published to a registry and arm64 images are untested.
 Whether the collaboration maintains Docker images is an open decision
 (:ref:`issue-docker-unmaintained`); the conda environment is the supported
 route.
@@ -137,7 +137,7 @@ Remove them and build again:
     cd src && make clean && cd ..
     source env/setup.sh
 
-``env/setup.sh`` prints the steps that failed at the end of its output, and
+``env/setup.sh`` prints the steps that failed at the end of its output and
 returns a non-zero status.
 
 **The download stopped.**  The model data come from ``forge.in2p3.fr``.  The

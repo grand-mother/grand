@@ -110,7 +110,13 @@ Other scripts
 -------------
 
 ``scripts/`` also holds plotting tools for the :term:`RF chain` and the noise
-(``plot_rf_chain.py``, ``plot_noise.py``), and ``open_grand_file.py`` and
+(``plot_rf_chain.py``, ``plot_noise.py``) and ``open_grand_file.py`` and
 ``open_grand_directory.py``, which open a file or folder in an interactive
-session with its trees loaded.       ``sim2root/`` has its own converters,
+session with its trees loaded.  ``sim2root/`` has its own converters,
 described in :doc:`sim2root`.
+
+Where next
+----------
+
+* :doc:`sim2root` to produce the simulation folder these scripts read.
+* :doc:`simulation` for what each step computes.

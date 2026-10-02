@@ -58,7 +58,7 @@ in field names, arguments and these pages.
       several file names.
 
    GP300
-      GRANDProto300: the 300-unit prototype array at Dunhuang, China, and the
+      GRANDProto300: the 300-unit prototype array at Dunhuang, China and the
       default ``du_type`` throughout the simulation.
 
    GRANDCS
@@ -86,7 +86,7 @@ in field names, arguments and these pages.
       tables; notebook 05.
 
    LNA
-      Low-noise amplifier.  The first active stage of the RF chain, and the one
+      Low-noise amplifier.  The first active stage of the RF chain and the one
       that sets the receiver noise figure.
 
    LST
@@ -110,7 +110,7 @@ in field names, arguments and these pages.
 
    RF chain
       The cascade of two-port networks between the antenna and the ADC:
-      matching network, LNA, baluns, cable, and a variable-gain amplifier with
+      matching network, LNA, baluns, cable and a variable-gain amplifier with
       a filter.  Notebook 04.
 
    S-parameters

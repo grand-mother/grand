@@ -2,7 +2,7 @@ Recipes
 =======
 
 Short code for common tasks.  Each recipe runs on its own, on the simulation
-that ships with the repository, and is executed when this documentation is
+that ships with the repository and is executed when this documentation is
 built.  The :doc:`notebooks` work through the same tasks at length.
 
 .. contents::

@@ -1,15 +1,15 @@
 Data files
 ==========
 
-.. contents::
-   :local:
-   :depth: 2
-
 GRANDlib relies on about 1 GB of tabulated models: antenna effective lengths,
 RF-chain measurements, Galactic-noise tables, terrain and the geomagnetic
 field.  Most of it is downloaded by ``env/setup.sh`` rather than kept in
 version control.  This page describes each file, where it comes from and what
 reads it.
+
+.. contents::
+   :local:
+   :depth: 2
 
 What is in version control
 --------------------------
@@ -104,7 +104,7 @@ environment cannot be built.
 
 ``env/setup.sh`` runs only ``download_data_grand.py``; the line for
 ``download_new_RFchain.py`` is commented out.  So the versioned bundle is what
-a normal setup gets, and the other three archives are fetched by hand when
+a normal setup gets and the other three archives are fetched by hand when
 someone needs them.
 
 Antenna effective length
@@ -212,12 +212,12 @@ Galactic noise
 The tables in use are ``noise/galactic_PL_per_Hz_gp13_GP300.npy`` and its
 ``_nec`` and ``_mat`` counterparts, one per antenna model.  Each has shape
 ``(221, 72, 3)``: 30 to 250 MHz in 1 MHz steps, 72 local-sidereal-time bins
-of 20 minutes, and the three arms.  They hold the **available power spectral
+of 20 minutes and the three arms.  They hold the **available power spectral
 density** :math:`P_L`, in W/Hz.
 
 They were computed by ``grand/sim/noise/Compute_Plot_Galactic_Noise.py``,
 which integrates the :term:`LFMap` sky temperature over direction against the
-antenna's :term:`effective length`, :math:`|\ell_\theta|^2 + |\ell_\phi|^2`, and
+antenna's :term:`effective length`, :math:`|\ell_\theta|^2 + |\ell_\phi|^2` and
 converts the resulting :term:`open-circuit voltage` to available power:
 
 .. math::  P_L = \frac{V_{\rm oc,RMS}^2}{4\,\mathrm{Re}(Z_{\rm ant})}
@@ -236,7 +236,7 @@ effective-length files they read:
 =============  ===================================================
 
 :func:`~grand.sim.noise.galaxy.galactic_noise` inverts the last step,
-:math:`V_{\rm oc,RMS}^2 = 4 P_L \mathrm{Re}(Z_{\rm ant})`, and
+:math:`V_{\rm oc,RMS}^2 = 4 P_L \mathrm{Re}(Z_{\rm ant})` and
 ``tests/sim/test_galactic_noise_normalisation.py`` checks the simulated level
 against the same relation, computed independently.
 
@@ -244,7 +244,7 @@ against the same relation, computed independently.
 matching ``Pocmax_`` and ``Voutmax_`` sets and ``PG_ALL_jifen.mat``, are the
 tables used before 7 September 2026.  They are still shipped, to describe
 files simulated before then, but no code reads them.  The ``_nec`` and
-``_mat`` files of that set are identical, and the default model read
+``_mat`` files of that set are identical, while the default model read
 ``PG_ALL_jifen.mat`` instead, so the three models gave two sets of numbers
 differing by up to a factor of two (:ref:`issue-galactic-noise-tables`).
 
@@ -263,9 +263,15 @@ lookup with no tile returns ``nan`` rather than raising; see
 Geomagnetic field
 -----------------
 
-``data/geomagnet/`` holds the two coefficient files, and both **are** in version
+``data/geomagnet/`` holds the two coefficient files.  Both **are** in version
 control, so :mod:`grand.geo.geomagnet` works on a fresh checkout.
 
 ``IGRF13.COF`` is IGRF-13, whose published validity ended on 1 January 2025.
 It still evaluates outside that window, silently.  IGRF-14 was released in
 2024 and has not been adopted here; see :doc:`known_issues`.
+
+Where next
+----------
+
+* :doc:`installation` to download and check the model data.
+* :doc:`simulation` for how each stage uses these files.

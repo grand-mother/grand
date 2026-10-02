@@ -9,10 +9,10 @@ What GRANDlib is
 
 GRANDlib computes little of the physics itself.  Air showers and their
 radio emission come from :term:`ZHAireS` or CoREAS, tau propagation from DANTON,
-terrain from :term:`TURTLE`, the geomagnetic field from :term:`GULL`, and sky brightness from
+terrain from :term:`TURTLE`, the geomagnetic field from :term:`GULL` and sky brightness from
 :term:`LFMap`.  What GRANDlib owns is three things:
 
-1. **A schema** — what a GRAND event *is*, and the format the collaboration
+1. **A schema** — what a GRAND event *is* and the format the collaboration
    stores it in (:mod:`grand.dataio`).
 2. **A frame-reconciliation engine** — where things are, in which frame, over
    what terrain, in what magnetic field (:mod:`grand.geo`).
@@ -47,7 +47,7 @@ Layering
 --------
 
 The intended layering is that :mod:`grand.geo` and :mod:`grand.dataio` sit at
-the bottom and know nothing above them, :mod:`grand.sim` composes both, and
+the bottom and know nothing above them, :mod:`grand.sim` composes both and
 :mod:`grand.aoi` and :mod:`grand.basis` sit on top providing the objects a user
 handles and the plots they look at.
 
@@ -68,7 +68,7 @@ code between subpackages.
 
 .. warning::
 
-   **There is a module-level import cycle**, and it is not visible from any one
+   **There is a module-level import cycle.**  It is not visible from any one
    file:
 
    .. code-block:: text

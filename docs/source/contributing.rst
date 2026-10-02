@@ -6,7 +6,7 @@ Contributing
    :depth: 1
 
 The conventions for changing GRANDlib: setting up, the checks a change must
-pass, and how code, tests, notebooks and documentation are written.
+pass and how code, tests, notebooks and documentation are written.
 
 Setting up
 ----------
@@ -21,7 +21,7 @@ Setting up
 ``env/setup.sh`` compiles the TURTLE and GULL C extensions and downloads the
 model data; see :doc:`installation` and :doc:`data_files`.
 
-The checks, and how to run them
+The checks and how to run them
 -------------------------------
 
 Everything CI runs, you can run.  Nothing here needs a container.
@@ -58,7 +58,7 @@ empties.
 Checking input
 --------------
 
-A public function checks what it is given, using :mod:`grand.basis.validate`,
+A public function checks what it is given, using :mod:`grand.basis.validate`
 and refuses bad input at the door rather than failing deep inside or, worse,
 returning a plausible wrong number.  The helpers convert and check in one line
 and write the message, which starts with ``GRANDlib:`` and names the function
@@ -74,8 +74,8 @@ and the argument::
 Raise ``TypeError`` for the wrong kind of value and ``ValueError`` for a value
 of the right kind but out of range or shape; warn with
 :func:`grand.basis.validate.warn` for input that is suspicious but usable.
-Never ``print`` and return ``None``, never call ``exit()``, and do not use
-``assert`` for user input: Python skips asserts under ``-O``, and their message
+Never ``print`` and return ``None``, never call ``exit()`` and do not use
+``assert`` for user input: Python skips asserts under ``-O``, where their message
 says nothing.  Asserts remain fine for internal invariants.
 
 Docstrings
@@ -111,7 +111,7 @@ version control, so a test cannot read a file from it.  Use the samples under
 
 **Assert what no convention can change.**  Where a value is disputed, a test
 that asserts it encodes one side of the dispute.  Assert the properties that
-hold either way, and record the measured value, with its date, in the
+hold either way and record the measured value, with its date, in the
 docstring; ``tests/sim/test_galactic_noise_normalisation.py`` is an example.
 
 **Seed every random draw, through a local generator.**  ``np.random.default_rng(0)``,
@@ -120,7 +120,7 @@ test depends on.
 
 Expected failures are a record, not a silencer.  ``tests/conftest.py`` holds a
 ``KNOWN_FAILURES`` table with a reason per entry, applied strictly: the reason
-is the part that matters, and an xfail that starts passing fails the run until
+is the part that matters.  An xfail that starts passing fails the run until
 its entry is removed.  See :doc:`testing`.
 
 Notebooks
@@ -152,7 +152,7 @@ Documentation
 with **zero warnings**.  Prose pages carry executable examples through
 ``.. jupyter-execute::``, so an example that stops working fails the build.
 
-Diagrams are generated too, by ``docs/dev/make_*_diagram.py``, and are
+Diagrams are generated too, by ``docs/dev/make_*_diagram.py`` and are
 committed as SVG.  Embed them so they can be opened full size:
 
 .. code-block:: rst
@@ -165,6 +165,26 @@ committed as SVG.  Embed them so they can be opened full size:
 The handbook section under ``docs/source/handbook/`` is generated from
 ``resources/GRANDlib_Handbook.zip`` by ``docs/dev/build_handbook.py``.  Do not
 edit those pages; corrections go in the ``ERRATA`` table in that script.
+
+Writing style
+-------------
+
+The documentation and the docstrings are written in American English, in
+plain sentences that say what the code does now.  In practice:
+
+* American spelling: *behavior*, *normalization*, *meters*, *toward*.
+* No comma before *and*: ``A, B and C``.  Where two clauses would be joined
+  by ``, and``, write two sentences.
+* State the fact.  Leave out ``it is worth noting``, ``said plainly``, ``why
+  it matters`` and the like.
+* Describe the current behavior, not its history: no issue numbers, no ``it
+  used to``, no dates except those a reader needs.  The history belongs in the
+  changelog and the commit messages.
+* Give the unit of every quantity and the frame of every position or
+  direction.
+
+``python docs/dev/check_style.py`` checks the pages for the first three.  The
+lint job runs it on every push.
 
 Editing source with scripts
 ---------------------------
@@ -189,7 +209,7 @@ A clean textual merge is not a compatible merge.  Run the pre-merge check:
     python quality/premerge_check.py <branch> [<branch> ...]
 
 It looks for the two static ways branches here have been found to conflict
-without conflicting: two names for one quantity, and two implementations of
+without conflicting: two names for one quantity and two implementations of
 one thing in different files.  The third way, a change of meaning under an
 unchanged name, only running the code detects; that is what the numeric tests
 are for.
@@ -198,4 +218,4 @@ Commits
 -------
 
 Say what changed and why, with measurements where there are any.  A commit
-that corrects an earlier commit or a document says so, and gives the number.
+that corrects an earlier commit or a document says so and gives the number.

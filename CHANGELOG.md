@@ -1577,6 +1577,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The documentation's landing page says which pages to read for analysis,
+  simulation or development; every Using page opens with what it covers and
+  ends with where to go next.  A style check, `docs/dev/check_style.py`, run by
+  the lint job, keeps the pages in American English and free of the
+  constructions the contributing guide lists; the pages are edited to pass it.
+
 - The troubleshooting page lists the common error and warning messages as
   they appear, each with its cause and what to do, so that searching for a
   message finds it.

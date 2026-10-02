@@ -1,20 +1,20 @@
 Continuous integration
 ======================
 
+Continuous integration (CI) is the practice of checking every change to the
+code automatically, on a clean machine, as soon as it is pushed.  It catches
+a broken test, a style error or a documentation page that no longer builds
+within minutes, before the change reaches other people.  It also catches
+problems that only appear on a machine other than the author's.
+
 .. contents::
    :local:
    :depth: 1
 
-Continuous integration (CI) is the practice of checking every change to the
-code automatically, on a clean machine, as soon as it is pushed.  It catches
-a broken test, a style error or a documentation page that no longer builds
-within minutes, before the change reaches other people, and it catches
-problems that only appear on a machine other than the author's.
-
 For GRANDlib, GitHub Actions runs the test suite, the linter and a
 documentation build on every push and every pull request, including pull
 requests from forks.  The results appear as checks on the commit and on the
-pull request: a green check means every step passed, and a red cross links
+pull request: a green check means every step passed; a red cross links
 to the log of the step that failed.  Every check runs a command you can also
 run locally (`Running the checks locally`_).
 
@@ -83,7 +83,7 @@ Every job needs the model data, about 1 GB from ``forge.in2p3.fr``.  The
 workflows cache it, keyed on ``data/model_version.flag``, so it is downloaded
 only when the model version changes.  There is no fallback to an older
 version, so a job never runs against the wrong data.  The download script
-retries four times and checks the size of each file, and it replaces the
+retries four times and checks the size of each file.  It replaces the
 previous data only after the new data have arrived.
 
 Running the checks locally
@@ -106,7 +106,7 @@ Testing the Docker route
 inside a Docker image.  It is a diagnostic, not a merge gate.  It runs
 ``env/setup.sh``, ``import grand``, the ``dataio`` tests and the full suite as
 separate steps, so a failure shows which stage broke.  By default it tests the
-published ``grandlib/dev:1.2`` image against ``dev-next`` and ``dev``, and
+published ``grandlib/dev:1.2`` image against ``dev-next`` and ``dev`` and
 builds the image of ``env/docker/grandlib.dockerfile``.
 
 GitHub offers manual runs only for workflows on the repository's default

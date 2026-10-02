@@ -33,7 +33,7 @@ per run; event-level trees hold one entry per event.  :doc:`datamodel`
 explains how the trees fit together and how to read them.
 
 Each tree is stored in its own file, named after the tree type:
-``shower_*.root`` for ``TShower``, ``run_*.root`` for ``TRun``, and so on.
+``shower_*.root`` for ``TShower``, ``run_*.root`` for ``TRun`` and so on.
 """
 
 

@@ -15,7 +15,7 @@ with a table of its modules.
      - Coordinate frames and conversions, terrain and the geoid, the
        geomagnetic field
    * - :doc:`api/dataio`
-     - The ROOT trees, and reading and writing files
+     - The ROOT trees and reading and writing files
    * - :doc:`api/sim`
      - The simulation chain: ``Efield2Voltage``, the antenna model, the RF
        chain, Galactic noise, the ADC and the T1 trigger
@@ -33,7 +33,7 @@ with a table of its modules.
 The most used entry points are :class:`~grand.sim.efield2voltage.Efield2Voltage`,
 the tree classes such as :class:`~grand.dataio.event_trees.TEfield` and
 :class:`~grand.dataio.event_trees.TVoltage`,
-:class:`~grand.aoi.event_list.EventList`, and the frames
+:class:`~grand.aoi.event_list.EventList` and the frames
 :class:`~grand.geo.coordinates.Geodetic` and
 :class:`~grand.geo.coordinates.GRANDCS`.  ``grand`` itself re-exports the
 common names, so ``from grand import Efield2Voltage, Geodetic`` works.

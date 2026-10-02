@@ -2,7 +2,7 @@ Quick start guide
 =================
 
 This page goes from an installed GRANDlib to the operations most users need:
-simulating the voltages of a shower, reading them back, digitizing them, and
+simulating the voltages of a shower, reading them back, digitizing them and
 running the stages of the chain on their own.  Every block on this page is
 executed when the documentation is built, in order, on the shower that ships
 with the repository.
@@ -45,7 +45,7 @@ simulated fields, since this folder also holds a level-1 copy.
 Reading the result
 ------------------
 
-Each file holds one ROOT tree, and each tree class reads one kind of file.
+Each file holds one ROOT tree and each tree class reads one kind of file.
 :class:`~grand.dataio.event_trees.TVoltage` gives the traces as one row per
 :term:`detection unit <DU>`, three arms per row:
 
@@ -93,7 +93,7 @@ Units
 -----
 
 GRANDlib uses the units below throughout.  A tree field that has a unit says
-so in its documentation, and functions name it in the argument when they can
+so in its documentation and functions name it in the argument when they can
 (``freqs_mhz``, ``dt_ns``).
 
 ======================================  ==========================================

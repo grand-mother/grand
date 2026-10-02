@@ -1,17 +1,17 @@
 Coordinates and conventions
 ===========================
 
+Air showers are computed in shower coordinates, antennas sit at geodetic
+positions on curved terrain and the radio emission depends on the local
+geomagnetic field.  :mod:`grand.geo.coordinates` converts between the frames
+these quantities are expressed in.  Mixing up frames is the most common source
+of wrong results in GRANDlib and rarely raises an error, so this page states
+each convention and shows it executing.  Units are listed in the
+:ref:`Quick start guide <quickstart-units>`.
+
 .. contents::
    :local:
    :depth: 2
-
-Air showers are computed in shower coordinates, antennas sit at geodetic
-positions on curved terrain, and the radio emission depends on the local
-geomagnetic field.  :mod:`grand.geo.coordinates` converts between the frames
-these quantities are expressed in.  Mixing up frames is the most common source
-of wrong results in GRANDlib, and rarely raises an error, so this page states
-each convention and shows it executing.  Units are listed in the
-:ref:`Quick start guide <quickstart-units>`.
 
 .. image:: _static/frames.svg
    :target: _static/frames.svg
@@ -76,7 +76,7 @@ To go the other way, pass the geodetic position as the first argument:
     print("0.01 deg north, in GRANDCS (m):", np.round(np.asarray(local).ravel(), 1))
 
 The point is due north, yet ``y`` is not zero: ``GRANDCS`` measures ``x``
-from **magnetic** north, 0.3° from geographic north at Dunhuang, and ``z`` is
+from **magnetic** north, 0.3° from geographic north at Dunhuang and ``z`` is
 slightly negative because the Earth curves away below the tangent plane.
 
 Every frame stores its components as ``(3, n)`` arrays, so a single point
@@ -107,7 +107,7 @@ GRANDCS and LTP axes differ
    things by them.
 
 ``LTP`` with ``orientation='ENU'`` is the usual east-north-up convention, so
-its ``x`` runs **East**.  ``GRANDCS`` follows GRAND's array convention, and
+its ``x`` runs **East**.  ``GRANDCS`` follows GRAND's array convention and
 its ``x`` runs **North**.  The same triple therefore names two different
 places:
 
@@ -122,7 +122,7 @@ places:
     print("same numbers, different frame: %.1f m apart" % separation)
 
 Neither raises an error or a warning.  A detector position mixed up this way
-lands outside the array, and a shower axis points at the wrong part of the
+lands outside the array; a shower axis points at the wrong part of the
 sky.  Naming the frame in the variable (``du_grandcs``, ``axis_enu``) makes
 the mistake visible.
 
@@ -152,7 +152,7 @@ Heights need a reference
 ------------------------
 
 A height is meaningless without saying what it is measured from.  The
-ellipsoid is a smooth mathematical figure; the geoid is mean sea level, and
+ellipsoid is a smooth mathematical figure; the geoid is mean sea level and
 the two differ by up to about 100 m worldwide.
 
 .. jupyter-execute::
@@ -197,7 +197,7 @@ A shower's angles say where it comes from
 -----------------------------------------
 
 A shower's ``zenith`` and ``azimuth`` name the direction it **arrives from**,
-not the direction it travels.  A vertical shower has zenith 0°, and the shower
+not the direction it travels.  A vertical shower has zenith 0°; the shower
 maximum lies upstream, at those angles as seen from the core.  The files
 GRANDlib reads, the converters that write them and Appendix A of the GRANDlib
 paper all follow this convention.  ``_cartesian_to_spherical`` applied to the
@@ -233,10 +233,17 @@ Common mistakes
 
    Notebook 01, *Coordinate systems* (:doc:`notebooks`), works through this
    page with figures: a detector layout drawn in ``GRANDCS`` and in geodetic
-   coordinates, and a shower axis in both.
+   coordinates and a shower axis in both.
 
 Reference
 ---------
 
 Appendix A of :cite:`GRAND:2024atu` gives the transformation matrix and the
 WGS-84 constants.  :doc:`api` documents :mod:`grand.geo.coordinates`.
+
+Where next
+----------
+
+* :doc:`datamodel` for how positions are stored in the files.
+* :doc:`recipes` for converting the antenna positions of a run.
+* Notebook 01 (:doc:`notebooks`) for the frames at length, with figures.

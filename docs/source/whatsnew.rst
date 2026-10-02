@@ -47,12 +47,12 @@ New
 * **One installation route**: a single conda environment and an installable
   package (:doc:`installation`).
 * **Documentation**: this site, with a quick start, recipes and twelve
-  notebooks, and ``notebooks/import_notebook.py`` to add or edit a notebook.
+  notebooks and ``notebooks/import_notebook.py`` to add or edit a notebook.
 
 Other changes
 ~~~~~~~~~~~~~
 
-* ``import grand`` no longer needs ROOT, and reading files no longer loads the
+* ``import grand`` no longer needs ROOT.  Reading files no longer loads the
   simulation code.
 * Trees are released when no longer referenced, so reading many files no
   longer exhausts memory (:ref:`datamodel-releasing-trees`).

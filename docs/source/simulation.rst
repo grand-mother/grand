@@ -76,7 +76,7 @@ from.  ``process_ant`` rotates the field into that basis before contracting.
    **The index** :math:`p` **is the antenna arm, not a component of the
    field.**  ``trace[:, 2]`` is the Z arm; it is not :math:`E_z`.  Because the
    basis follows the arrival direction, which arm sees a given field depends
-   on the geometry, and the ratio between arms is not the ratio between field
+   on the geometry.  The ratio between arms is not the ratio between field
    components.
 
    .. image:: _static/antenna_arms.svg
@@ -133,7 +133,7 @@ A matched, lossless line gives the identity matrix.
 .. image:: _static/rfchain.svg
    :target: _static/rfchain.svg
    :alt: the six RF-chain stages between Z_ant and Z_load, the measured file
-         each reads, the order of the matrix product, and the stage whose
+         each reads, the order of the matrix product and the stage whose
          gain setting selects nothing
    :width: 100%
 
@@ -165,7 +165,7 @@ Digitization
 ------------
 
 :meth:`ADC.downsample <grand.sim.detector.adc.ADC.downsample>` resamples
-the voltage to the 500 MHz of the ADC, and
+the voltage to the 500 MHz of the ADC and
 :meth:`ADC.process <grand.sim.detector.adc.ADC.process>` quantizes it to 14
 bits (one count is 109.9 µV) and saturates it at ±0.9 V, producing the counts
 a ``TADC`` tree holds.  Measured noise, in ADC counts,

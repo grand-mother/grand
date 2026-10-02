@@ -1,13 +1,13 @@
 Troubleshooting
 ===============
 
-.. contents::
-   :local:
-   :depth: 1
-
 Problems grouped by what you see: an error message, a ``nan``, a number that
 looks wrong, or a message that only looks like an error.  For known defects,
 see :doc:`known_issues`.
+
+.. contents::
+   :local:
+   :depth: 1
 
 Errors and warnings that start with ``GRANDlib:``
 -------------------------------------------------
@@ -34,8 +34,8 @@ work as usual:
   that is not a ROOT file.
 
 Values that are suspicious but usable give a :class:`~grand.basis.validate.GRANDlibWarning`
-instead, and are used as given.  A tree field outside its physical range is
-one: reading a file goes through the same code as writing one, and existing
+instead and are used as given.  A tree field outside its physical range is
+one: reading a file goes through the same code as writing one and existing
 files hold placeholders such as ``xmax_grams = -201``, which must stay
 readable.  ``NaN`` in a coordinate is another.  To find where they come from,
 turn them into errors::
@@ -89,7 +89,7 @@ the three antenna models agree to about 10%.
 
 **A frequency is out by** :math:`10^6`.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
 stores its frequency axis in **hertz**; everything in
-:mod:`grand.sim.detector.rf_chain` uses **megahertz**, and the attribute name
+:mod:`grand.sim.detector.rf_chain` uses **megahertz**.  The attribute name
 carries no unit suffix.  Divide by ``1e6`` when crossing between them.
 
 **An angle is out by a factor of 57.3.**  The trees, the simulation chain and

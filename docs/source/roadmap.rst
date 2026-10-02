@@ -5,7 +5,7 @@ The recovery plan is the program of work that brought the GRANDlib repository
 back to a state in which changes are tested, reviewed and released.  Before it,
 the default branch (``master``) was over a thousand commits behind the branch
 people actually used (``dev``), continuous integration no longer completed a
-run, and three dozen branches waited unmerged.  The plan sets out, in phases,
+run and three dozen branches waited unmerged.  The plan sets out, in phases,
 how to rebuild a single working trunk without losing any of that work.
 
 What it means for you
@@ -57,7 +57,7 @@ After it:
   arrays, with configuration objects and ROOT confined to reading and writing
   files (:ref:`issue-import-requires-root`).
 * Phase 10: salvage the remaining unique work on old branches, archive-tag and
-  delete them, and remove ``src_outlib/``.
+  delete them and remove ``src_outlib/``.
 
 The full plan
 -------------

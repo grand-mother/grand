@@ -7,7 +7,7 @@ external air-shower code computes and turns it into the voltages and :term:`ADC`
 counts that a GRAND :term:`detection unit <DU>` records.  The same package defines the
 ROOT data format the collaboration stores its simulated and measured data in.
 It also provides the coordinate frames, terrain and geomagnetic field that tie
-both to real sites, and a first set of reconstruction tools that go back from
+both to real sites and a first set of reconstruction tools that go back from
 recorded signals to the shower.
 
 .. tip::
@@ -45,7 +45,7 @@ through the measured :term:`RF chain` and writes a file.  A second step digitize
 Each stage can also be called on its own arrays, without any file.
 
 **One data format.**  Simulated and measured events are stored in the same
-ROOT trees, and read back as Python numbers and NumPy arrays.  Every voltage
+ROOT trees and read back as Python numbers and NumPy arrays.  Every voltage
 file records the GRANDlib version that computed it.
 
 **Tested against what it claims.**  Over 1200 tests check the package against
@@ -54,6 +54,21 @@ must hold exactly (:doc:`testing`).  Inputs are checked
 when a function is called, so a wrong unit or a missing file stops with a
 message that names the argument rather than producing a plausible wrong
 number.
+
+Which pages do I need?
+----------------------
+
+**I analyze GRAND data.**  :doc:`installation`, then :doc:`datamodel` and the
+:doc:`data_format`, :doc:`coordinates`, the reading recipes in :doc:`recipes`
+and notebooks 02, 09 and 11 (:doc:`notebooks`).
+
+**I run simulations.**  :doc:`installation` and the :doc:`quickstart`, then
+:doc:`sim2root` to convert ZHAireS or CoREAS output, :doc:`commands`,
+:doc:`simulation` for what each stage does and :doc:`known_issues` before
+relying on absolute noise levels or the trigger.
+
+**I change GRANDlib.**  :doc:`contributing`, :doc:`testing`, :doc:`ci` and
+:doc:`architecture`.
 
 What it can compute
 -------------------
@@ -65,7 +80,7 @@ What it can compute
 * The response of the :term:`GRANDProto300 <GP300>` RF chain (matching network, LNA, baluns,
   cable, filter board) as a cascade of measured two-port networks.
 * Digitization by the 14-bit, 500 MHz ADC, with saturation and optional
-  measured noise, and an offline version of the T1 trigger.
+  measured noise and an offline version of the T1 trigger.
 * Positions in geodetic, Earth-centered, local tangent-plane and array frames,
   ground elevation from :term:`SRTM` tiles, the geoid and the geomagnetic field.
 * The arrival direction, the position of the shower maximum and an energy
@@ -82,7 +97,7 @@ What it has been used for
 * Reading and viewing GRANDProto300 and :term:`GP13` data, including ten GP13
   cosmic-ray candidates that ship with the examples (notebooks 11 and 12).
 
-When to use GRANDlib, and when not
+When to use GRANDlib and when not
 ----------------------------------
 
 GRANDlib is the tool for anything that needs the response of a GRAND

@@ -11,7 +11,7 @@ given time span.
 
 .. image:: _static/datamodel.svg
    :target: _static/datamodel.svg
-   :alt: the run-level and event-level trees, the keys that join them, and the
+   :alt: the run-level and event-level trees, the keys that join them and the
          three grouping rules that are not documented elsewhere
    :width: 100%
 
@@ -98,7 +98,7 @@ With :mod:`grand.aoi`, which joins the trees into one event object:
     print("energy %.3g GeV, Xmax %.1f g/cm2" % (shower.energy_primary, shower.Xmax))
     print("antennas %d" % len(event.antennas))
 
-The two APIs name the same quantity differently, and ``simshower`` means
+The two APIs name the same quantity differently and ``simshower`` means
 different things in each: in :mod:`grand.aoi` it is the *simulated* shower
 read from ``TShower`` at level 0 (``event.shower`` is the level-1 one, absent
 from a simulation), not ``TShowerSim``.
@@ -126,7 +126,7 @@ Provenance
 ``TRun`` carries ``data_generator_version``, ``event_version``,
 ``analysis_level``, ``site`` and ``site_layout``; every tree records the
 software that last wrote it (``modification_software``,
-``modification_software_version``), and ``TVoltage`` the GRANDlib version
+``modification_software_version``) and ``TVoltage`` the GRANDlib version
 that computed its voltages (``grandlib_version``).  A change to the
 Galactic-noise normalization, for example, alters every voltage without
 changing the file's layout; the version stamp is what tells two such files
@@ -192,11 +192,18 @@ changes what every reader of the format sees;
 the layout is updated, so the change shows up in review.
 
 A descriptor can also carry a unit and a valid range.  Writing a value
-outside the range warns, and the unit appears in the field's documentation.
+outside the range warns.  The unit appears in the field's documentation.
 
 Reference
 ---------
 
 :doc:`data_format` lists every field of every tree, with its type, unit and
-meaning.  Appendix B of :cite:`GRAND:2024atu`, and :doc:`api` for every class and
+meaning.  Appendix B of :cite:`GRAND:2024atu` and :doc:`api` for every class and
 field.
+
+Where next
+----------
+
+* :doc:`data_format` for every field of every tree.
+* :doc:`recipes` for reading events and many files.
+* Notebooks 02 and 09 (:doc:`notebooks`).

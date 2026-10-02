@@ -4,9 +4,9 @@ Test suite
 The test suite is the set of automated checks, in ``tests/``, that verify
 GRANDlib does what it should: that its physics agrees with independent
 calculations, that files it writes read back unchanged, that its documented
-commands work, and that a fixed bug stays fixed.  Running it tells you whether
+commands work and that a fixed bug stays fixed.  Running it tells you whether
 your installation works and whether a change you made broke something.  It
-uses `pytest <https://docs.pytest.org>`_, and runs automatically on every
+uses `pytest <https://docs.pytest.org>`_ and runs automatically on every
 change (:doc:`ci`).
 
 .. contents::
@@ -53,9 +53,9 @@ Layout
 ``tests/sim``, ``tests/aoi``, ``tests/analysis``, ``tests/basis`` and
 ``tests/granddb``.  Three directories test what lies outside the package:
 ``tests/sim2root`` runs the converters on the committed samples,
-``tests/scripts`` the command-line tools, and ``tests/examples`` the event
+``tests/scripts`` the command-line tools and ``tests/examples`` the event
 viewer.  Files at the top level test properties of the whole package: input
-validation, lazy imports, packaging, and the commands and recipes the
+validation, lazy imports, packaging and the commands and recipes the
 documentation gives.
 
 What the tests check
@@ -63,7 +63,7 @@ What the tests check
 
 **Physics against independent calculations.**  The Galactic-noise level is
 rebuilt from the shipped tables and the antenna impedance, independently of
-the module, and compared with the simulated noise
+the module and compared with the simulated noise
 (``tests/sim/test_galactic_noise_normalisation.py``).  The arrival direction
 recomputed from the position of Xmax is compared with the ZHAireS summaries
 (``tests/geo/test_angle_convention.py``).  The arm of each effective-length
@@ -111,7 +111,7 @@ Writing a test
 * Where a reference is needed, prefer one from the GRANDlib paper or an
   independent code to one produced by GRANDlib itself.
 * With random input, fix the seed with a local generator
-  (``np.random.default_rng(seed)``), and assert on distributions rather than
+  (``np.random.default_rng(seed)``) and assert on distributions rather than
   on single draws.
 * When testing an optimized path against a plain one, first assert that the
   optimized path ran.

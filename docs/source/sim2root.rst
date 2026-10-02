@@ -1,17 +1,17 @@
 Converting simulations: sim2root
 ================================
 
-.. contents::
-   :local:
-   :depth: 1
-
 GRANDlib starts from an electric field.  The air shower and its radio
 emission are simulated by :term:`ZHAireS` or CoREAS, outside GRANDlib.  The converters
 in ``sim2root/`` turn the output of those codes into GRAND's ROOT format, which
 the rest of the library reads.
 
+.. contents::
+   :local:
+   :depth: 1
+
 ``sim2root/`` is in this repository but is not part of the ``grand`` package:
-it is not imported by it, and its code is not linted.  The tests run the
+it is not imported by it.  Its code is not linted.  The tests run the
 converters on the committed samples.
 
 Where it sits
@@ -151,12 +151,18 @@ If you work on it
 - Read ``sim2root/README.md`` first; it is more current than the Handbook.
 - Test by round-tripping.  Convert, then read the result back with
   ``grand.dataio`` and check the fields you touched.  Notebook 02 shows the
-  reading side, and ``tests/sim/test_pipeline_end_to_end.py`` shows how to
+  reading side and ``tests/sim/test_pipeline_end_to_end.py`` shows how to
   build a small file from the tree classes rather than shipping one.
 - If you add a field on one side, check the other.  The RawRoot and GRANDRoot
-  schemas are maintained separately, and
+  schemas are maintained separately and
   :ref:`issue-nutrig-field-names` is what happens when two branches name one
   quantity twice.
 - Adding ``sim2root/`` to the lint gate is planned.  The undefined-name block
   comes first, since it is the only group of findings that is an error rather
   than a matter of style.
+
+Where next
+----------
+
+* :doc:`commands` for the next steps: voltage, then ADC counts.
+* :doc:`datamodel` for the trees the converters write.

@@ -44,6 +44,11 @@ jobs:
       - name: Ruff
         run: ruff check grand/ tests/ quality/ notebooks/ docs/dev/ granddb/
 
+      # American spelling and the house style of the documentation pages;
+      # contributing.rst describes the rules.
+      - name: Documentation style
+        run: python docs/dev/check_style.py
+
   handbook:
     name: Handbook PDF
     runs-on: ubuntu-latest

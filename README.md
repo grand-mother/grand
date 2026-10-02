@@ -15,14 +15,14 @@ at each antenna and turns it into the voltages and ADC counts that a GRAND
 detection unit records: antenna response, Galactic noise, RF chain and
 digitization.  It also defines the ROOT data format the collaboration stores
 simulated and measured data in, the coordinate frames, terrain and
-geomagnetic field that tie them to real sites, and tools to reconstruct a
+geomagnetic field that tie them to real sites and tools to reconstruct a
 shower from recorded signals.
 
 Development happens on the `dev-next` branch.
 
 ## Installation
 
-GRANDlib runs on Linux x86-64 with Python 3.10 or later, and needs ROOT.  The
+GRANDlib runs on Linux x86-64 with Python 3.10 or later and needs ROOT.  The
 conda environment in this repository provides everything:
 
 ```bash
@@ -72,7 +72,7 @@ cd docs && make html         # then open docs/build/html/index.html
 ```
 
 Twelve worked [notebooks](notebooks/) show each part of the library with
-figures, and can be read on GitHub without running them.
+figures and can be read on GitHub without running them.
 
 ## Reporting problems and contributing
 

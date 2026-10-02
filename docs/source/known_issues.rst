@@ -2,7 +2,7 @@ Known issues
 ============
 
 This page lists the problems known to affect results or to need a decision,
-with what to do in the meantime.  For the latest status, and for problems
+with what to do in the meantime.  For the latest status and for problems
 reported since this page was last updated, see the `open issues on GitHub
 <https://github.com/grand-mother/grand/issues>`_.  Fixed problems are recorded
 in the :doc:`changelog`.
@@ -27,7 +27,7 @@ The VGA gain setting has no effect
 the same transfer function: the stage named ``vgaf`` reads
 ``feb+amfitler+biast.s2p``, a front-end board with an AM filter and a bias
 tee, whatever the gain.  The per-gain tables ``filter+vga{0,5,20}db+filter.s2p``
-ship with the model data and are never opened, and there is no table for
+ship with the model data and are never opened.  There is no table for
 -5 dB.  Section 8.3 of :cite:`GRAND:2024atu` describes a transfer function that
 changes with the gain.
 
@@ -47,19 +47,19 @@ The offline T1 trigger passes no unit on clean simulations
 With the default parameters, T1 passed none of the units of clean, strong
 simulated events (:term:`ADC` peak 850).  On synthetic pulses there are two reasons:
 
-* Only the first T1 crossing is tried, and it is rejected if it lies within
+* Only the first T1 crossing is tried.  It is rejected if it lies within
   the first ``t_quiet/2`` samples (256 at the default 512 ns).
-* Consecutive T2 crossings must be closer than ``t_sepmax = 10`` ns, strictly,
+* Consecutive T2 crossings must be closer than ``t_sepmax = 10`` ns, strictly
   and one wider gap rejects the channel.  A clean pulse at 60 to 200 MHz has
   its crossings 10 to 16 ns apart.  Noise adds closely spaced crossings, which
   is why noisy events sometimes pass.
 
 Two parameters, off by default, select the other readings of the gap rule:
-``sepmax_inclusive=1`` accepts a gap equal to ``t_sepmax``, and
+``sepmax_inclusive=1`` accepts a gap equal to ``t_sepmax`` and
 ``sepmax_ends_count=1`` ends the count at a wider gap instead of rejecting the
 channel (``--t1_param sepmax_inclusive=1`` on the command line).  With either,
 a clean pulse at 100 to 200 MHz counts 9 to 15 crossings, above
-``nc_max = 8``, and still does not trigger.
+``nc_max = 8`` and still does not trigger.
 
 *Meanwhile:* offline T1 results on noise-free simulations are not meaningful.
 The firmware behavior is for the trigger group to confirm.
@@ -76,10 +76,10 @@ Four defects found in review, each with a known fix awaiting a decision:
 * At the default ``padding_factor=1.0``, the antenna response wraps around the
   end of the trace: the :term:`open-circuit voltage` of the sample shower differs by 3
   to 5% from the one computed with ``padding_factor=2``.
-* The ADC truncates toward zero instead of rounding, and its positive full
+* The ADC truncates toward zero instead of rounding.  Its positive full
   scale is +8192 instead of +8191.
 * The effective refractive index of :mod:`grand.analysis.physics.atmosphere`
-  is up to 3.4% off for sources within 1 km horizontally, and is NaN when the
+  is up to 3.4% off for sources within 1 km horizontally and is NaN when the
   source and the antenna are at the same altitude.
 
 *Meanwhile:* pass ``padding_factor=2`` to
@@ -95,11 +95,11 @@ Voltages simulated before 7 September 2026
 :Affects: noise levels in files simulated before that date
 
 The Galactic-noise model was corrected on 7 September 2026.  Before that, the
-simulated noise was :math:`\sqrt{2}` too low, and the three antenna models
+simulated noise was :math:`\sqrt{2}` too low.  The three antenna models
 read noise tables that differed from one another by up to a factor of two
 (``GP300_nec`` and ``GP300_mat`` read the same file).
 
-*Meanwhile:* do not compare absolute noise levels across that date, and quote
+*Meanwhile:* do not compare absolute noise levels across that date and quote
 the ``du_type`` with any noise level from an older file.  Voltage files record
 the GRANDlib version that wrote them (``grandlib_version``); files from before
 the correction carry ``0.1.0.dev0`` or no version.
@@ -109,7 +109,7 @@ the correction carry ``0.1.0.dev0`` or no version.
 The geomagnetic model ends in 2025
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:Affects: the geomagnetic field, and magnetic-north frames, at dates from
+:Affects: the geomagnetic field and magnetic-north frames, at dates from
           1 January 2025
 :Test: ``tests/geo/test_geomagnet_validity.py``
 
@@ -134,7 +134,7 @@ The sample simulations are dated May 1976
 :Issue: `#225 <https://github.com/grand-mother/grand/issues/225>`_
 :Test: ``tests/sim2root/test_sample_event_times.py``
 
-The simulations carry no event time, and the converters used to write a fixed
+The simulations carry no event time.  The converters used to write a fixed
 value in its place: ``core_time_s`` and ``du_seconds`` read 200854920, 13 May
 1976.  The converters now use the simulation date.  The committed samples are
 kept as they were written, because tests read their other values and a
@@ -145,7 +145,7 @@ name, not from the event time.
 
 .. _issue-magnetic-field-units:
 
-``magnetic_field`` is not a vector, and its unit is not recorded
+``magnetic_field`` is not a vector and its unit is not recorded
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :Affects: anything that reads ``TShower.magnetic_field``
@@ -199,7 +199,7 @@ Fourteen fields change type when a file is read back
 
 PyROOT presents ``std::vector<unsigned char>`` as characters.  A field such as
 ``test_pulse_rate_divider`` written as ``[3, 5]`` reads back as
-``['\x03', '\x05']``, and ``sum()`` over it raises ``TypeError``.  No data are
+``['\x03', '\x05']`` and ``sum()`` over it raises ``TypeError``.  No data are
 lost.
 
 *Meanwhile:* apply ``ord()`` to each element.  Changing the declared type would
@@ -253,7 +253,7 @@ No Docker image is maintained
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The newest published images, ``grandlib/dev:1.2`` and ``grandlib/dev:2.0``,
-date from 2023 and 2022, and nobody is responsible for them.  The Handbook
+date from 2023 and 2022.  Nobody is responsible for them.  The Handbook
 still presents Docker as the first installation route.  The full test suite
 passed inside ``grandlib/dev:1.2`` and inside an image built from
 ``env/docker/grandlib.dockerfile`` (:doc:`installation`), so the route works.
@@ -295,3 +295,9 @@ committed in 2023 and is not valid Python.
 ``sim2root/ZHAireSRawRoot/AiresInfoFunctionsGRANDROOT.py``.  Nothing imports
 the directory.  Edit the files under ``sim2root/`` instead.  The directory
 will be removed once the branches that still modify it are merged.
+
+Where next
+----------
+
+* :doc:`troubleshooting` for errors and surprising numbers.
+* The `open issues on GitHub <https://github.com/grand-mother/grand/issues>`_.
