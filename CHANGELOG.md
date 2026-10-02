@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `DataDirectory` opens many files faster (#283, in part): a tree's list of
+  units, which read the whole chain (one more pass over every file) at
+  every open, is computed on first use.  Measured on one-event files:
+  2000 files open in 5.2 s instead of 7.2 s.  The cost stays linear in the
+  number of files here (1.8, 4.2 and 7.2 s for 500, 1000 and 2000 files
+  before; not the N^1.6 reported); the three passes left (entry count,
+  `Draw` estimate, `BuildIndex`) each open every file.
+
 - Why T1 passes no unit on clean simulations is now in the known issues
   (#233, item 3): a pulse before sample `t_quiet/2` is rejected, and a clean
   pulse's T2 crossings lie at least `t_sepmax = 10` ns apart, which rejects

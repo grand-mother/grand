@@ -1,4 +1,5 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import functools
 import glob
 import re
 import os
@@ -380,6 +381,44 @@ class DataDirectory:
                 if tree_inst := getattr(self, f"{tree}_l{level}"):
                     return tree_inst.get_list_of_events()
 
+class _TreeInfo(dict):
+    r"""A tree's metadata, some of it computed on first access (#283).
+
+    ``info["dus"]`` and ``info.get("dus")`` work as before; the value is
+    computed when first asked for, and is absent (``KeyError``, or the
+    default of ``get``) when the tree has none.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._loaders = {}
+
+    def lazy(self, key, loader):
+        r"""Computes ``self[key]`` with ``loader()`` when it is first asked for."""
+        self._loaders[key] = loader
+
+    def _load(self, key):
+        loader = self._loaders.pop(key, None)
+        if loader is not None:
+            value = loader()
+            if value is not None:
+                self[key] = value
+
+    def __missing__(self, key):
+        self._load(key)
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        self._load(key)
+        return dict.get(self, key, default)
+
+    def __contains__(self, key):
+        self._load(key)
+        return dict.__contains__(self, key)
+
+
 def _open_root_file(name):
     r"""Opens a ROOT file for reading, with a clear error if it cannot be.
 
@@ -558,6 +597,7 @@ class DataFile:
                 tree_info["evt_cnt"] = t.GetEntries()
 
             # Add the tree to a dict for this tree class
+            tree_info = _TreeInfo(tree_info)
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
 
             self.dict_of_trees[tree_info["name"]] = t
@@ -597,9 +637,9 @@ class DataFile:
                 if traces_lenghts is not None:
                     el["traces_lengths"] = traces_lenghts
 
-                dus = self._get_list_of_all_used_dus(tree_instance)
-                if dus is not None:
-                    el["dus"] = dus
+                # On first use: listing the units reads the whole tree, one
+                # more pass over every file of a chain at every open (#283)
+                el.lazy("dus", functools.partial(self._get_list_of_all_used_dus, tree_instance))
 
                 el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
