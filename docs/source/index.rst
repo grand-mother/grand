@@ -36,7 +36,7 @@ recorded signals to the shower.
    * `GitHub repository <https://github.com/grand-mother/grand>`_ and
      `open issues <https://github.com/grand-mother/grand/issues>`_
    * :doc:`notebooks` (twelve worked notebooks)
-   * :doc:`citing` and :doc:`changelog`
+   * :doc:`whatsnew`, :doc:`citing` and the :doc:`changelog`
 
 **End to end.**  One call goes from the electric field at each antenna to the
 voltage at the ADC input.  It projects the field on the antenna's effective
@@ -147,4 +147,5 @@ or later.
    glossary
    citing
    references
+   whatsnew
    changelog

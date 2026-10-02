@@ -1567,6 +1567,9 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- A What's new page summarizes the changes users notice, those that alter
+  results first.
+
 - The API reference is split into one page per subpackage, each opening with
   a table of its modules, under an overview page.  Every documentation page
   links to its source on GitHub ("Edit on GitHub").
