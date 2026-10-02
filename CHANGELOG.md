@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `DataDirectory` opens one pass faster (#283): each chain's
+  `Length$(du_id)` draw is sized by the draw itself, instead of by a
+  `GetEntries()` that opened every file first; a chain longer than the
+  default estimate is drawn again.  At 2000 one-event files the chain setup
+  takes 3.3 s instead of 4.1 s.  Two passes remain (the draw and
+  `BuildIndex`), each opening every file once; together with the lazy unit
+  lists, the cost stays linear in the number of files.
+
 - Less memory for long traces (#284, items 2 and 3): `Efield2Voltage`
   computes each RF chain's transfer function once per frequency axis and
   keeps it, instead of recomputing it for every unit, then releases the

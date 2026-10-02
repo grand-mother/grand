@@ -419,6 +419,21 @@ class _TreeInfo(dict):
         return dict.__contains__(self, key)
 
 
+def _draw_du_lengths(tree):
+    r"""Draws ``Length$(du_id)`` over every entry of `tree`; returns the number of entries.
+
+    The draw is sized by the draw itself: calling ``GetEntries()`` first was
+    one more pass opening every file of a chain (#283).  If the tree's
+    estimate holds fewer entries than there are, it is raised and the draw
+    repeated, so the values read back with ``GetV1()`` are always complete.
+    """
+    count = tree.Draw("Length$(du_id)", "", "goff")
+    if count > tree.GetEstimate():
+        tree.SetEstimate(count)
+        count = tree.Draw("Length$(du_id)", "", "goff")
+    return count
+
+
 def _open_root_file(name):
     r"""Opens a ROOT file for reading, with a clear error if it cannot be.
 
@@ -559,8 +574,7 @@ class DataFile:
 
                 # Need to tell ROOT what buffer size to use for Draw - this is approximated by the total number of DUs
                 # ToDo: probably better to switch all the 1D GetV...() to RDataFrame::AsNumpy, to save memory
-                t.SetEstimate(t.GetEntries())
-                count = t.Draw("Length$(du_id)", "", "goff")
+                count = _draw_du_lengths(t)
                 total_elements = int(np.sum(np.frombuffer(t.GetV1(), dtype=np.float64, count=count)))
                 t.SetEstimate(total_elements+1)
 
