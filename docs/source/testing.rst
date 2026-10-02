@@ -1,121 +1,116 @@
-Testing
-=======
+Test suite
+==========
 
 .. contents::
    :local:
+   :depth: 1
 
-Running the suite
------------------
+Running it
+----------
+
+From the repository root, in an environment set up as in :doc:`installation`:
 
 .. code-block:: bash
 
-    conda activate grand-dev
-    source env/setup.sh          # the tests need the compiled C libraries
     pytest tests/ -q
 
-Current state, on the ``dev-next`` branch:
+The suite has about 1270 tests and takes about 20 minutes on one core.  It
+needs the compiled TURTLE and GULL libraries and the model data, which
+``source env/setup.sh`` provides.  Every test writes into a temporary folder,
+so two runs can share a checkout.
 
-.. code-block:: text
+A single area runs on its own:
 
-    1233 passed, 10 skipped, 5 xfailed             (2026-10-02)
-    coverage: 80% over grand/, 23% over granddb/, 72% together   (measured 2026-10-01)
+.. code-block:: bash
+
+    pytest tests/geo -q                                # coordinates, terrain, field
+    pytest tests/sim/test_pipeline_golden.py -q        # the whole chain
+
+What a run reports
+------------------
+
+*Skipped* tests need something the environment lacks, such as an optional
+package or a sample file; each says what in its skip reason.
+
+*Expected failures* (``xfailed``) are known defects that need a decision
+rather than a patch.  ``tests/conftest.py`` lists them, with the reason for
+each and who can settle it; the corresponding entries are in
+:doc:`known_issues`.  They are strict: a listed test that starts passing fails
+the run until its entry is removed.
 
 Layout
 ------
 
-``tests/`` mirrors the package.  ``tests/granddb/`` is the newest, added on
-2026-09-08 when granddb entered the test and lint gates; it needs no
-PostgreSQL, because the ``[database]`` section of a granddb config file is
-optional and the first test pins that.  ``tests/geo/`` is the oldest and best
-covered; ``tests/dataio/`` and ``tests/aoi/`` arrived together and are the
-largest; ``tests/sim/`` is the thinnest relative to what it guards.
+``tests/`` mirrors the package: ``tests/geo``, ``tests/dataio``,
+``tests/sim``, ``tests/aoi``, ``tests/analysis``, ``tests/basis`` and
+``tests/granddb``.  Three directories test what lies outside the package:
+``tests/sim2root`` runs the converters on the committed samples,
+``tests/scripts`` the command-line tools, and ``tests/examples`` the event
+viewer.  Files at the top level test properties of the whole package: input
+validation, lazy imports, packaging, and the commands and recipes the
+documentation gives.
 
-Known failures are marked, not hidden
--------------------------------------
+What the tests check
+--------------------
 
-Three tests fail for reasons that need a decision rather than a patch.  They
-are registered in ``tests/conftest.py`` with the reason for each and who can
-settle it, so that the suite can be a required check in CI — a permanently red
-gate is a gate nobody looks at.
+**Physics against independent calculations.**  The Galactic-noise level is
+rebuilt from the shipped tables and the antenna impedance, independently of
+the module, and compared with the simulated noise
+(``tests/sim/test_galactic_noise_normalisation.py``).  The arrival direction
+recomputed from the position of Xmax is compared with the ZHAireS summaries
+(``tests/geo/test_angle_convention.py``).  The arm of each effective-length
+table is identified by correlating its pattern with the named HFSS arms
+(``tests/sim/test_antenna_arm_identity.py``).
 
-They are marked ``xfail`` strictly (``xfail_strict = true`` in
-``pyproject.toml``), so a test that starts passing fails the run until its
-entry is deleted.  With ``strict=False`` that went unnoticed: three tests
-passed for a while only where an untracked ``data/test_efield.root`` happened
-to lie (#271).
+**Properties that must hold exactly.**  Parseval's theorem on every noise
+trace, frame conversions that return their input, the same noise from the same
+seed.
 
-Read the registry rather than a summary of it — it is the authority, it is
-short, and it says what each failure actually is.
+**Contracts.**  ``tests/dataio/test_schema_snapshot.py`` compares the layout of
+every ROOT tree with a stored snapshot, so a change to the file format appears
+in review.  ``tests/dataio/test_backward_compatibility.py`` reads files written
+in 2024.
 
-What the tests are for
-----------------------
+**Regressions.**  ``tests/sim/test_pipeline_golden.py`` runs the whole chain on
+a fixed input and seed and compares the result with a stored reference, to
+1e-6 of the trace peak.  It shows that the answer has not changed, not that it
+is right.  When a change is meant to alter the answer, regenerate the
+reference with ``python tests/sim/test_pipeline_golden.py --write`` and say why
+in the commit message.
 
-Three kinds, and the distinction matters when adding more.
-
-**Invariants** hold under any correct implementation and survive a rewrite.
-``tests/sim/test_galactic_noise_normalisation.py`` asserts that the time
-series carries the energy of the spectrum it came from, which is true whatever
-normalisation convention is chosen — so it will still be valid whichever way
-the open question about that convention is settled.
-
-**Contracts** pin something that other people depend on.
-``tests/dataio/test_schema_snapshot.py`` records the ROOT tree layout and
-fails until the snapshot is regenerated, which puts a schema change in the
-diff where a reviewer sees it instead of letting it arrive silently.  It also
-carries a guard against a specific collision: two branches adding the same
-NUTRIG quantity under different names.
-
-**Regressions** pin a bug so it cannot come back.
-``tests/dataio/test_descriptor_defaults.py`` constructs every tree class with
-no arguments, which was impossible under NumPy 2 until recently.
-
-Writing a new test
-------------------
-
-Prefer an invariant to a stored value where one exists: it needs no reference
-and does not have to be regenerated. Where a stored reference is needed,
-prefer one from the published paper — its figures fix the local sidereal time
-of maximum Galactic noise per port, the RF-chain transfer function, and an
-end-to-end case — over a number produced by the code itself, which only says
-the code still does what it did.
-
-Assert on distributions rather than individual random draws.  A per-case
-assertion on random input is brittle: one case drifts, the suite goes red, and
-the fix is to loosen the bound until it catches nothing.
-
-If an optimisation is being tested, assert first that the fast path actually
-ran.  A comparison between an optimised route and a plain one proves nothing
-if the optimisation quietly declined — both sides then execute the same code
-and agree exactly, which reads as success.
+**The documentation.**  ``tests/test_documented_commands.py`` and
+``tests/test_documented_recipes.py`` run the commands and code that
+:doc:`commands`, :doc:`sim2root` and :doc:`datamodel` give.  The executed
+examples of the other pages run when the documentation is built.
 
 Coverage
 --------
-
-Measured with:
 
 .. code-block:: bash
 
     pytest tests/ -q --cov=grand --cov=granddb --cov-report=term
 
-72% today.  The number is worth less than it looks: line coverage counts
-executed lines, not verified behaviour, and the end-to-end test executed a
-great deal of the simulation chain while asserting only that an output file
-appeared.  Appendix C of the GRANDlib paper reports 84%, measured when CI
-still ran; that figure carried the same caveat.
+On 1 October 2026 the suite covered 80% of the lines of ``grand/`` and 23% of
+``granddb/``.  Line coverage counts lines executed, not results checked, so it
+overstates how well a module is tested.  ``sim2root/``, ``examples/`` and
+``src_outlib/`` are not measured.
 
-Known gaps
-----------
+Writing a test
+--------------
 
-The end-to-end test cannot run at all on a fresh checkout, because its input
-file is not in version control and is not downloaded by ``env/setup.sh``.
-See :ref:`issue-missing-endtoend-fixture`.  A replacement that builds its own
-input, ``tests/sim/test_pipeline_end_to_end.py``, covers the same ground and
-does run.
+* Prefer a property that holds for any correct implementation to a stored
+  value: it needs no reference and survives a rewrite.
+* Where a reference is needed, prefer one from the GRANDlib paper or an
+  independent code to one produced by GRANDlib itself.
+* With random input, fix the seed with a local generator
+  (``np.random.default_rng(seed)``), and assert on distributions rather than
+  on single draws.
+* When testing an optimized path against a plain one, first assert that the
+  optimized path ran.
+* Write files into pytest's ``tmp_path``, never into the repository.
+* For a known defect that needs a decision, add the test with an entry in
+  ``tests/conftest.py`` and in :doc:`known_issues`, rather than skipping it.
 
-**The suite cannot be run twice at once.**  Several tests write to fixed paths
-under ``data/`` -- ``test_voltage.root``, ``test_voltage1.root`` -- rather than
-to a temporary directory, so two concurrent runs, or ``pytest -n auto``,
-occasionally fail on a file another process is writing.  It shows up as a
-single failure that disappears on a rerun, which is the most misleading shape
-a test failure can take.  New tests should use pytest's ``tmp_path``, as
-``test_pipeline_end_to_end.py`` does.
+Known gaps are tracked in `#271
+<https://github.com/grand-mother/grand/issues/271>`_: some tests that cannot
+fail, and some that depend on files outside version control.

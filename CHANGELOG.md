@@ -1556,6 +1556,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The documentation is reorganized into Getting started, Using GRANDlib, How
+  it works and Reference, and its pages rewritten.  New: a quick start and a
+  recipes page whose examples run on the committed sample when the
+  documentation is built, and a page on the command-line tools.  Docker is
+  now part of the installation page, which also says what pip can install.
+  The implementation notes are distributed to the pages they concern, with
+  the units in the quick start.  Known issues lists only open problems, each
+  linked to its GitHub issue.  The ``grand.manage_log`` module docstring,
+  which rendered with a raw HTML link and an unformatted example, is
+  rewritten.
+
 - **Public functions check their input, with messages that start with
   `GRANDlib:`.** A review found that only 18 % of the 328 public functions
   checked their input at all; of 60 bad inputs, 27 were accepted silently,

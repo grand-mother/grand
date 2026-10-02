@@ -205,8 +205,8 @@ with a known answer and on ten GP13 candidates.
 .. automodule:: grand.analysis.constants
    :members:
 
-Support
--------
+Logging, provenance and C libraries
+-----------------------------------
 
 .. automodule:: grand.manage_log
    :members:

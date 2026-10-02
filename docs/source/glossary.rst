@@ -1,18 +1,15 @@
 Glossary
 ========
 
-GRAND carries jargon from three directions at once — radio astronomy, air-shower
-physics and RF engineering — and a term that is obvious to one of those
-communities is often opaque to the other two.  This page is the place to look
-when a field name in :doc:`datamodel` or an argument in the :doc:`api` does not
-explain itself.
+Terms from radio astronomy, air-shower physics and RF engineering that appear
+in field names, arguments and these pages.
 
 .. glossary::
    :sorted:
 
    ADC
       Analogue-to-digital converter.  In GRAND, 14 bits over a 1.8 V full
-      scale, giving a quantisation step of about 110 µV.  Also the name of the
+      scale, giving a quantization step of 109.9 µV.  Also the name of the
       tree that stores what a unit actually recorded, :class:`~grand.dataio.event_trees.TADC`.
 
    analysis level
@@ -27,17 +24,17 @@ explain itself.
 
    DC2
       The second GRAND Data Challenge: a collaboration-wide exercise in which
-      a common simulated dataset is produced and analysed.  Much of the
+      a common simulated dataset is produced and analyzed.  Much of the
       branch activity in the repository traces to it.
 
    DU
       Detection unit.  One antenna with its three arms, its electronics and its
-      digitiser.  ``du_id`` identifies it; ``du_xyz`` is its position in the
+      digitizer.  ``du_id`` identifies it; ``du_xyz`` is its position in the
       site frame.
 
    ECEF
       Earth-Centred, Earth-Fixed.  A Cartesian frame with its origin at the
-      centre of the Earth, rotating with it.  GRANDlib uses it as the pivot
+      center of the Earth, rotating with it.  GRANDlib uses it as the pivot
       through which all other frame conversions pass; see :doc:`coordinates`.
 
    effective length
@@ -81,7 +78,7 @@ explain itself.
 
    HorizonAntenna
       The GRAND antenna design: three arms, two horizontal and one vertical,
-      on a mast a few metres above the ground.
+      on a mast a few meters above the ground.
 
    LFMap
       A low-frequency sky map of Galactic brightness temperature.  Folded

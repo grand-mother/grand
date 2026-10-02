@@ -6,10 +6,9 @@ Worked notebooks live in `notebooks/
 reading order.  Each carries its figures inline, so they can be read on GitHub
 without being run.
 
-They are the long form of the narrative pages.  A page states a convention and
-shows it executing in a few lines; a notebook works through the same material
-with the reasoning around it — why the convention is what it is, what happens
-at the edges, and what the numbers were checked against.
+They are the long form of the :doc:`recipes` and the narrative pages: a
+recipe shows a task in a few lines, and a notebook works through it with the
+reasoning, the edge cases and the checks behind the numbers.
 
 To run them rather than read them::
 
@@ -26,32 +25,28 @@ Jupyter): notebook 08 imports
 
 .. note::
 
-   The notebooks are **not** built into this documentation.  Executing them on
-   every documentation build would be slow, and their stored outputs are more
-   useful than freshly computed ones for reading.  A scheduled job runs them
-   weekly instead, so they cannot rot unnoticed.
+   The notebooks are not built into this documentation, since executing them
+   would slow every build.  The links below open them on GitHub, with their
+   stored outputs.  CI executes them every week and on every change, so the
+   stored outputs stay current.
 
-They are generated
+Editing a notebook
 ------------------
 
-The notebooks are built by ``notebooks/make_notebooks.py``, which owns their
-source, executes each one and stores its outputs.  **Edit that file, not the**
-``.ipynb`` — anything written into a notebook by hand is lost on the next
+The notebooks are written by ``notebooks/make_notebooks.py``, which holds
+their source, executes each one and stores its outputs.  **Edit that file, not
+the** ``.ipynb``: a change made in a notebook directly is lost on the next
 rebuild::
 
     python notebooks/make_notebooks.py                # rebuild and execute all
     python notebooks/make_notebooks.py --only 03,05   # just those two
     python notebooks/make_notebooks.py --no-execute   # while drafting
 
-Generating them keeps the title format, the navigation footers and the shared
-conventions structural rather than something a dozen JSON files have to agree
-about, and makes review a diff of Python instead of a diff of embedded output.
-The build refuses to finish if a notebook fails to execute, comes back without
-stored outputs — which renders blank on GitHub — or is left on disk not
-matching the generator.
+The script stops if a notebook fails to execute or comes back without
+outputs, and CI fails if a committed notebook does not match the script.
 
-Available
----------
+The notebooks
+-------------
 
 `01. Coordinate systems <https://github.com/grand-mother/grand/blob/dev-next/notebooks/01_coordinates.ipynb>`_
    The four frames and the conversions between them; the two conventions that
@@ -86,7 +81,7 @@ Available
 
 `06. From electric field to ADC counts <https://github.com/grand-mother/grand/blob/dev-next/notebooks/06_efield_to_adc.ipynb>`_
    The whole chain on a fixture built in the notebook: each stage isolated,
-   the signal-to-noise that follows from the input amplitude, digitisation,
+   the signal-to-noise that follows from the input amplitude, digitization,
    and a round trip back out of the written file.  Includes the trap that the
    three output channels are antenna arms, not Cartesian components of the
    field.
@@ -115,13 +110,13 @@ Available
    through both layers and comparing them.
 
 `10. Finding data <https://github.com/grand-mother/grand/blob/dev-next/notebooks/10_finding_data.ipynb>`_
-   ``granddb``, the data catalogue that ships with GRANDlib and answers "where
+   ``granddb``, the data catalog that ships with GRANDlib and answers "where
    is this file?".  Builds a config file, finds files in local directories and
    their subdirectories, and shows what the ``[repositories]`` and
    ``[credentials]`` sections look like.  The point it exists to make: **you do
    not need a database to find files** — the ``[database]`` section is optional
    and the whole notebook runs without one.  Says plainly which four things do
-   need the catalogue.
+   need the catalog.
 
 `11. Reconstructing a shower <https://github.com/grand-mother/grand/blob/dev-next/notebooks/11_reconstruction.ipynb>`_
    ``grand.analysis``, the reconstruction package: from the peak times and

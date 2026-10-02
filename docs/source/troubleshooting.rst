@@ -5,18 +5,16 @@ Troubleshooting
    :local:
    :depth: 1
 
-Things that go wrong, in rough order of how often they catch someone new.
-
-Most of these are not exceptions.  GRANDlib's characteristic failure is a
-``nan`` or a silently wrong number that stays plausible for several steps, so
-the entries below are grouped by what you *see*, not by what raised.
+Problems grouped by what you see: an error message, a ``nan``, a number that
+looks wrong, or a message that only looks like an error.  For known defects,
+see :doc:`known_issues`.
 
 Errors and warnings that start with ``GRANDlib:``
 -------------------------------------------------
 
-Since 2026-10 the public functions check their input, and say what is wrong
-in a message that starts with ``GRANDlib:``, names the function and the
-argument, gives what was expected and shows what was given::
+Public functions check their input.  A message that starts with
+``GRANDlib:`` names the function and the argument, what was expected and what
+was given::
 
     ValueError: GRANDlib: Geodetic: 'latitude' must be between -90 and 90 degrees, got 200.0
     TypeError: GRANDlib: TRun.run_number: must be an integer, got 1.7
@@ -70,11 +68,6 @@ The ``nan`` propagates through ``elevation(..., reference='sea')``, which
 subtracts the undulation from it.  **Check for ``nan`` after every elevation
 lookup.**
 
-**A geoid undulation returned ``nan`` and the coordinates look fine.**  The
-site is west of Greenwich and you are on a version before the fix for
-:ref:`issue-geoid-longitude-convention`: the keyword form did not wrap a
-negative longitude.  Upgrade, or pass a ``Geodetic``.
-
 The numbers are wrong but nothing failed
 ----------------------------------------
 
@@ -89,10 +82,8 @@ out as 600 : 400 : 1.  See :doc:`simulation` and notebook 06.
 :ref:`issue-vga-gain-ignored`.
 
 **Two noise levels disagree by a factor of two.**  If either was simulated
-before 2026-09-07, compare the ``du_type``: until then the three values
-resolved to two distinct sets of numbers, differing by up to 2.1×, and two of
-the three read a byte-identical file (:ref:`issue-galactic-noise-tables`).
-Since then each reads its own table, and the three agree to about 10 %.
+before 7 September 2026, see :ref:`issue-galactic-noise-tables`.  Since then
+the three antenna models agree to about 10%.
 
 **A frequency is out by** :math:`10^6`.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
 stores its frequency axis in **hertz**; everything in
@@ -100,8 +91,7 @@ stores its frequency axis in **hertz**; everything in
 carries no unit suffix.  Divide by ``1e6`` when crossing between them.
 
 **An angle is out by a factor of 57.3.**  The trees, the simulation chain and
-the antenna tables take angles in **degrees** — ``zenith``, ``azimuth``, and
-the ``phi``/``theta`` axes of the tables — while :mod:`grand.analysis` and the
+the antenna tables take angles in **degrees**; :mod:`grand.analysis` and the
 event viewer work in **radians**.  The analysis functions warn when given a
 value larger than :math:`2\pi`.
 
@@ -111,14 +101,6 @@ in ``leff_theta_reim``; the polar attributes ``leff_theta``, ``leff_phi``,
 
 Exceptions
 ----------
-
-``KeyError`` on the first ``compute_voltage()``
-    Fixed.  Four parameters — ``resample_to_mhz``, ``extend_to_us``,
-    ``calibration_smearing_sigma`` and ``add_jitter_ns`` — used to be set only
-    by ``scripts/convert_efield2voltage.py``, so the command line worked while
-    the documented Python usage raised.  If you still see this, you are on an
-    older revision; pin it with
-    ``tests/sim/test_pipeline_end_to_end.py::test_default_params_are_complete``.
 
 ``NotUniqueEvent: An event with (run_number,event_number)=(0,0) already exists``
     You wrote two events with the same key into one tree, most often by running
@@ -134,23 +116,19 @@ Exceptions
 
 ``ModuleNotFoundError: No module named 'ROOT'``
     The environment is not active, or ROOT is not installed.  ``import grand``
-    requires ROOT at import time, not lazily; see
-    :ref:`issue-import-requires-root`.
+    works without ROOT, but reading files, topography and the simulation need
+    it (:ref:`issue-import-requires-root`).
 
     .. code-block:: bash
 
         conda activate grand-dev
 
 ``ImportError`` for ``turtle`` or ``gull``
-    The C extensions are not built.  They compile from source and are not on
-    PyPI:
+    The C extensions are not built.  They compile from source:
 
     .. code-block:: bash
 
         source env/setup.sh
-
-    That script needs ``make``, which the conda environment does not declare —
-    install it from your distribution if it is missing.
 
 ``ValueError`` naming a file and the ``_L0_``/``_L1_`` convention
     A file name's analysis level does not match the ``analysis_level`` stored
@@ -161,42 +139,35 @@ Messages that look like errors and are not
 ------------------------------------------
 
 ``No valid trun TTree in the file ...  Creating a new one.``
-    Expected when writing, and logged only at debug level now (older versions
-    printed it as a warning).  Constructing a tree class on a file that does
-    not yet contain that tree creates it.  Only worry if you see it while *reading*
-    a file you expected to be populated — that means the tree is absent or
-    named differently.
+    Expected when writing: constructing a tree class on a file that does not
+    yet contain that tree creates it.  When *reading* a file you expected to
+    hold the tree, it means the tree is absent or named differently.
 
 ``TClass::Init:0: RuntimeWarning: no dictionary for class ... is available``
     ROOT could not find a dictionary for a class it does not need.  Harmless.
 
-A CPU-feature warning on stderr during a documentation build
-    ROOT's JIT writes it once at first use.  It is on stderr, so
-    ``jupyter-sphinx`` reports it as a warning and ``sphinx-build -W`` would
-    make it fatal.  The documentation build therefore does not use ``-W``; the
-    log is grepped instead, with that one line filtered.  See :doc:`ci`.
+A CPU-feature warning during a documentation build
+    ROOT's JIT compiler writes it on some processors.  It is harmless; see
+    :doc:`ci`.
 
 Reading files
 -------------
 
-**``DataDirectory`` returned fewer handles than I have runs.**  It groups by
-tree type and analysis level, not by run.  Two runs in one directory do not
-give two handles.  This is the trap notebook 02 works through, and it is
-written down nowhere else.
+**``DataDirectory`` returned fewer handles than there are runs.**  It groups
+by tree type and analysis level, not by run, so two runs in one folder do not
+give two handles.  Notebook 02 works through this.
 
-**A bare attribute gave me the wrong level.**  Both levels are returned, and a
-bare attribute follows the highest one present.  Ask for the level you want
-explicitly.
+**A bare attribute gave the wrong level.**  A bare attribute such as
+``tefield`` follows the highest level present.  Ask for the level explicitly,
+as ``tefield_l0``.
 
 **A reader wants a directory, not a file.**  Some readers are coupled to
 directory layout rather than taking a path; see
 :ref:`issue-reader-directory-coupling`.
 
-**Memory grows with every file and the job is killed out of memory.**  Tree
-instances are kept alive in ``grand_tree_list``, together with the ROOT files
-they opened, until you release them.  Use ``with TADC(path) as tadc:`` or call
-``tadc.stop_using()`` at the end of each iteration; see
-:ref:`datamodel-releasing-trees`.
+**Memory grows with every file.**  Release each tree when done with it: use
+``with TADC(path) as tadc:`` or call ``tadc.stop_using()`` at the end of each
+iteration (:ref:`datamodel-releasing-trees`).
 
 Environment and build
 ---------------------
@@ -207,22 +178,16 @@ Environment and build
 
     conda env create -f env/conda/grand-dev.yml --solver=libmamba
 
-**A result changed after a ROOT upgrade.**  Check first that the computation is
-deterministic.  A difference between two runs on different ROOT versions was
-once recorded here as a ROOT effect and turned out to be an unseeded random
-draw in the test itself — see :ref:`issue-root-638-numerical-difference`, which
-is retained as a worked example of the mistake.  Seed everything, reproduce the
-difference twice, and only then look at ROOT.
+**A result changed after a ROOT upgrade.**  Check first that the computation
+is deterministic: seed every random draw and reproduce the difference twice
+before attributing it to ROOT.
 
-**A test fails only in a full run, never alone.**  Look for unseeded
-randomness.  One such test existed in this repository and failed about one run
-in six; it is now seeded through a local generator so it does not disturb
-global random state.
+**A test fails only in a full run, never alone.**  Look for an unseeded random
+draw, or one that uses NumPy's global generator.
 
 Still stuck
 -----------
 
-:doc:`known_issues` lists what is known to be wrong, with what was measured and
-what would settle it.  If the behaviour is not there and not here, it is worth
-reporting — and worth writing a test that reproduces it, because most of the
-entries on that page began as one.
+Check :doc:`known_issues` and the `open issues on GitHub
+<https://github.com/grand-mother/grand/issues>`_.  If the problem is not
+there, please open an issue with the code that reproduces it.
