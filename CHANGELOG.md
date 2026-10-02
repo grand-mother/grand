@@ -1582,6 +1582,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The documentation uses one name per concept: *detection unit* (or *unit*)
+  for the station and *antenna* for the antenna itself, *arm* for the three
+  antenna arms and *channel* only for the ADC's inputs, *electric field* in
+  prose.  The glossary defines *arm* and *channel*.
+
 - The documentation's landing page says which pages to read for analysis,
   simulation or development; every Using page opens with what it covers and
   ends with where to go next.  A style check, `docs/dev/check_style.py`, run by

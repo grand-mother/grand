@@ -104,7 +104,7 @@ The notebooks
    The whole chain on a fixture built in the notebook: each stage isolated,
    the signal-to-noise that follows from the input amplitude, digitization
    and a round trip back out of the written file.  Includes the trap that the
-   three output channels are antenna arms, not Cartesian components of the
+   three output traces are antenna arms, not Cartesian components of the
    field.
 
 `07. Topography <https://github.com/grand-mother/grand/blob/dev-next/notebooks/07_topography.ipynb>`_

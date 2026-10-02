@@ -135,7 +135,8 @@ def check(path):
     lines = path.read_text(encoding="utf-8").splitlines()
     # Join each prose line with the next, so a phrase broken across two lines is seen
     text = list(prose(lines))
-    british = re.compile(r"(?<![\w\-/.])(%s)(?![\w\-/])" % "|".join(BRITISH), re.I)
+    # A hyphen before the word is allowed ("Earth-Centred"), not after it
+    british = re.compile(r"(?<![\w/.])(%s)(?![\w\-/])" % "|".join(BRITISH), re.I)
     for index, (number, line) in enumerate(text):
         following = text[index + 1][1] if index + 1 < len(text) and text[index + 1][0] == number + 1 else ""
         joined = line + " " + following.lstrip()

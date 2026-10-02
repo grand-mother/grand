@@ -35,7 +35,7 @@ Where outputs go
 Without ``-o``, each script names its output after its input and writes it
 into the simulation folder.  A bare name given with ``-o`` also goes into that
 folder, unless ``-od`` names another.  An existing output is replaced.  A
-folder holding e-field files at several analysis levels is read at the
+folder holding electric-field files at several analysis levels is read at the
 highest, with a warning; ``--level`` chooses another.
 
 ``convert_efield2voltage.py``
@@ -59,7 +59,7 @@ Option                               Effect
                                      times
 ``--calibration_smearing_sigma S``   Smear each unit's amplitude calibration by a
                                      Gaussian of this relative width
-``--level L``                        Analysis level of the e-field files to read
+``--level L``                        Analysis level of the electric-field files to read
 ``-o``, ``-od``                      Output file and folder
 ===================================  =====================================================
 
@@ -94,7 +94,7 @@ Turns a simulated electric field into one closer to what the hardware would
 see: band-pass filtered to 50-200 MHz, resampled (``--target_sampling_rate_mhz``),
 padded (``--target_duration_us``), with optional white noise
 (``--add_noise_uVm``), timing jitter and calibration smearing.  This is the
-step that produces the level-1 e-field files of a simulation folder.
+step that produces the level-1 electric-field files of a simulation folder.
 
 ``extract_events.py``
 ---------------------

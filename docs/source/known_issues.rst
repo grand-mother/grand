@@ -176,7 +176,7 @@ The file readers depend on file names
 they are given.  They look for the run and shower trees in the same folder, by
 file name, so three conditions must hold:
 
-1. the run, e-field and shower trees are in separate files, named ``run_*``,
+1. the run, electric-field and shower trees are in separate files, named ``run_*``,
    ``efield_*`` and ``shower_*``;
 2. each name carries its :term:`analysis level`, as ``_L0_`` or ``_L1_``;
 3. the ``analysis_level`` stored in each tree matches its name.

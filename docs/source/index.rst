@@ -21,7 +21,7 @@ recorded signals to the shower.
 
        sim = Efield2Voltage("sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000",
                             "voltage.root", output_directory=".", seed=1, efield_level=0)
-       sim.compute_voltage()        # 44 antennas, about 10 s on one core
+       sim.compute_voltage()        # 44 detection units, about 10 s on one core
 
    Run it from the repository root.  The :doc:`quickstart` continues from
    here: reading the result back, the units, the frames, digitization and the

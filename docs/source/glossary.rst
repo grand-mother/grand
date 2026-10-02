@@ -24,16 +24,25 @@ in field names, arguments and these pages.
 
    DC2
       The second GRAND Data Challenge: a collaboration-wide exercise in which
-      a common simulated dataset is produced and analyzed.  Much of the
-      branch activity in the repository traces to it.
+      a common simulated dataset is produced and analyzed.
 
    DU
-      Detection unit.  One antenna with its three arms, its electronics and its
-      digitizer.  ``du_id`` identifies it; ``du_xyz`` is its position in the
-      site frame.
+      Detection unit, or *unit* for short.  One antenna with its three arms,
+      its electronics and its digitizer.  ``du_id`` identifies it; ``du_xyz``
+      is its position in the array frame.  *Antenna* in these pages means the
+      antenna itself, not the whole unit.
+
+   arm
+      One of the three antenna elements of a detection unit: X (south-north),
+      Y (east-west) and Z (vertical).  A voltage trace has one row per arm.
+      An arm is not a component of the electric field.
+
+   channel
+      One of the four inputs of a unit's ADC, 0 to 3, as in ``TADC.trace_ch``.
+      Voltages and electric fields have arms or components, not channels.
 
    ECEF
-      Earth-Centred, Earth-Fixed.  A Cartesian frame with its origin at the
+      Earth-centered, Earth-fixed.  A Cartesian frame with its origin at the
       center of the Earth, rotating with it.  GRANDlib uses it as the pivot
       through which all other frame conversions pass; see :doc:`coordinates`.
 

@@ -73,7 +73,7 @@ lookup.**
 The numbers are wrong but nothing failed
 ----------------------------------------
 
-**The three trace channels do not match the field components you put in.**
+**The three arms do not match the field components you put in.**
 They are not meant to.  ``trace[:, 2]`` is the Z antenna arm, not
 :math:`E_z`: the response is the projection of the field onto the effective
 length in the spherical basis of the *arrival direction*, so which arm sees

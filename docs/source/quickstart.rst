@@ -15,7 +15,7 @@ each antenna, converted to GRAND's format by ``sim2root`` (:doc:`sim2root`).
 The result of that conversion is a folder of ROOT files: ``efield_*`` holds the
 traces, ``shower_*`` the shower and ``run_*`` the detector layout.  The
 repository includes one such folder, a 3.9 EeV proton shower at
-zenith 79.4° seen by 44 :term:`GRANDProto300 <GP300>` antennas:
+zenith 79.4° seen by 44 :term:`GRANDProto300 <GP300>` detection units:
 
 .. jupyter-execute::
 
@@ -134,7 +134,7 @@ shower from the west.
 north, y to west and z up.  A local ``LTP`` frame with ``orientation='ENU'``
 takes the same three numbers and means east, north, up.
 
-*The three channels are antenna arms, not field components.*  ``trace[:, 0]``
+*The three traces are antenna arms, not field components.*  ``trace[:, 0]``
 is the south-north arm (X), ``trace[:, 1]`` the east-west arm (Y) and
 ``trace[:, 2]`` the vertical arm (Z).  The voltage on an arm is the projection
 of the field on that arm's :term:`effective length`, so the ratio between arms is not
@@ -147,7 +147,7 @@ ellipsoid.
 Terms used throughout
 ---------------------
 
-*Detection unit* (DU): one antenna station, with its three arms, RF chain and
+*Detection unit* (DU, or unit): one antenna with its three arms, its RF chain and
 ADC.  ``du_id`` identifies it.
 
 *Run* and *event*: an event is one candidate air shower, a run a set of events

@@ -92,7 +92,7 @@ from.  ``process_ant`` rotates the field into that basis before contracting.
    In notebook 06, a field with components in the ratio 1.0 : 0.6 : 0.2
    produces arm amplitudes of about 600 : 400 : 1, although the Z arm has the
    largest :math:`|\ell_\theta|` of the three at that zenith angle.  An
-   analysis that treats the channels as Cartesian components is wrong by an
+   analysis that treats the arms as Cartesian components is wrong by an
    amount that depends on the direction.
 
 Galactic noise
