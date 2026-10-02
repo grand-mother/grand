@@ -11,6 +11,13 @@ if len(sys.argv)>1:
 else:
     filename = "dummy_example_events.root"
 
+# A second run appended to the first one's file and failed with NotUniqueEvent
+# (#218): start from an empty file each time
+import os
+if os.path.exists(filename):
+    print(f"Replacing the existing {filename}")
+    os.remove(filename)
+
 print("Writing events to file", filename)
 
 # How many events to generate?

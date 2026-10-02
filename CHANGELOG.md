@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `Event.close_files()` (with `auto_file_close=False`) no longer crashes
+  the process when the event's trees share one file: it closed the file
+  after writing the first tree, deleting the others (a regression of the
+  #212 fix). `examples/aoi/event_generation.py` runs again, and can be run
+  twice (it replaces its output instead of failing with `NotUniqueEvent`).
+
 - A tree dropped without `stop_using()` is released (#284):
   `grand_tree_list` holds the trees by weak reference, and a dropped tree
   closes the file it opened unless another live tree reads it. A loop that

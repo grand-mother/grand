@@ -1636,11 +1636,15 @@ class Event:
         read from are left untouched (this used to write them too, changing
         the input files, #234).
         """
-        for tree in self._pending_writes or []:
+        pending = [tree for tree in self._pending_writes or [] if tree.tree is not None]
+        # All written before any file is closed: the trees usually share one
+        # file, and closing it after the first deleted the others' TTrees,
+        # so writing the second crashed the process (#218)
+        for tree in pending:
             # The same tree may be shared with other events writing to the file
-            if tree.tree is None:
-                continue
-            tree.write(force_close_file=True)
+            tree.write(close_file=False)
+        for tree in pending:
+            # Each file is closed once no other live tree uses it
             tree.stop_using()
         self._pending_writes = []
 
