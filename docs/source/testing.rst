@@ -91,6 +91,9 @@ in the commit message.
 :doc:`commands`, :doc:`sim2root` and :doc:`datamodel` give.  The executed
 examples of the other pages run when the documentation is built.
 
+:doc:`validation` shows the checks against independent calculations as
+figures.
+
 Coverage
 --------
 

@@ -58,11 +58,13 @@ number.
 Which pages do I need?
 ----------------------
 
-**I analyze GRAND data.**  :doc:`installation`, then :doc:`datamodel` and the
+**I analyze GRAND data.**  :doc:`installation`, the :doc:`cheatsheet`, then
+:doc:`datamodel` and the
 :doc:`data_format`, :doc:`coordinates`, the reading recipes in :doc:`recipes`
 and notebooks 02, 09 and 11 (:doc:`notebooks`).
 
-**I run simulations.**  :doc:`installation` and the :doc:`quickstart`, then
+**I run simulations.**  :doc:`installation`, the :doc:`quickstart` and the
+:doc:`tutorial`, then
 :doc:`sim2root` to convert ZHAireS or CoREAS output, :doc:`commands`,
 :doc:`simulation` for what each stage does and :doc:`known_issues` before
 relying on absolute noise levels or the trigger.
@@ -124,6 +126,8 @@ or later.
 
    installation
    quickstart
+   tutorial
+   cheatsheet
 
 .. toctree::
    :maxdepth: 2
@@ -146,6 +150,7 @@ or later.
    :hidden:
 
    simulation
+   validation
    architecture
    testing
    ci

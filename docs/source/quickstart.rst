@@ -266,6 +266,9 @@ The latitude increased: x points north.
 Where next
 ----------
 
+* :doc:`tutorial`: one shower followed from the antennas to its reconstructed
+  direction.
+* :doc:`cheatsheet`: units, conventions and the common calls on one page.
 * :doc:`recipes`: short code for the common tasks, from reading a shower to
   reconstructing its direction.
 * :doc:`notebooks`: twelve notebooks that work through each part of the

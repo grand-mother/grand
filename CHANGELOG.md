@@ -1403,6 +1403,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- Three documentation pages: a tutorial that follows one shower from the
+  antennas to its reconstructed direction, a one-page cheat sheet, and a
+  validation page showing GRANDlib's checks against independent
+  calculations as figures, computed at each build.
+
 - A weekly link check (`linkcheck.yml`, `docs/dev/check_links.py`) of the
   external links in the documentation, the README and the package metadata.
   Its first run found the changelog page linking to a branch that does not
