@@ -1403,6 +1403,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- A weekly link check (`linkcheck.yml`, `docs/dev/check_links.py`) of the
+  external links in the documentation, the README and the package metadata.
+  Its first run found the changelog page linking to a branch that does not
+  exist.
+
 - A data format reference in the documentation: every field of every tree,
   with its type, unit and description, generated from the tree classes at
   each build (`docs/dev/make_data_format.py`).

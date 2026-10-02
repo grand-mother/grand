@@ -1,0 +1,27 @@
+name: Link check
+
+# Checks the external links of the documentation, the README and the package
+# metadata (docs/dev/check_links.py).  Weekly and by hand rather than on every
+# push: an outside site being down for an hour is no reason to fail a pull
+# request.  The job fails only on links that are gone (404, 410, or a host
+# that no longer resolves); other failures are listed as warnings.
+on:
+  schedule:
+    - cron: '17 6 * * 1'          # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: External links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Check the links
+        run: python docs/dev/check_links.py

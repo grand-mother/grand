@@ -33,8 +33,8 @@ The workflows
      - The test suite, with ROOT 6.36 and with ROOT 6.38
    * - ``lint.yml``
      - every push and pull request
-     - Ruff; the documentation build, which fails on any warning; and the
-       compilation of the Handbook PDF
+     - Ruff; the documentation style check; the documentation build, which
+       fails on any warning; the compilation of the Handbook PDF
    * - ``notebooks.yml``
      - changes under ``notebooks/``; Mondays at 05:00 UTC; on request
      - Executes every tutorial notebook and checks that it matches its
@@ -45,6 +45,10 @@ The workflows
    * - ``docker.yml``
      - pushes to a branch named ``ci/docker-test``; on request
      - Runs the suite inside a Docker image (`Testing the Docker route`_)
+   * - ``linkcheck.yml``
+     - Mondays at 06:17 UTC; on request
+     - Checks the external links of the documentation and the package
+       metadata
    * - ``root_version.yml``
      - changes to ``grand/dataio/version``
      - Tags the version of the ROOT data format
@@ -93,6 +97,7 @@ Running the checks locally
 
     pytest tests/ -q                                             # the suite
     ruff check grand/ tests/ quality/ notebooks/ docs/dev/ granddb/   # the linter
+    python docs/dev/check_style.py                               # the writing style
     cd docs && make html                                         # the documentation
     python notebooks/make_notebooks.py                           # the notebooks
 
