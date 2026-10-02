@@ -87,8 +87,7 @@ class MotherRunTree(DataTree):
         Raises
         ------
         LookupError
-            When the tree has no such run.  It returned 0 and left the
-            previous run's values loaded (#206).
+            When the tree has no such run.
         """
         self._check_open("get_run")
         # Make sure we have an int; int() gave a bare ValueError for 'x' (#236)

@@ -8,7 +8,7 @@ def shower_direction_vector(theta, phi):
 
     It points away from where the shower comes from: the opposite of
     :func:`grand.dataio.xmax_frame.arrival_direction`, which points toward
-    the source (#261).
+    the source.
 
     Parameters
     ----------

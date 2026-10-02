@@ -170,8 +170,6 @@ class DetectorUnitNetwork:
     def get_max_dist_du(self):
         """Return the largest distance between two DUs of the network.
 
-        It raised NotImplementedError while documenting a return value (#261).
-
         Returns
         -------
         float

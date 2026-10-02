@@ -16,13 +16,13 @@ logger = getLogger(__name__)
 
 
 def _require(condition, what):
-    r"""Checks an internal condition; unlike ``assert``, it is not removed by ``python -O`` (#255)."""
+    r"""Checks an internal condition; unlike ``assert``, it is not removed by ``python -O``."""
     if not condition:
         raise RuntimeError(_validate.message("rf_chain", "internal check failed: %s" % what))
 
 
 def _loadtxt(path, *args, **kwargs):
-    r"""``np.loadtxt`` of a data-model file, checked first (#279)."""
+    r"""``np.loadtxt`` of a data-model file, checked first."""
     return np.loadtxt(_data_model.check(path, "RF chain"), *args, **kwargs)
 
 """
@@ -159,12 +159,6 @@ def get_axis_filename(component_name, axis):
         If the component is disabled there, or the axis is not one of the above.
     FileNotFoundError
         If the configuration gives no file for the component.
-
-    Notes
-    -----
-    Every problem used to be printed as "ERROR: ..." and answered with
-    ``None``, which the callers passed on until an unrelated TypeError; the
-    missing-component path even ended in ``NameError: Nonec`` (#255).
     """
     where = "rf_chain.get_axis_filename"
     components, _ = _config()
@@ -485,7 +479,7 @@ class GenericProcessingDU:
     _INPUTS = ("freqs_mhz", "freqs_in", "sparams")
 
     def release_arrays(self):
-        r"""Frees the arrays computed for the current frequencies (#284).
+        r"""Frees the arrays computed for the current frequencies.
 
         Every array whose last axis runs over the frequencies is dropped, in
         this stage and in the stages it holds; the measured input tables are
@@ -519,8 +513,7 @@ class MatchingNetwork(GenericProcessingDU):
     def __init__(self):
         """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        Takes no parameters (the ``size_sig`` it documented does not exist,
-        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
+        Takes no parameters (the ``size_sig`` it documented does not exist); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -680,8 +673,7 @@ class gaa_frontend0db(GenericProcessingDU):
     def __init__(self):
         """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        Takes no parameters (the ``size_sig`` it documented does not exist,
-        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
+        Takes no parameters (the ``size_sig`` it documented does not exist); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -827,8 +819,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
     def __init__(self):
         """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        Takes no parameters (the ``size_sig`` it documented does not exist,
-        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
+        Takes no parameters (the ``size_sig`` it documented does not exist); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
@@ -1311,7 +1302,7 @@ class BalunBeforeADC(GenericProcessingDU):
     def __init__(self):
         """Loads the balun's measured S-parameters, used for all three arms.
 
-        Takes no parameters (#261).  After :meth:`compute_for_freqs`, it holds
+        Takes no parameters.  After :meth:`compute_for_freqs`, it holds
         ``s11``, ``s21``, ``s12``, ``s22`` (shape ``(3, n_freq)``) and the
         unnormalised ``ABCD_matrix`` (shape ``(2, 2, 3, n_freq)``).
         """
@@ -1873,7 +1864,7 @@ class Zload(GenericProcessingDU):
     def __init__(self):
         """Loads the load's reflection coefficient, measured with a VNA.
 
-        Takes no parameters (#261).  The same load is used for all three
+        Takes no parameters.  The same load is used for all three
         arms.  After :meth:`compute_for_freqs`, it holds the reflection
         coefficient ``s`` and ``Z_load``, the total impedance of the balun,
         200 ohm resistor and ADC chip, each of shape ``(n_freq,)``.

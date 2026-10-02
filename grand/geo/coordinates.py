@@ -153,7 +153,7 @@ def _latitude_longitude(coordinates, latitude, longitude, where):
     Both ``geoid_undulation`` functions take a position object, keyword
     ``latitude`` and ``longitude``, or two positional numbers (latitude,
     longitude).  Their signatures differed, so ``grand.geoid_undulation(40.98,
-    93.95)`` raised TypeError (#261).
+    93.95)`` raised TypeError.
     """
     # Positions are ndarray subclasses too, so they are told apart first
     if isinstance(coordinates, Coordinates):
@@ -1262,7 +1262,7 @@ class Geodetic(GeodeticRepresentation):
         Pole); negative in the southern hemisphere.
     Longitude
         Degrees east of the prime meridian (Greenwich), between -360 and 360
-        (beyond that it is refused, #267).  A negative value is stored plus
+        (beyond that it is refused).  A negative value is stored plus
         360, so -10 becomes 350.
     Height
         Metres above the WGS-84 ellipsoid, the reference surface of these
@@ -1465,10 +1465,6 @@ class Geodetic(GeodeticRepresentation):
         -------
         Horizontal
             Azimuth, elevation and norm.
-
-        Notes
-        -----
-        It was a stub that returned ``None`` (#251).
         """
         if location is None:
             raise TypeError(_validate.message(
@@ -1498,7 +1494,7 @@ class Geodetic(GeodeticRepresentation):
         ----------
         location : Geodetic, optional
             Origin of the array frame.  Without it the default origin is
-            used, with a warning (it was used silently, #251).
+            used, with a warning.
 
         Returns
         -------
@@ -1698,7 +1694,7 @@ class ECEF(CartesianRepresentation):
         ----------
         location : Geodetic, optional
             Origin of the array frame.  Without it the default origin is
-            used, with a warning (it was used silently, #251).
+            used, with a warning.
 
         Returns
         -------
@@ -1746,7 +1742,7 @@ class HorizontalVector(HorizontalRepresentation):
     """Deprecated alias, merged into :class:`Horizontal`.
 
     by adding 'vector' attribute to reduce code duplication.  It takes what
-    :class:`Horizontal` takes: ``location`` raised TypeError here (#267).
+    :class:`Horizontal` takes: ``location`` raised TypeError here.
     """
 
     def __new__(cls, *args, **kwargs):
@@ -2232,7 +2228,7 @@ class LTP(CartesianRepresentation):
         Returns
         -------
         GRANDCS
-            The vector in the array frame.  (It returned ``None``, #251.)
+            The vector in the array frame.
         """
         return _to_grandcs(self, location, "LTP.ltp_to_grandcs")
 
@@ -2456,7 +2452,7 @@ class Rotation(_Rotation):
 
 
 def _to_grandcs(position, location, where):
-    r"""``GRANDCS(position, location=location)``, warning when no origin is given (#251)."""
+    r"""``GRANDCS(position, location=location)``, warning when no origin is given."""
     if location is None:
         warnings.warn(_validate.message(
             where, "no 'location' given: the default array origin (latitude %.3f, longitude "

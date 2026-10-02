@@ -1,11 +1,11 @@
 """One writer per ROOT file, across processes.
 
-Several processes appending to one ROOT file -- two batch jobs with the same
-output name, or a resubmitted job -- used to interleave their writes: events
-were lost while every process reported success, or the file was left
-unreadable (grand-mother/grand#281).  ROOT does no locking of its own.
+ROOT does no locking of its own, so several processes appending to one file
+(two batch jobs with the same output name, or a resubmitted job) would
+interleave their writes: events would be lost while every process reported
+success, or the file left unreadable.
 
-A process that writes a file now holds an exclusive ``flock`` on the file
+A process that writes a file holds an exclusive ``flock`` on the file
 itself from the moment it opens the file for writing until it closes it.
 Another process that tries to write the file meanwhile is refused with a clear
 message.  A process that opened the file earlier, for reading, and wants to
@@ -168,7 +168,7 @@ def is_current(name):
 
     False when it was removed, or replaced or changed by something other than
     this process since it was opened: a tree reopening the name must then
-    open it afresh, not reuse the open copy (#236).  Unknown files, and files
+    open it afresh, not reuse the open copy.  Unknown files, and files
     this process is writing, count as current.
     """
     path = _key(name)

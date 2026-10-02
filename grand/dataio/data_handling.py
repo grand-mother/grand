@@ -239,7 +239,7 @@ class DataDirectory:
         The level is read from ``_L<n>_<serial>.root``.  A file of the type
         whose name does not end that way (``efield_copy.root``) is skipped
         with a warning naming it: the level was taken from a fixed position
-        with ``int()``, and one such file aborted the whole folder (#204).
+        with ``int()``, and one such file aborted the whole folder.
         """
         prefix = flistname[2:-1] + "_"
         files = {}
@@ -401,7 +401,7 @@ class DataDirectory:
                     return tree_inst.get_list_of_events()
 
 class _TreeInfo(dict):
-    r"""A tree's metadata, some of it computed on first access (#283).
+    r"""A tree's metadata, some of it computed on first access.
 
     ``info["dus"]`` and ``info.get("dus")`` work as before; the value is
     computed when first asked for, and is absent (``KeyError``, or the
@@ -442,7 +442,7 @@ def _draw_du_lengths(tree):
     r"""Draws ``Length$(du_id)`` over every entry of `tree`; returns the number of entries.
 
     The draw is sized by the draw itself: calling ``GetEntries()`` first was
-    one more pass opening every file of a chain (#283).  If the tree's
+    one more pass opening every file of a chain.  If the tree's
     estimate holds fewer entries than there are, it is raised and the draw
     repeated, so the values read back with ``GetV1()`` are always complete.
     """

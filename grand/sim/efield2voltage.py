@@ -128,10 +128,8 @@ _MIN_XMAX_DISTANCE_M = 100.0
 def _trees_of_one_level(directory, level=None):
     r"""The efield, run and shower trees of `directory`, read at one level.
 
-    ``DataDirectory`` picks the highest level of each tree type on its own, so
-    a folder holding an L0 efield file and an L1 run file paired the L0 traces
-    with the L1 sampling time, which silently doubled every voltage (issue
-    #237).  The level is taken from the efield tree; the run tree must exist
+    The level is taken from the efield tree, so that the traces and the
+    sampling time always come from the same level; the run tree must exist
     at that level, and the shower tree, whose content does not depend on the
     level, is taken at that level or the closest one below it.
 
@@ -140,7 +138,7 @@ def _trees_of_one_level(directory, level=None):
     directory : grand.dataio.DataDirectory
     level : int, optional
         Level of the efield to read; the highest present when omitted, with
-        a warning if there are several (#231: it was picked silently).
+        a warning if there are several (it was picked silently).
 
     Returns
     -------
@@ -209,7 +207,7 @@ class Efield2Voltage:
     Attributes
     ----------
     params : dict
-        The processing switches, with these keys and defaults (#261):
+        The processing switches, with these keys and defaults:
 
         ``add_noise`` (True)
             Add Galactic noise.
@@ -221,7 +219,7 @@ class Efield2Voltage:
             Apply the RF chain up to the LNA output, or the G@Auger chain.
         ``resample_to_mhz`` (0)
             Resample to this rate; 0 keeps the input rate.  Other rates stay
-            in memory: :meth:`save_voltage` refuses them (#229).
+            in memory: :meth:`save_voltage` refuses them.
         ``extend_to_us`` (0)
             Extend the traces to this duration, in µs; 0 keeps their length.
         ``calibration_smearing_sigma`` (0)
@@ -290,18 +288,17 @@ class Efield2Voltage:
         du_type : str, optional
             The antenna model: ``'GP300'`` (HFSS simulation, the default),
             ``'GP300_nec'`` (NEC) or ``'GP300_mat'`` (Matlab).  ``'Horizon'``
-            is no longer accepted: its model files are not in the data model
-            (#232).
+            is no longer accepted: its model files are not in the data model.
         efield_level : int, optional
             For a folder holding efield files at several levels, the one to
-            read; the highest by default, with a warning (#231).
+            read; the highest by default, with a warning.
 
         Raises
         ------
         FileNotFoundError
             If `d_input` does not exist, or lacks a run, shower or efield file.
         ValueError
-            If the trees do not agree (#249), or an argument is invalid.
+            If the trees do not agree, or an argument is invalid.
 
         Notes
         -----
@@ -1050,7 +1047,7 @@ class Efield2Voltage:
                 groot.data_tree.replace_output(batch.pop("partial"), batch["name"])
 
     def _discard_voltage(self):
-        r"""Drops the output of a compute_voltage() that failed, writing nothing (#240)."""
+        r"""Drops the output of a compute_voltage() that failed, writing nothing."""
         batch = getattr(self, "_batch_volt", None)
         if batch and batch.get("tree") is not None:
             tree = batch["tree"]
@@ -1062,14 +1059,14 @@ class Efield2Voltage:
                 os.remove(batch.pop("partial"))
 
     def _require_event(self, action):
-        r"""Refuses `action` before an event is loaded (#277)."""
+        r"""Refuses `action` before an event is loaded."""
         if not hasattr(self, "nb_du"):
             raise RuntimeError(_validate.message(
                 "Efield2Voltage.%s" % action, "no event is loaded; call get_event() or "
                 "compute_voltage_event() first"))
 
     def _check_du_idx(self, du_idx, action):
-        r"""Returns `du_idx` as an int in ``range(nb_du)``: -1 silently took the last unit (#277)."""
+        r"""Returns `du_idx` as an int in ``range(nb_du)``: -1 silently took the last unit."""
         if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):
             raise TypeError(_validate.message(
                 "Efield2Voltage.%s" % action, "du_idx must be an integer, got %r" % (du_idx,)))
@@ -1084,7 +1081,7 @@ class Efield2Voltage:
         r"""Checks the processing switches before any work is done.
 
         They were checked only when the first event was saved, after the whole
-        computation, and the failed run left a stub output file (#240).
+        computation, and the failed run left a stub output file.
         """
         # A misspelt key was ignored and the default used; a flag was read by
         # truthiness, so the string 'no' turned the RF chain on (#265)

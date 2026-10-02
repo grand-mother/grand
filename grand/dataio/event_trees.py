@@ -228,8 +228,7 @@ class MotherEventTree(DataTree):
         Raises
         ------
         LookupError
-            When the tree has no such event.  It returned 0 and left the
-            previous event's values loaded (#206).
+            When the tree has no such event.
         """
         self._check_open("get_event")
         # Try to get the requested entry
@@ -339,7 +338,7 @@ class MotherEventTree(DataTree):
             For each detection unit of the loaded entry, the length of each of
             its channels; ``None`` if this tree holds no traces.  (It looked
             for branches named ``trace_x`` or ``trace_0``, which no tree has,
-            and always returned ``None``, #200.)
+            and always returned ``None``.)
         """
         for name in ("trace", "trace_ch"):
             if self._tree.GetListOfLeaves().FindObject(name):
@@ -353,8 +352,8 @@ class MotherEventTree(DataTree):
         -------
         list of int or None
             Detection units in the loaded entry, in its order; ``None`` if this
-            tree has no ``du_id``.  (It returned the units of the whole tree,
-            as `get_list_of_all_used_dus` does, #200.)
+            tree has no ``du_id``.  For the units of the whole tree, use
+            `get_list_of_all_used_dus`.
         """
         if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
@@ -886,16 +885,10 @@ class TVoltage(MotherEventTree):
     grandlib_version: StdStringDesc = field(default=StdStringDesc())
     r"""Version of GRANDlib that produced this file.
 
-    Written by :class:`~grand.sim.efield2voltage.Efield2Voltage`.  It exists
-    because the simulated voltage depends on the code as much as on the input:
-    the galactic-noise normalization changed by a factor of :math:`\sqrt2` on
-    2026-09-07, and before this field there was nothing in a file to say which
-    side of that change it came from.
-
-    Empty on files written before this field existed, which is itself the
-    answer: no stamp means it predates 2026-09-07.
-
-    This is only worth reading if the version is bumped when behavior changes.
+    Written by :class:`~grand.sim.efield2voltage.Efield2Voltage`.  The
+    simulated voltage depends on the code as well as on the input: the
+    Galactic-noise level, for example, changed by a factor of :math:`\sqrt2`
+    on 7 September 2026.  Files written before that date carry no version.
     It sat at ``0.1.0.dev0`` across twenty-seven milestone tags, which would
     have made the stamp useless; see the note in ``pyproject.toml``.
     """
@@ -1042,7 +1035,7 @@ class TShower(MotherEventTree):
     """Atmospheric model parameters"""
     ## Magnetic field parameters: Inclination, Declination, modulus
     magnetic_field: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Magnetic field: inclination (degrees), declination (degrees), strength (µT).  Files written by the CoREAS converter before #232 hold the strength in mT, or in Gauss"""
+    """Magnetic field: inclination (degrees), declination (degrees), strength (µT).  Files from older CoREAS conversions hold the strength in mT or in gauss"""
     ## Ground Altitude at core position (m asl)
     core_alt: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Ground Altitude at core position (m asl)"""

@@ -281,7 +281,7 @@ class _FileEventBase:
         Raises
         ------
         ValueError
-            If the event has no antenna (``du_count`` 0, issue #91): there
+            If the event has no antenna (``du_count`` 0): there
             are no traces to wrap, and no sampling rate to give them.
         """
         if self.traces.shape[0] == 0:
@@ -325,7 +325,7 @@ class _FileEventBase:
           * shower_core_pos, xmax_pos_shc, xmax_pos (m), magnetic_field
           * origin_geoid, from ``TRun``
 
-        Derived (#261):
+        Derived:
           * FIX_xmax_pos_grandlib: xmax_pos_shc + shower_core_pos
           * FIX_xmax_pos: Xmax in the site frame, from the file's own geometry
           * xmax_frame: which frame xmax_pos_shc was found to be in (see

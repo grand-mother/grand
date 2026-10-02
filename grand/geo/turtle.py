@@ -76,8 +76,7 @@ def _regularize(a):
 def _elevation_points(a, b, names, where):
     r"""Prepares the two coordinates of an elevation lookup.
 
-    libturtle's elevation lookups crash the interpreter on a NaN coordinate
-    (issue #262), so only finite points are passed to them: the caller gets
+    libturtle's elevation lookups crash the interpreter on a NaN coordinate, so only finite points are passed to them: the caller gets
     the mask of those points and returns NaN, with a warning, for the others.
     ``None`` reads as NaN, as it always has; other non-numeric values are refused.
 

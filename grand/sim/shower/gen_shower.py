@@ -67,7 +67,7 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
 
 """
 def _primary(value, where):
-    r"""A primary given as a name or a ``ParticleCode``; anything else is refused (#267)."""
+    r"""A primary given as a name or a ``ParticleCode``; anything else is refused."""
     if value is not None and not isinstance(value, (str, ParticleCode)):
         raise TypeError(_validate.message(
             where, "must be a particle name or a ParticleCode, got %s" % type(value).__name__))
@@ -75,7 +75,7 @@ def _primary(value, where):
 
 
 def _origin_geoid(value, where):
-    r"""``[latitude, longitude, height]``, with the ranges ``TRun.origin_geoid`` warns about (#267)."""
+    r"""``[latitude, longitude, height]``, with the ranges ``TRun.origin_geoid`` warns about."""
     if value is None:
         return value
     values = _validate.field_check("vector3")(value, where)

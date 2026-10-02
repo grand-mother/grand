@@ -112,13 +112,13 @@ class Event(_validate.CheckedFields):
     antennas_origin: tuple = None
     """(latitude, longitude, height) of the GRANDCS frame the positions in
     ``antennas`` are given in: the run's ``origin_geoid``, or
-    :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS (#215)."""
+    :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS."""
 
     gps_origin: object = None
     """Origin for antenna positions computed from GPS (GP300, GP80, GP13):
     None for :data:`GPS_ANTENNA_ORIGIN`, ``"run"`` for the run's
     ``origin_geoid``, or ``(latitude, longitude, height)``.  Which one the
-    data intend is for their owners to say (#215); the default keeps the
+    data intend is for their owners to say; the default keeps the
     positions as they were."""
 
     ## ToDo: what is it?
@@ -771,7 +771,7 @@ class Event(_validate.CheckedFields):
 
     ## Fill event's antennas
     def _gps_origin(self):
-        r"""The origin GPS positions are expressed against, per ``gps_origin`` (#215)."""
+        r"""The origin GPS positions are expressed against, per ``gps_origin``."""
         choice = self.gps_origin
         if choice is None:
             return GPS_ANTENNA_ORIGIN
@@ -1319,7 +1319,7 @@ class Event(_validate.CheckedFields):
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1336,7 +1336,7 @@ class Event(_validate.CheckedFields):
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1353,7 +1353,7 @@ class Event(_validate.CheckedFields):
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1370,7 +1370,7 @@ class Event(_validate.CheckedFields):
         Parameters
         ----------
         filename : str
-            Destination file; required (#212).
+            Destination file; required.
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         tree_name : str, optional
@@ -1670,8 +1670,7 @@ class Event(_validate.CheckedFields):
         """Writes and closes the files of the trees written with auto_file_close False.
 
         Only trees this event filled for writing are written: the trees it was
-        read from are left untouched (this used to write them too, changing
-        the input files, #234).
+        read from, and so the input files, are left untouched.
         """
         pending = [tree for tree in self._pending_writes or [] if tree.tree is not None]
         # All written before any file is closed: the trees usually share one

@@ -76,7 +76,7 @@ class Timetrace3D(_validate.CheckedFields):
         ----------
         time_offset : float
             Subtracted from ``t0`` to give the time of the first sample, in
-            nanoseconds.  Required (#261).
+            nanoseconds.  Required.
         """
         # ToDo: t0 is at the moment the trigger time, not the start time...
         self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
@@ -88,7 +88,7 @@ class Timetrace3D(_validate.CheckedFields):
         ----------
         time_offset : float
             The time, in nanoseconds, on the axis of ``t_vector``.  (The
-            docstring called it ``t``, #261.)
+            docstring called it ``t``.)
 
         Returns
         -------
@@ -111,7 +111,7 @@ class Timetrace3D(_validate.CheckedFields):
         ----------
         time_offset : float
             The time, in nanoseconds, on the axis of ``t_vector``.  (The
-            docstring called it ``t``, #261.)
+            docstring called it ``t``.)
 
         Returns
         -------

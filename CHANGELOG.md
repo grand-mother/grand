@@ -1573,6 +1573,9 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- Docstrings no longer cite issue numbers or narrate fixed bugs; that history
+  is in this changelog and in the commit messages.
+
 - The first mention of a glossary term on each page links to its entry.
 
 - A What's new page summarizes the changes users notice, those that alter

@@ -238,7 +238,7 @@ class StdVectorList(MutableSequence):
         ------
         IndexError
             When it is out of range: ``s[10] = x`` on three elements was
-            ignored, and ``s[-1] = x`` failed in C++ (#201).
+            ignored, and ``s[-1] = x`` failed in C++.
         """
         size = len(self._vector)
         position = operator.index(index)
@@ -407,7 +407,7 @@ class StdVectorList(MutableSequence):
     def __iadd__(self, value):
         r"""Appends the elements of `value`, in place, as ``list +=`` does.
 
-        It replaced the contents instead on ROOT >= 6.30 (#201); replacing is
+        It replaced the contents instead on ROOT >= 6.30; replacing is
         :meth:`_assign`, which the field descriptors use.
 
         Parameters
@@ -429,7 +429,7 @@ class StdVectorList(MutableSequence):
 
         The new contents are built while the old ones are held aside, and
         put back if the conversion fails: a failed assignment emptied the
-        field (#201).  The vector object itself is kept, since a tree branch
+        field.  The vector object itself is kept, since a tree branch
         points at it.
 
         Parameters
@@ -881,7 +881,7 @@ class TTreeArrayDesc:
         component_limits : sequence, optional
             For a 1-D array, per element ``(name, minimum, maximum, unit)`` or
             None: a value outside is warned about and stored, as for scalar
-            limits (#267).
+            limits.
         """
         self.factory = lambda: np.zeros(shape, dtype)
         self.dtype = dtype

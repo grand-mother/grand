@@ -510,7 +510,7 @@ def plausible(value, name, where, kind):
 
     Type and range checks cannot tell 500 MHz given as 500e6 from a real
     500e6 MHz; this catches the unit mistakes that silently give results
-    wrong by orders of magnitude (#266), with a `GRANDlibWarning` rather than
+    wrong by orders of magnitude, with a `GRANDlibWarning` rather than
     an error, since the ranges are generous but not physical limits.
 
     Parameters
@@ -605,7 +605,7 @@ class CheckedFields:
 
     For dataclasses that hold the same quantities as the data trees -- the
     ``grand.aoi`` classes and ``ShowerEvent`` -- so they accept and refuse
-    what the tree setters do (#267).  ``_field_checks`` maps a field name to
+    what the tree setters do.  ``_field_checks`` maps a field name to
     a :func:`field_check`.
     """
 

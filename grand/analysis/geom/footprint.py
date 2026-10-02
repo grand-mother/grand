@@ -25,7 +25,7 @@ def compute_core(k, Xsource, groundAltitude=cons.groundAltitude):
         Height above sea level of the frame's origin, where the source
         distance is measured from (meters).  The default, 1231 m, is the GP13
         site; for simulation files pass the ground altitude
-        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns.
 
     Returns
     -------
@@ -51,7 +51,7 @@ def antenna_positions_from_run(trun):
     the source measured from ``(0, 0, groundAltitude)``.  ``TRun.du_xyz``
     gives z relative to the run's origin, ``origin_geoid``, so feeding it
     to the fits with the default ``groundAltitude`` (1231 m, GP13) placed
-    the source that far too high: arrival times moved by up to 250 ns (#252).
+    the source that far too high: arrival times moved by up to 250 ns.
 
     Parameters
     ----------

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 r"""Offline, DAQ-style first-level (T1) trigger on ADC traces.
 
-This is the logic of ``scripts/T1_trigger_offline.py`` (snonis,
-2024-10), moved here so that it can be imported, tested, and applied by
-``scripts/convert_voltage2adc.py`` (issue #139).  The algorithm and the
-default parameters are unchanged.
+The algorithm and default parameters are those of
+``scripts/T1_trigger_offline.py``; ``scripts/convert_voltage2adc.py
+--t1_trigger`` applies them.
 
 .. warning::
 
@@ -91,7 +90,7 @@ T1_TRIGGER_FLAG = 1
 def _check_config(config, where="T1 trigger"):
     r"""Refuses T1 parameters that cannot describe a trigger.
 
-    They were used as given (#267): a second threshold above the first, a
+    They were used as given: a second threshold above the first, a
     coincidence range with ``nc_min > nc_max``, negative windows.
 
     Raises
@@ -344,7 +343,7 @@ def t1_config_from_params(params):
     ValueError
         For a string that is not ``KEY=VALUE`` with an integer value, an
         unknown key, or values that cannot describe a trigger (``th2 > th1``,
-        ``nc_min > nc_max``, a negative window; #267).
+        ``nc_min > nc_max``, a negative window).
     """
     config = dict(DEFAULT_T1_CONFIG)
     for param in params or []:

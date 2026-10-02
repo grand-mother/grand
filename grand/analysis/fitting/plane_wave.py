@@ -21,7 +21,7 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     c (float): Speed of light in m/s, default is  299792458 m/s
     n (float or ndarray): Indices of refraction (vector or constant), default is 1.000136
     sigma (float or ndarray, optional): Timing uncertainty of each antenna, in
-        seconds; weights the antennas (#216).
+        seconds; weights the antennas.
 
     Returns
     -------
@@ -197,7 +197,7 @@ def PWF_model(params, Xants, c=cons.c_light,  n=cons.n_atm, groundAltitude=cons.
         Height above sea level of the frame's origin, where the source
         distance is measured from (meters).  The default, 1231 m, is the GP13
         site; for simulation files pass the ground altitude
-        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns.
         For the plane wave it only shifts all times by one constant.
 
     Returns

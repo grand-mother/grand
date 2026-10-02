@@ -35,9 +35,9 @@ def get_peak_amplitude(trace, channels, return_envelope=False):
     Compute the peak amplitude of a trace (in ADC counts or uV or uV/m).
 
     The envelope is the Euclidean norm of the Hilbert envelopes of the
-    selected components, ``sqrt(sum_i |hilbert(ch_i)|**2)``.  (It was the Hilbert
-    envelope of the norm, which is biased by -4 % to +6 % depending on the
-    carrier frequency, #288.)
+    selected components, ``sqrt(sum_i |hilbert(ch_i)|**2)``.  (The Hilbert
+    envelope of the norm would be biased by -4% to +6%, depending on the
+    carrier frequency.)
 
     Parameters
     ----------
@@ -120,7 +120,7 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
 
     As :meth:`grand.ADC.process` does, without its noise: the counts are
     truncated toward zero and saturate at ``+-adc_full_scale``.  They were
-    neither (1e12 µV gave 9.1e9 counts), and NaN passed through (#289).
+    neither (1e12 µV gave 9.1e9 counts), and NaN passed through.
 
     Parameters
     ----------

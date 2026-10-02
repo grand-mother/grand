@@ -49,7 +49,7 @@ class Antenna(_validate.CheckedFields):
 
         x runs north (magnetic), y west and z up, from the frame's origin;
         z is relative to the origin's height, not to sea level.  The origin
-        is the event's ``antennas_origin`` (#215).
+        is the event's ``antennas_origin``.
 
         Returns
         -------

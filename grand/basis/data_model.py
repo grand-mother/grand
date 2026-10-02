@@ -4,7 +4,7 @@ r"""Checks on the downloaded data model (antenna, RF chain, noise, topography).
 A missing data-model file failed with whatever library read it -- numpy's
 ``FileNotFoundError``, ``BadZipFile``, ``EOFError``, an ``IndexError`` deep in
 the RF chain, a GULL or TURTLE ``LibraryError`` -- none pointing at the cure;
-and a damaged file that still parsed changed the voltages silently (#279).
+and a damaged file that still parsed changed the voltages silently.
 
 ``data/download_data_grand.py`` now writes a manifest of the files it
 installs, with their sizes and SHA-256 sums.  :func:`check` is called by the

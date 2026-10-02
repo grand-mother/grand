@@ -46,7 +46,7 @@ class ParticleCode(IntEnum):
         r"""Accepts a member name, case-insensitively; otherwise lists the valid codes.
 
         ``ParticleCode('proton')`` raised "'proton' is not a valid
-        ParticleCode", without saying what is (#267).
+        ParticleCode", without saying what is.
         """
         if isinstance(value, str):
             member = cls.__members__.get(value.strip().upper().replace("-", "_").replace(" ", "_"))

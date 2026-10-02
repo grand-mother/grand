@@ -3,7 +3,7 @@
 The dataclasses of GRANDlib -- the data trees, ``Event``, ``ShowerEvent`` and
 others -- document each field where it is declared: a string literal after
 the field, or a ``##`` comment before it.  Neither reaches ``help()`` or the
-API reference, so their constructors read as undocumented (#261).  Copying
+API reference, so their constructors read as undocumented.  Copying
 the text into the class docstring would drift from the fields; this module
 builds the section from the source instead, when the class is created.
 """

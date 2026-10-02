@@ -63,7 +63,7 @@ class EventList:
             unless a call to :meth:`get_event` asks for another.
         gps_origin : None, "run" or (float, float, float), optional
             Origin of antenna positions computed from GPS (GP300, GP80,
-            GP13): see :attr:`grand.aoi.event.Event.gps_origin` (#215).
+            GP13): see :attr:`grand.aoi.event.Event.gps_origin`.
         """
         self.event_list = None
 
@@ -161,8 +161,7 @@ class EventList:
             If both an entry and an event/run number are given, or a run
             number without an event number.
         LookupError
-            If the input holds no such event.  (These used to be printed, and
-            ``None`` returned into the caller's loop, #256.)
+            If the input holds no such event.
         """
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?

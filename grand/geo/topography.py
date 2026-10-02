@@ -151,7 +151,7 @@ def elevation(coordinates, reference: Optional[str] = _default_reference):
 
 
 def _finite_points(a, b, frame_finite, where):
-    r"""Returns the mask of the points libturtle can be given (issue #262).
+    r"""Returns the mask of the points libturtle can be given.
 
     Parameters
     ----------
@@ -179,7 +179,7 @@ def _fill_elevation(n, finite, values):
     r"""Puts the computed elevations back among the skipped points.
 
     A point with a finite position that comes back NaN lies outside every
-    loaded tile. That used to be silent (#280): the warning says how many and
+    loaded tile. That used to be silent: the warning says how many and
     how to get the tiles.
 
     Parameters
@@ -594,7 +594,7 @@ class Topography:
         direction : CartesianRepresentation or ECEF
             Direction to travel in, in **ECEF** unless `frame` says otherwise.
             A local (east, north, up) vector passed without `frame` is read as
-            ECEF and gives a wrong distance (#210).
+            ECEF and gives a wrong distance.
         maximum_distance : float, optional
             Give up beyond this distance, in meters.
         frame : LTP, GRANDCS or "ENU", optional

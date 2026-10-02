@@ -76,7 +76,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     freqs_mhz : ndarray, shape (nb_freq,)
         Uniformly spaced output-frequency grid, in MHz: the full rFFT axis
         of `size_out` samples (``size_out // 2 + 1`` points), or a band of it.
-        It is not checked against `size_out` (#261).
+        It is not checked against `size_out`.
     nb_ant : int
         Number of detector units for which independent noise is generated.
     seed : int or None, optional

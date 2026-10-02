@@ -155,7 +155,7 @@ class Voltage:
         ------
         ValueError
             If `t` is not 1-D, or the last axis of `V` does not have one
-            sample per time (nothing was checked, #267).
+            sample per time (nothing was checked).
         """
         t, v = np.asarray(self.t), np.asarray(self.V)
         if t.ndim != 1:

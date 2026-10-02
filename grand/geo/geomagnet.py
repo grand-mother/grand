@@ -71,7 +71,7 @@ def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresen
     CartesianRepresentation
         The geomagnetic field vector, in **tesla**, in the local
         **east-north-up** frame at the location, whatever frame `coordinates`
-        is given in (#261).  GRAND data use north-west-up: there, x is this
+        is given in.  GRAND data use north-west-up: there, x is this
         y and y is minus this x.  About 5.6e-5 T at Dunhuang.
 
     Examples
@@ -110,7 +110,7 @@ class Geomagnet:
     ----------
     field : CartesianRepresentation
         The field in **tesla**, in the local **east-north-up** frame at the
-        location, whatever frame the location was given in (#261).  GRAND
+        location, whatever frame the location was given in.  GRAND
         data use north-west-up: there, x is this y and y is minus this x.
     declination : float or ndarray
         Angle of the horizontal field from geographic north, in degrees,

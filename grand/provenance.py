@@ -2,7 +2,7 @@
 r"""Which GRANDlib produced a file: the package version and its git commit.
 
 Every tree GRANDlib creates records this in its ``modification_software`` and
-``modification_software_version`` metadata (issue #137), so a simulated or
+``modification_software_version`` metadata, so a simulated or
 converted file says which code wrote it.  The package version alone is not
 enough: it moves only on release, and most files are written from a git
 checkout between releases.
