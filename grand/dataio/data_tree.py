@@ -165,6 +165,10 @@ with it, so dropping the last Python reference does not close it (GitHub issue #
 _written_entries = {}
 
 
+#: Addresses of the trees a closing ``write()`` took out of their file; they
+#: exist only in memory until ``stop_using()`` deletes them (#223).
+_detached_by_write = set()
+
 #: File names of the trees that opened an existing file which did not hold
 #: their tree, keyed by id(tree): ``TEfield(shower_file)``.  Writing such a
 #: tree unfilled only added an empty tree to the user's file (#206).
@@ -1163,6 +1167,7 @@ class DataTree:
         if (creating_file and close_file) or force_close_file:
             # Need to set 0 directory so that closing of the file does not delete the internal TTree
             self._tree.SetDirectory(ROOT.nullptr)
+            _detached_by_write.add(ROOT.addressof(self._tree))   # stop_using() deletes it (#223)
             self._file.Close()
             _forget_opened_file(self._file)
 
@@ -2021,7 +2026,44 @@ class DataTree:
             finalizer.detach()
 
         if close_file:
+            self._delete_detached_tree()
             self._release_file()
+
+    def _delete_detached_tree(self):
+        r"""Deletes the TTree that a closing ``write()`` detached from its file (#223).
+
+        ``write(force_close_file=True)`` and a write that created its file take
+        the tree out of the file before closing it, so that closing does not
+        delete it.  Nothing deleted it afterwards: every tree written that way
+        stayed in memory with its branch buffers, about 4 MB per file set in
+        ``sim2root.py -ef``.  It is deleted here, unless another live tree
+        object holds it.
+        """
+        tree = self._tree
+        if tree is None or self.is_tchain:
+            return
+        try:
+            address = ROOT.addressof(tree)
+        except Exception:
+            return
+        # Only a tree write() detached is known to be alive and file-less: a
+        # handle to a tree deleted with its file must not be touched
+        if address not in _detached_by_write:
+            return
+        for inst in grand_tree_list:
+            if inst is self or inst._tree is None:
+                continue
+            try:
+                if ROOT.addressof(inst._tree) == address:
+                    return
+            except Exception:
+                continue
+        _detached_by_write.discard(address)
+        # Handed to Python, which deletes it with the last reference;
+        # __destruct__() left the tree and its baskets allocated
+        ROOT.SetOwnership(tree, True)
+        self._tree = None
+        del tree
 
     def _release_file(self):
         """Close the file this tree opened itself, if no other tree in ``grand_tree_list`` uses it"""

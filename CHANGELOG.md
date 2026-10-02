@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `sim2root.py -ef N` no longer keeps every file set in memory (#223, the
+  last item): a tree that a closing `write()` takes out of its file, so
+  that closing the file does not delete it, is now freed by
+  `stop_using()`; it stayed allocated with its baskets, about 4.4 MB per
+  file set.  80 events in 40 file sets peak at 692 MB instead of 847 MB
+  (one file set: 674 MB); what remains, under 0.5 MB per set, is ROOT's
+  own per-file share.
+
 - No committed sample stores a fake 1976 event time where it can be
   avoided (#225, the last item): the two ZHAireS `.rawroot` samples are
   regenerated with today's converter, which changes `unix_second` from
