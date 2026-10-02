@@ -65,7 +65,7 @@ def test_a_folder_with_no_recognised_file_is_refused(tmp_path):
     with pytest.warns(Warning, match="foo.root"):
         directory = DataDirectory(str(tmp_path))
     assert directory.unrecognised_files == [str(tmp_path / "foo.root")]
-    with pytest.warns(Warning), pytest.raises(FileNotFoundError, match="no GRAND event files recognised.*foo.root"):
+    with pytest.warns(Warning), pytest.raises(FileNotFoundError, match="no GRAND event files recognized.*foo.root"):
         EventList(str(tmp_path))
 
 

@@ -20,6 +20,8 @@ was given::
     TypeError: GRANDlib: TRun.run_number: must be an integer, got 1.7
     FileNotFoundError: GRANDlib: EventList: no such file or directory: /data/run_1
 
+:ref:`troubleshooting-messages` below lists the common ones, with what to do.
+
 The exceptions are the standard ones, so ``except ValueError`` and the like
 work as usual:
 
@@ -99,20 +101,105 @@ value larger than :math:`2\pi`.
 in ``leff_theta_reim``; the polar attributes ``leff_theta``, ``leff_phi``,
 ``phase_theta`` and ``phase_phi`` exist and are never populated.
 
-Exceptions
-----------
+.. _troubleshooting-messages:
 
-``NotUniqueEvent: An event with (run_number,event_number)=(0,0) already exists``
-    You wrote two events with the same key into one tree, most often by running
-    a simulation twice into the same output file.  Give each run its own output
-    path, or advance ``event_number``.
+Error and warning messages
+--------------------------
 
-``OSError: ... is being written by another process`` (or ``was changed by another process``)
+The messages GRANDlib gives most often, as they appear.  Search this page for
+a few words of the message you got; ``…`` stands for the part that changes.
+
+Files and folders
+~~~~~~~~~~~~~~~~~
+
+``no such file or directory: …``
+    The path does not exist.  A relative path is relative to the directory
+    Python runs in; in a notebook, that is ``notebooks/``.
+
+``no ROOT files (*.root) in …``
+    The folder exists but holds no ROOT file: check that it is the folder
+    ``sim2root.py`` wrote, not its parent.
+
+``no GRAND event files recognized in …; files must be named <type>_<events>_L<level>_<serial>.root``
+    The folder holds ROOT files whose names do not follow GRAND's convention,
+    such as ``efield_1-2_L0_0000.root``, so their trees cannot be found.
+    Rename the files, or open each one with its tree class
+    (:class:`~grand.dataio.event_trees.TEfield`, ...).
+
+``… holds no efield file`` / ``… holds no run file`` / ``… holds no shower file``
+    :class:`~grand.sim.efield2voltage.Efield2Voltage` needs the whole folder
+    ``sim2root.py`` wrote, with its ``efield_*``, ``run_*`` and ``shower_*``
+    files; a single e-field file is not enough.
+
+``… holds efield files at levels 0, 1: reading the highest`` (warning)
+    The folder holds several :term:`analysis levels <analysis level>`.  Choose
+    one with ``efield_level=0`` in Python or ``--level 0`` on the command line.
+
+``… holds an efield file at level … but no run file at that level``
+    The run file carries the sampling interval, so it must exist at the level
+    of the e-field file.  Convert the simulation again, or choose another
+    level.
+
+``cannot tell which run and shower trees belong to …: a GRAND filename carries its analysis level as '_L0_' or '_L1_'``
+    The file readers of :mod:`grand.dataio.root_files` find a file's run and
+    shower trees by its name, which must carry ``_L0_`` or ``_L1_``.  Rename
+    the file, or read its trees directly (:ref:`issue-reader-directory-coupling`).
+
+``DataDirectory: … is named level … but its … tree is level …`` (warning)
+    The ``_L0_`` or ``_L1_`` in a file name disagrees with the
+    ``analysis_level`` stored in its trees; the trees' level is used.  Rename
+    the file to match.
+
+``convert_voltage2adc: no voltage_*_L<level>_*.root in …``
+    Run ``convert_efield2voltage.py`` on the folder first (:doc:`commands`).
+
+Writing files
+~~~~~~~~~~~~~
+
+``… is being written by another process`` / ``… was changed by another process``
     Two processes tried to write the same ROOT file, for example two batch
     jobs with the same output name.  Only one process may write a file at a
     time; the other is refused rather than allowed to lose events or corrupt
     the file.  Give each job its own output file, or wait for the first to
     finish and run the second again.
+
+``NotUniqueEvent: An event with (run_number,event_number)=(…) already exists``
+    Two events with the same run and event numbers were written into one
+    tree, most often by running a simulation twice into the same output file.
+    Give each run its own output file, or change ``event_number``.
+
+Reading events
+~~~~~~~~~~~~~~
+
+``no event … in run … in the input; it holds (event, run) …`` / ``no event with event number … and run number …``
+    The numbers are wrong, or swapped: GRANDlib takes the event number first.
+    ``tree.get_list_of_events()`` lists the (event, run) pairs a file holds.
+
+Values
+~~~~~~
+
+``'lst' must be 0 to 24 h`` / ``'f_lst' (local sidereal time) must satisfy 0 <= f_lst < 24 hours``
+    The local sidereal time is in hours, not degrees.
+
+``'…' = … is outside -6.28319 to 6.28319 rad; is it an angle in degrees?`` (warning)
+    :mod:`grand.analysis` works in radians; convert with ``np.radians``.
+    The trees and the simulation use degrees.
+
+``the peak times span … s, more than a shower front takes to cross any array; are they in ns rather than s?`` (warning)
+    The reconstruction takes times in seconds; divide nanoseconds by ``1e9``.
+
+``Source direction at zenith … deg, outside the antenna table (…; below the antenna's horizon): its effective length is taken as zero`` (warning)
+    The shower maximum is below the antenna's horizon, so the antenna is
+    taken to see nothing from it.  This happens for nearly horizontal
+    showers over uneven ground, or when Xmax is wrong in the input.
+
+Installation
+~~~~~~~~~~~~
+
+``data model incomplete: … is missing`` / ``data model damaged: … has … bytes``
+    A file of the model data is missing or was not downloaded completely.
+    Run ``python data/download_data_grand.py`` (``source env/setup.sh`` does
+    it).
 
 ``ModuleNotFoundError: No module named 'ROOT'``
     The environment is not active, or ROOT is not installed.  ``import grand``
@@ -129,11 +216,6 @@ Exceptions
     .. code-block:: bash
 
         source env/setup.sh
-
-``ValueError`` naming a file and the ``_L0_``/``_L1_`` convention
-    A file name's :term:`analysis level` does not match the ``analysis_level`` stored
-    in its tree.  Rename the file, or fix the tree.  The two must agree; see
-    :doc:`datamodel`.
 
 Messages that look like errors and are not
 ------------------------------------------

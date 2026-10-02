@@ -1577,6 +1577,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The troubleshooting page lists the common error and warning messages as
+  they appear, each with its cause and what to do, so that searching for a
+  message finds it.
+
 - The field descriptions of `TShower`, `TEfield`, `TVoltage`, `TADC` and
   `TRun` are rewritten: each says what the field holds, in which unit and
   frame, and the 38 undescribed `TADC` firmware fields are described.
