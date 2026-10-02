@@ -167,8 +167,9 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
   if len(log_file) == 0:
     print("[WARNING] No log file found in this directory. Using dummy values for first interaction.")
 
-    first_interaction = 1 # height of first interaction - in m
-    print("[WARNING] Assuming first interaction at 1m.")
+    # Unknown: it was written as 1 m, a real-looking height (#232)
+    first_interaction = np.nan # height of first interaction - in m
+    print("[WARNING] No first interaction height: written as NaN.")
     hadr_interaction  = "Sibyll 2.3d"
     coreas_version    = "1.4"
     print("Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4.")
@@ -222,9 +223,12 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
 
   RunID = simID
   EventID = int(read_params(reas_input, "EventNumber"))
-  print("[WARNING] dummy values for GPSSecs and GPSNanoSecs")
-  GPSSecs = 1996#read_params(reas_input, "GPSSecs")
-  GPSNanoSecs = 19961026#read_params(reas_input, "GPSNanoSecs")
+  # CoREAS gives no event time.  It was written as 1996 s and 19961026 ns,
+  # which read as a time in January 1970 against an event date of 2017; 0
+  # means "none", and sim2root then uses the simulation date (#232, #225)
+  print("[WARNING] No event time (GPSSecs, GPSNanoSecs): written as 0, the simulation date is used")
+  GPSSecs = 0
+  GPSNanoSecs = 0
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
   # `read_params` returns None for a keyword the file does not carry, so the
@@ -241,7 +245,9 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
     DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
     DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") / 100 # geometrical distance of shower maximum from core in m
-    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10 ** (-1) # convert from Gauss to mT
+    # In µT, as ZHAireS stores it: Gauss x 100.  It was Gauss x 0.1 = mT here
+    # and Gauss on the .inp path, three units for one field (#232)
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 100 # convert from Gauss to µT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
@@ -279,7 +285,7 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
     print("[WARNING] FieldIntensity, FieldInclination, GeomagneticAngle hardcoded for Dunhuang")
     DepthOfShowerMaximum = -1
     DistanceOfShowerMaximum = -1
-    FieldIntensity = 0.5648236565
+    FieldIntensity = 56.48236565 # µT (0.5648 Gauss)
     FieldInclination = 61.60505071
     GeomagneticAngle = 93.82137564
 
@@ -408,8 +414,9 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
   print("*****************************************")
 
   # TODO: find injection altitude in TPlotter.h/cpp
-  InjectionAltitude = 1.
-  print("[WARNING] InjectionAltitude is hardcoded")
+  # Unknown: it was written as 1 m (#232)
+  InjectionAltitude = np.nan
+  print("[WARNING] InjectionAltitude is not known: written as NaN")
 
   site = read_site(inp_input)
   latitude, longitude, altitude = read_lat_long_alt(site)
@@ -538,8 +545,10 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
   print("***RawMeta***")
     
   RawMeta = RawTrees.RawMetaTree(OutputFileName)
-  RawMeta.run_number = int(RunID)
-  RawMeta.event_number = EventID
+  # As in RawShower and RawEfield: they were swapped here, run 4100 and
+  # event 1 against run 1 and event 4100 (#232)
+  RawMeta.run_number = EventID
+  RawMeta.event_number = int(RunID)
 
   print("[WARNING] array_name is hardcoded")
   RawMeta.array_name = "GP300"

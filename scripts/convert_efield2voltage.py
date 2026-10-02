@@ -148,7 +148,9 @@ def manage_args():
         "--du_type",
         type=str,
         default='GP300',
-        help="Choose between 4 different antenna models, GP300 -using hfss simulations, GP300_nec -using nec simulations, GP300_mat -using matlab simulations, Horizon",
+        choices=["GP300", "GP300_nec", "GP300_mat"],
+        # Horizon was offered, but its antenna files are not in the data model (#232)
+        help="Antenna model: GP300 (HFSS simulations, the default), GP300_nec (NEC) or GP300_mat (Matlab)",
     )
     parser.add_argument(
         "--target_duration_us",

@@ -261,8 +261,8 @@ class Efield2Voltage:
         du_type : str, optional
             The antenna model: ``'GP300'`` (HFSS simulation, the default),
             ``'GP300_nec'`` (NEC) or ``'GP300_mat'`` (Matlab).  ``'Horizon'``
-            is accepted but its model files are not shipped, so it fails
-            when loading (#232).
+            is no longer accepted: its model files are not in the data model
+            (#232).
         efield_level : int, optional
             For a folder holding efield files at several levels, the one to
             read; the highest by default, with a warning (#231).
@@ -351,7 +351,7 @@ class Efield2Voltage:
         self.rf_chain = RFChain()                           # loads RF chain for GP13
         self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
         self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
-        self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
+        self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec' or 'GP300_mat'
         # Every key the class reads must be present here.  Four of them --
         # resample_to_mhz, extend_to_us, calibration_smearing_sigma and
         # add_jitter_ns -- used to be set only by

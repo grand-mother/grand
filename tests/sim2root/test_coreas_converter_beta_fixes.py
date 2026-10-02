@@ -140,3 +140,42 @@ def test_an_existing_output_is_refused_or_replaced(tmp_path):
 def test_no_option_is_an_error(tmp_path):
     work = _workdir(tmp_path, with_event_block=False)
     assert _run(work).returncode != 0
+
+
+@pytest.mark.parametrize("with_event_block", [False, True], ids=["inp_fallback", "reas_block"])
+def test_one_unit_one_numbering_and_no_fake_values(tmp_path, with_event_block):
+    r"""#232: the field strength was in Gauss or mT, RawMeta swapped run and
+    event, and unknown times and heights were written as 1996 s, 19961026 ns
+    and 1 m."""
+    import numpy as np
+
+    from sim2root.Common.raw_root_trees import RawMetaTree, RawShowerTree
+
+    work = _workdir(tmp_path, with_event_block)
+    _convert(work)
+    out = str(work / "Coreas_004100.rawroot")
+    shower = RawShowerTree(out)
+    shower.get_entry(0)
+    assert float(shower.magnetic_field[2]) == pytest.approx(56.482, abs=1e-3)   # µT, as ZHAireS
+    numbers = int(shower.run_number), int(shower.event_number)
+    assert numbers == (1, 4100)
+    assert np.isnan(float(shower.first_interaction))         # no CORSIKA log in the sample
+    assert np.all(np.isnan(np.asarray(shower.primary_inj_alt_shc, dtype=float)))
+    shower.stop_using()
+
+    meta = RawMetaTree(out)
+    meta.get_entry(0)
+    assert (int(meta.run_number), int(meta.event_number)) == numbers
+    assert (int(meta.unix_second), int(meta.unix_nanosecond)) == (0, 0)
+    meta.stop_using()
+
+
+def test_the_unshipped_horizon_model_is_not_offered():
+    r"""#232: --du_type Horizon was offered, then failed on files the data model lacks."""
+    from grand.sim.detector.antenna_model import AntennaModel
+
+    with pytest.raises(ValueError, match="GP300_mat"):
+        AntennaModel("Horizon")
+    done = subprocess.run([sys.executable, str(ROOT / "scripts" / "convert_efield2voltage.py"),
+                           "x", "--du_type", "Horizon"], capture_output=True, text=True, timeout=300)
+    assert done.returncode == 2 and "invalid choice: 'Horizon'" in done.stderr

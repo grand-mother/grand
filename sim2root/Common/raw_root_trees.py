@@ -95,7 +95,7 @@ class RawShowerTree(MotherEventTree):
     atmos_depth: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
         
-    ### Magnetic field parameters: Inclination, Declination, Fmodulus.: In shower coordinates. Declination
+    ### Magnetic field parameters: Inclination, Declination (degrees), Fmodulus (µT, #232).: In shower coordinates. Declination
     #The Earth’s magnetic field, B, is described by its strength, Fmodulus = ∥B∥; its inclination, I, defined
     # as the angle between the local horizontal plane and the field vector; and its declination, D, defined
     # as the angle between the horizontal component of B, H, and the geographical North (direction of

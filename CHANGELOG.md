@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The CoREAS converter writes one unit and one numbering (#232): the
+  magnetic field strength is in µT, as from ZHAireS (it was mT from the
+  `.reas` path and Gauss from the `.inp` path), and the tree docs say so;
+  `RawMeta` takes the run and event numbers of `RawShower` and `RawEfield`
+  (it had them swapped); the missing event time is written as 0, so
+  sim2root uses the simulation date, instead of 1996 s and 19961026 ns; an
+  unknown first-interaction height or injection altitude is NaN, not 1 m.
+  `--du_type Horizon` and `AntennaModel("Horizon")` are no longer offered:
+  their antenna files are not in the data model.  The committed Dunhuang
+  sample is kept as written in 2024, as the backward-compatibility tests
+  need it.
+
 - Tree lookups say when they miss (#206): `get_event`, `get_run` and
   `get_entry_with_index` raise `LookupError`, and `get_entry` raises
   `IndexError`, with a `GRANDlib:` message; they returned 0 and left the

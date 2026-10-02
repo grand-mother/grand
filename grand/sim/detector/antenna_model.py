@@ -4,7 +4,7 @@
 # The coresponding files of the default model are Light_GP300Antenna_EWarm_leff.npz, Light_GP300Antenna_SNarm_leff.npz and Light_GP300Antenna_Zarm_leff.npz.
 # For details on how these simulations were produced using the different codes and comparisons between different model (HFSS, NEC matlab) please refer to the documents and presentations 
 # posted in forge software forum https://forge.in2p3.fr/projects/software-forum/dmsf (for NEC and matlab) and https://forge.in2p3.fr/documents/1353, https://forge.in2p3.fr/documents/1354 for the HFSS simulations.
-# Tha availiable GP300 antenna models are 'GP300' (default produced by HFSS simulation package), 'GP300_nec' (produced by NEC simulation package), 'GP300_mat' (produced by matlab antenna package) and 'Horizon'.  
+# Tha availiable GP300 antenna models are 'GP300' (default produced by HFSS simulation package), 'GP300_nec' (produced by NEC simulation package), and 'GP300_mat' (produced by matlab antenna package).  
 
 from logging import getLogger
 
@@ -170,17 +170,10 @@ class AntennaModel:
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Zarm_leff.npz")
             self.leff_z = tabulated_antenna_model(path_ant)
             
-        elif du_type=='Horizon':
-            logger.info("Loading Horizon antenna model")
-            path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
-            self.leff_ew = tabulated_antenna_model(path_ant)
-            path_ant = grand_add_path_data("detector/HorizonAntenna_SNarm_leff_loaded.npy")
-            self.leff_sn = tabulated_antenna_model(path_ant)
-            path_ant = grand_add_path_data("detector/HorizonAntenna_Zarm_leff_loaded.npy")
-            self.leff_z = tabulated_antenna_model(path_ant)
-
         else:
-            _validate.one_of(du_type, ("GP300", "GP300_nec", "GP300_mat", "Horizon"),
+            # Horizon was accepted, then failed on its antenna files, which the data
+            # model does not hold (#232)
+            _validate.one_of(du_type, ("GP300", "GP300_nec", "GP300_mat"),
                              "du_type", "AntennaModel")
 
         self.d_leff = {"sn": self.leff_sn, "ew": self.leff_ew, "z": self.leff_z}

@@ -1002,7 +1002,7 @@ class TShower(MotherEventTree):
     """Atmospheric model parameters"""
     ## Magnetic field parameters: Inclination, Declination, modulus
     magnetic_field: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Magnetic field: inclination (degrees), declination (degrees), strength.  The strength is in µT from ZHAireS and in mT from CoREAS (#232)"""
+    """Magnetic field: inclination (degrees), declination (degrees), strength (µT).  Files written by the CoREAS converter before #232 hold the strength in mT, or in Gauss"""
     ## Ground Altitude at core position (m asl)
     core_alt: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Ground Altitude at core position (m asl)"""

@@ -68,7 +68,7 @@ usage: convert_efield2voltage.py [-h] [--no_noise] [--no_rf_chain]
                                  [--verbose {debug,info,warning,error,critical}]
                                  [--seed SEED] [--lst LST]
                                  [--padding_factor PADDING_FACTOR]
-                                 [--du_type DU_TYPE]
+                                 [--du_type {GP300,GP300_nec,GP300_mat}]
                                  [--target_duration_us TARGET_DURATION_US]
                                  [--target_sampling_rate_mhz TARGET_SAMPLING_RATE_MHZ]
                                  [--add_jitter_ns ADD_JITTER_NS]
@@ -104,10 +104,9 @@ options:
   --padding_factor PADDING_FACTOR
                         Increase size of signal with zero padding, with 1.2
                         the size is increased of 20%.
-  --du_type DU_TYPE     Choose between 4 different antenna models, GP300
-                        -using hfss simulations, GP300_nec -using nec
-                        simulations, GP300_mat -using matlab simulations,
-                        Horizon
+  --du_type {GP300,GP300_nec,GP300_mat}
+                        Antenna model: GP300 (HFSS simulations, the default),
+                        GP300_nec (NEC) or GP300_mat (Matlab)
   --target_duration_us TARGET_DURATION_US
                         Adujust (and override) padding factor in order to get
                         a signal of the given duration, in us
