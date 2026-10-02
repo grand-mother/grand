@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Tree setters report out-of-range values (#267, part 2): `TRun.origin_geoid`
+  with a latitude beyond ±90 or a longitude beyond ±360, `du_nanoseconds` of
+  a second or more, and `TShower.azimuth` outside 0–360 are warned about
+  (and stored, so existing files stay readable); `True` in a numeric field
+  is refused; a non-string in a string field names that field (it always
+  said "site").
+
 - Geo entry points refuse invalid input (#267, part 1): spherical `theta`
   outside 0–180 or a negative `r`, an elevation beyond ±90, a longitude
   beyond ±360 and a height below the centre of the Earth; an `LTP`

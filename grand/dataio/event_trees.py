@@ -447,7 +447,7 @@ class TADC(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
     trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -732,7 +732,7 @@ class TRawVoltage(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -849,7 +849,7 @@ class TVoltage(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -926,7 +926,7 @@ class TEfield(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
 
     trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -973,7 +973,7 @@ class TShower(MotherEventTree):
     energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, unit="GeV"))
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
     ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
-    azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=360, unit="degrees"))
     """Shower azimuth, in degrees, measured from north towards west (NWU frame, origin at the core); the direction the shower *comes from*"""
     ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=180, unit="degrees"))

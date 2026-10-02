@@ -860,6 +860,9 @@ class TTreeScalarDesc:
             raise ValueError(_validate.message(
                 where, "must be a single value, got an array of shape %s" % (arr.shape,)))
 
+        # True stored as 1 in a numeric field (#267)
+        if isinstance(scalar, (bool, np.bool_)) and inst.dtype.kind != "b":
+            raise TypeError(_validate.message(where, "must be a number, got %r" % (scalar,)))
         converted = _validate.coerce_to_dtype(scalar, inst.dtype, where)
         _check_limits(converted, where, **getattr(self, "limits", {}))
         inst[0] = converted
@@ -867,7 +870,7 @@ class TTreeScalarDesc:
 
 class TTreeArrayDesc:
     """A descriptor for numpy arrays stored in TTrees. Ensures the type and converts to array (in case of for eg. list). Makes use of it possible in dataclasses without setting property and setter"""
-    def __init__(self, shape, dtype):
+    def __init__(self, shape, dtype, component_limits=None):
         r"""Declares a branch holding a fixed-shape array.
 
         Parameters
@@ -876,9 +879,14 @@ class TTreeArrayDesc:
             Shape of the array.
         dtype : type or str
             NumPy dtype of its elements.
+        component_limits : sequence, optional
+            For a 1-D array, per element ``(name, minimum, maximum, unit)`` or
+            None: a value outside is warned about and stored, as for scalar
+            limits (#267).
         """
         self.factory = lambda: np.zeros(shape, dtype)
         self.dtype = dtype
+        self.component_limits = component_limits
 
     def __set_name__(self, type, name):
         r"""Records the attribute name this descriptor was assigned to.
@@ -957,6 +965,11 @@ class TTreeArrayDesc:
                 where, "must have %d values (shape %s), got shape %s"
                 % (inst.size, inst.shape, given.shape)))
         inst[:] = _validate.coerce_to_dtype(given.reshape(inst.shape), self.dtype, where)
+        for value, limits in zip(np.ravel(inst), getattr(self, "component_limits", None) or ()):
+            if limits is not None:
+                name, minimum, maximum, unit = limits
+                _check_limits(value, "%s (%s)" % (where, name), minimum=minimum, maximum=maximum,
+                              unit=unit)
 
 
 class StdString:
@@ -1068,8 +1081,10 @@ class StdStringDesc:
             nothing to assign.
         """
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string) or isinstance(value, StdStringDesc)):
+            # It named the field "site", whatever the field (#267)
             raise ValueError(
-                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+                _validate.message("%s.%s" % (type(obj).__name__, self.name),
+                                  "must be a string, got %s" % type(value).__name__)
             )
 
         if not hasattr(obj, self.attrname):

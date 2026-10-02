@@ -205,7 +205,8 @@ class TRun(MotherRunTree):
     site_layout: StdStringDesc = field(default=StdStringDesc())
     """Site layout"""
     ## Origin of the coordinate system used for the array
-    origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
+    origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32, component_limits=(
+        ("latitude", -90, 90, "degrees"), ("longitude", -360, 360, "degrees"), None)))
     """Origin of the array frame: (latitude in degrees, longitude in degrees, height in metres).  du_xyz is relative to it"""
 
     ## Detector unit (antenna) ID
