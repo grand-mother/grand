@@ -74,6 +74,7 @@ sim2root/CoREASRawRoot/__pycache__/CorsikaInfoFuncs.cpython-310.pyc
 # Sphinx build output
 docs/build/
 docs/source/_static/version.css
+docs/source/data_format.rst
 docs/source/_static/GRANDlib_Handbook.pdf
 
 # pip wheel's build directory (tests/test_packaging.py builds a wheel)

@@ -411,7 +411,7 @@ class MotherEventTree(DataTree):
 @dataclass
 ## The class for storing ADC traces and associated values for each event
 class TADC(MotherEventTree):
-    """The class for storing ADC traces and associated values for each event"""
+    """Digitized traces of each event, in ADC counts, with each detection unit's status and firmware settings."""
 
     _type: str = "adc"
 
@@ -747,7 +747,7 @@ class TADC(MotherEventTree):
 @dataclass
 ## The class for storing voltage traces and associated values for each event
 class TRawVoltage(MotherEventTree):
-    """The class for storing voltage traces and associated values at ADC input level for each event. Derived from TADC but in human readable format and physics units."""
+    """Voltage at the ADC input of each event, converted from ``TADC`` to physical units."""
 
     _type: str = "rawvoltage"
 
@@ -865,7 +865,7 @@ class TRawVoltage(MotherEventTree):
 @dataclass
 ## The class for storing voltage traces and associated values for each event
 class TVoltage(MotherEventTree):
-    """The class for storing voltage traces and associated values at antenna feed point for each event"""
+    """Voltage traces of each event, in µV, as simulated by ``Efield2Voltage``."""
 
     _type: str = "voltage"
 
@@ -936,7 +936,7 @@ class TVoltage(MotherEventTree):
 @dataclass
 ## The class for storing Efield traces and associated values for each event
 class TEfield(MotherEventTree):
-    """The class for storing Efield traces and associated values for each event
+    """Electric-field traces of each event at each detection unit, in µV/m.
 
     Examples
     --------
@@ -1015,7 +1015,7 @@ class TEfield(MotherEventTree):
 @dataclass
 ## The class for storing reconstructed shower data common for each event
 class TShower(MotherEventTree):
-    """The class for storing shower data common for each event
+    """The shower of each event: primary, energy, direction, core and shower maximum.
 
     Examples
     --------
@@ -1094,7 +1094,7 @@ class TShower(MotherEventTree):
 @dataclass
 ## The class for storing a shower sim-only data for each event
 class TShowerSim(MotherEventTree):
-    """Event-level info associated with simulated showers"""
+    """What a simulation records about the shower of each event, beyond ``TShower``."""
 
     _type: str = "showersim"
 
@@ -1199,7 +1199,7 @@ class TShowerSim(MotherEventTree):
 
 @dataclass
 class TRecons(MotherEventTree):
-    """TTree to store reconstruction results per event"""
+    """Reconstruction results of each event: the fits of :mod:`grand.analysis`."""
 
     _type: str = "recons"
     _tree_name: str = "trecons"

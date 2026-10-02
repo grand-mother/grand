@@ -165,7 +165,7 @@ class MotherRunTree(DataTree):
 @dataclass
 ## A class wrapping around a TTree holding values common for the whole run
 class TRun(MotherRunTree):
-    """A class wrapping around a TTree holding values common for the whole run
+    """What stays the same over a run: the site, the layout and the detection units.
 
     Examples
     --------
@@ -281,7 +281,7 @@ class TRun(MotherRunTree):
 @dataclass
 ## General info on the voltage common to all events.
 class TRunVoltage(MotherRunTree):
-    """General info on the voltage common to all events."""
+    """Settings of the voltage traces, common to all events of a run."""
 
     _type: str = "runvoltage"
 
@@ -353,7 +353,7 @@ class TRunVoltage(MotherRunTree):
 @dataclass
 ## General info on the raw voltage common to all events.
 class TRunRawVoltage(MotherRunTree):
-    """General info on the voltage common to all events."""
+    """Settings of the raw voltage traces, common to all events of a run."""
 
     _type: str = "runrawvoltage"
 
@@ -436,7 +436,7 @@ class TRunRawVoltage(MotherRunTree):
 @dataclass
 ## The class for storing Efield sim-only data common for a whole run
 class TRunEfieldSim(MotherRunTree):
-    """The class for storing Efield sim-only data common for a whole run"""
+    """Simulation settings of the electric-field traces, common to all events of a run."""
 
     _type: str = "runefieldsim"
 
@@ -481,7 +481,7 @@ class TRunEfieldSim(MotherRunTree):
 @dataclass
 ## The class for storing shower sim-only data common for a whole run
 class TRunShowerSim(MotherRunTree):
-    """Run-level info associated with simulated showers"""
+    """Simulation settings of the showers, common to all events of a run."""
 
     _type: str = "runshowersim"
 
@@ -541,7 +541,7 @@ class TRunShowerSim(MotherRunTree):
 @dataclass
 ## General info on the noise generation
 class TRunNoise(MotherRunTree):
-    """General info on the noise generation"""
+    """Settings of the Galactic-noise generation for a run."""
 
     _type: str = "runnoise"
 

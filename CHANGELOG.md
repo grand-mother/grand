@@ -1403,6 +1403,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- A data format reference in the documentation: every field of every tree,
+  with its type, unit and description, generated from the tree classes at
+  each build (`docs/dev/make_data_format.py`).
+
 - Executed examples in the docstrings of the most used entry points:
   `Efield2Voltage`, `EventList`, `DataDirectory`, `TShower`, `TEfield`,
   `TRun`, `LTP`, `RFChain`, `galactic_noise`, `t1_du_triggers`,

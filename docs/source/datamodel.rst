@@ -46,7 +46,7 @@ Class              Contents
 ``TRunVoltage``    Voltage information common to all events of a run
 ``TADC``           Traces in ADC units, before conversion to voltage
 ``TRawVoltage``    Traces after conversion to voltage
-``TVoltage``       Voltage traces at the antenna feed point
+``TVoltage``       Voltage traces, as simulated by ``Efield2Voltage``
 ``TEfield``        Electric-field traces of an event
 ``TShower``        Characteristics of a shower
 ``TShowerSim``     Additional information about a *simulated* shower
@@ -197,5 +197,6 @@ outside the range warns, and the unit appears in the field's documentation.
 Reference
 ---------
 
-Appendix B of :cite:`GRAND:2024atu`, and :doc:`api` for every class and
+:doc:`data_format` lists every field of every tree, with its type, unit and
+meaning.  Appendix B of :cite:`GRAND:2024atu`, and :doc:`api` for every class and
 field.

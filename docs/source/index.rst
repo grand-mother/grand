@@ -143,6 +143,7 @@ or later.
    :hidden:
 
    api
+   data_format
    handbook/index
    glossary
    citing

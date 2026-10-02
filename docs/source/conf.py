@@ -171,9 +171,28 @@ def _write_version_css(app):
                       '.wy-side-nav-search::after { content: "%s"; }\n' % release)
 
 
+def _write_data_format(app):
+    r"""Writes ``data_format.rst`` from the tree classes, so the reference cannot drift.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        The running Sphinx application; not used.
+    """
+    import importlib.util
+    import pathlib
+
+    script = pathlib.Path(__file__).resolve().parents[1] / 'dev' / 'make_data_format.py'
+    spec = importlib.util.spec_from_file_location('make_data_format', script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.write()
+
+
 def setup(app):
-    r"""Sphinx entry point: registers the generated stylesheet."""
+    r"""Sphinx entry point: registers the generated stylesheet and data-format page."""
     app.connect('builder-inited', _write_version_css)
+    app.connect('builder-inited', _write_data_format)
 
 html_theme_options = {
     'logo_only': True,          # the logo already says "GRANDlib"
