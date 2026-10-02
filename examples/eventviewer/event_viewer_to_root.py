@@ -105,6 +105,9 @@ class EventViewer:
     $ pip3 install bokeh
     """
 
+    # x-axis label of the traces; get_data adds the sample width (#216)
+    time_label = "Sample"
+
     def __init__(self, datadir, geofile=None, event=0,
                  host="localhost", port=46813):
         """Builds a viewer for one event.
@@ -184,6 +187,10 @@ class EventViewer:
                 "takes 0 to %d" % (self.event, n_events, n_events - 1))
         for i in [self.event]:
             e = el.get_event(entry_number=i)
+            # The trace axes said "Time Bins", with no unit (#216)
+            bin_ns = getattr(e.efields[0], "t_bin_size", None) if e.efields else None
+            self.time_label = ("Sample (%g ns each)" % float(bin_ns) if bin_ns
+                               else "Sample")
             print(f"Event {i}, "
                   + f"du_id {e.efields[0].du_id}, "
                   + f"time {e.efields[0].t0}")
@@ -303,15 +310,15 @@ class EventViewer:
 
             # plot traces
             curvex = hv.Curve(
-                efield[0, :], 'Time Bins', 'E-field Trace', label='Ex')\
+                efield[0, :], self.time_label, 'E-field Trace', label='Ex')\
                 .opts(line_width=lw, tools=['hover'], xlabel='', alpha=alp,
                       color='r')
             curvey = hv.Curve(
-                efield[1, :], 'Time Bins', 'E-field Trace', label='Ey')\
+                efield[1, :], self.time_label, 'E-field Trace', label='Ey')\
                 .opts(line_width=lw, tools=['hover'], xlabel='', alpha=alp,
                       color='steelblue')
             curvez = hv.Curve(
-                efield[2, :], 'Time Bins', 'E-field Trace', label='Ez')\
+                efield[2, :], self.time_label, 'E-field Trace', label='Ez')\
                 .opts(line_width=lw, tools=['hover'], xlabel='', alpha=alp,
                       color='olive')
             curve = curvex*curvey*curvez
@@ -334,15 +341,15 @@ class EventViewer:
 
             # plot hilbert transform
             curvexh = hv.Curve(
-                hilbert_amp[0, :], 'Time Bins', 'E-field [μV/m]')\
+                hilbert_amp[0, :], self.time_label, 'E-field [μV/m]')\
                 .opts(line_width=lw, tools=['hover'], alpha=alp-0.1,
                       color='r')
             curveyh = hv.Curve(
-                hilbert_amp[1, :], 'Time Bins', 'E-field [μV/m]')\
+                hilbert_amp[1, :], self.time_label, 'E-field [μV/m]')\
                 .opts(line_width=lw, tools=['hover'], alpha=alp,
                       color='steelblue')
             curvezh = hv.Curve(
-                hilbert_amp[2, :], 'Time Bins', 'E-field [μV/m]')\
+                hilbert_amp[2, :], self.time_label, 'E-field [μV/m]')\
                 .opts(line_width=lw, tools=['hover'], alpha=alp,
                       color='olive')
             curve_h = curvexh*curveyh*curvezh
@@ -376,9 +383,9 @@ class EventViewer:
         Traces are plotted only for antennae that are hit.
         """
         if not index:
-            c1 = hv.Curve([], 'Time Bins', 'E-field Trace')
-            c2 = hv.Curve([], 'Time Bins', 'E-field Trace')
-            c3 = hv.Curve([], 'Time Bins', 'E-field Trace')
+            c1 = hv.Curve([], self.time_label, 'E-field Trace')
+            c2 = hv.Curve([], self.time_label, 'E-field Trace')
+            c3 = hv.Curve([], self.time_label, 'E-field Trace')
             curve = c1*c2*c3
             return curve
 
@@ -386,7 +393,7 @@ class EventViewer:
         # after a smaller run is loaded, since the selection stream keeps its
         # value across the reload.
         if index[0] >= len(self.trace_collection):
-            return hv.Curve([], 'Time Bins', 'E-field Trace')
+            return hv.Curve([], self.time_label, 'E-field Trace')
         antEtrace = self.trace_collection[index[0]]
         antEtrace.opts(width=side_width, height=side_height, show_grid=True,
                        fontsize={'title': 16,
@@ -407,9 +414,9 @@ class EventViewer:
         Traces are plotted only for antennae that are hit.
         """
         if not index:
-            c1 = hv.Curve([], 'Time Bins', 'E-field [μV/m]')
-            c2 = hv.Curve([], 'Time Bins', 'E-field [μV/m]')
-            c3 = hv.Curve([], 'Time Bins', 'E-field [μV/m]')
+            c1 = hv.Curve([], self.time_label, 'E-field [μV/m]')
+            c2 = hv.Curve([], self.time_label, 'E-field [μV/m]')
+            c3 = hv.Curve([], self.time_label, 'E-field [μV/m]')
             curve = c1*c2*c3
             return curve
 
@@ -429,13 +436,17 @@ class EventViewer:
 
         To Do: Extend this to include experimental events.
         """
+        # The peak amplitude here is the largest of the three components'
+        # Hilbert envelopes, not the norm grand.analysis.signals.
+        # get_peak_amplitude uses, so the two cannot be compared (#216)
         quantity = ['Particle', 'Ene [EeV]', 'Zen [deg]',
-                    'Azi [deg]', 'Xmax [g/cm2]']
+                    'Azi [deg]', 'Xmax [g/cm2]', 'Peak amplitude']
         value = [self.primary,
                  round(self.energy, 2),
                  round(np.rad2deg(self.zenith), 2),
                  round(np.rad2deg(self.azimuth), 2),
-                 round(self.slant_xmax, 2)]
+                 round(self.slant_xmax, 2),
+                 'max of component envelopes']
 
         text = {'Quantity': quantity, 'Value': value}
         df = pd.DataFrame(text, columns=['Quantity', 'Value'])
@@ -464,8 +475,8 @@ class EventViewer:
                   height=img_height,
                   cmap='Spectral_r',
                   title='Ground Plane [km]',
-                  xlabel='',
-                  ylabel='',
+                  xlabel='South-North [km]',
+                  ylabel='East-West [km]',
                   tools=['hover'],
                   toolbar='below',
                   fontsize={'title': 10,
@@ -793,9 +804,15 @@ class EventViewer:
                 color='k', marker='star_dot', size=25)
 
     def select_color(self):
-        """Select color."""
-        self.color_pallete = sns.palettes.color_palette(
-            self.choose_color.value, len(self.hitX)).as_hex()
+        """Select color.
+
+        Before the widgets exist (``get_data()`` called on its own, without
+        ``view()``), the default palette is used: it failed with
+        "'EventViewer' object has no attribute 'choose_color'" (#216).
+        """
+        widget = getattr(self, "choose_color", None)
+        name = widget.value if widget is not None else "viridis"
+        self.color_pallete = sns.palettes.color_palette(name, len(self.hitX)).as_hex()
         return self.color_pallete
 
     def view(self, serve=True):

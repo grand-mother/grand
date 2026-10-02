@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Direction reconstruction edge cases and labels (#216): the plane-wave fit
+  returns a finite (90°, 0°) for a horizontal shower over a flat array (it
+  gave NaN) and an azimuth in [0, 2π) (it could return exactly 360°); its
+  docstring documents `sigma` and the angle ranges, `SWF_loss` says the
+  source sits on the side the shower comes from, and the Cramér–Rao module
+  says `delta_omega` is the ADF width and the bounds are for the joint
+  model.  The event viewer labels its trace axes "Sample (N ns each)"
+  instead of "Time Bins", its ground plane South-North / East-West in km,
+  says the peak amplitude is the maximum of the component envelopes, and
+  no longer fails choosing a colour map before its widgets exist.
+
 - The examples run or say what they need (#218): `examples/README.md`
   indexes them; `sim/shower_event` uses the committed sample (it needed an
   untracked file, and created an empty one); `geo/local_topography.py`

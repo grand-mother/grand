@@ -20,10 +20,13 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     verbose (bool): Verbose output, default is False.
     c (float): Speed of light in m/s, default is  299792458 m/s
     n (float or ndarray): Indices of refraction (vector or constant), default is 1.000136
+    sigma (float or ndarray, optional): Timing uncertainty of each antenna, in
+        seconds; weights the antennas (#216).
 
     Returns
     -------
-    ndarray: Theta and phi angles in radians.
+    ndarray: Theta in [0, pi] and phi in [0, 2*pi), in radians: the direction
+    the shower comes from.
     """
     where = "PWF_semianalytical"
     Xants = _checks.antennas(Xants, where, min_ants=3)
@@ -56,9 +59,7 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     # every vertical shower over a flat array (#288)
     if nbeta == 0 or np.ptp(tants) == 0:
         k_opt = W[:, 0] if W[2, 0] < 0 else -W[:, 0]
-        theta_opt = np.arccos(np.clip(-k_opt[2], -1.0, 1.0))
-        phi_opt = np.arctan2(-k_opt[1], -k_opt[0]) % (2 * np.pi)
-        return np.array([theta_opt, phi_opt])
+        return _source_angles(k_opt)
 
     if (np.abs(beta[0] / nbeta) < 1e-14):
         if (verbose):
@@ -68,7 +69,9 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
         c_[1] = beta[1] / (d[1] + mu)
         c_[2] = beta[2] / (d[2] + mu)
         si = np.sign(np.dot(W[:, 0], np.array([0, 0, 1.])))
-        c_[0] = -si * np.sqrt(1 - c_[1]**2 - c_[2]**2)
+        # Rounding can take the radicand just below 0: a horizontal shower
+        # (zenith 90 degrees) gave NaN (#216)
+        c_[0] = -si * np.sqrt(max(0.0, 1 - c_[1]**2 - c_[2]**2))
         k_opt = np.dot(W, c_)
 
     else:
@@ -84,12 +87,19 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     if k_opt[2] > 1e-2:
         k_opt = k_opt - 2 * (k_opt @ W[:, 0]) * W[:, 0]
 
-    theta_opt = np.arccos(-k_opt[2])
-    phi_opt = np.arctan2(-k_opt[1], -k_opt[0])
+    return _source_angles(k_opt)
 
-    if phi_opt < 0:
-        phi_opt += 2 * np.pi
-    return np.array([theta_opt, phi_opt])
+
+def _source_angles(k):
+    """Theta in [0, pi] and phi in [0, 2*pi) of the direction -k."""
+    theta = np.arccos(np.clip(-k[2], -1.0, 1.0))
+    # It could return exactly 2*pi, i.e. 360 degrees, for an azimuth of 0
+    # (#216).  The modulo alone is not enough: a tiny negative angle rounds
+    # to exactly 2*pi.
+    phi = np.arctan2(-k[1], -k[0]) % (2 * np.pi)
+    if phi >= 2 * np.pi:
+        phi = 0.0
+    return np.array([theta, phi])
 
 def mean(X:np.ndarray, sigma=None):
     """Return the mean of ``X`` along its first axis, weighted by ``sigma``.

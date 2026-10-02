@@ -56,7 +56,7 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
     phi_adf : float
         Azimuth angle from ADF reconstruction (radians).
     delta_omega : float
-        Angular uncertainty (radians).
+        Width parameter of the ADF, in radians (not an uncertainty, #216).
     scaling_factor : float
         Scaling factor for the amplitude model.
     Xants : np.ndarray
@@ -74,7 +74,8 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
         in the order of the arguments: theta_swf, phi_swf (radians),
         r_xsource (m), t_s (s), theta_adf, phi_adf, delta_omega (radians),
         scaling_factor.  All NaN if the Fisher matrix cannot be inverted
-        (#261).
+        (#261).  They are bounds for the joint time-and-amplitude model, so
+        lower than a time-only spherical fit can reach (#216).
     """
     # Number of antennas
     where = "CRB_ADF_SWF"

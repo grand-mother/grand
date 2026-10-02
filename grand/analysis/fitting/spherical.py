@@ -15,9 +15,10 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
     where:
     Xants are the antenna positions (shape=(nants,3))
     tants are the trigger times (shape=(nants,))
-    x_s = \sin(\theta)\cos(\phi)
-    y_s = \sin(\theta)\sin(\phi)
-    z_s = \cos(\theta)
+    (x_s, y_s, z_s) = r_xmax * (\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)
+                      + (0, 0, groundAltitude)
+    i.e. the source lies at -r_xmax * K, on the side the shower *comes from*
+    (K is the propagation direction; #216).
 
     Parameters
     ----------
