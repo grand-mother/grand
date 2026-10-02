@@ -292,3 +292,20 @@ def test_a_nan_trace_is_refused():
     traces[1, 0, 100] = np.nan
     with pytest.raises(ValueError, match="unit 1 .*NaN"):
         t1_du_triggers(traces)
+
+
+@pytest.mark.parametrize("f_mhz,start", [(60, 400), (100, 400), (200, 400), (100, 100)])
+def test_clean_pulses_do_not_pass_with_the_defaults(f_mhz, start):
+    r"""#233: the diagnosis recorded in known_issues (issue-t1-clean-simulations).
+
+    A pulse before sample t_quiet/2 is rejected, and a clean pulse's T2
+    crossings are at least t_sepmax = 10 ns apart, which rejects the channel.
+    If the trigger group changes either rule, update the known issue.
+    """
+    from grand.sim.detector.trigger import t1_du_triggers
+
+    t = np.arange(1024) * 2.0
+    pulse = np.where(t >= start * 2, 850 * np.exp(-(t - start * 2) / 30)
+                     * np.sin(2 * np.pi * f_mhz * 1e-3 * (t - start * 2)), 0)
+    traces = np.stack([pulse, pulse, pulse])[None]
+    assert not t1_du_triggers(traces).any()

@@ -9,6 +9,35 @@ Open problems that affect results or block work, with what is measured, what
 is not, and what would settle each one.  Fixed issues move to the changelog
 rather than staying here.
 
+.. _issue-t1-clean-simulations:
+
+The offline T1 trigger passes no unit on clean simulations
+------------------------------------------------------------
+
+:Status: open, for the trigger group (#233, item 3)
+:Affected: ``convert_voltage2adc.py --t1_trigger``,
+  :func:`grand.sim.detector.trigger.t1_du_triggers`
+
+A beta tester found that T1 with the default parameters passed 0 of 44 and
+0 of 5 units on clean, strong simulated events (ADC peak 850), and none
+either with ``th1=5, th2=2, nc_min=1``.  Measured on synthetic damped pulses
+of amplitude 850 ADC counts (2026-10-02), the two reasons are:
+
+- **The quiet time.** Only the first T1 crossing is tried, and it is rejected
+  if it lies within the first ``t_quiet/2`` samples: with ``t_quiet = 512``
+  ns, a pulse before sample 256 never triggers.
+- **The crossing separation.** Consecutive T2 crossings must be closer than
+  ``t_sepmax = 10`` ns, strictly, and one crossing too far apart rejects the
+  channel rather than ending the count.  A clean pulse at 60, 100, 150 or
+  200 MHz has its crossings 16, 10, 14 and 10 ns apart, so every channel is
+  rejected; noise adds crossings close together, which is why noisy events
+  sometimes pass.
+
+Whether the firmware ends the count or rejects the channel, and whether the
+comparison is strict, are for the trigger group to confirm, with the other
+open points listed in :func:`~grand.sim.detector.trigger.extract_trigger_parameters`.
+Until then, offline T1 results on noise-free simulations are not meaningful.
+
 .. _issue-galactic-noise-normalisation:
 
 Galactic-noise normalisation: resolved, RMS

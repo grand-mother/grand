@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Why T1 passes no unit on clean simulations is now in the known issues
+  (#233, item 3): a pulse before sample `t_quiet/2` is rejected, and a clean
+  pulse's T2 crossings lie at least `t_sepmax = 10` ns apart, which rejects
+  the channel rather than ending the count.  A test pins the current rules
+  until the trigger group confirms or changes them.
+
 - The rest of #256: `StdVectorList`'s ROOT-version fallback chain no longer
   uses bare `except:` (which caught Ctrl-C); when its last fallback fails
   too, the `TypeError` names the value, the vector type and the first
