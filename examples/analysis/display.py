@@ -1,11 +1,38 @@
+"""Plots the ADF fit and the ground footprint of each reconstructed event.
+
+Run it from this folder (it reads ``config.py`` beside it, which names the
+antenna file and the reconstruction file main_AOI.py wrote); it needs pandas.
+By default it opens two windows per event, one after the other; with
+``--savefig DIR`` it writes them as PNG files into DIR instead (#218).
+"""
+import argparse
+import os
+
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
 import grand.analysis.fitting as fit
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom as geom
 from grand.dataio import TRecons
 import config as conf
+
+parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+parser.add_argument("--savefig", metavar="DIR", help="save the figures as PNG files into DIR instead of showing them")
+args = parser.parse_args()
+if args.savefig:
+    matplotlib.use("Agg")
+    os.makedirs(args.savefig, exist_ok=True)
+import matplotlib.pyplot as plt
+
+
+def show_or_save(name):
+    r"""Shows the current figure, or saves it as DIR/name.png with --savefig."""
+    if args.savefig:
+        plt.savefig(os.path.join(args.savefig, name + ".png"), bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
 
 # ---------------------------------------------------------------
 # Load RTK antenna positions from text file
@@ -15,7 +42,7 @@ import config as conf
 # ---------------------------------------------------------------
 file_path = conf.antenna_file
 column_names = ['antenna_ID', 'x', 'y', 'z'] #'x' is East, 'y' is North, 'z' sea level (0m)
-antenna_position = pd.read_csv(file_path, sep='\s+', names=column_names, header=None)
+antenna_position = pd.read_csv(file_path, sep=r'\s+', names=column_names, header=None)
 antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int) 
 antenna_position = antenna_position[~antenna_position['antenna_ID'].between(0, 15)]
 
@@ -79,12 +106,12 @@ for ev_no, run_no in t_recons.get_list_of_events():
     plt.plot(np.rad2deg(w), adf_f,"--r",label="mean ADF model")
     plt.ylim([0, max(t_recons.adf_amplitude)*1.5]) 
     plt.xlim([0,1.6])
-    plt.xlabel("$\omega$ (deg)")
+    plt.xlabel(r"$\omega$ (deg)")
     plt.legend(loc="best")
     plt.suptitle(fsuptit, fontsize = 10)
     plt.title(ftit_adf)
     plt.ylabel("Voltage (ADC)")
-    plt.show()
+    show_or_save("adf_run%d_event%d" % (run_no, ev_no))
 
 
     # ---------------------------------------------------------------
@@ -116,7 +143,7 @@ for ev_no, run_no in t_recons.get_list_of_events():
     plt.ylim([xmin,xmax])
     plt.xlim([ymin,ymax])
     plt.subplots_adjust(left=0.15) 
-    plt.show()
+    show_or_save("footprint_run%d_event%d" % (run_no, ev_no))
 
     
 

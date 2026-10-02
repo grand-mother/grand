@@ -34,27 +34,32 @@ class ADC:
         '''
         downsamples the voltage trace to the target sampling rate
 
-        Arguments
-        ---------
-        `voltage_trace`
-        type        : np.ndarray[double]
-        units       : uV 
-        description : Array of voltage traces, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        voltage_trace : np.ndarray[double]
+            Array of voltage traces, with shape (N_du,3,N_samples), in µV.
+        input_sampling_rate_mhz : float
+            Sampling rate of `voltage_trace`, in MHz.
 
         Returns
         -------
-        `downsampled_voltage_trace`
-        type        : np.ndarray[double]
-        units       : uV
-        description : Array of downsamplef voltage traces, with shape (N_du,3,N_samples)
+        downsampled_voltage_trace : np.ndarray[double]
+            Array of downsampled voltage traces, with shape (N_du,3,N_samples), in µV.
 
         '''
+        # A rate of 0, NaN or below 0 failed with a bare ZeroDivisionError or
+        # a negative dimension (#289)
+        input_sampling_rate_mhz = _validate.as_real(input_sampling_rate_mhz, "input_sampling_rate_mhz",
+                                                    "ADC.downsample")
+        _validate.positive(input_sampling_rate_mhz, "input_sampling_rate_mhz", "ADC.downsample", "MHz")
+        _validate.plausible(input_sampling_rate_mhz, "input_sampling_rate_mhz", "ADC.downsample", "sampling_rate_mhz")   # (#266)
         if self.sampling_rate != input_sampling_rate_mhz : 
           #compute the fft
           voltage_trace_f=sf.rfft(voltage_trace)
           #compute new number of points
           ratio=(self.sampling_rate/input_sampling_rate_mhz)        
-          m=int(np.shape(voltage_trace)[2]*ratio)
+          # Rounded, not truncated: 999 samples at 1 GHz gave 499 at 500 MHz (#289)
+          m=int(round(np.shape(voltage_trace)[2]*ratio))
           logger.info(f"resampling the voltage from {input_sampling_rate_mhz} to an ADC of {self.sampling_rate} MHz")        
           downsampled_voltage_trace=sf.irfft(voltage_trace_f,m)*ratio
           #plt.plot(np.arange(0,len(downsampled_voltage_trace[0][0]))/ratio,downsampled_voltage_trace[0][0])
@@ -73,24 +78,27 @@ class ADC:
         - converts voltage to ADC counts
         - quantizes the values
 
-        Arguments
-        ---------
-        `voltage_trace`
-        type        : np.ndarray[float]
-        units       : µV
-        description : Array of voltage traces at the ADC level, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        voltage_trace : np.ndarray[float]
+            Array of voltage traces at the ADC level, with shape (N_du,3,N_samples), in µV.
 
         Returns
         -------
-        `adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : The digitized array of ADC traces, with shape (N_du,3,N_samples)
+        adc_trace : np.ndarray[int]
+            The digitized array of ADC traces, with shape (N_du,3,N_samples), in ADC counts.
 
         '''
         
         # Convert voltage to ADC
         adc_trace = voltage_trace * self.max_bit_value / self.max_voltage
+
+        # Bounded in floating point before the integer cast: a value beyond the
+        # int64 range became its most negative value, whose absolute value is
+        # negative too, so saturation never caught it (#239).  The bound is far
+        # beyond saturation, which _saturate() applies after any added noise.
+        bound = float(2 ** 40)
+        adc_trace = np.clip(adc_trace, -bound, bound)
 
         # Quantize the trace
         adc_trace = np.trunc(adc_trace).astype(int)
@@ -102,25 +110,30 @@ class ADC:
         '''
         Simulates the saturation of the ADC
 
-        Arguments
-        ---------
-        `adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of ADC traces, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        adc_trace : np.ndarray[int]
+            Array of ADC traces, with shape (N_du,3,N_samples), in ADC counts.
 
         Returns
         -------
-        `saturated_adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of saturated ADC traces, with shape (N_du,3,N_samples)
+        saturated_adc_trace : np.ndarray[int]
+            Array of saturated ADC traces, with shape (N_du,3,N_samples), in ADC counts.
 
         '''
         
         saturated_adc_trace = np.where(np.abs(adc_trace)<self.max_bit_value,
                                        adc_trace,
                                        np.sign(adc_trace)*self.max_bit_value)
+
+        # Saturation is reported, not applied silently (#239)
+        clipped = np.abs(adc_trace) >= self.max_bit_value
+        if clipped.any():
+            per_du = clipped.reshape(clipped.shape[0], -1).sum(axis=1) if clipped.ndim > 1 else [clipped.sum()]
+            logger.warning("ADC saturation: %d samples clipped at +/-%d counts, in %d of %d units "
+                           "(per unit: %s)", int(clipped.sum()), self.max_bit_value,
+                           int(np.count_nonzero(per_du)), len(per_du),
+                           [int(n) for n in per_du][:20])
 
         return saturated_adc_trace
     
@@ -131,24 +144,19 @@ class ADC:
         Processes an analog voltage trace to a digital ADC trace,
         with an option to add measured noise
 
-        Arguments
-        ---------
-        `voltage_trace`
-        type        : np.ndarray[float]
-        units       : µV
-        description : Array of voltage traces at the ADC level, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        voltage_trace : np.ndarray[float]
+            Array of voltage traces at the ADC level, with shape (N_du,3,N_samples), in µV.
 
-        `noise_trace` (optional)
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of measured noise traces, with shape (N_du,3,N_samples)
+        noise_trace : np.ndarray[int], optional
+            Array of measured noise traces, with shape (N_du,3,N_samples), in
+            ADC counts.
 
         Returns
         -------
-        `adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of ADC traces with shape (N_du,3,N_samples)
+        adc_trace : np.ndarray[int]
+            Array of ADC traces with shape (N_du,3,N_samples), in ADC counts.
 
         Examples
         --------
@@ -178,7 +186,13 @@ class ADC:
             raise TypeError(_validate.message(
                 "ADC.process", "'voltage_trace' must be a NumPy array, got %s"
                 % type(voltage_trace).__name__))
-          
+        # NaN or inf cannot be digitized: it was written as the most negative
+        # integer, and the error came only later, from the tree (#239)
+        if not np.all(np.isfinite(voltage_trace)):
+            where = np.argwhere(~np.isfinite(voltage_trace))
+            raise ValueError(_validate.message(
+                "ADC.process", "'voltage_trace' has %d NaN or infinite samples, first at "
+                "(unit, channel, sample) index %s" % (len(where), tuple(int(i) for i in where[0]))))
 
         adc_trace = self._digitize(voltage_trace)
 

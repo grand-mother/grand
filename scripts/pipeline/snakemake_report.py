@@ -466,6 +466,10 @@ def main():
     long_output = args.long_output
 
     data = parse_log(args.logfile)
+    # An empty or unrelated file gave a full report saying UNKNOWN, exit 0 (#246)
+    if not data["jobs"] and not data["errors"] and data["start_time"] is None \
+            and data["steps_total"] is None and data["workflow_status"] == "UNKNOWN":
+        raise SystemExit("snakemake_report: %s holds no Snakemake log lines" % args.logfile)
 
     print_report(data, long_output=long_output, logfile=args.logfile)
 

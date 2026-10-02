@@ -15,6 +15,969 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `CRB_PWF` at zenith 0 or 180° (#288, the last item): it returned
+  `[nan nan]` and printed, because the azimuth is undefined there and a
+  central difference in zenith crossed the pole.  The zenith bound is now
+  finite (for a known azimuth, from a one-sided derivative), the azimuth
+  bound is `inf`, and both cases warn instead of printing.
+
+- `DataDirectory` opens many files faster (#283, in part): a tree's list of
+  units, which read the whole chain (one more pass over every file) at
+  every open, is computed on first use.  Measured on one-event files:
+  2000 files open in 5.2 s instead of 7.2 s.  The cost stays linear in the
+  number of files here (1.8, 4.2 and 7.2 s for 500, 1000 and 2000 files
+  before; not the N^1.6 reported); the three passes left (entry count,
+  `Draw` estimate, `BuildIndex`) each open every file.
+
+- Why T1 passes no unit on clean simulations is now in the known issues
+  (#233, item 3): a pulse before sample `t_quiet/2` is rejected, and a clean
+  pulse's T2 crossings lie at least `t_sepmax = 10` ns apart, which rejects
+  the channel rather than ending the count.  A test pins the current rules
+  until the trigger group confirms or changes them.
+
+- The rest of #256: `StdVectorList`'s ROOT-version fallback chain no longer
+  uses bare `except:` (which caught Ctrl-C); when its last fallback fails
+  too, the `TypeError` names the value, the vector type and the first
+  error, rather than the fallback's own; and an `OverflowError` is raised
+  (it converted the value, stored nothing and left the vector empty).  The
+  informational prints left in `grand.aoi` ("No Run tree", "Writing ...",
+  "Can not find any tree ...") are log records.
+
+- The RF chain's checks survive `python -O` (#255, item 4): its 43
+  `assert` statements, removed under optimisation, are explicit checks;
+  `interpol_at_new_x` with an empty table and `matmul` with matrices that
+  are not (2, 2, n_freq) raise `ValueError` naming the function.
+
+- Numerical edges (#289): `Efield2Voltage.get_leff` refuses a position
+  beyond ±22000 km on either side, or not finite, with a `GRANDlib:`
+  message (it tested `x > 2.2e7` only); `recons_swf` passes `sigma` to the
+  loss (it was documented but ignored), and `SWF_loss` weights per-antenna
+  uncertainties or takes their covariance matrix (a vector gave an array,
+  not a χ²); `t1_du_triggers` refuses traces that are not
+  (N_du, N_channels, N_samples) (one unit's (3, N) channels were read as
+  three units) and a `t_period` under 2 ns (an `IndexError`);
+  `analysis.convert_voltage_to_ADC` truncates and saturates at the full
+  scale, as `ADC.process` does, and refuses NaN; `ADC.downsample` refuses
+  a rate of 0, NaN or below 0, and rounds the new length (999 samples at
+  1 GHz give 500 at 500 MHz, not 499); the coordinate constructors no
+  longer list `Horizontal` among the positions they convert; a zero-length
+  vector's elevation is 0, not NaN; `geoid_undulation` refuses a latitude
+  beyond ±90° or a longitude beyond ±360° (it returned NaN, or wrapped);
+  a float32 field refuses a value that overflows to infinity and warns
+  when one underflows to 0.
+
+- The CoREAS converter writes one unit and one numbering (#232): the
+  magnetic field strength is in µT, as from ZHAireS (it was mT from the
+  `.reas` path and Gauss from the `.inp` path), and the tree docs say so;
+  `RawMeta` takes the run and event numbers of `RawShower` and `RawEfield`
+  (it had them swapped); the missing event time is written as 0, so
+  sim2root uses the simulation date, instead of 1996 s and 19961026 ns; an
+  unknown first-interaction height or injection altitude is NaN, not 1 m.
+  `--du_type Horizon` and `AntennaModel("Horizon")` are no longer offered:
+  their antenna files are not in the data model.  The committed Dunhuang
+  sample is kept as written in 2024, as the backward-compatibility tests
+  need it.
+
+- Tree lookups say when they miss (#206): `get_event`, `get_run` and
+  `get_entry_with_index` raise `LookupError`, and `get_entry` raises
+  `IndexError`, with a `GRANDlib:` message; they returned 0 and left the
+  previous event's values (or zeros) loaded, and `get_event(1618)` quietly
+  looked in run 0.  `get_entry_with_index` takes `run_no=` and `evt_no=` by
+  name only: by position the run came first, the reverse of `get_event`, so
+  a tuple from `get_list_of_events()` found another event.  `get_event` and
+  `has_event` on a tree filled in memory find its events without
+  `build_index()`.  `TEfield(shower_file).write()` with nothing filled no
+  longer adds an empty `tefield` tree to the shower file.  A string field
+  set to a non-string raises `TypeError`, and `None` in a numeric field is
+  refused (it was stored as NaN, or called "NaN or infinity").  The TRecons
+  angles and their bounds are declared in radians, so 85.0 (degrees by
+  mistake) warns; `TRun.du_id` warns outside 0–65535, the range the event
+  trees store.  `get_number_of_events`'s docstring no longer says it can
+  differ from the entry count.  An existing file reopened for update by
+  `fill()` still has its bookkeeping rewritten on close, even if nothing is
+  written (its trees are unchanged); this is now documented.
+
+- Direction reconstruction edge cases and labels (#216): the plane-wave fit
+  returns a finite (90°, 0°) for a horizontal shower over a flat array (it
+  gave NaN) and an azimuth in [0, 2π) (it could return exactly 360°); its
+  docstring documents `sigma` and the angle ranges, `SWF_loss` says the
+  source sits on the side the shower comes from, and the Cramér–Rao module
+  says `delta_omega` is the ADF width and the bounds are for the joint
+  model.  The event viewer labels its trace axes "Sample (N ns each)"
+  instead of "Time Bins", its ground plane South-North / East-West in km,
+  says the peak amplitude is the maximum of the component envelopes, and
+  no longer fails choosing a colour map before its widgets exist.
+
+- The examples run or say what they need (#218): `examples/README.md`
+  indexes them; `sim/shower_event` uses the committed sample (it needed an
+  untracked file, and created an empty one); `geo/local_topography.py`
+  downloads tiles only with `--download`; the Handling3dTraces notebook no
+  longer contains merge-conflict markers; the five stubs and outdated
+  notebooks moved to `examples/old/stubs/`; `rf_chain_example.py` lists
+  its real choices; `analysis/display.py` has `--savefig` and no
+  `SyntaxWarning`; `data_storing.py` draws zeniths in 0–180;
+  `datafile_use.py` exits 1 without a file; the AOI readme and the datalib
+  config say what the GP13 browser, the sim2root browser and the data
+  manager need.
+
+- `Event.close_files()` (with `auto_file_close=False`) no longer crashes
+  the process when the event's trees share one file: it closed the file
+  after writing the first tree, deleting the others (a regression of the
+  #212 fix). `examples/aoi/event_generation.py` runs again, and can be run
+  twice (it replaces its output instead of failing with `NotUniqueEvent`).
+
+- A tree dropped without `stop_using()` is released (#284):
+  `grand_tree_list` holds the trees by weak reference, and a dropped tree
+  closes the file it opened unless another live tree reads it. A loop that
+  only dropped its trees grew by about 630 kB a file; it now grows by the
+  same ~58 kB as with `stop_using()`, which is inside ROOT.
+
+- The data model is checked before use (#279): the downloader records a
+  manifest (sizes and SHA-256) of what it installs, and re-downloads when
+  the version matches but `noise/`, `topography/` or a file is missing (it
+  said "up to date"); the antenna, RF-chain and noise loaders refuse a
+  missing file, or one whose size differs from the manifest, with a message
+  naming the remedy; `python -m grand.basis.data_model` verifies an
+  installation. `convert_voltage2adc.py` imports `psutil` only for its
+  memory report, so `-h` works without it.
+
+- The test suite can fail when it should (#271): expected failures are
+  strict (`xfail_strict = true`), so a fixed test can no longer stay
+  silently green; the three tests that read the untracked
+  `data/test_efield.root` (`test_datatree`, `test_Efield2Voltage`,
+  `test_showerevent`) and the pipeline test now run on the committed
+  sample and write only to temporary folders, and are no longer expected
+  failures; about twenty tests that asserted nothing now check results;
+  the logger tests no longer write into `tests/`; every script is checked
+  to answer `-h` without writing a file. Three expected failures remain.
+
+- The remaining entry points of #267 check their input: `ParticleCode`
+  accepts a name (`ParticleCode('proton')`) and otherwise lists the valid
+  ones; T1 parameters with `th2 > th1`, `nc_min > nc_max` or a negative
+  window are refused; `type_trace.Voltage` checks that `V` has one sample
+  per time; `DetectorUnitNetwork.init_pos_id` accepts a tuple of ids;
+  `get_handling3dtraces` / `get_simu_parameters` name a missing file (and
+  an event-less one, which raised a bare `AssertionError`);
+  `protocol.get(None)` no longer requests ".../None.gz"; and
+  `xmax_in_site_frame` checks its angles even when Xmax is unknown.
+
+- Tree setters report out-of-range values (#267, part 2): `TRun.origin_geoid`
+  with a latitude beyond ±90 or a longitude beyond ±360, `du_nanoseconds` of
+  a second or more, and `TShower.azimuth` outside 0–360 are warned about
+  (and stored, so existing files stay readable); `True` in a numeric field
+  is refused; a non-string in a string field names that field (it always
+  said "site").
+
+- Geo entry points refuse invalid input (#267, part 1): spherical `theta`
+  outside 0–180 or a negative `r`, an elevation beyond ±90, a longitude
+  beyond ±360 and a height below the centre of the Earth; an `LTP`
+  orientation that is not one letter from each of E/W, N/S, U/D (it named
+  only the first bad character), and a `rotation` that is not a rotation;
+  an unknown geomagnetic model (with the available ones listed, instead of
+  a GULL error with a file path); a string or complex number given to
+  `turtle.ecef_from_geodetic`; a missing map or model file (named, instead
+  of a C library error). `HorizontalVector` takes `location` like
+  `Horizontal`; `gull.Snapshot()` works with its defaults and takes a
+  `Path`; `turtle.Map.elevation` keeps a 2-D input's shape.
+
+- aoi and analysis docstrings, and their rendering (#261, part 5):
+  `Timetrace3D.get_value_at_time` / `get_hilbert_value_at_time` document
+  their real argument, `time_offset`, and that they match a sample exactly
+  rather than interpolate; `calculate_t_vector`'s argument is required;
+  `Event.write_*`'s `filename` is required; positions are
+  `CartesianRepresentation`s of shape `(3, 1)` in the north-west-up frame;
+  `Event.directory`, the Hilbert getters and `Shower.origin_geoid` describe
+  what they hold. `CRB_PWF` / `CRB_ADF_SWF` say they return standard
+  deviations, in which order and units; `recons_swf` gives units;
+  `shower_direction_vector` says it returns the propagation direction, the
+  opposite of `arrival_direction`. The ADC docstrings, `DataDirectory`'s
+  Doxygen `@param` lines and `create_file_tree`'s parameters now render as
+  numpydoc.
+
+- Sim and reader docstrings match the code (#261, part 4): `Efield2Voltage`
+  lists every `params` key with its default, its constructor's Raises/Notes
+  render as sections, `du_type` lists its values (`'Horizon'`'s files are
+  not shipped, #232), `add()` no longer claims to broadcast, and
+  `compute_voltage_du` lists its five stages; the RF chains say the VGA gain
+  has no effect at present and which gain files ship, `vout_f` takes one
+  unit's `(3, n_freq)` and raises `ValueError` otherwise (a bare `assert`),
+  and the stage constructors no longer document parameters they do not
+  take; `galactic_noise` explains `size_out` against `freqs_mhz`;
+  `get_simu_parameters` lists where each key comes from, and `FileAdc` no
+  longer says it reads voltages.
+
+- Tree fields state their units (#261, part 3): `TShower.azimuth`
+  (degrees, from north towards west, "comes from"), `magnetic_field`
+  (degrees, degrees, and µT from ZHAireS but mT from CoREAS, #232),
+  `core_time_ns` (it repeated `core_time_s`'s text), `TVoltage.trace` (µV),
+  `TEfield.trace` (µV/m), `time_max` and `t_pre`/`t_post` (ns),
+  `TRun.origin_geoid`/`du_geoid` (degrees, degrees, metres),
+  `first`/`last_event_time` (Unix seconds), `gal_noise_LST` (hours) and
+  `gal_noise_sigma` (µV).
+
+- `grand.basis` functions do what they document (#261, part 2):
+  `DetectorUnitNetwork.get_surface` works under NumPy 2 (its 2-D
+  `np.cross` failed; two tests were marked as expected failures for it) and
+  returns 0 for fewer than three units; `get_max_dist_du` is implemented
+  (it raised `NotImplementedError`); `get_snr_and_noise` documents its three
+  returns; the `get_fastest_size_fft` docstrings give a real summary and the
+  right exception (`ValueError`).
+
+- Geo docstrings that misled (#261, part 1): `Geomagnet` and
+  `geomagnet.field` state the unit (tesla) and frame (east-north-up at the
+  location, whatever frame the location is given in; GRAND data use
+  north-west-up); `Geodetic` no longer says a height of zero is sea level,
+  states how longitudes are stored, and drops its developer notes. The two
+  `geoid_undulation` functions now share one signature, so
+  `grand.geoid_undulation(40.98, 93.95)` works (it raised `TypeError`).
+
+- The reconstruction's frame is explicit for simulation files (#252): the
+  fits take heights above sea level with the ground at `groundAltitude`
+  (1231 m, GP13), while `TRun.du_xyz` is relative to `origin_geoid`; the new
+  `grand.analysis.geom.antenna_positions_from_run(trun)` returns positions
+  in the fits' frame and the ground altitude to pass. The fits' docstrings
+  and notebook 11 now state the convention (feeding `du_xyz` with the
+  default moved arrival times by up to ~250 ns).
+
+- The conversion scripts check that the run and event trees agree before
+  computing (#249): `grand.dataio.consistency.check_event_trees`, used by
+  `Efield2Voltage`, `convert_efield2efield.py` and `convert_voltage2adc.py`,
+  refuses events of a run the run file does not hold, a unit listed twice
+  or missing from the run, and a `t_bin_size` that is not one positive value
+  per run, and names a missing run, efield or shower file. These crashed
+  deep inside ("could not be broadcast", `IndexError`, `KeyError`, `None`)
+  or were accepted silently. A missing input path raises `FileNotFoundError`
+  with the `GRANDlib:` prefix.
+
+- A folder holding several runs converts (#241): the run chain was indexed
+  by (run, event), which found no run, so `get_run()` failed for every run
+  and `convert_efield2voltage` crashed. `convert_voltage2adc
+  --add_noise_from` draws distinct noise traces while there are enough,
+  warns when fewer traces than units force reuse (correlated noise), and
+  refuses a simulated ADC file or too short traces with a message naming the
+  file instead of `IndexError` / `assert`.
+
+- dataio no longer hands back stale or zeroed data silently (#236):
+  reopening a path whose file was replaced, changed or removed since it was
+  opened reads the file on disk, not the copy still open; a tree without
+  its `run_number` / `event_number` branches is refused instead of reading
+  as zeros; `EventList` on a folder with no recognised file names says so
+  (it failed on `None`), and `DataDirectory.unrecognised_files` lists them;
+  an absent or invalid `analysis_level` raises; a misspelt tree name such as
+  `trunk` raises `AttributeError` instead of returning `None`;
+  `get_event('x')` / `get_run('x')` raise a clear `TypeError`; an unreadable
+  file reports "permission denied". (Use after close already raised.)
+
+- The conversion scripts write where they say and can be rerun (#231):
+  `convert_efield2efield.py -od` writes the L1 run files there too (they
+  went into the input folder), replaces earlier outputs instead of failing
+  with `NotUniqueEvent`, and no longer reads a folder's existing L1 efield
+  files as input; `convert_voltage2adc.py` converts a voltage file given by
+  path whatever its name, finds `voltage_*_L<level>_*.root` at any level,
+  pairs each voltage file with the run file of its own level, and puts a
+  bare `-o` name in the input folder like the other scripts;
+  `Efield2Voltage` warns when a folder holds efield files at several levels
+  and reads the highest, and `efield_level=` / `--level` chooses one.
+
+- A ZHAireS simulation without an Xmax stores NaN, not -1 g/cm² and -1000 m
+  (which became an Xmax below ground in `TShower`) (#225). A simulation
+  without an event time (`EventUnixTime: 0`, as in the committed sample)
+  gets one fallback, the simulation date, in `core_time_s`, the event time
+  and every `du_seconds`, logged once; it was 200854920 in the converter and
+  200854852 in sim2root (May 1976), while `unix_date` said 2022-10-26. The
+  committed `sim2root/Common` sample files still carry the old time.
+
+- The ZHAireS `.sry` readers raise `ValueError` naming the missing value
+  instead of calling `exit()`, which ended whatever program had imported
+  them (#224); `scripts/pipeline/register_convert.py` exits 1, not 0, for an
+  unregistered file.
+
+- `sim2root.py` and the ZHAireS converter fail cleanly (#224): a missing
+  input file is refused (it was created empty, and the run died on an
+  unbound variable); no input, a missing `-sl` and a full serial range exit
+  1 instead of 0; a failed conversion removes the files it wrote and the
+  folder it made; `-fo` on a folder that already holds files needs
+  `--overwrite`. `ZHAireSRawToRawROOT.py` has an argparse command line
+  (`--help` works; the folder alone or all five arguments), and a missing
+  folder or `.sry`, a bad mode or a crash exit non-zero.
+
+- `grand.aoi` events now say which origin their antenna positions are in
+  (#215, partly): `Event.antennas_origin` is the run's `origin_geoid`, or for
+  positions computed from GPS (GP300, GP80, GP13) the hard-coded point, now
+  named `grand.aoi.event.GPS_ANTENNA_ORIGIN` and documented as 3.8 km from
+  the GP80 runs' `origin_geoid`. Which origin GPS positions *should* use is
+  left to the data owners. `Antenna.position`'s docstring now gives the
+  frame, the z reference and the `(3, 1)` shape.
+
+- `sim2root.py -ef N` splits correctly (#223): `-ef 1` gives one event per
+  file (it was ignored), and an `N` that divides the number of events no
+  longer leaves a trailing empty efield/shower/showersim set. Inputs holding
+  different run numbers are refused before anything is written unless `-ru`
+  (one run) or `-ss` (one run per file) says how to write them; the run
+  trees used to describe the first run only.
+
+- `StdVectorList` behaves like the list it claims to be (#201): `unsigned
+  char` / `char` elements read back as numbers, not characters (also from
+  files; `asnumpy()` no longer gives booleans); `+=` appends instead of
+  replacing; numpy `bool` and `uint64` arrays can be assigned; a failed
+  assignment keeps the field's previous value instead of emptying it;
+  negative indices, slices (also of an empty vector), slice assignment,
+  `del`, `insert`, `pop` and `remove` work, and an out-of-range index raises
+  `IndexError` instead of being ignored; `==` compares nested vectors
+  correctly; constructing a nested char vector no longer crashes cling.
+
+- The docs now show how to read one event's shower (#192): `datamodel.rst`
+  has a "Read one event" recipe in both `grand.dataio` (`TShower`, not
+  `TShowerSim`) and `grand.aoi` (`event.simshower`) forms, with a table of
+  field names and units in each API; `coordinates.rst` shows the geodetic to
+  `GRANDCS` conversion, why a due-north point has a small `y` (magnetic
+  north), and why points are `(3, 1)` arrays. The quickstart links both.
+  `tests/test_documented_recipes.py` runs the recipes.
+
+- Environment problems now name their remedy (#280): a missing compiled core
+  says to run `source env/setup.sh`; a missing `iminuit` or event-viewer
+  package names the `pip install -e ".[analysis]"` / `".[viewer]"` extra;
+  `topography.elevation` warns when points fall outside the downloaded tiles
+  (it returned NaN silently); `Efield2Voltage` refuses a read-only output
+  folder before computing instead of failing at the write.
+
+- **Utility scripts parse their arguments (#246).** `plot_tmax_vmax.py` and
+  `extract_rf_chain.py` read `sys.argv` or nothing: `-h` was a file name or
+  ran the whole computation, a bad index became 0, and output went into the
+  current folder. Both now use `argparse`, with `--savefig` and `-o`/
+  `--overwrite`. `get_version.py` printed `0.0.0` outside the repository root;
+  it now finds the version file from its own location. `plot_noise.py`
+  accepts only whole LST hours 0–23 and the known `du_type`s; the
+  `plot_rf_chain`/`plot_Vout_AT_Device`/`Compute_Vout_AT_Device_save` option
+  checks are argparse choices instead of a bare `Exception` listing the wrong
+  options; `Compute_Vout_AT_Device_save.py --savedata` takes `--out_dir`;
+  `snakemake_report.py` exits non-zero on a file with no Snakemake log lines.
+
+- **Routine operations no longer print alarms (#194).** Creating a tree in a
+  new file warned "No valid … TTree … Creating a new one" (now debug); every
+  read of an older file warned that a branch was "not found … will not be
+  filled" (now once per file and branch, at info, saying the file predates
+  the branch); `grand.aoi` narrated each read with `print`s ("Run information
+  loaded.", …), now debug logging. Notebook outputs are cleaner accordingly.
+
+- **Documentation facts that were stale or wrong (#258).** `TRun.software_version`
+  does not exist (the version fields are named now); the noise-table pages
+  speak of the pre-2026-09-07 problems in the past tense; `data_files.rst`
+  counts 14 tracked files and four download scripts; `sim2root.rst` says what
+  the tests cover and has current line and finding counts; `api.rst` gains the
+  eight undocumented modules and current docstring figures (702 functions);
+  `ci.rst` lists the workflows that exist and their triggers; installation no
+  longer says `setup.sh` downloads topography; the −5 dB VGA table is gone
+  from `simulation.rst`; `testing.rst` has today's numbers (998 passed, 72 %
+  coverage); the Handbook errata cover its installation commands and snippets
+  for removed code, and its orphan `:width:` lines are gone;
+  `make_notebooks.py --help` prints help instead of rebuilding everything.
+  The analysis angles are radians, as the troubleshooting page now says.
+
+- **Stale READMEs (#260).** `scripts/readme.md` covered four scripts with
+  outdated help; it now indexes all of them and reproduces each one's current
+  `-h` output, with the working two-step recipe. The CoREAS README named a
+  non-existent `coreas_pipeline.py` and the wrong script spelling;
+  `sim2root/README.md` had two sections numbered 3; `data/readme.md`,
+  `examples/dataio/readme.md`, the conda and quality READMEs pointed at paths
+  and modules that are gone; `env/readme.md` now links the Docker README;
+  `docs/readme.md` says how to build the docs; the sim2root API dump called
+  the muon profiles electron and positron ones.
+- **Stale or garbled documentation text (#193).** The coordinates page
+  promised a notebook that exists (now linked); the notebook page's sentence
+  about notebook 12's dependencies is readable; the quickstart's design
+  sketch is marked as not runnable; the Handbook's Directory Structure page
+  states the arms the right way round; notebook footers no longer say
+  "uncommitted changes" for a build made with its own commit. (Docstrings
+  with `jupyter-execute` blocks are left: the docs build runs them.)
+
+- **Notebooks 10–12: counts, units, jargon (#219).** Notebook 10 named five
+  scripts and listed four (`register_in_db` was missing) and explained
+  behaviour by commit history; notebook 11's bound check now says which bound
+  (every bounded fit is on the upper ring width, as the text says), the ring
+  width is stated to be dimensionless, and the table header is complete;
+  notebook 12's axis reads "West [km]" (y runs west) and its legend no longer
+  covers the point the text cites. (Notebook 07's 57 km is fixed with #210.)
+
+- **Notebook prose the outputs contradicted, second pass (#269).** Each
+  statement was checked against its own cell output and rewritten from it:
+  the per-bin noise spectrum does not fall steeply (05); the sky-temperature
+  ratio is 183 by median, 124 by extremes, and the LST swing 1.33–1.49 by arm
+  (05); only the 0, 5 and 20 dB VGA tables exist, and the gain comes from the
+  LNA and the VGA stage, not the cable (04); notebook 08's input is weak, so
+  its "peak" is noise and the swap is of field components (08); the 9 µs is
+  the spread of trace starts, and the epoch is sim2root's placeholder date
+  (09); the zenith/azimuth precision ratio is 1/cos θ, and the sky plot is a
+  map seen from above (11); ENU's φ runs from East (07); the viewer's band
+  and the Cherenkov-ring peak (12); angles in degrees for the trees, radians
+  in `grand.analysis` (06); an empty `grandlib_version` dates only
+  `Efield2Voltage` files (02, 05); the layout is two rings, both panels have
+  East to the right, and `GRANDCS` x is magnetic north (01).
+
+- **Notebook 08's own tolerance (#217).** It claimed "exactly zero, bit for
+  bit" and judged its table with a 10⁻⁹ tolerance, so on a machine where the
+  rerun differed by one float32 step its unchanged control row read "caught".
+  It now uses the test's tolerance (10⁻⁶ of the peak) and says that
+  reproduction is to float32 rounding. `notebooks.rst` says the notebooks run
+  from `notebooks/` with the repository root on `sys.path`.
+
+- **Notebooks 03–06: fixture, frequency grid and prose (#188, #189, #190).**
+  - Notebook 06's fixture put Xmax straight above the core for an 85°
+    shower, so every run warned that the geometry was inconsistent; Xmax is
+    now on the shower axis. The warning itself now says its angles are
+    offsets from the axis, not zeniths.
+  - With a consistent geometry the per-arm numbers change, and the prose is
+    rewritten from them: signal-to-noise about 5 on X and 3.4 on Y, about
+    0.01 at 1 µV/m, open-circuit voltages 117 : 115 : 35 µV for a field of
+    1.0 : 0.6 : 0.2, and the Z arm "largest |ℓθ|", not "most sensitive".
+  - Notebook 05 placed 1 MHz-spaced noise into FFT bins 0.977 MHz wide,
+    shifting the band 2 % low; it now uses the bins' own frequencies, and
+    names the first argument as the local sidereal time.
+  - Notebook 03 gave one resonance for all arms; the Z arm's is near 50 MHz.
+    Notebook 04 evaluated the chain only on 30–250 MHz, so the band edges its
+    text describes could not be seen; it now runs 10–400 MHz.
+
+- **Conversion script options checked (#277, item 5).**
+  `convert_efield2voltage.py --target_duration_us 1e9` tried to allocate
+  terabytes; `--padding_factor nan` and `--calibration_smearing_sigma -1`
+  gave raw errors or were accepted; `convert_voltage2adc.py --seed -3` gave a
+  NumPy traceback and `--target_sampling_rate_mhz -5` exited 0. Each is now
+  refused with a `GRANDlib:` message before any work.
+
+- **`Efield2Voltage` and `Event` misuse is explained (#277, items 1–4).**
+  `compute_voltage_du`, `final_resample` and `save_voltage` before an event
+  was loaded raised `AttributeError`; they now say to call `get_event` first.
+  `du_idx=-1` silently took the last unit and `3.5` was reported as a bad
+  event index; `event_idx=True` loaded event 1; an `event_idx` given with
+  event and run numbers was ignored but kept. Each is now refused with a
+  `GRANDlib:` message. `Event` on a directory with only level-0 showers
+  crashed with the default `init_trees=True`; a missing event gave "zero-size
+  array"; one of `event_number`/`run_number` alone gave a `TypeError`; and
+  `write()` on an empty event "'NoneType' object is not iterable". These now
+  work or say what is wrong. (Item 5, script options, is covered by #233,
+  #265 and #288.)
+
+- **Nonsense inputs that passed silently (#288, items 1–3).**
+  `convert_efield2efield.py --add_noise_uVm inf` wrote NaN traces, and
+  `--target_sampling_rate_mhz 0.5` (GHz typed for MHz) wrote traces of a few
+  samples; infinite values are now refused, and a target rate must be 0 or at
+  least 10 MHz. `Efield2Voltage` refuses a run `t_bin_size` of 0, negative,
+  NaN or ≥ 1000 ns and traces under 16 samples, which failed with
+  `IndexError` deep in the interpolation. The T1 trigger refuses a NaN trace,
+  which it still triggered on. (A NaN e-field was already refused, #239.)
+
+- **Plane-wave fit: vertical showers and collinear antennas (#288, item 5).**
+  Equal arrival times -- a vertical shower over a flat array -- made the
+  solver fail with "function value is NaN"; the fit now returns the array's
+  normal (zenith 0). Antennas on one line returned `[nan nan]` with only a
+  `RuntimeWarning`; they are now refused with a message.
+
+- **`get_peak_amplitude` was biased by −4 % to +6 % (#288, item 4).** It took
+  the Hilbert envelope of the field's norm, which depends on the carrier
+  frequency. It now takes the norm of the per-channel envelopes, which gives
+  the true envelope to 0.2 %; `get_peak_time` uses the same envelope.
+
+- **Values almost certainly in the wrong unit warn (#266).** Frequencies in Hz
+  given to `galactic_noise` gave all zeros; a sampling rate in Hz, a time
+  step in seconds, angles in degrees where radians are expected, or peak
+  times in ns gave results wrong by orders of magnitude, all silently. A new
+  `grand.basis.validate.plausible` warns (`GRANDlibWarning`) outside generous
+  ranges per unit (`PLAUSIBLE`), and is applied where these values enter:
+  `galactic_noise`, `ADC.downsample`, both `get_fastest_size_fft`, `get_psd`,
+  `get_peak_time`, every analysis function's angles, and the plane-wave
+  fit's times.
+
+- **Input checks that vanished under `python -O` (#259).** Sixteen checks on
+  user input were `assert` statements: gone under `-O`, and otherwise an
+  empty `AssertionError`. They now raise `TypeError`/`ValueError` with a
+  `GRANDlib:` message: `Efield2Voltage.add`/`multiply` shapes and `du_idx`
+  (which now also accepts NumPy integers), `DetectorUnitNetwork` positions
+  and identifiers, `AntennaProcessing.set_out_freq_mhz`, the two
+  `interpol_at_new_x`, `Handling3dTraces`, `ElectricField` and
+  `get_fastest_size_fft`'s padding. Internal invariants stay asserts.
+
+- **sim2root cosmetics with consequences (#226, items 1–3).**
+  `IllustrateSimPipe.py --savefig` failed unless a `plots/` folder already
+  existed; it is now created. Without `-e` the output folder name had a double
+  underscore (`_CD__0000`); it is now `_CD_0000`. `-s MySite` changed only
+  `trun` and the folder name; the run-showersim and run-efieldsim trees now
+  carry it too. (Items 4–5, the event order in file names and the
+  one-argument converter's fixed time, are naming conventions left as they
+  are.)
+
+- **Argument messages in the conversion scripts (#233, items 1–2).**
+  `convert_efield2efield.py` failed with a bare `AssertionError` for a
+  negative noise, jitter or smearing, a negative rate or duration, and a
+  `--target_duration_us` shorter than the traces; each now says what is
+  wrong. `--padding_factor 0.5` was reported as "'extend_to_us' = 0 us is
+  shorter than the traces"; `Efield2Voltage` now names `padding_factor`.
+  The `--lst` message said "> 0h and < 24h" while accepting 0 and 24. (Item
+  3, the T1 trigger passing no unit on clean simulations, is for the trigger
+  group.)
+
+- **`T1_trigger_offline.py` parses its arguments (#183).** It read
+  `sys.argv[1]` directly, so `-h` was opened as a file and no argument gave
+  `IndexError`. It now has a usage message, `-o` for where the list goes, and
+  `--t1_param KEY=VALUE` as `convert_voltage2adc.py` has; the parser for those
+  moved to `grand.sim.detector.trigger.t1_config_from_params`, so both scripts
+  share it.
+
+- **Class access to a tree field (#191).** `TShower.zenith`, and so
+  `help(TShower.zenith)`, failed with `'NoneType' object has no attribute
+  '_zenith'`: the field descriptors did not handle class access. They now
+  return themselves, as Python descriptors do.
+
+- **`Efield2Voltage` checks its configuration (#265).** A misspelt key in
+  `params` (`add_noise_`) was ignored and the default used; the flags were read
+  by truthiness, so the string `'no'` turned the RF chain on; a negative or
+  NaN smearing sigma was accepted. Before any computation, unknown keys are
+  now refused with the list of valid ones, the four flags must be `True` or
+  `False`, `lst` must be 0–24 h and the numbers non-negative and finite.
+  `padding_factor` is checked in the constructor, and a single e-field file
+  (no run or shower tree) is refused with a message saying to give the
+  sim2root folder, instead of `AttributeError: 'DataFile' object has no
+  attribute 'trun'`. The defaults are public as `PARAM_DEFAULTS`.
+
+- **A file whose name level disagrees with its trees (#187).** A `run_..._L1_`
+  file holding level-0 trees made `DataDirectory` fail with an
+  `AttributeError` naming a tree nobody wrote; a file not named after a tree
+  type vanished from the directory without a word. The first now warns,
+  naming the file and both levels, and uses the trees' level; the second is
+  ignored with a warning. Notebook 02 shows the new behaviour.
+
+- **A misspelt tree field is refused (#202).** `t.zenit = 5` was accepted and
+  stored nowhere: the guard meant to catch it was assigned to each instance,
+  where Python never looks for `__setattr__`. It is now on the class, active
+  once the tree is built, and suggests the closest field ("did you mean
+  'zenith'?"). Turning it on found the same mistake in the repository, all
+  silently losing data:
+  - `sim2root.py` wrote the gamma and hadron longitudinal profiles under
+    names `TShowerSim` does not have (`long_pd_gammas`, `long_pd_hadr`); they
+    now reach `long_pd_gamma` and `long_pd_hadron`. The CoREAS converter
+    likewise wrote `long_pd_gamma` where `RawShowerTree` has `long_pd_gammas`.
+  - `sim2root.py` also assigned 13 other profiles (all-charged, nuclei,
+    neutrino, the low-energy and energy-deposit tables, their depth grid),
+    `atmos_refractivity` and `du_x/y/z`, none of which any GRANDROOT tree
+    has. They are still not written, now explicitly; whether to map the
+    energy profiles onto `TShowerSim`'s `*_elow` / `*_edep` fields is a
+    data-model decision left open.
+  - `grand.aoi` wrote five monitoring fields to `TVoltage`, which has none;
+    the ZHAireS converter set a slant depth with no field; a test set
+    `trace_ch` on a `TVoltage`, whose field is `trace`.
+
+- **Tree file patterns and lists (#205).** `TShower("dir/nomatch_*.root")`
+  with no match created a file literally named `nomatch_*.root`; it now raises
+  `FileNotFoundError`. A chain built from a pattern had no index, so
+  `get_event` found nothing; it is now indexed, as `DataFile`'s chains are. A
+  list of files is accepted, as `DataFile` accepts it; pattern matches are
+  chained in sorted order; and `is_tchain` is true for a chain from
+  `DataFile` too.
+
+- **`DataDirectory`: recursive scan and oddly named files (#204).**
+  `recursive=True` found nothing below the top folder, because the pattern
+  had no `**`. A file of a known type whose name does not end in
+  `_L<level>_<serial>.root` (`efield_copy.root`) aborted the whole folder
+  with `ValueError: invalid literal for int()`; it is now skipped with a
+  warning that names it.
+
+- **CoREAS converter appended to an existing output (#181).** The trees open
+  their file for appending, so converting a shower a second time -- or once,
+  next to the committed sample -- failed with `NotUniqueEvent`. An existing
+  output is now refused with a `GRANDlib:` message, or replaced with
+  `--overwrite`; `-o` chooses the folder (or, for one shower, the file). The
+  converter exits non-zero when given no option. The README and
+  `sim2root.rst` say where the output goes.
+
+- **Declination at Dunhuang overstated (#186).** The coordinates page and
+  notebook 01 said "a few degrees ... hundreds of metres over 10 km". It is
+  about 0.3° in 2020 (51 m at 10 km) and −0.03° in mid-2024 by the shipped
+  IGRF-13 model. Both now give the real size; the notebook computes it. The
+  move to IGRF-14 is a separate change.
+
+- **`get_traces_lengths` and `get_list_of_dus` (#200).** `get_traces_lengths`
+  looked for branches no tree has (`trace_x`, `trace_0`) and always returned
+  `None`; it now gives, for the loaded entry, each unit's channel lengths,
+  from `trace` or `trace_ch`. `get_list_of_dus` returned every unit in the
+  tree, contrary to its docstring; it now gives the loaded entry's units, and
+  `get_list_of_all_used_dus` the whole tree's.
+
+- **Tree datetimes are UTC (#203).** `creation_datetime` was taken in UTC but
+  stored as if it were local time, so it was off by the machine's UTC offset
+  (8 hours early in China), and read back in local time again. Datetimes are
+  now stored and read as UTC, naive datetimes are taken as UTC, and
+  `get_metadata_as_dict` gives 1970-01-01 for an unset `source_datetime`, as
+  the property does, instead of 0. The `utcnow()` deprecation warning on
+  every tree creation is gone.
+
+- **`copy_contents()` emptied the source (#282).** Copying a vector-of-vectors
+  field from another tree moved the source's inner vectors instead of copying
+  them, so the source's traces were left empty after the first copy, and a
+  loop that copied from the same entry twice wrote empty traces. The copy is
+  now element by element; the source is unchanged.
+
+- **Tree lookups take NumPy integers (#276).** `get_entry(np.int64(1))`,
+  the indices `np.where` gives, and `get_entry_with_index(t.run_number,
+  t.event_number)` -- whose values are `np.uint32` -- raised `TypeError` from
+  ROOT. Any integer is now accepted; a bool or a float is refused with a
+  `GRANDlib:` message.
+
+- **`sin_geomag_angle` on arrays (#214).** An array of angles gave a single
+  number, larger than 1: the norm ran over all the directions together. It is
+  now taken per direction; a scalar input still gives a float.
+
+- **Output folders and the ADC script's input (#180, #182).** `-od` with a
+  folder that did not exist yet failed with `FileNotFoundError` in
+  `convert_efield2voltage.py` and `convert_efield2efield.py`, and so did
+  `Efield2Voltage(output_directory=...)`; the folder is now created.
+  `convert_voltage2adc.py` documented a file but needed the folder; its help
+  now says folder, a voltage file in it is accepted too, and the "utput"
+  typo is gone.
+
+- **Effective length 1° off for every negative azimuth (#253).** The antenna
+  tables hold azimuth 0–360° inclusive (361 points, 360 repeating 0), and the
+  periodic wrap used the 361 points, so every direction with a negative
+  azimuth read the table one step off: 0.8 % on average, a factor of 3 near a
+  null. The wrap now uses the 360 steps of a turn. The pipeline reference
+  (`tests/sim/pipeline_golden.npz`) is regenerated for this change: it moved
+  by at most 5.8×10⁻⁵ of the trace peak.
+
+- **Documented commands that failed (#257).** `sim2root.rst`,
+  `simulation.rst`, `quickstart.rst` and the Handbook's Directory Structure
+  page gave commands that failed as written: the CoREAS converter without
+  `-d`, `sim2root.py` without `-sl`, and the voltage and ADC steps on single
+  files. Each now gives the working form: `-d proton`, `-sl GP300` (with a
+  common trace window for the two ZHAireS samples, #222), and the folder
+  `sim2root.py` wrote for both conversion steps. A new test reads the commands
+  out of the pages and runs them on the committed samples.
+  `convert_voltage2adc.py` says what it needs instead of failing with
+  `IndexError`, `sim2root.py -o` creates missing parent folders, the
+  `Efield2Voltage` docstring describes its input correctly, and the Handbook
+  errata list the failing commands.
+
+- **Tests for deliberate bugs the suite missed (#270).** A mutation audit
+  found five changes that passed every test. Each is now caught: the azimuth
+  of `Horizontal` from an (east, north, up) position, and its round trip
+  through ECEF; `final_resample`'s amplitude and output length at 2× and 0.5×
+  the rate; exact ADC counts at ±0.5 and ±1.5 LSB and full scale. The order of
+  `get_dus_indices_in_run` is pinned by the #199 test. Each new test was
+  checked against its mutation.
+
+- **Raw or reduced χ² in `TRecons`, and bounds that read 0 (#211).** The
+  committed `recons_CR_candidates.root` holds the raw χ², as `TRecons`
+  documents, but `main_AOI.py` and `main_DOI.py` wrote it divided by the
+  degrees of freedom, and notebook 11 read the file as reduced: its section 8
+  showed raw χ² under a "χ²/ndf" heading. The scripts now write the raw χ²;
+  the field docstrings give the right degrees of freedom (`du_count - 2` or
+  `- 4`, not `du_count`); notebook 11 divides, and its conclusions are
+  rewritten from the new numbers (PWF χ²/ndf 0.1–12, not "tens to over a
+  hundred"). Unfilled χ² and Cramér-Rao bound fields read NaN, not 0.0, which
+  looked like a perfect fit or no uncertainty. `examples/analysis/README.md`
+  records what the committed file holds.
+
+- **`sim2root.py`: one trace window per run, and checked options (#222).**
+  A run stores one `t_pre`/`t_post`; events with different windows were
+  written under the first event's, with traces of different lengths and no
+  warning. `sim2root.py` now checks every input before writing and stops,
+  asking for `--trigger_time_ns` and `--target_duration_us` (or `-ss`). The
+  window options are checked too: a duration of 0, a trigger at 0, or a
+  trigger after the end of the trace wrote all-zero traces or failed with a
+  bare error, and now stop with a `GRANDlib: sim2root:` message.
+
+- **`topography.distance` read a local direction as ECEF (#210).** TURTLE
+  needs an ECEF direction, the docstrings did not say so, and notebook 07
+  passed an (east, north, up) vector: straight down from 1500 m came out as
+  2.27 km. `distance` now takes `frame=` (an `LTP`, a `GRANDCS` or `"ENU"`)
+  and rotates the direction to ECEF; the docstrings name the frame. Without
+  `frame` the direction is still ECEF, as before. Notebook 07's section 4 is
+  rebuilt: the terrain changes the inclined path by a few per cent at the
+  shipped tile, not by "a factor of nearly six".
+
+- **Coordinates west of Greenwich, and conversions that returned nothing (#251).**
+  - `geoid_undulation(latitude=..., longitude=...)` returned NaN for a
+    negative longitude: the EGM96 map is indexed 0–360° and only the
+    `Geodetic` form wrapped the longitude. Both forms now wrap it and agree.
+    The known-issues entry, troubleshooting and notebook 07 are updated.
+  - `Horizontal` stored its location, basis and vector on the class, so a
+    second `Horizontal` changed the first. They are now per instance.
+  - `Geodetic.geodetic_to_horizontal` and the `*_to_grandcs` methods
+    returned `None`. They now return the converted coordinates; called
+    without a `location`, the GRAND-frame ones warn that the default origin
+    is used.
+
+- **Silent failures and global side effects (#256, in part).**
+  - The Newton solver behind the Cherenkov angle returned whatever iterate it
+    had reached when it did not converge (-610961.3 for x² + 1), without a
+    word, and divided by zero when started at 0. It now warns and returns NaN,
+    and handles a zero start.
+  - `DataFile` raised a string when it could not index a chain, which is
+    itself a `TypeError` that lost the message; and a read error was taken
+    for an absent tree. Both now raise proper errors.
+  - `EventList.get_event` and `Event.fill_event_from_trees` printed their
+    errors and returned `None` or `False`, which callers and iteration passed
+    on; they now raise `ValueError`, `LookupError` or `FileNotFoundError`.
+  - `import grand` turned every `ComplexWarning` in the user's own code into
+    an error; the filter now applies to `grand.geo.coordinates` only.
+  - The `turtle.Map` cache loaded one file twice under two spellings and
+    never freed its C maps; `create_output_for_logger` added handlers on
+    every call (each message printed once per call), changed the caller's
+    list and truncated its log file each time; `logger.exception` was used
+    outside `except` blocks, logging "NoneType: None". All fixed.
+  (The fallback chains in `descriptors.py` and the remaining informational
+  prints in `grand.aoi` are fixed in a later entry.)
+
+- **RF-chain configuration errors are raised, not printed (#255).** A
+  component missing from `rf_chain_config.xml` printed "ERROR: ..." and then
+  failed with `NameError: name 'Nonec' is not defined`; an invalid axis
+  printed an error and returned `None`, which callers passed on until an
+  unrelated `TypeError`. `get_axis_filename` now raises `KeyError`,
+  `ValueError` or `FileNotFoundError` naming the component and the axis. The
+  duplicate definitions of `read_config` and `get_axis_filename` are gone, the
+  configuration is read on first use rather than at import, the VGA gain check
+  no longer relies on an `assert`, and a tautological `assert` is removed.
+
+- **`get_files_from_db.py` reports what it does (#245).** Files of 256 kB or
+  less that the transfer database lists were moved to a `crap/` folder with no
+  message, listed files that did not exist were dropped silently, a database
+  whose name did not match `<tag>_<site>_` gave `[]` and exit 0, and a
+  mistyped path created an empty database before failing on "no such table"
+  (also in `get_files_list.py`). The move is kept (a question for the pipeline
+  owners) but every move and every missing file is reported on stderr; a
+  misnamed, missing or unreadable database exits 2 with a message; the
+  database is opened read-only, and the query takes its tag as a parameter.
+
+- **A wheel carries the data files the code opens (#278).** `package-data`
+  listed only `dataio/version`, so a wheel built where setuptools does not see
+  the git checkout lacked `dataio/vector_filling.C` and
+  `sim/detector/rf_chain_config.xml`: `import grand.dataio` printed a ROOT
+  error and the first vector branch written failed with an unrelated
+  `AttributeError`, and `grand.sim.efield2voltage` did not import. Both are
+  now listed, `grand.dataio` refuses to import without its macro with a
+  message saying why, and a test builds the wheel and uses it from outside
+  the source tree.
+
+- **The conversion scripts can be run again on the same folder (#240).**
+  `convert_voltage2adc.py` deleted its earlier output, then failed with
+  `NotUniqueEvent` and left none; `convert_efield2voltage.py` failed the same
+  way on a re-run, although `-o`'s help says an existing file is overwritten;
+  and a run that failed late, on a parameter checked only after the
+  computation, left a stub file that broke every later run on the folder.
+  Both scripts now write under a hidden temporary name and move the file into
+  place only when it is complete, so the earlier output survives a failed run;
+  `Efield2Voltage` checks its parameters before computing and leaves nothing
+  behind when it fails; and `DataDirectory` skips a file holding no GRAND tree,
+  with a warning. `Efield2Voltage` also records the analysis level of the
+  e-field it read: a `voltage_*_L1_*` file said level 0, and the next scan of
+  its folder failed.
+
+- **`--seed` makes calibration smearing reproducible (#230).** The smearing
+  drew from NumPy's global generator, which the seed never reached, so two runs
+  with the same seed differed by up to 18583 µV; it now draws from a generator
+  seeded with the seed and the event number. Jitter without a seed crashed
+  (`None > 0`); seed 0 counted as no seed, in `Efield2Voltage` and
+  `convert_efield2efield.py`; and negative seeds were accepted. Now 0 is a
+  seed like any other, no seed means a fresh realisation, and a negative seed
+  is refused.
+
+- **`convert_efield2efield.py` writes `du_count`, honours `-o`, and handles
+  empty events and inputs (#248).** `du_count` was never set, so every event
+  of its output read as having no antenna; `-o` with a directory in it was
+  cut to the file name and written into the input folder; an event whose
+  shower hit no antenna crashed with `IndexError` (it is now written empty, as
+  at every other level, #91); and an input with no events logged "Exiting."
+  and went on to write empty output files (it now stops, writing nothing).
+
+- **The sim2root pipeline example runs as documented (#221).** `RunSimPipe.py`
+  and `RunSimPipeNoJitter.py` never passed the site layout that sim2root
+  requires, so the first step failed and the next ones ran on whichever
+  directory was newest (in `sim2root/Common`, a committed sample); the voltage
+  step was also given its output path twice over (`DIR/DIR/voltage_...`).
+  Both scripts now take a required `-sl`, pass it on, take the directory
+  sim2root created rather than the newest one, and stop at the first failed
+  step. The sim2root README examples gain `-sl` (and lose a stray `python`).
+  `RunSimPipe.py ../ZHAireSRawRoot ZHAireS -sl GP300` was run end to end.
+
+- **`recons_ADF` no longer returns its starting point as a fit (#286).** The
+  loss divides by the antenna amplitudes, so a zero amplitude (an antenna
+  below one ADC count) made it infinite everywhere and the fit returned the
+  input angles and the initial width and amplitude, without a word; a source
+  at or below the antennas made the minimizer run for minutes before doing
+  the same. Non-positive amplitudes and a source not above the antennas are
+  now refused with a `GRANDlib:` error naming the antennas; a fit whose loss
+  ends non-finite raises; and a fit the minimizer reports as not converged
+  logs a warning.
+
+- **The README quickstart works (#185).** It gave `Efield2Voltage` and
+  `convert_efield2voltage.py` a single e-field file, which fails: both need a
+  simulation directory holding the run and shower trees as well. The
+  quickstart now uses a directory, says what it must hold, and both commands
+  were run as written on the committed RUN1 sample.
+
+- **`Handling3dTraces` handles one-antenna events (#287).** `np.squeeze`
+  dropped the antenna axis, so `get_tmax_vmax()` and `get_snr_and_noise()`
+  crashed on an event with one antenna, and `interpol="no"` returned 0-d
+  arrays. They now return one value per antenna for any number of antennas,
+  and an unknown `interpol` raises a `ValueError` naming the accepted values
+  (it raised "No active exception to reraise").
+
+- **The ADC step no longer turns NaN or huge voltages into the most negative
+  count (#239).** Casting a NaN, an inf or a voltage beyond the int64 range to
+  an integer gave -9223372036854775808, whose absolute value is negative too,
+  so saturation never clipped it: a large positive voltage came out as the
+  most negative count, and the failure surfaced only later, as an int16 range
+  error from the tree. `ADC.process` now refuses NaN and inf, naming the first
+  (unit, channel, sample) index; bounds the value before the integer cast, so
+  huge voltages saturate with the right sign; and logs how many samples
+  saturated, per unit. `Efield2Voltage` refuses an e-field with NaN or inf
+  samples, naming the event and the units.
+
+- **`extract_events.py` no longer deletes the target directory (#244).**
+  `-ow` removed the whole target directory with whatever else was in it (with
+  target `.`, the current directory). It now replaces only the GRAND files the
+  script writes, and refuses `.`, a parent of the current directory, or a
+  directory holding a source. The event list is read and checked before the
+  target is touched: blank and `#` lines are skipped, a repeated line is
+  dropped with a warning, a bad line is reported with its number, and a path
+  with a comma can be quoted. An event already in the target is skipped
+  instead of aborting the job; a requested event that is not found makes the
+  script exit 1; `-c` now stores its comment in the trees written. The trees
+  of the two e-field levels share a name, so only one of them was written and
+  the other file was left without a tree; both are written now.
+
+- **The `open_grand_*` scripts no longer run the file name as code (#184).**
+  `open_grand_file.py`, `open_grand_directory.py` and
+  `open_grand_analysis_prompt.py` pasted the name into the Python command they
+  start the shell with, so a quote in it broke the session and a crafted name
+  ran arbitrary code. The name now reaches the shell through the environment.
+  `open_grand_analysis_prompt.py` also printed `sys.argv[1]` as the directory,
+  which is the first option when one is given.
+
+- **Appending events slows down less (#283, in part).** Every time a tree was
+  opened it listed all run and event numbers, reading the whole tree, and
+  `Efield2Voltage` reopened and rewrote its output file for every event, so
+  each event was slower than the last (about 16 ms per event at 400 events,
+  40 ms at 2000). Opening a tree no longer lists its events: that is done when
+  a `fill()` first needs it for the duplicate check. `compute_voltage()` keeps
+  its output tree open and writes it once at the end. That also fixes
+  `append_file=False`, which deleted the file before every event, so only the
+  last event was kept, and crashed when the output directory was a string.
+  Still open in #283: `DataDirectory` on thousands of files.
+
+- **Two objects on one tree keep their own values (#273).** Two tree objects
+  opened on one file wrapped the same ROOT tree, whose branches read into and
+  fill from the buffers of whichever object bound them last: one object's
+  `fill()` wrote the other's event number, and reading with one changed the
+  other's fields. Each object now takes the branches back before it uses the
+  tree, so it reads into and fills from its own fields.
+
+- **Reading events no longer changes input files or crashes at exit (#234).**
+  `Event.close_files()` wrote every tree, including those only read, so the
+  input files grew a new key cycle each time (and the call could hang); it now
+  writes only trees the event filled for writing (with the `Event.write`
+  rewrite, #212). And a script that only read an event crashed or hung at exit
+  in about a third of the runs (exit 129/139, in ROOT's `EndOfProcessCleanups`):
+  ROOT deleted the trees after Python had begun freeing the buffers their
+  branches point to. A tree object now detaches its buffers from the tree when
+  it is released, and at exit, before ROOT's own cleanup, every tree ROOT still
+  holds is detached; nothing is closed there, and no tree that may already be
+  gone is touched. 30 of 30 runs exit cleanly.
+
+- **Using a tree after its file was closed raises instead of crashing (#274).**
+  `close_file()`, `DataFile.close()` and `DataDirectory.close()` delete the
+  trees stored in the file, and any later use of one -- through the object
+  that closed it or another object on the same file -- killed the interpreter
+  (exit 129, no traceback). Every tree object stored in a file is now marked
+  when the file closes, and `get_entry()`, `fill()`, `write()`, `draw()` and
+  the other methods that read the tree raise a `RuntimeError` saying the file
+  was closed. A tree kept in memory after `write("file.root")` is unaffected.
+
+- **Filled entries are no longer dropped silently (#275).** Entries filled but
+  not written were discarded without a word when a `with` block ended or
+  `stop_using()` was called. Leaving a `with` block normally now writes them,
+  as leaving `with open(...)` flushes a file; if the block ends with an
+  exception, or `stop_using()` is called with entries pending, they are
+  discarded with a `GRANDlibWarning` giving the count.
+
+- **`EventList` and `DataFile` say what is wrong with an input (#235).**
+  Plausible inputs failed deep inside with errors that named nothing useful.
+  Now:
+  - a shower file without a run tree raises `FileNotFoundError` saying the
+    run tree is needed (it was `'NoneType' object has no attribute
+    'origin_geoid'`);
+  - a tree that is not a GRAND tree is skipped with a warning, and a file
+    holding none raises `ValueError` (it was `attribute name must be string`);
+  - `entry_number` must be an integer within the input (out of range it was
+    `zero-size array to reduction operation minimum`; `True` was read as 1);
+  - a closed `ROOT.TFile`, or an empty, text or damaged file, is refused with a
+    `GRANDlib:` message, and `Event.file` accepts a path object;
+  - data holding only raw voltages is read without `use_trawvoltage=True`;
+  - tree types guessed from names no longer take `tvoltage` for
+    `TRawVoltage` or `trunvoltage` for `TRun`.
+
+- **`EventList` options take effect (#213).** `start_event` and `start_entry`
+  were stored but ignored by iteration; they now set where it starts, and
+  refuse values the input does not hold. A per-call `tefield_level` was
+  ignored for directories (level 1 came back when level 0 was asked for) and
+  stuck to later calls once used; it now applies to that call only, and a
+  level the data does not hold raises `ValueError` instead of giving
+  `efields=None`. `trawvoltage_channels` must name exactly three channels (it
+  crashed with `IndexError` on fewer), and after a `use_trawvoltage=True` call
+  the next default call no longer fails: the voltage tree is chosen on every
+  call, and data holding only raw voltages is read as such. The docstrings
+  now say that every event returned is the same, refilled `Event` object.
+
+- **`Event.write` (#212).** `overwrite=True` with `out_dir` deleted the whole
+  output directory, with anything else the user kept there; it now replaces
+  only the files of the tree kinds it writes. `write()` with no destination
+  crashed with `AttributeError`; it now says to give `out_dir` or file names.
+  `common_filename` always failed with `TreeExists`, because `overwrite` was
+  not passed on, and the failed write left the `Event`, and the `EventList` it
+  came from, reading showers with zenith 0 and Xmax 0: writing now builds its
+  own trees and never replaces the ones the event was read from. It adds the
+  event to the file, or with `overwrite=True` replaces those trees; parts the
+  event does not hold are skipped, and simulated events (no weather data, one
+  sampling time) no longer crash the writer.
+
+- **`get_dus_indices_in_run` follows the event's order (#199).** It returned
+  the matching indices in the run's order, so whenever an event listed its
+  units in another order than the run, antenna positions and sampling times
+  (in `Efield2Voltage`, `convert_voltage2adc.py`, `convert_efield2efield.py`
+  and `grand.aoi`) were paired with the wrong traces; units missing from the run
+  were dropped silently. It now returns the indices in the event's order and
+  raises for a unit the run does not hold. Every committed sim2root sample
+  lists units in run order, so existing simulation outputs were not affected.
+
+- **`write("other.root")` on a tree stored in a file writes a full copy
+  (#198).** It moved the tree to the new file with `SetDirectory()`, which left
+  the data already written behind: the new file referenced baskets it did not
+  hold, and read back as zeros with zlib errors. The tree is now copied, every
+  entry including those filled but not yet written, and the tree object stays
+  attached to its own file.
+
+- **`write()` no longer replaces a tree silently (#197).** Writing a new tree
+  object into a file that already held a tree of the same name replaced it,
+  with `overwrite=False` as with `overwrite=True`, so earlier events were lost;
+  and `overwrite=True` opened the file with "recreate", which also deleted every
+  other tree in it. Without `overwrite` this is now refused with a message
+  saying how to add events (open the file with the tree class and fill that);
+  with it, only the tree of that name is replaced.
+
+- **Listing and drawing a tree no longer change the values it holds (#196).**
+  `TTree::Draw()` reads every entry into the buffers the tree object is bound
+  to, so after `get_list_of_events()`, `draw()`, `get_traces_lengths()` or the
+  duplicate check in `fill()`, some fields held the last entry's values and
+  others the loaded entry's (`event_number` 3 with entry 1's zenith).
+  Worse, values just set for the next `fill()` were replaced too, so the
+  wrong event could be written. The fields a draw touches are now saved
+  before it and restored after it.
+
+- **`DataDirectory` keeps every file of a level (#195).** Files were grouped
+  by a fixed field of their name, so names of different lengths
+  (`shower_<date>_<time>_0-0_L1_0000.root` and
+  `shower_<date>_<time>_<run>_0-0_L1_0000.root`) of the same level fell into
+  two groups, and one replaced the other: `examples/analysis/reconstructed_events_AOI`
+  showed 1 of its 10 showers. The level is now read from the `L<n>` field
+  before the serial number, wherever it is.
+
 - **Several processes writing one ROOT file no longer lose events or
   corrupt it (#281).** Two batch jobs with the same output, or a resubmitted
   job, interleaved their writes: with three processes appending to one file,
@@ -28,7 +991,9 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   refused when it tries to write, since its view is out of date. Everything
   reported as written is in the file (checked over 10 runs of 4 writers).
   Reading takes no lasting lock, and one process writing a file is unchanged.
-  Where `flock` is unavailable the old behaviour remains.
+  Where `flock` is unavailable the old behaviour remains. A process waits up to
+  2 s for a lock before refusing: processes started together briefly met each
+  other's read lock and could all give up.
 
 - **No antenna response from below the antenna's horizon (#285).** The
   effective-length lookup took the zenith row modulo the table size, so a

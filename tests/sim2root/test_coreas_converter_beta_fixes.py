@@ -110,3 +110,72 @@ def test_antenna_list_and_traces_are_cross_checked(tmp_path, how, message):
     assert done.returncode != 0
     assert message in done.stderr
     assert not (work / "Coreas_004100.rawroot").exists()
+
+
+def _run(work, *args):
+    return subprocess.run([sys.executable, "CoreasToRawROOT.py", *args], cwd=work,
+                          capture_output=True, text=True, timeout=900)
+
+
+def test_an_existing_output_is_refused_or_replaced(tmp_path):
+    r"""#181: a second conversion appended to the previous output and failed with NotUniqueEvent."""
+    work = _workdir(tmp_path, with_event_block=False)
+    first = _run(work, "--file", "proton/SIM004100.reas")
+    assert first.returncode == 0, first.stderr[-2000:]
+    assert (work / "Coreas_004100.rawroot").is_file()
+
+    again = _run(work, "--file", "proton/SIM004100.reas")
+    assert again.returncode != 0
+    assert "GRANDlib: CoreasToRawROOT:" in again.stderr and "--overwrite" in again.stderr
+    assert "NotUniqueEvent" not in again.stderr
+
+    replaced = _run(work, "--file", "proton/SIM004100.reas", "--overwrite")
+    assert replaced.returncode == 0, replaced.stderr[-2000:]
+
+    elsewhere = _run(work, "-d", "proton", "-o", str(tmp_path / "out" / "raw"))
+    assert elsewhere.returncode == 0, elsewhere.stderr[-2000:]
+    assert (tmp_path / "out" / "raw" / "Coreas_004100.rawroot").is_file()
+
+
+def test_no_option_is_an_error(tmp_path):
+    work = _workdir(tmp_path, with_event_block=False)
+    assert _run(work).returncode != 0
+
+
+@pytest.mark.parametrize("with_event_block", [False, True], ids=["inp_fallback", "reas_block"])
+def test_one_unit_one_numbering_and_no_fake_values(tmp_path, with_event_block):
+    r"""#232: the field strength was in Gauss or mT, RawMeta swapped run and
+    event, and unknown times and heights were written as 1996 s, 19961026 ns
+    and 1 m."""
+    import numpy as np
+
+    from sim2root.Common.raw_root_trees import RawMetaTree, RawShowerTree
+
+    work = _workdir(tmp_path, with_event_block)
+    _convert(work)
+    out = str(work / "Coreas_004100.rawroot")
+    shower = RawShowerTree(out)
+    shower.get_entry(0)
+    assert float(shower.magnetic_field[2]) == pytest.approx(56.482, abs=1e-3)   # µT, as ZHAireS
+    numbers = int(shower.run_number), int(shower.event_number)
+    assert numbers == (1, 4100)
+    assert np.isnan(float(shower.first_interaction))         # no CORSIKA log in the sample
+    assert np.all(np.isnan(np.asarray(shower.primary_inj_alt_shc, dtype=float)))
+    shower.stop_using()
+
+    meta = RawMetaTree(out)
+    meta.get_entry(0)
+    assert (int(meta.run_number), int(meta.event_number)) == numbers
+    assert (int(meta.unix_second), int(meta.unix_nanosecond)) == (0, 0)
+    meta.stop_using()
+
+
+def test_the_unshipped_horizon_model_is_not_offered():
+    r"""#232: --du_type Horizon was offered, then failed on files the data model lacks."""
+    from grand.sim.detector.antenna_model import AntennaModel
+
+    with pytest.raises(ValueError, match="GP300_mat"):
+        AntennaModel("Horizon")
+    done = subprocess.run([sys.executable, str(ROOT / "scripts" / "convert_efield2voltage.py"),
+                           "x", "--du_type", "Horizon"], capture_output=True, text=True, timeout=300)
+    assert done.returncode == 2 and "invalid choice: 'Horizon'" in done.stderr

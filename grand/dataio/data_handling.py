@@ -1,15 +1,20 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import functools
 import glob
+import re
 import os
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
 
 from grand.basis import validate as _validate
+from grand.basis.validate import GRANDlibWarning
 import ROOT
 import datetime
+import warnings
 
 from grand.dataio import logger, DataTree, MotherEventTree
+from grand.dataio.data_tree import _to_unix
 import grand.dataio
 from grand.dataio import file_lock as _file_lock
 
@@ -17,14 +22,17 @@ from grand.dataio import file_lock as _file_lock
 ROOT.gErrorIgnoreLevel = ROOT.kFatal
 
 ## Class holding the information about GRAND data in a directory
+#: Names of the trees and file lists a DataDirectory may lack: ``tshower``,
+#: ``tshower_l1``, ``ftshower``, ``ftshowers``, ``ftshower_l0``, ...
+_ABSENT_TREE = re.compile(r"^f?t(run|runvoltage|runrawvoltage|rawvoltage|adc|voltage|efield|shower|"
+                          r"runefieldsim|runshowersim|showersim|runnoise)(s|_l\d+)?$")
+
+
 class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
     def __init__(self, dir_name: str, recursive: bool = False, analysis_level: int = -1, sim2root_structure: bool = True):
-        """
-        @param dir_name: the name of the directory to be scanned
-        @param recursive: if to scan the directory recursively
-        @param analysis_level: which analysis level files to read. -1 means max
+        """Indexes the GRAND files of a directory.
 
         Parameters
         ----------
@@ -52,7 +60,30 @@ class DataDirectory:
 
         self.tree_file_types = ["ftruns", "ftrunrawvoltages", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]
 
+        # -1 is "the highest"; other negative levels silently meant it too (#236)
+        if isinstance(analysis_level, bool) or not isinstance(analysis_level, (int, np.integer)) \
+                or analysis_level < -1:
+            raise ValueError(_validate.message(
+                "DataDirectory", "analysis_level must be -1 (the highest present) or a level >= 0, "
+                "got %r" % (analysis_level,)))
+
+        self._claimed = set()
         self.init_structure()
+        # A file no tree type claims was ignored without a word (#187)
+        unclaimed = [el.filename for el in self.file_handle_list if el.filename not in self._claimed]
+        for name in unclaimed:
+            warnings.warn("GRANDlib: DataDirectory: %s is not named after a GRAND tree type "
+                          "(run_, efield_, voltage_, ...); ignored" % name,
+                          GRANDlibWarning, stacklevel=2)
+        self.unrecognised_files = unclaimed
+        # A level that is not present gave the highest one's absence: every
+        # tree None, with no word (#236)
+        if analysis_level != -1:
+            present = sorted({level for name in self.tree_file_types for level in getattr(self, name, {})})
+            if present and analysis_level not in present:
+                raise ValueError(_validate.message(
+                    "DataDirectory", "%s holds no files at analysis level %d; it has levels %s"
+                    % (self.dir_name, analysis_level, ", ".join(map(str, present)) or "none")))
 
         # # Set the structure type depending on the dir name
         # exp_structure = False
@@ -87,11 +118,12 @@ class DataDirectory:
         AttributeError
             If no such tree was found in the directory.
         """
-        trees_to_check = ["trun", "trunvoltage", "trunrawvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
-        if any(s in name for s in trees_to_check):
+        # A tree or file list this directory lacks reads as None.  Any name
+        # merely containing a tree name did, so a typo such as "trunk" gave
+        # None instead of an error (#236).
+        if _ABSENT_TREE.match(name):
             return None
-        else:
-            raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
+        raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
 
     def get_list_of_files(self, recursive: bool = False):
         """Gets list of files in the directory
@@ -106,7 +138,10 @@ class DataDirectory:
         list of str
             Paths of the ROOT files found.
         """
-        return sorted(glob.glob(os.path.join(self.dir_name, "*.root"), recursive=recursive))
+        # "**" is what makes glob recurse; without it recursive=True found
+        # nothing below the top folder (#204)
+        pattern = os.path.join(self.dir_name, "**", "*.root") if recursive else os.path.join(self.dir_name, "*.root")
+        return sorted(glob.glob(pattern, recursive=recursive))
 
     def get_list_of_files_handles(self):
         """Go through the list of files in the directory and open all of them
@@ -146,7 +181,15 @@ class DataDirectory:
             whole directory with ``IndexError: list index out of range`` and no
             indication of which file was at fault.
             """
-            el = Path(x).name.split("_")
+            name = Path(x).name
+            el = name.split("_")
+            # The level is the "L<n>" field just before the serial number,
+            # wherever it falls: names carry 4, 6 or 7 fields depending on
+            # the producer, and a fixed position put files of one level into
+            # different groups, one of which then replaced the other (#195).
+            level = re.search(r"_(L\d+)_[^_]*\.root$", name)
+            if level:
+                return el[0], level.group(1)
             if len(el) == 4:
                 return el[0], el[2]
             if len(el) > 4:
@@ -159,9 +202,55 @@ class DataDirectory:
         from itertools import groupby
         for key, filenames in groupby(sorted(self.file_list, key=split_filenames), split_filenames):
             filenames = list(filenames)
-            file_handle_list.append(DataFile(filenames))
+            # A file with no GRAND tree, such as the stub a failed run left,
+            # is skipped with a warning: it used to break every later scan of
+            # the folder with an AttributeError (#240)
+            try:
+                file_handle_list.append(DataFile(filenames))
+            except ValueError as error:
+                if "holds no GRAND tree" not in str(error):
+                    raise
+                logger.warning("%s; skipped (delete it if a failed run left it)", error)
 
         return file_handle_list
+
+    def _files_by_level(self, flistname):
+        r"""Returns ``{level: DataFile}`` for the files of one tree type.
+
+        The level is read from ``_L<n>_<serial>.root``.  A file of the type
+        whose name does not end that way (``efield_copy.root``) is skipped
+        with a warning naming it: the level was taken from a fixed position
+        with ``int()``, and one such file aborted the whole folder (#204).
+        """
+        prefix = flistname[2:-1] + "_"
+        files = {}
+        for el in self.file_handle_list:
+            name = Path(el.filename).name
+            if not name.startswith(prefix):
+                continue
+            level = re.search(r"_L(\d+)_[^_]*\.root$", name)
+            if level is None:
+                warnings.warn("GRANDlib: DataDirectory: %s does not end in _L<level>_<serial>.root; "
+                              "skipped" % el.filename, GRANDlibWarning, stacklevel=3)
+                if hasattr(self, "_claimed"):
+                    self._claimed.add(el.filename)    # warned about once already
+                continue
+            level = int(level.group(1))
+            # The trees' analysis_level decides: a name saying _L1_ over
+            # level-0 trees made the lookup fail, or the file vanish (#187)
+            tree = flistname[1:-1]
+            levels = sorted(int(a[len(tree) + 2:]) for a in vars(el)
+                            if a.startswith(tree + "_l") and a[len(tree) + 2:].isdigit())
+            if levels and level not in levels:
+                warnings.warn("GRANDlib: DataDirectory: %s is named level %d but its %s tree is level "
+                              "%s; level %d is used" % (el.filename, level, tree,
+                                                        "/".join(map(str, levels)), levels[-1], ),
+                              GRANDlibWarning, stacklevel=3)
+                level = levels[-1]
+            files[level] = el
+            if hasattr(self, "_claimed"):
+                self._claimed.add(el.filename)
+        return files
 
     # Init the instance with sim2root structure files
     def init_structure(self):
@@ -173,7 +262,7 @@ class DataDirectory:
         for flistname in self.tree_file_types:
             # Assign the list of files with specific tree type to the class instance
             # setattr(self, flistname, {int(Path(el).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, self._files_by_level(flistname))
 
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
@@ -200,7 +289,7 @@ class DataDirectory:
         for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
             # setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, self._files_by_level(flistname))
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
@@ -227,7 +316,7 @@ class DataDirectory:
         for flistname in ["ftruns", "ftrunrawvoltages", "ftadcs", "ftrawvoltages"]:
         # for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, self._files_by_level(flistname))
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
@@ -291,6 +380,44 @@ class DataDirectory:
             for tree in trees_to_check:
                 if tree_inst := getattr(self, f"{tree}_l{level}"):
                     return tree_inst.get_list_of_events()
+
+class _TreeInfo(dict):
+    r"""A tree's metadata, some of it computed on first access (#283).
+
+    ``info["dus"]`` and ``info.get("dus")`` work as before; the value is
+    computed when first asked for, and is absent (``KeyError``, or the
+    default of ``get``) when the tree has none.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._loaders = {}
+
+    def lazy(self, key, loader):
+        r"""Computes ``self[key]`` with ``loader()`` when it is first asked for."""
+        self._loaders[key] = loader
+
+    def _load(self, key):
+        loader = self._loaders.pop(key, None)
+        if loader is not None:
+            value = loader()
+            if value is not None:
+                self[key] = value
+
+    def __missing__(self, key):
+        self._load(key)
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        self._load(key)
+        return dict.get(self, key, default)
+
+    def __contains__(self, key):
+        self._load(key)
+        return dict.__contains__(self, key)
+
 
 def _open_root_file(name):
     r"""Opens a ROOT file for reading, with a clear error if it cannot be.
@@ -396,6 +523,10 @@ class DataFile:
                 self.filename = filename[0]
                 self.flist = filename
         elif type(filename) is ROOT.TFile:
+            # A closed file gave an empty DataFile with no error (#235)
+            if not filename.IsOpen():
+                raise ValueError(_validate.message(
+                    "DataFile", "the ROOT.TFile %s is closed" % filename.GetName()))
             self.f = filename
             self.filename = self.f.GetName()
         else:
@@ -412,6 +543,12 @@ class DataFile:
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
+            # A tree that is not a GRAND tree is skipped: its unknown type
+            # crashed with "attribute name must be string, not 'NoneType'" (#235)
+            if not isinstance(tree_info.get("type"), str) or not hasattr(grand.dataio, tree_info["type"]):
+                logger.warning("%s: tree %s is not a GRAND tree; skipped",
+                               self.filename, tree_info["name"])
+                continue
 
             # If we want a TChain
             if self.is_tchain:
@@ -427,16 +564,22 @@ class DataFile:
                 total_elements = int(np.sum(np.frombuffer(t.GetV1(), dtype=np.float64, count=count)))
                 t.SetEstimate(total_elements+1)
 
-                # Build the index for this chain - it is not generated automatically from the Trees indices
-                try:
-                    # Assuming en Event tree
-                    t.BuildIndex("run_number", "event_number")
-                # If failed, try as a run tree
-                except:
-                    try:
-                        t.BuildIndex("run_number")
-                    except:
-                        raise("Unable to build index for the tree")
+                # Build the index for this chain - it is not generated automatically
+                # from the Trees indices.  By the branches present: a run tree
+                # indexed by (run_number, event_number) raised nothing, but got
+                # an index that found no run, so a folder of two runs failed
+                # every get_run() (#241)
+                if t.GetBranch("event_number"):
+                    built = t.BuildIndex("run_number", "event_number")
+                elif t.GetBranch("run_number"):
+                    built = t.BuildIndex("run_number")
+                else:
+                    built = -1
+                if built < 0:
+                    # Raising a string is itself a TypeError, which lost
+                    # the message (#256)
+                    raise RuntimeError(_validate.message(
+                        "DataFile", "unable to build an index for the tree %s" % t.GetName()))
 
                 # Set metadata from the first TTree in the TChain
                 temp_metadata = self.get_tree_info(t).keys()
@@ -446,7 +589,7 @@ class DataFile:
                             t.GetUserInfo().Add(ROOT.TNamed(key, value))
                         else:
                             if isinstance(value, datetime.datetime):
-                                t.GetUserInfo().Add(ROOT.TParameter(int)(key, int(value.timestamp())))
+                                t.GetUserInfo().Add(ROOT.TParameter(int)(key, _to_unix(value)))
                             else:
                                 t.GetUserInfo().Add(ROOT.TParameter(int)(key, value))
 
@@ -454,9 +597,14 @@ class DataFile:
                 tree_info["evt_cnt"] = t.GetEntries()
 
             # Add the tree to a dict for this tree class
+            tree_info = _TreeInfo(tree_info)
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
 
             self.dict_of_trees[tree_info["name"]] = t
+
+        if not self.dict_of_trees:
+            raise ValueError(_validate.message(
+                "DataFile", "%s holds no GRAND tree" % self.filename))
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
@@ -489,9 +637,9 @@ class DataFile:
                 if traces_lenghts is not None:
                     el["traces_lengths"] = traces_lenghts
 
-                dus = self._get_list_of_all_used_dus(tree_instance)
-                if dus is not None:
-                    el["dus"] = dus
+                # On first use: listing the units reads the whole tree, one
+                # more pass over every file of a chain at every open (#283)
+                el.lazy("dus", functools.partial(self._get_list_of_all_used_dus, tree_instance))
 
                 el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
@@ -604,7 +752,8 @@ class DataFile:
             return None
         else:
             traces_lengths = tree.get_traces_lengths()
-            if traces_lengths is None:
+            # Lengths of the loaded entry; none is loaded when the file opens
+            if not traces_lengths:
                 return None
 
             # Check if traces have constant length
@@ -676,16 +825,16 @@ class DataFile:
         #     return "ShowerEventZHAireSTree"
         # Other trees
         else:
-            if "run" in name:
-                return "TRun"
-            elif "adc" in name:
-                return "TADC"
-            elif "voltage" in name:
-                return "TRawVoltage"
-            elif "efield" in name:
-                return "TEfield"
-            elif "shower" in name:
-                return "TShower"
+            # The specific names first: "trunvoltage" was taken for TRun and
+            # "tvoltage" for TRawVoltage (#235)
+            for part, tree_type in (("runrawvoltage", "TRunRawVoltage"), ("runvoltage", "TRunVoltage"),
+                                    ("runnoise", "TRunNoise"), ("run", "TRun"), ("adc", "TADC"),
+                                    ("rawvoltage", "TRawVoltage"), ("voltage", "TVoltage"),
+                                    ("efield", "TEfield"), ("shower", "TShower"),
+                                    ("recons", "TRecons")):
+                if part in name:
+                    return tree_type
+            return None
 
     def _load_trees(self):
         # Loop through the keys
@@ -702,7 +851,10 @@ class DataFile:
         """Close the file and the belonging trees"""
         for t in self.tree_instances:
             t.stop_using()
-        self.f.Close()
+        # The trees' data goes with the file: mark them, so that using one
+        # raises a clear error rather than crashing (#274)
+        from grand.dataio.data_tree import _close_with_trees
+        _close_with_trees(self.f, self.tree_instances)
         _file_lock.release(self.f.GetName())
 
     def get_max_list_of_events(self):
@@ -718,8 +870,8 @@ class DataFile:
         # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
         for level in range(10):
             for tree in trees_to_check:
-                try:
-                    if tree_inst := getattr(self, f"{tree}_l{level}"):
-                            return tree_inst.get_list_of_events()
-                except:
-                    pass
+                # Only an absent tree is skipped: a read error was taken for an
+                # absent tree too, and the caller then got None (#256)
+                tree_inst = getattr(self, f"{tree}_l{level}", None)
+                if tree_inst:
+                    return tree_inst.get_list_of_events()

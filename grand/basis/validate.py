@@ -442,6 +442,11 @@ def coerce_to_dtype(value, dtype, where):
     dtype = np.dtype(dtype)
     if dtype.kind not in "iuf":
         return np.asarray(value, dtype=dtype)
+    # None was stored as NaN in a float field, and called "NaN or infinity"
+    # in an integer one (#206)
+    if value is None:
+        raise TypeError(message(where, "must be a number, got None; use NaN for an "
+                                "unknown value of a float field"))
     try:
         given = np.asarray(value)
     except (TypeError, ValueError):
@@ -461,7 +466,17 @@ def coerce_to_dtype(value, dtype, where):
     if given.dtype.kind == "c":
         raise TypeError(message(where, "must be a real number, got the complex %s" % _show(value)))
     if dtype.kind == "f":
-        return given.astype(dtype)
+        with np.errstate(over="ignore", under="ignore"):
+            converted = given.astype(dtype)
+        # 1e39 in a float32 field read back as inf, and 1e-46 as 0 (#289)
+        finite = np.isfinite(given)
+        if np.any(finite & ~np.isfinite(converted)):
+            raise ValueError(message(where, "%s does not fit in %s (largest %g)"
+                                     % (_show(value), dtype, np.finfo(dtype).max)))
+        if np.any(finite & (given != 0) & (converted == 0)):
+            warn(where, "%s is below the smallest %s and is stored as 0" % (_show(value), dtype),
+                 stacklevel=5)
+        return converted
     # Integer storage
     if given.dtype.kind == "b":
         raise TypeError(message(where, "must be an integer, got a boolean"))
@@ -476,3 +491,46 @@ def coerce_to_dtype(value, dtype, where):
         raise ValueError(message(where, "must be an integer between %d and %d (stored as %s), got %s"
                                  % (info.min, info.max, dtype, int(bad) if float(bad).is_integer() else bad)))
     return given.astype(dtype)
+
+
+#: Ranges outside which a value is almost certainly in the wrong unit (#266):
+#: ``(low, high, unit, what a value outside usually is)``.
+PLAUSIBLE = {
+    "frequency_mhz": (0.0, 1e5, "MHz", "a frequency in Hz or GHz"),
+    "sampling_rate_mhz": (1.0, 1e5, "MHz", "a rate in Hz or GHz"),
+    "time_step_ns": (1e-3, 1e4, "ns", "a time step in seconds"),
+    "angle_rad": (-2 * np.pi, 2 * np.pi, "rad", "an angle in degrees"),
+}
+
+
+def plausible(value, name, where, kind):
+    r"""Warns if `value` lies outside the plausible range of its unit; returns it unchanged.
+
+    Type and range checks cannot tell 500 MHz given as 500e6 from a real
+    500e6 MHz; this catches the unit mistakes that silently give results
+    wrong by orders of magnitude (#266), with a `GRANDlibWarning` rather than
+    an error, since the ranges are generous but not physical limits.
+
+    Parameters
+    ----------
+    value : float or array_like
+        The value to look at; non-finite elements are ignored.
+    name : str
+        The argument's name.
+    where : str
+        The function it was given to.
+    kind : str
+        A key of :data:`PLAUSIBLE`.
+    """
+    low, high, unit, likely = PLAUSIBLE[kind]
+    try:
+        array = np.asarray(value, dtype=float)
+    except (TypeError, ValueError):
+        return value
+    finite = array[np.isfinite(array)]
+    if finite.size and (finite.min() < low or finite.max() > high):
+        bad = finite[(finite < low) | (finite > high)].ravel()[0]
+        warnings.warn(message(where, "'%s' = %g is outside %g to %g %s; is it %s?"
+                              % (name, bad, low, high, unit, likely)),
+                      GRANDlibWarning, stacklevel=3)
+    return value

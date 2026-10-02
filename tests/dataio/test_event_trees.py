@@ -49,11 +49,14 @@ class TestMotherEventTree:
         # Result depends on tree state
         assert result is not None or result is None
 
-    def test_print_list_of_events(self):
-        """Test print_list_of_events method."""
-        tree = MotherEventTree()
-        # Should not raise
-        tree.print_list_of_events()
+    def test_print_list_of_events(self, capsys):
+        """print_list_of_events lists the events (#271)."""
+        from grand.dataio import TShower
+        sample = ("sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/"
+                  "shower_1618-13790_L0_0000.root")
+        with TShower(sample) as tree:
+            tree.print_list_of_events()
+        assert "13790" in capsys.readouterr().out
 
     def test_add_proper_friends(self):
         """Test add_proper_friends method."""

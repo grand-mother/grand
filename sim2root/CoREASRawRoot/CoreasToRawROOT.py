@@ -27,6 +27,11 @@ parser.add_option("--directory", "--dir", "-d", type="str", dest="directory",
                   help="Specify the full path to the directory of the shower that you want to convert.")
 parser.add_option("--file", "-f", type="str", dest="file",
                   help="Specify the full path to the SIMxxxxxx.reas file of the shower that you want to convert.")
+parser.add_option("--output", "-o", type="str", dest="output", default=".",
+                  help="Folder to write Coreas_<simID>.rawroot into, or, for a single shower, the "
+                       "file name. Default: the current folder.")
+parser.add_option("--overwrite", action="store_true", dest="overwrite", default=False,
+                  help="Replace an existing output file instead of refusing.")
 
 (options, args) = parser.parse_args()
 
@@ -86,7 +91,29 @@ def check_antennas_and_traces(path_antenna_list, trace_dir):
     raise ValueError("GRANDlib: CoreasToRawROOT: %s and %s do not match:\n  - %s"
                      % (path_antenna_list, trace_dir, "\n  - ".join(problems)))
 
-def CoreasToRawRoot(file, simID=None):
+def output_file(output, RunID, overwrite=False):
+  r"""Returns the RawROOT file to write, refusing an existing one (#181).
+
+  The trees open their file for appending, so a second conversion of the
+  same shower -- or the committed sample in this folder -- failed with
+  NotUniqueEvent.  An existing file is now refused, or replaced with
+  ``overwrite``.
+  """
+  if output.endswith(".rawroot"):
+    name = output
+  else:
+    name = os.path.join(output, "Coreas_" + RunID + ".rawroot")
+  if os.path.exists(name):
+    if not overwrite:
+      sys.exit("GRANDlib: CoreasToRawROOT: %s already exists; remove it or use --overwrite" % name)
+    os.remove(name)
+  parent = os.path.dirname(name)
+  if parent:
+    os.makedirs(parent, exist_ok=True)
+  return name
+
+
+def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
   print("-----------------------------------------")
   print("------ COREAS to RAWROOT converter ------")
   print("-----------------------------------------")
@@ -140,8 +167,9 @@ def CoreasToRawRoot(file, simID=None):
   if len(log_file) == 0:
     print("[WARNING] No log file found in this directory. Using dummy values for first interaction.")
 
-    first_interaction = 1 # height of first interaction - in m
-    print("[WARNING] Assuming first interaction at 1m.")
+    # Unknown: it was written as 1 m, a real-looking height (#232)
+    first_interaction = np.nan # height of first interaction - in m
+    print("[WARNING] No first interaction height: written as NaN.")
     hadr_interaction  = "Sibyll 2.3d"
     coreas_version    = "1.4"
     print("Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4.")
@@ -195,9 +223,12 @@ def CoreasToRawRoot(file, simID=None):
 
   RunID = simID
   EventID = int(read_params(reas_input, "EventNumber"))
-  print("[WARNING] dummy values for GPSSecs and GPSNanoSecs")
-  GPSSecs = 1996#read_params(reas_input, "GPSSecs")
-  GPSNanoSecs = 19961026#read_params(reas_input, "GPSNanoSecs")
+  # CoREAS gives no event time.  It was written as 1996 s and 19961026 ns,
+  # which read as a time in January 1970 against an event date of 2017; 0
+  # means "none", and sim2root then uses the simulation date (#232, #225)
+  print("[WARNING] No event time (GPSSecs, GPSNanoSecs): written as 0, the simulation date is used")
+  GPSSecs = 0
+  GPSNanoSecs = 0
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
   # `read_params` returns None for a keyword the file does not carry, so the
@@ -214,7 +245,9 @@ def CoreasToRawRoot(file, simID=None):
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
     DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
     DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") / 100 # geometrical distance of shower maximum from core in m
-    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10 ** (-1) # convert from Gauss to mT
+    # In µT, as ZHAireS stores it: Gauss x 100.  It was Gauss x 0.1 = mT here
+    # and Gauss on the .inp path, three units for one field (#232)
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 100 # convert from Gauss to µT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
@@ -252,7 +285,7 @@ def CoreasToRawRoot(file, simID=None):
     print("[WARNING] FieldIntensity, FieldInclination, GeomagneticAngle hardcoded for Dunhuang")
     DepthOfShowerMaximum = -1
     DistanceOfShowerMaximum = -1
-    FieldIntensity = 0.5648236565
+    FieldIntensity = 56.48236565 # µT (0.5648 Gauss)
     FieldInclination = 61.60505071
     GeomagneticAngle = 93.82137564
 
@@ -381,8 +414,9 @@ def CoreasToRawRoot(file, simID=None):
   print("*****************************************")
 
   # TODO: find injection altitude in TPlotter.h/cpp
-  InjectionAltitude = 1.
-  print("[WARNING] InjectionAltitude is hardcoded")
+  # Unknown: it was written as 1 m (#232)
+  InjectionAltitude = np.nan
+  print("[WARNING] InjectionAltitude is not known: written as NaN")
 
   site = read_site(inp_input)
   latitude, longitude, altitude = read_lat_long_alt(site)
@@ -393,7 +427,7 @@ def CoreasToRawRoot(file, simID=None):
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + RunID +".rawroot"
+  OutputFileName = output_file(output, RunID, overwrite)
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -459,7 +493,8 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.xmax_distance = DistanceOfShowerMaximum
   RawShower.xmax_pos_shc = Xmax_NWU
 
-  RawShower.long_pd_gamma = pd_gammas
+  # RawShowerTree calls it long_pd_gammas; the gamma profile was stored nowhere (#202)
+  RawShower.long_pd_gammas = pd_gammas
   RawShower.long_pd_eminus = pd_electrons
   RawShower.long_pd_eplus = pd_positrons
   RawShower.long_pd_muminus = pd_muN
@@ -510,8 +545,10 @@ def CoreasToRawRoot(file, simID=None):
   print("***RawMeta***")
     
   RawMeta = RawTrees.RawMetaTree(OutputFileName)
-  RawMeta.run_number = int(RunID)
-  RawMeta.event_number = EventID
+  # As in RawShower and RawEfield: they were swapped here, run 4100 and
+  # event 1 against run 1 and event 4100 (#232)
+  RawMeta.run_number = EventID
+  RawMeta.event_number = int(RunID)
 
   print("[WARNING] array_name is hardcoded")
   RawMeta.array_name = "GP300"
@@ -670,15 +707,18 @@ if __name__ == "__main__":
     if not available_reas_files:
         sys.exit("Error: No showers found in the specified directory. Please check your input and try again.")
     
+    if options.output.endswith(".rawroot") and len(available_reas_files) > 1:
+        sys.exit("GRANDlib: CoreasToRawROOT: %d showers in %s; -o must name a folder, not a file"
+                 % (len(available_reas_files), options.directory))
     # get simIDs from the found reas files
-    for reas_file in available_reas_files:
+    for reas_file in sorted(available_reas_files):
         shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
         if shower_match:
             simID = shower_match.group(1)
             print(f"Run number: {simID}")
         else:
             sys.exit(f"Error: No simID found for {reas_file}. Please check your input and try again.")
-        CoreasToRawRoot(reas_file, simID)
+        CoreasToRawRoot(reas_file, simID, options.output, options.overwrite)
 
   # * # * # * # * # * # * # * # * # * # *
   # convert a single shower
@@ -691,11 +731,12 @@ if __name__ == "__main__":
     else:
       sys.exit("Error: Shower not found in the specified file. Please check your input and try again.")
     # run the script
-    CoreasToRawRoot(file, simID)
+    CoreasToRawRoot(file, simID, options.output, options.overwrite)
 
   # * # * # * # * # * # * # * # * # * # *
   # print help if options are not specified correctly
   else:
     print("Error: No valid options specified. Please provide either a directory or a file to convert.")
     parser.print_help()
+    sys.exit(2)
     sys.exit()

@@ -3,6 +3,7 @@
 ## by Lech Wiktor Piotrowski
 
 import os
+import sys
 import argparse
 from types import SimpleNamespace
 import time
@@ -32,6 +33,8 @@ clparser = argparse.ArgumentParser(description="Convert simulation data in rawro
 clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GRANDRaw data TTrees, a directory with GRANDraw files or a .txt file with list of rawroot files")
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
+clparser.add_argument("--overwrite", action="store_true",
+                      help="allow -fo to name a folder that already holds files (refused otherwise)")
 clparser.add_argument("-s", "--site_name", help="The name of the site", default=None)
 clparser.add_argument("-sl", "--site_layout", help="The layout of the site (eg. GP13, GP80, GAA)", default=None)
 clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
@@ -243,12 +246,132 @@ def convert_date(date_str):
     return formatted_date
 
 
-def main():
+def desired_window(t_pre, t_post, trigger_time_ns=None, target_duration_us=None):
+    r"""Returns the ``(t_pre, t_post)``, in ns, a trace is written with.
 
+    ``--trigger_time_ns`` sets t_pre and keeps the duration; with
+    ``--target_duration_us`` too, the duration is set as well.
+    """
+    if trigger_time_ns is not None:
+        t_post = t_pre + t_post - trigger_time_ns
+        t_pre = trigger_time_ns
+    if target_duration_us is not None:
+        t_post = target_duration_us * 1000 - t_pre
+    return t_pre, t_post
+
+
+def check_windows(file_list, trigger_time_ns=None, target_duration_us=None, star_shape=False):
+    r"""Exits with a message if the requested windows cannot be written (#222).
+
+    Checked before anything is written: the options must be positive, the
+    trigger must fall inside the trace, and all the events of one run (one
+    file with ``-ss``) must share one window, since the run tree stores only
+    one.  Events that hit no antenna carry no trace and are not checked.
+    """
+    def fail(message):
+        sys.exit("GRANDlib: sim2root: " + message)
+
+    if trigger_time_ns is not None and not trigger_time_ns > 0:
+        fail("--trigger_time_ns must be > 0, got %s" % trigger_time_ns)
+    if target_duration_us is not None and not target_duration_us > 0:
+        fail("--target_duration_us must be > 0, got %s" % target_duration_us)
+    if (trigger_time_ns is not None and target_duration_us is not None
+            and not trigger_time_ns < target_duration_us * 1000):
+        fail("--trigger_time_ns (%s ns) must be shorter than --target_duration_us (%s ns)"
+             % (trigger_time_ns, target_duration_us * 1000))
+
+    run_window = None
+    for filename in file_list:
+        if star_shape:
+            run_window = None
+        try:
+            trawefield = RawTrees.RawEfieldTree(filename)
+        except OSError:
+            continue
+        for i in range(trawefield.get_entries()):
+            trawefield.get_entry(i)
+            if is_no_antenna_event(trawefield):
+                continue
+            window = desired_window(trawefield.t_pre, trawefield.t_post, trigger_time_ns, target_duration_us)
+            where = "%s entry %d (t_pre %s ns, t_post %s ns)" % (filename, i, trawefield.t_pre, trawefield.t_post)
+            if not window[1] > 0:
+                fail("%s: the requested window ends %s ns before the trigger; give a longer "
+                     "--target_duration_us or a shorter --trigger_time_ns" % (where, -window[1]))
+            if run_window is None:
+                run_window = window
+            elif not np.allclose(window, run_window):
+                fail("%s: its window (t_pre %s, t_post %s ns) differs from the run's (t_pre %s, "
+                     "t_post %s ns), and the run stores only one.  Give --trigger_time_ns and "
+                     "--target_duration_us to write every event with the same window%s"
+                     % ((where,) + tuple(window) + tuple(run_window)
+                        + ("" if star_shape else ", or convert the files separately with -ss",)))
+
+
+def check_run_numbers(file_list, ext_run_number=None, star_shape=False):
+    r"""Exits with a message if the inputs hold several runs and nothing says how to write them.
+
+    The run trees were written for the first run only, while the event trees
+    kept every event's own run number, so the later runs had no run entry
+    (#223).  ``-ru`` writes them all as one run; ``-ss`` makes each input
+    file its own run.
+    """
+    if ext_run_number is not None or star_shape:
+        return
+    runs = set()
+    for filename in file_list:
+        try:
+            trawshower = RawTrees.RawShowerTree(filename)
+        except OSError:
+            continue
+        for i in range(trawshower.get_entries()):
+            trawshower.get_entry(i)
+            runs.add(int(trawshower.run_number))
+        trawshower.stop_using()
+    if len(runs) > 1:
+        runs = sorted(runs)
+        sys.exit("GRANDlib: sim2root: the inputs hold runs %s and %s, and the run files describe "
+                 "one run.  Give -ru N to write them all as run N, or convert each run separately"
+                 % (", ".join(str(run) for run in runs[:-1]), runs[-1]))
+
+
+def fail(message):
+    r"""Exits with status 1 and `message` (#224: several failures exited 0)."""
+    sys.exit("GRANDlib: sim2root: " + message)
+
+
+# What this run wrote, so that a failure can remove it (#224): the folder,
+# whether this run created it, and the files that were there before.
+_output = {"dir": None, "created": False, "before": set()}
+
+
+def _remove_partial_output():
+    r"""Removes the files a failed conversion wrote, and its folder if it made it."""
+    folder = _output["dir"]
+    if folder is None or not folder.is_dir():
+        return
+    for path in folder.iterdir():
+        if path.name not in _output["before"] and path.is_file():
+            path.unlink()
+    if _output["created"] and not any(folder.iterdir()):
+        folder.rmdir()
+    logger.error(f"The conversion failed; removed its partial output from {folder}")
+
+
+def main():
+    r"""Runs the conversion; on failure, removes what it had written (#224)."""
+    try:
+        convert()
+    except BaseException as error:
+        if not (isinstance(error, SystemExit) and error.code in (0, None)):
+            _remove_partial_output()
+        raise
+
+
+def convert():
+    r"""Converts the input files given on the command line."""
     # Check if the site layout is defined
     if not clargs.star_shape and not clargs.site_layout:
-        print("Please provide the simulated site layout as a command line parameter (eg. -sl GP300)")
-        exit(-1)
+        fail("give the simulated site layout with -sl (e.g. -sl GP300)")
 
     # Initialise the run number if specified
     ext_run_number = None
@@ -281,11 +404,30 @@ def main():
         file_list = clargs.file_dir_name
 
     if len(file_list)==0:
-        print("No RawRoot files found in the input directory. Exiting.")
-        exit(0)
+        fail("no .rawroot files in %s" % clargs.file_dir_name[0])
+    # Opening a missing file for reading created it, and the run then failed
+    # on an unbound variable (#224)
+    missing = [name for name in file_list if not Path(name).is_file()]
+    if missing:
+        fail("no such input file: %s" % ", ".join(missing))
+    if clargs.forced_output_directory is not None and not clargs.overwrite:
+        forced = Path(clargs.output_parent_directory, clargs.forced_output_directory)
+        if forced.is_dir() and any(forced.iterdir()):
+            fail("the -fo folder %s already holds files, and a second file set next to them "
+                 "breaks the later steps; give --overwrite to write there anyway" % forced)
 
-    # How many events were stored in current files
-    events_in_file = 1
+    # Before anything is written: one window per run, and a valid one (#222)
+    check_windows(file_list, clargs.trigger_time_ns, clargs.target_duration_us, clargs.star_shape)
+    # ... and one run, unless -ru or -ss says what to do with several (#223)
+    check_run_numbers(file_list, ext_run_number, clargs.star_shape)
+
+    # How many events the open event files hold.  It started at 1 and the
+    # first event was exempt from the check, so -ef 1 never split and an
+    # exact multiple left an empty file set behind (#223).  A new set is now
+    # opened only when an event is about to go into it.
+    events_in_file = 0
+    event_files_open = True     # init_all_trees opens the first set
+    split_done = False
 
     # The name of the output directory
     out_dir_name = ""
@@ -327,22 +469,14 @@ def main():
 
             OriginalTpre=trawefield.t_pre
             OriginalTpost=trawefield.t_post
-            DesiredTpre=trawefield.t_pre
-            DesiredTpost=trawefield.t_post
-
-            if clargs.trigger_time_ns is not None:
-              DesiredTpre=clargs.trigger_time_ns
-              assert DesiredTpre > 0
-              OriginalDuration= OriginalTpre+OriginalTpost
-              DesiredTpost= OriginalDuration-DesiredTpre
-
-            if clargs.target_duration_us is not None:
-              DesiredTpost=clargs.target_duration_us*1000-DesiredTpre
+            # Checked by check_windows before the loop (#222)
+            DesiredTpre, DesiredTpost = desired_window(OriginalTpre, OriginalTpost,
+                                                       clargs.trigger_time_ns, clargs.target_duration_us)
             #we modify this becouse it needs to be stored in the run file on the first event.
             trawefield.t_pre=DesiredTpre
             trawefield.t_post=DesiredTpost
 
-            if events_in_file==1:
+            if events_in_file==0:
                 if ext_event_number is not None:
                     file_start_event_number = end_event_number+1
                 else:
@@ -386,12 +520,11 @@ def main():
                 gt.trunshowersim.run_number = run_number
                 gt.trunefieldsim.run_number = run_number
 
-                # If no site was specified for the trunshowersim, put inside site
-                if trawshower.site == "":
+                # The site, if none was recorded or -s gives one: -s changed
+                # only trun and the folder name (#226)
+                if trawshower.site == "" or clargs.site_name:
                     gt.trunshowersim.site = site
-
-                # If no site was specified for the trunefieldsim, put inside site
-                if trawefield.site == "":
+                if trawefield.site == "" or clargs.site_name:
                     gt.trunefieldsim.site = site
 
                 gt.trun.site = site
@@ -403,10 +536,15 @@ def main():
                 gt.trunefieldsim.fill()
                 # gt.trun.write()
 
+            if not event_files_open:
+                logger.info("Creating new event files")
+                init_event_trees(out_dir_name, gt)
+                event_files_open = True
+
             # Convert the RawShowerTree entries
             rawshower2grandroot(trawshower, gt)
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
-            rawmeta2grandroot(trawmeta, gt)
+            rawmeta2grandroot(trawmeta, gt, trawshower.unix_date)
 
             # A shower that hit no antenna (issue #91). It is kept: the shower,
             # showersim and efield trees all get the event, the efield entry
@@ -479,9 +617,10 @@ def main():
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
+            events_in_file += 1
 
             # If filled max number of events in file
-            if events_in_file == clargs.events_per_file and not (file_num==0 and i==0):
+            if clargs.events_per_file and events_in_file == clargs.events_per_file:
 
                 # tmp_start_event_number = gt.tshower.event_number
 
@@ -498,14 +637,9 @@ def main():
                 logger.info("Renaming event files")
                 rename_event_files(clargs, out_dir_name, file_start_event_number, end_event_number)
 
-                # Create the new event files
-                logger.info("Creating new event files")
-                init_event_trees(out_dir_name, gt)
-
-                events_in_file=0
-                # start_event_number = tmp_start_event_number
-
-            events_in_file += 1
+                event_files_open = False
+                split_done = True
+                events_in_file = 0
 
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
@@ -552,6 +686,9 @@ def main():
         if ext_event_number is not None:
             ext_event_number += 1
 
+    if out_dir_name == "":
+        fail("no events in the input files (all were empty or unreadable); nothing written")
+
     # Fill the trun with antenna positions and ids from ALL the events (not for star shape, already done)
     # ToDo: this should be done with TChain in one loop over all the files... maybe (which would be faster?)
     if not clargs.star_shape:
@@ -585,17 +722,25 @@ def main():
         # gt.trunshowersim.write()
         # gt.trunefieldsim.write()
 
-    # Write the event trees
-    gt.tshower.write(force_close_file=True)
-    gt.tshowersim.write(force_close_file=True)
-    gt.tefield.write(force_close_file=True)
+    # Write the event trees, unless the last set was already written by -ef
+    # (or one opened after it got no event)
+    event_files_pending = event_files_open and not (split_done and events_in_file == 0)
+    if event_files_pending:
+        gt.tshower.write(force_close_file=True)
+        gt.tshowersim.write(force_close_file=True)
+        gt.tefield.write(force_close_file=True)
+    elif event_files_open:
+        for tree, name in ((gt.tshower, "shower"), (gt.tshowersim, "showersim"), (gt.tefield, "efield")):
+            tree.stop_using()
+            Path(out_dir_name, name + ".root").unlink(missing_ok=True)
     gt.trun.write(force_close_file=True)
     gt.trunshowersim.write(force_close_file=True)
     gt.trunefieldsim.write(force_close_file=True)
 
     # Rename the created files to appropriate names
     logger.info("Renaming files to proper file names")
-    rename_all_files(clargs, out_dir_name, file_start_event_number, end_event_number, start_run_number)
+    rename_all_files(clargs, out_dir_name, file_start_event_number, end_event_number, start_run_number,
+                     event_files=event_files_pending)
 
 # Initialise all output trees and their directory
 def init_all_trees(clargs, unix_date, run_number, site, gt):
@@ -613,11 +758,15 @@ def init_all_trees(clargs, unix_date, run_number, site, gt):
     if clargs.forced_output_directory is None:
         out_dir_name = form_directory_name(clargs, date, time, run_number, site)
         logger.info(f"Storing files in directory {out_dir_name}")
-        out_dir_name.mkdir()
+        out_dir_name.mkdir(parents=True)  # -o may name a folder not yet made (#257)
+        _output.update(dir=out_dir_name, created=True, before=set())
     # If another directory was forced as the output directory, create it
     else:
         out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
-        out_dir_name.mkdir(exist_ok=True)
+        existed = out_dir_name.is_dir()
+        out_dir_name.mkdir(parents=True, exist_ok=True)
+        _output.update(dir=out_dir_name, created=not existed,
+                       before={path.name for path in out_dir_name.iterdir()})
 
     # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
     # Init run trees only if requested
@@ -874,7 +1023,9 @@ def rawshower2grandroot(trawshower, gt):
     #gt.tshowersim.long_pd_depth = trawshower.long_slantdepth
     gt.tshowersim.long_pd_depth = trawshower.long_pd_depth
     ## Longitudinal Profile of Number of Gammas
-    gt.tshowersim.long_pd_gammas = trawshower.long_pd_gammas
+    # TShowerSim calls it long_pd_gamma: assigned as "long_pd_gammas", the gamma
+    # profile was stored nowhere (found by the #202 field guard)
+    gt.tshowersim.long_pd_gamma = trawshower.long_pd_gammas
     ## Longitudinal Profile of Number of e+
     gt.tshowersim.long_pd_eplus = trawshower.long_pd_eplus
     ## Longitudinal Profile of Number of e-
@@ -883,36 +1034,17 @@ def rawshower2grandroot(trawshower, gt):
     gt.tshowersim.long_pd_muplus = trawshower.long_pd_muplus
     ## Longitudinal Profile of Number of mu-
     gt.tshowersim.long_pd_muminus = trawshower.long_pd_muminus
-    ## Longitudinal Profile of Number of All charged particles
-    gt.tshowersim.long_pd_allch = trawshower.long_pd_allch
-    ## Longitudinal Profile of Number of Nuclei
-    gt.tshowersim.long_pd_nuclei = trawshower.long_pd_nuclei
-    ## Longitudinal Profile of Number of Hadrons
-    gt.tshowersim.long_pd_hadr = trawshower.long_pd_hadr
+    ## Longitudinal Profile of Number of Hadrons (TShowerSim: long_pd_hadron;
+    ## assigned as "long_pd_hadr" it was stored nowhere, #202)
+    gt.tshowersim.long_pd_hadron = trawshower.long_pd_hadr
 
-    ## Longitudinal Profile of Energy of created neutrinos (GeV)
-    gt.tshowersim.long_ed_neutrino = trawshower.long_ed_neutrino
-
-    ## Longitudinal Profile of low energy gammas (GeV)
-    gt.tshowersim.long_ed_gamma_cut = trawshower.long_ed_gamma_cut
-    ## Longitudinal Profile of low energy e+/e- (GeV)
-    gt.tshowersim.long_ed_e_cut = trawshower.long_ed_e_cut
-    ## Longitudinal Profile of low energy mu+/mu- (GeV)
-    gt.tshowersim.long_ed_mu_cut = trawshower.long_ed_mu_cut
-    ## Longitudinal Profile of low energy hadrons (GeV)
-    gt.tshowersim.long_ed_hadr_cut = trawshower.long_ed_hadr_cut
-
-    ## Longitudinal Profile of energy deposit by gammas (GeV)
-    gt.tshowersim.long_ed_gamma_ioniz = trawshower.long_ed_gamma_ioniz
-    ## Longitudinal Profile of energy deposit by e+/e-  (GeV)
-    gt.tshowersim.long_ed_e_ioniz = trawshower.long_ed_e_ioniz
-    ## Longitudinal Profile of energy deposit by muons  (GeV)
-    gt.tshowersim.long_ed_mu_ioniz = trawshower.long_ed_mu_ioniz
-    ## Longitudinal Profile of energy deposit by hadrons (GeV)
-    gt.tshowersim.long_ed_hadr_ioniz = trawshower.long_ed_hadr_ioniz
-
-    # extra values
-    gt.tshowersim.long_ed_depth = trawshower.long_ed_depth
+    # Not written: TShowerSim has no field for them.  They were assigned under
+    # these names and silently stored nowhere until the #202 field guard made
+    # that an error.  The energy profiles may sit on their own depth grid
+    # (long_ed_depth), which TShowerSim cannot record next to long_pd_depth;
+    # mapping them onto long_*_elow / long_*_edep is a data-model decision.
+    #   long_pd_allch, long_pd_nuclei, long_ed_neutrino, long_ed_*_cut,
+    #   long_ed_*_ioniz, long_ed_depth
 
     # gt.tshower.first_interaction = trawshower.first_interaction
 
@@ -922,7 +1054,9 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     gt.tefield.run_number = trawefield.run_number
     gt.tefield.event_number = trawefield.event_number
 
-    gt.tshowersim.atmos_refractivity = trawefield.atmos_refractivity
+    # atmos_refractivity has no field in the GRANDROOT trees; it was stored
+    # nowhere (#202)
+    # gt.tshowersim.atmos_refractivity = trawefield.atmos_refractivity
 
     # Per antenna things
     gt.tefield.du_id = trawefield.du_id
@@ -936,11 +1070,11 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
 
     # ToDo: this should be a single vector of xyz
     ## X position in shower referential
-    gt.tefield.du_x = trawefield.du_x
+    # gt.tefield.du_x = trawefield.du_x  (TEfield has no du_x; stored nowhere, #202)
     ## Y position in shower referential
-    gt.tefield.du_y = trawefield.du_y
+    # gt.tefield.du_y = trawefield.du_y  (TEfield has no du_y; stored nowhere, #202)
     ## Z position in shower referential
-    gt.tefield.du_z = trawefield.du_z
+    # gt.tefield.du_z = trawefield.du_z  (TEfield has no du_z; stored nowhere, #202)
 
     ## Efield trace in X,Y,Z direction
     if ext_trace is None:
@@ -958,11 +1092,11 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
 
     # Generate trigger times from t0s
     tempseconds=np.zeros((len(t_0)), dtype=np.int64)
-    tempseconds[:]=gt.tshowersim.event_seconds
-    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + t_0)
+    tempseconds[:]=gt.event_seconds
+    tempnanoseconds= np.int64(gt.event_nanoseconds + t_0)
     #rolling over the nanoseconds    
-    maskplus= gt.tshowersim.event_nanoseconds + t_0 >=1e9
-    maskminus= gt.tshowersim.event_nanoseconds + t_0 <0
+    maskplus= gt.event_nanoseconds + t_0 >=1e9
+    maskminus= gt.event_nanoseconds + t_0 <0
     tempnanoseconds[maskplus]-=np.int64(1e9)
     tempseconds[maskplus]+=np.int64(1)   
     tempnanoseconds[maskminus]+=np.int64(1e9)
@@ -975,19 +1109,32 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     gt.tefield.trigger_position= np.ushort([trawefield.t_pre]*trawefield.du_count/trawefield.t_bin_size)
 
 # Convert the RawMetaTree entries
-def rawmeta2grandroot(trawmeta, gt):
+_time_fallback_logged = False
+
+
+def rawmeta2grandroot(trawmeta, gt, unix_date=0):
+    r"""Converts the RawMetaTree entry; `unix_date` is the simulation date, used
+    as the event time when the simulation gives none (#225)."""
+    global _time_fallback_logged
     #gt.tshower.shower_core_pos = trawmeta.shower_core_pos this is duplicated, using ithe one in shower for compatibility
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
     #event time    
     if(trawmeta.unix_second>0):
       gt.tshower.core_time_s = trawmeta.unix_second              #this will be filled by the reconstruction of the core position eventually?
-      gt.tshowersim.event_seconds = trawmeta.unix_second
+      gt.event_seconds = trawmeta.unix_second
     else:
-      gt.tshower.core_time_s = 200854852
-      gt.tshowersim.event_seconds = 200854852
+      # It was 200854852 (May 1976) here and 200854920 in the converter,
+      # while unix_date and the run's event times gave the simulation date
+      # (#225).  One fallback now: the simulation date.
+      if not _time_fallback_logged:
+        logger.warning("The simulation gives no event time (EventUnixTime 0): using the simulation "
+                       "date, %d, as the event time, here and for every later event without one" % unix_date)
+        _time_fallback_logged = True
+      gt.tshower.core_time_s = unix_date
+      gt.event_seconds = unix_date
     gt.tshower.core_time_ns = trawmeta.unix_nanosecond         #this will be filled by the reconstruction of the core position eventually?
-    gt.tshowersim.event_nanoseconds = trawmeta.unix_nanosecond
+    gt.event_nanoseconds = trawmeta.unix_nanosecond
     
     
 
@@ -1006,18 +1153,19 @@ def form_directory_name(clargs, date, time, run_number, site):
 
     # Go through serial numbers in directory names to find a one that does not exist
     for sn in range(5000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
+        # Without -e, "CD_{extra}_" left a double underscore (#226)
+        cd = f"CD_{extra}_" if extra else "CD_"
+        dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_{cd}{sn:0>4}")
         if not dir_name.exists():
             break
     # If directories with serial number up to 5000 already created
     else:
-        print("All directories with serial number up to 5000 already exist. Please clean up some directories!")
-        exit(0)
+        fail("all output folder names up to serial number 5000 exist; clean some up")
 
     return dir_name
 
 # Rename the created files to appropriate names
-def rename_all_files(clargs, path, start_event_number, end_event_number, run_number):
+def rename_all_files(clargs, path, start_event_number, end_event_number, run_number, event_files=True):
 
     # Go through run output files
     for fn_start in ["run", "runshowersim", "runefieldsim"]:
@@ -1031,11 +1179,11 @@ def rename_all_files(clargs, path, start_event_number, end_event_number, run_num
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 5000. Please clean up some files!")
-            exit(0)
+            fail(f"no free file name for {fn_in} up to serial number 5000; clean some up")
 
     # Rename the event files
-    rename_event_files(clargs, path, start_event_number, end_event_number)
+    if event_files:
+        rename_event_files(clargs, path, start_event_number, end_event_number)
 
 def rename_event_files(clargs, path, start_event_number, end_event_number):
 
@@ -1051,8 +1199,7 @@ def rename_event_files(clargs, path, start_event_number, end_event_number):
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 5s000. Please clean up some files!")
-            exit(0)
+            fail(f"no free file name for {fn_in} up to serial number 5000; clean some up")
 
 ## Simple shifting of a single x,y,z trace
 def trace_shift(arr, shift):

@@ -1,15 +1,25 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import logging
 import os
 from pathlib import Path
 import ROOT
+import numpy as np
 
 from grand.aoi.event import Event
 from grand.dataio import DataDirectory, DataFile
 from grand.basis import validate as _validate
 
+logger = logging.getLogger(__name__)
+
 
 class EventList:
-    """A class giving access/iteration over multiple events"""
+    """A class giving access/iteration over multiple events
+
+    Every call to :meth:`get_event`, and every step of an iteration, fills and
+    returns the *same* :class:`Event` object, so ``list(EventList(d))`` holds
+    that one object several times, showing the last event. Copy what you need
+    from each event before reading the next.
+    """
 
     ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
     file: ROOT.TFile = None
@@ -30,6 +40,9 @@ class EventList:
             Event number to begin at.
         start_entry : int, optional
             Entry index to begin at, used instead of `start_event`.
+        tefield_level : int, optional
+            Analysis level of the electric field to read, for every event
+            unless a call to :meth:`get_event` asks for another.
         """
         self.event_list = None
 
@@ -56,7 +69,9 @@ class EventList:
         elif isinstance(inp_name, str):
             # If file name was given
             if Path(inp_name).is_file():
-                self.file = DataFile(ROOT.TFile(inp_name, "read"))
+                # DataFile opens it with a clear error for an empty, text or
+                # damaged file, rather than cppyy's bare OSError (#235)
+                self.file = DataFile(inp_name)
                 # self.file = ROOT.TFile(inp_name, "read")
                 self.event_list = self.file.get_max_list_of_events()
             # If directory name was given
@@ -66,6 +81,14 @@ class EventList:
                         "EventList", "no ROOT files (*.root) in %s" % inp_name))
                 self.directory = DataDirectory(inp_name)
                 self.event_list = self.directory.get_max_list_of_events()
+                # Nothing recognised: this failed later on None, as "'NoneType'
+                # object has no attribute 'f'" (#236)
+                if self.event_list is None:
+                    names = [os.path.basename(name) for name in self.directory.unrecognised_files]
+                    raise FileNotFoundError(_validate.message(
+                        "EventList", "no GRAND event files recognised in %s%s; files must be named "
+                        "<type>_<events>_L<level>_<serial>.root, e.g. efield_1-2_L0_0000.root, or be "
+                        "opened one at a time" % (inp_name, " (found %s)" % ", ".join(names[:5]) if names else "")))
             else:
                 raise FileNotFoundError(_validate.message(
                     "EventList", "no such file or directory: %s" % inp_name))
@@ -80,6 +103,7 @@ class EventList:
                 "EventList", "give 'start_event' or 'start_entry', not both"))
         self.start_event = start_event
         self.start_entry = start_entry
+        self.tefield_level = tefield_level
 
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
@@ -108,13 +132,22 @@ class EventList:
         Returns
         -------
         Event
-            The event, or ``None`` when it was not found.
+            The event.
+
+        Raises
+        ------
+        ValueError
+            If both an entry and an event/run number are given, or a run
+            number without an event number.
+        LookupError
+            If the input holds no such event.  (These used to be printed, and
+            ``None`` returned into the caller's loop, #256.)
         """
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?
         if entry_number is not None and (run_number is not None or event_number is not None):
-            print("Please provide only entry_number or event/run_number!")
-            return None
+            raise ValueError(_validate.message(
+                "EventList.get_event", "give entry_number, or event_number and run_number, not both"))
 
         e = self.event
 
@@ -131,7 +164,20 @@ class EventList:
             entry_number = 0
 
         if entry_number is not None:
-            e._entry_number = entry_number
+            # Checked here: out of range it failed deep in the reader with
+            # "zero-size array to reduction operation minimum", and a bool or
+            # a float reached cppyy (#235)
+            if isinstance(entry_number, bool) or not isinstance(entry_number, (int, np.integer)):
+                raise TypeError(_validate.message(
+                    "EventList.get_event", "'entry_number' must be an integer, got %r" % (entry_number,)))
+            count = self.get_number_of_events()
+            if count is None and self.event_list is not None:
+                count = len(self.event_list)
+            if entry_number < 0 or (count is not None and entry_number >= count):
+                raise IndexError(_validate.message(
+                    "EventList.get_event", "entry_number %s is out of range: the input holds %s "
+                    "events" % (entry_number, count)))
+            e._entry_number = int(entry_number)
         else:
             if run_number is None:
                 run_number = 0
@@ -144,24 +190,24 @@ class EventList:
                 if (self.event_list is not None
                         and (event_number, run_number) not in
                         {(int(ev), int(run)) for ev, run in self.event_list}):
-                    print("No event with event number %s and run number %s; "
-                          "this input holds %d events: %s"
-                          % (event_number, run_number, len(self.event_list),
-                             self.event_list[:10]))
-                    return None
+                    raise LookupError(_validate.message(
+                        "EventList.get_event", "no event with event number %s and run number %s; "
+                        "this input holds %d events: %s"
+                        % (event_number, run_number, len(self.event_list), self.event_list[:10])))
                 e.run_number=run_number
                 e.event_number=event_number
             else:
-                print("Please provide event_number and run_number, or entry_number")
-                return None
+                raise ValueError(_validate.message(
+                    "EventList.get_event", "give event_number with run_number, or entry_number"))
 
         # Fill the event
         if fill_event:
             # Overwrite the init kwargs with kwargs given here
-            if len(kwargs)>0:
-                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **kwargs)
-            else:
-                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **self.init_kwargs)
+            options = dict(kwargs) if len(kwargs) > 0 else dict(self.init_kwargs)
+            # The level is passed on every call, so a per-call level is used
+            # and does not stick to later calls (#213)
+            options.setdefault("tefield_level", self.tefield_level)
+            e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **options)
 
             # Don't init trees anymore
             self.init_trees = False
@@ -200,19 +246,42 @@ class EventList:
         #elif hasattr(data_input, "trecons") and data_input.trecons:
         #    return data_input.trecons.get_entries()
         else:
-            print("Can not find any tree to provide the number of events in the file.")
+            # None, as distinct from 0 entries; logged, not printed (#256)
+            logger.warning("Can not find any tree to provide the number of events in the file.")
             return None
 
     ## Return the iterable over self
     def __iter__(self):
-        r"""Yields each event in turn.
+        r"""Yields each event in turn, from `start_event` or `start_entry` if given.
 
         Yields
         ------
         Event
-            The next event, fully populated.
+            The next event, fully populated.  It is the same object each time,
+            refilled: see the class description.
+
+        Raises
+        ------
+        ValueError
+            If `start_event` or `start_entry` is not in the input.
         """
-        for event_num, run_num in self.event_list:
+        # start_event and start_entry were stored but ignored (#213)
+        events = list(self.event_list)
+        first = 0
+        if self.start_entry is not None:
+            if not 0 <= self.start_entry < len(events):
+                raise ValueError(_validate.message(
+                    "EventList", "start_entry %s is out of range: the input holds %d events"
+                    % (self.start_entry, len(events))))
+            first = self.start_entry
+        elif self.start_event is not None:
+            numbers = [int(ev) for ev, _ in events]
+            if self.start_event not in numbers:
+                raise ValueError(_validate.message(
+                    "EventList", "start_event %s is not in the input; it holds %s"
+                    % (self.start_event, numbers[:10])))
+            first = numbers.index(self.start_event)
+        for event_num, run_num in events[first:]:
             yield self.get_event(event_number=event_num, run_number=run_num)
 
         # # If this is the first event, and start_entry was specified

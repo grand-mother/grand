@@ -9,6 +9,35 @@ Open problems that affect results or block work, with what is measured, what
 is not, and what would settle each one.  Fixed issues move to the changelog
 rather than staying here.
 
+.. _issue-t1-clean-simulations:
+
+The offline T1 trigger passes no unit on clean simulations
+------------------------------------------------------------
+
+:Status: open, for the trigger group (#233, item 3)
+:Affected: ``convert_voltage2adc.py --t1_trigger``,
+  :func:`grand.sim.detector.trigger.t1_du_triggers`
+
+A beta tester found that T1 with the default parameters passed 0 of 44 and
+0 of 5 units on clean, strong simulated events (ADC peak 850), and none
+either with ``th1=5, th2=2, nc_min=1``.  Measured on synthetic damped pulses
+of amplitude 850 ADC counts (2026-10-02), the two reasons are:
+
+- **The quiet time.** Only the first T1 crossing is tried, and it is rejected
+  if it lies within the first ``t_quiet/2`` samples: with ``t_quiet = 512``
+  ns, a pulse before sample 256 never triggers.
+- **The crossing separation.** Consecutive T2 crossings must be closer than
+  ``t_sepmax = 10`` ns, strictly, and one crossing too far apart rejects the
+  channel rather than ending the count.  A clean pulse at 60, 100, 150 or
+  200 MHz has its crossings 16, 10, 14 and 10 ns apart, so every channel is
+  rejected; noise adds crossings close together, which is why noisy events
+  sometimes pass.
+
+Whether the firmware ends the count or rejects the channel, and whether the
+comparison is strict, are for the trigger group to confirm, with the other
+open points listed in :func:`~grand.sim.detector.trigger.extract_trigger_parameters`.
+Until then, offline T1 results on noise-free simulations are not meaningful.
+
 .. _issue-galactic-noise-normalisation:
 
 Galactic-noise normalisation: resolved, RMS
@@ -186,38 +215,27 @@ how the documentation and the notebooks label them.
 
 .. _issue-geoid-longitude-convention:
 
-``geoid_undulation`` returns NaN for a negative longitude
-----------------------------------------------------------
+``geoid_undulation`` returned NaN for a negative longitude
+-----------------------------------------------------------
 
-:Status: open, not blocking
+:Status: **fixed** 2026-10-01 (grand-mother/grand#251); kept here until it appears in a release changelog
 :Affects: any site west of Greenwich
 :Test: ``tests/geo/test_topography_conventions.py``
 
 The EGM96 undulation map shipped as ``data/egm96.png`` is indexed over
 longitude 0-360 degrees.  :func:`grand.geo.topography.geoid_undulation` has two
-calling conventions, and only one of them normalises:
+calling conventions, and only the :class:`~grand.geo.coordinates.Geodetic` one
+normalised the longitude: ``geoid_undulation(latitude=-35.20,
+longitude=-69.32)`` returned ``nan``, with nothing raised.  Both forms now wrap
+the longitude into :math:`[0, 360)` and agree:
 
 .. code-block:: python
 
     >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
-    nan
-    >>> topography.geoid_undulation(latitude=-35.20, longitude=290.68)
     25.583896785168232
     >>> topography.geoid_undulation(
     ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
     25.583896785168232
-
-Nothing raises.  The ``nan`` propagates into whatever geometry follows, and
-through ``elevation(..., reference='sea')``, which subtracts the undulation.
-
-**Workaround.**  Pass a :class:`~grand.geo.coordinates.Geodetic` rather than
-the ``latitude=``/``longitude=`` keywords.  That path normalises and is what
-the documentation and notebook 07 use throughout.
-
-**Fix.**  Wrap the longitude into :math:`[0, 360)` in the keyword branch.  It
-is one line; it has not been made here only because changing a function's
-domain silently is worse than documenting it, and no user of the keyword form
-in the western hemisphere has been identified.
 
 This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
 point with no SRTM tile also returns ``nan`` rather than raising.  Both are
@@ -883,7 +901,8 @@ physics is no longer loaded to read a file.
 The end-to-end test has no input
 ---------------------------------
 
-:Status: open
+:Status: fixed (the numerical regression is covered by
+         ``tests/sim/test_pipeline_golden.py``)
 :Affects: the only test that exercises the whole pipeline
 :Test: ``tests/sim/test_efield2voltage.py``
 
@@ -911,9 +930,9 @@ That needs agreed reference values, which in turn needs the Galactic-noise
 normalisation settled, so it is blocked on
 :ref:`issue-galactic-noise-normalisation` rather than on the fixture.
 
-``tests/sim/test_efield2voltage.py`` still reads the absent
-``data/test_efield.root`` and is still marked xfail; it should be retired in
-favour of the built fixture.
+``tests/sim/test_efield2voltage.py`` now runs on the committed RUN1 sample in
+a temporary folder and checks the events written; it is no longer an
+expected failure.
 
 .. _issue-vga-gain-ignored:
 
@@ -1015,7 +1034,10 @@ expects.  None of that is documented, validated or stated in an error message.
 
 **Consequences.**  A user who renames a file, or writes one from the tree
 classes directly, gets an ``AttributeError`` naming an attribute they have
-never heard of.
+never heard of.  (``DataDirectory`` itself no longer does: since #187 it warns
+about a name level that disagrees with the trees and uses the trees' level,
+and warns about a file no tree type claims.  This reader still expects the
+naming above.)
 
 The module was at 21 % test coverage when this was written, not because it is
 unimportant but because a valid input was difficult to construct.  It is now at

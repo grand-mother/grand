@@ -167,3 +167,147 @@ def test_an_event_without_a_usable_xmax_is_refused(level0_sample, tmp_path, xmax
     signal.params["add_noise"] = False
     with pytest.raises(ValueError, match="no usable Xmax position"):
         signal.compute_voltage(event_number=13790, run_number=1)
+
+
+def test_compute_voltage_writes_once_and_keeps_every_event(level0_sample, tmp_path, monkeypatch):
+    r"""#283: the output file was reopened and rewritten for every event, each slower
+    than the last; with append_file=False it was deleted before every event, so only
+    the last event was kept."""
+    from grand import Efield2Voltage
+    from grand.dataio import TVoltage
+
+    writes = []
+    original = TVoltage.write
+
+    def counting(self, *args, **kwargs):
+        writes.append(1)
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(TVoltage, "write", counting)
+    for append in (True, False):
+        writes.clear()
+        signal = Efield2Voltage(str(level0_sample), "out_%s.root" % append,
+                                output_directory=str(tmp_path), seed=1)
+        signal.params["add_noise"] = False
+        signal.compute_voltage(append_file=append)
+        assert len(writes) == 1
+        out = TVoltage(str(tmp_path / ("out_%s.root" % append)))
+        assert sorted(out.get_list_of_events()) == [(1618, 1), (13790, 1)]
+        out.stop_using()
+
+
+def _smeared(sample, seed):
+    from grand import Efield2Voltage
+
+    signal = Efield2Voltage(str(sample), seed=seed)
+    signal.params.update(add_noise=False, calibration_smearing_sigma=0.1)
+    signal.compute_voltage_event(event_number=1618, run_number=1)
+    signal.final_resample()
+    return np.array(signal.vout)
+
+
+def test_seed_controls_calibration_smearing_and_jitter(level0_sample, tmp_path):
+    r"""#230: smearing ignored the seed; jitter without a seed crashed on None > 0;
+    seed 0 meant unseeded; a negative seed was accepted."""
+    from grand import Efield2Voltage
+
+    assert np.array_equal(_smeared(level0_sample, 1), _smeared(level0_sample, 1))
+    assert np.array_equal(_smeared(level0_sample, 0), _smeared(level0_sample, 0))
+    assert not np.array_equal(_smeared(level0_sample, 1), _smeared(level0_sample, 2))
+
+    signal = Efield2Voltage(str(level0_sample), "jitter.root", output_directory=str(tmp_path))
+    signal.params.update(add_noise=False, add_jitter_ns=5)
+    signal.compute_voltage(event_number=1618, run_number=1)           # no seed: no crash
+    assert (tmp_path / "jitter.root").exists()
+
+    with pytest.raises(ValueError, match="'seed' must be None or a non-negative integer"):
+        Efield2Voltage(str(level0_sample), seed=-3)
+
+
+@pytest.mark.parametrize("params, error, message", [
+    ({"add_noise_": True}, KeyError, "unknown key 'add_noise_'"),
+    ({"add_rf_chain": "no"}, TypeError, "'add_rf_chain' must be True or False"),
+    ({"add_noise": 0}, TypeError, "'add_noise' must be True or False"),
+    ({"calibration_smearing_sigma": -0.1}, ValueError, "calibration_smearing_sigma"),
+    ({"calibration_smearing_sigma": float("nan")}, ValueError, "calibration_smearing_sigma"),
+    ({"lst": 25.0}, ValueError, "'lst' must be 0 to 24"),
+])
+def test_bad_params_are_refused_before_computing(level0_sample, params, error, message):
+    r"""#265: misspelt keys were ignored, flags read by truthiness ('no' meant yes)."""
+    with pytest.raises(error, match=message):
+        _voltage(level0_sample, 13790, **params)
+
+
+@pytest.mark.parametrize("padding", [0, -1, float("nan"), "a"])
+def test_a_bad_padding_factor_is_refused(level0_sample, padding):
+    from grand import Efield2Voltage
+
+    with pytest.raises((ValueError, TypeError), match="padding_factor"):
+        Efield2Voltage(str(level0_sample), padding_factor=padding)
+
+
+def test_a_single_efield_file_is_explained(level0_sample):
+    from grand import Efield2Voltage
+
+    (efield,) = level0_sample.glob("efield_*_L0_*.root")
+    with pytest.raises(ValueError, match="give the folder sim2root.py wrote"):
+        Efield2Voltage(str(efield))
+
+
+@pytest.mark.parametrize("bin_ns", [0.0, -0.5, 1000.0, float("nan")])
+def test_a_bad_bin_size_is_refused(level0_sample, bin_ns):
+    r"""#288: these failed with IndexError deep in the interpolation."""
+    import os
+
+    from grand.dataio import TRun
+
+    (path,) = level0_sample.glob("run_*_L0_*.root")
+    source = TRun(str(path))
+    source.get_entry(0)
+    staged = path.with_name("staged.root")
+    target = TRun(str(staged))
+    target.copy_contents(source)
+    target.t_bin_size = [bin_ns] * len(source.t_bin_size)
+    target.fill()
+    target.write()
+    target.stop_using()
+    source.stop_using()
+    os.replace(staged, path)
+    with pytest.raises(ValueError, match="t_bin_size"):
+        _voltage(level0_sample, 13790)
+
+
+def test_misuse_of_efield2voltage_is_explained(level0_sample):
+    r"""#277: use before an event and bad indices gave AttributeError, or chose silently."""
+    from grand import Efield2Voltage
+
+    signal = Efield2Voltage(str(level0_sample), seed=1)
+    for action in (lambda: signal.compute_voltage_du(0), signal.final_resample, signal.save_voltage):
+        with pytest.raises(RuntimeError, match="no event is loaded"):
+            action()
+    with pytest.raises(IndexError, match="du_idx must be 0 to"):
+        Efield2Voltage(str(level0_sample), seed=1).compute_voltage(event_idx=0, du_idx=-1)
+    with pytest.raises(TypeError, match="du_idx must be an integer"):
+        Efield2Voltage(str(level0_sample), seed=1).compute_voltage(event_idx=0, du_idx=3.5)
+    with pytest.raises(TypeError, match="event_idx must be an integer"):
+        signal.get_event(event_idx=True)
+    with pytest.raises(ValueError, match="not both"):
+        signal.get_event(event_idx=0, event_number=1618, run_number=1)
+
+
+def test_misuse_of_event_is_explained(level0_sample, tmp_path):
+    r"""#277: Event crashed on a directory with the defaults, a missing event, or one number."""
+    from grand.aoi.event import Event
+
+    event = Event()
+    event.directory = str(level0_sample)
+    event.fill_event_from_trees(event_number=1618, run_number=1)
+    assert len(event.efields) == 5 and event.simshower is not None    # no L1 shower here
+    with pytest.raises(LookupError, match="no event 99"):
+        event.fill_event_from_trees(event_number=99, run_number=1)
+    other = Event()
+    other.directory = str(level0_sample)
+    with pytest.raises(ValueError, match="give both"):
+        other.fill_event_from_trees(event_number=1618)
+    with pytest.raises(RuntimeError, match="the event is empty"):
+        Event().write(out_dir=str(tmp_path))

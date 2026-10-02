@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional, Union
 from logging import getLogger
@@ -10,7 +11,11 @@ import warnings
 
 import numpy
 
-from .._core import ffi, lib
+try:
+    from .._core import ffi, lib
+except ImportError as _error:          # (#280)
+    from grand import CORE_MISSING
+    raise ImportError(CORE_MISSING) from _error
 from ..basis import validate as _validate
 
 
@@ -108,6 +113,16 @@ def _elevation_points(a, b, names, where):
     return a, b, finite.ravel()
 
 
+def _check_real(value, name, where):
+    r"""Refuses a value that is not real numbers (None is allowed: it reads as NaN)."""
+    if value is None:
+        return
+    array = numpy.asanyarray(value)
+    if array.dtype.kind not in "iuf":
+        raise TypeError(_validate.message(where, "'%s' must be a real number or an array of real "
+                                          "numbers, got %r" % (name, value)))
+
+
 def ecef_from_geodetic(latitude, longitude, altitude):
     """Convert geodetic coordinates to ECEF ones
 
@@ -126,6 +141,10 @@ def ecef_from_geodetic(latitude, longitude, altitude):
         ECEF position, in metres.
     """
 
+    # A string was parsed, None read as NaN and a complex number lost its
+    # imaginary part, silently (#267); None stays NaN, as for the elevations
+    for value, name in ((latitude, "latitude"), (longitude, "longitude"), (altitude, "altitude")):
+        _check_real(value, name, "ecef_from_geodetic")
     latitude, longitude, altitude = map(_regularize, (latitude, longitude, altitude))
     if latitude.size != longitude.size:
         raise ValueError("latitude and longitude must have the same size")
@@ -303,10 +322,11 @@ class Map(object):
             The opened map.
         """
 
-        if path in Map.cache.keys():
-            return cls.cache[path]
-        else:
-            return object.__new__(cls)
+        # Keyed by the resolved path: "map" and Path("map") loaded it twice (#256)
+        key = os.path.realpath(os.fspath(path))
+        if key in Map.cache:
+            return cls.cache[key]
+        return object.__new__(cls)
 
     def __init__(self, path: Union[Path, str]):
         """Initialise a map object from a data file
@@ -324,6 +344,10 @@ class Map(object):
         if hasattr(self, "_map"):
             logger.debug(f"Map {path} already in cache")
             return
+        # libturtle reported a missing file as a LibraryError (#267)
+        if not os.path.isfile(os.fspath(path)):
+            self._map, self._path = None, None
+            raise FileNotFoundError(_validate.message("turtle.Map", "no map file %s" % os.fspath(path)))
         # Create the map object
         map_ = ffi.new("struct turtle_map **")
         path_ = ffi.new("char []", str(path).encode())
@@ -333,20 +357,21 @@ class Map(object):
             raise LibraryError(r)
         else:
             self._map = map_
-            self._path = path
+            self._path = os.fspath(path)  # one spelling for every caller of the cached map
         # add object in cache
         logger.info(f"Map constructor add map {path} in cache memory ")
-        Map.cache[path] = self
+        Map.cache[os.path.realpath(os.fspath(path))] = self
 
     def __del__(self):
         r"""Releases the underlying TURTLE map.
 
         """
-        if self in Map.cache:
-            logger.debug(f"Map : remove {self._path} from the cache")
-            del Map.cache[self._path]
-            # free C memory allocation
+        # "self in Map.cache" compared the object with the keys, so it was
+        # always False and the C map was never freed (#256).  A cached map is
+        # only deleted at exit, when the cache goes; free what was loaded.
+        if getattr(self, "_map", None) is not None:
             lib.turtle_map_destroy(self._map)
+            self._map = None
 
     def elevation(self, x, y):
         """Get the elevation at the given map coordinates
@@ -364,6 +389,7 @@ class Map(object):
             Elevation, in metres.
         """
 
+        shape = numpy.shape(x)
         x, y, finite = _elevation_points(x, y, ("x", "y"), "Map.elevation")
 
         n = x.size
@@ -382,7 +408,8 @@ class Map(object):
                 x.size,
             )
             elevation[finite] = values
-            return elevation[0] if n == 1 else elevation
+            # In the input's shape: 2-D input came back flattened (#267)
+            return elevation[0] if n == 1 else elevation.reshape(shape) if len(shape) > 1 else elevation
 
     @property
     def path(self):

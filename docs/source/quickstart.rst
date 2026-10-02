@@ -7,21 +7,24 @@ simulation, and compute the voltage a detection unit would record.
 Today
 -----
 
-From Listing 4 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_:
+After Listing 4 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_,
+which passes a single e-field file.  The input is now the simulation folder
+``sim2root.py`` writes (``efield_*``, ``run_*`` and ``shower_*`` files), since
+the run and shower trees are needed too:
 
 .. code-block:: python
 
     from grand import Efield2Voltage
 
-    signal = Efield2Voltage("input_efield.root", "output_voltage.root")
+    signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
     signal.params["add_noise"]    = True
     signal.params["add_rf_chain"] = True
 
-    signal.compute_voltage()      # writes output_voltage.root as a side effect
+    signal.compute_voltage()      # writes ./voltage.root as a side effect
 
 or, equivalently, from a shell::
 
-    python scripts/convert_efield2voltage.py input_efield.root -o output_voltage.root
+    python scripts/convert_efield2voltage.py my_simulation -o voltage.root -od .
 
 .. note::
 
@@ -29,11 +32,25 @@ or, equivalently, from a shell::
    the problem.  A ``jupyter-execute`` block runs when the page is built, so
    it cannot go stale; but this one cannot run, because it needs a ROOT file
    on disk before the object can even be constructed.  Every example in this
-   library has that shape today, which is why none of the 554 functions
-   carries one.
+   library has that shape today, which is why only 17 of the 702 functions
+   carry one.
+
+Next steps
+~~~~~~~~~~
+
+- Read a shower's zenith, azimuth and energy back from a file:
+  :ref:`datamodel-read-one-event`.
+- Turn a latitude and longitude into array coordinates, and back:
+  :doc:`coordinates`.
 
 After Phase 6
 -------------
+
+.. warning::
+
+   **Not runnable.**  The code in this section is a design sketch: the
+   modules it imports (``grand.config``, ``grand.io``, ``grand.sim.kernel``)
+   do not exist yet.  Use the form above.
 
 Once input, processing and output are delineated, the same operation
 separates into steps that can each be demonstrated on their own:

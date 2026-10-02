@@ -149,7 +149,8 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     # Plane Wave Fit (PWF)
     # -------------------------------
     theta_pwf_rad, phi_pwf_rad = fit.PWF_semianalytical(Xants, peak_times, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=5e-9)
-    chi2_pwf_reduced = fit.PWF_loss((theta_pwf_rad, phi_pwf_rad), Xants, peak_times, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=5e-9)/(n_antennas - 2)
+    # Raw chi2, as TRecons documents: readers divide by the degrees of freedom (#211)
+    chi2_pwf = fit.PWF_loss((theta_pwf_rad, phi_pwf_rad), Xants, peak_times, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=5e-9)
 
     # -------------------------------
     # Spherical Wave Fit (SWF)
@@ -161,7 +162,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     Xsource = Xsource[0]
 
     l_ant = geom.distance_source_antenna(Xants, Xsource)
-    chi2_swf_reduced = fit.SWF_loss(theta_swf_rad, phi_swf_rad, r_xmax, t_s, Xants, peak_times, sigma=5e-9)/(n_antennas - 4)
+    chi2_swf = fit.SWF_loss(theta_swf_rad, phi_swf_rad, r_xmax, t_s, Xants, peak_times, sigma=5e-9)
 
     # -------------------------------
     # Angular Distribution Function (ADF)
@@ -169,7 +170,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     theta_adf, phi_adf, delta_omega, scaling_factor = fit.recons_ADF(theta_pwf_rad, phi_pwf_rad, peak_amps, Xants, Xsource)
     eta, omega, omega_cr, l_ant, amplitude_model = fit.ADF_parameters(theta_adf, phi_adf, delta_omega, scaling_factor, Xants, Xsource, groundAltitude=cons.groundAltitude, Bvec=cons.Bvec)
     best_params = theta_adf, phi_adf, delta_omega, scaling_factor
-    chi2_adf_reduced = fit.ADF_loss(best_params, peak_amps, Xants, Xsource)/(n_antennas - 4)
+    chi2_adf = fit.ADF_loss(best_params, peak_amps, Xants, Xsource)
     sin_alpha = geom.sin_geomag_angle(theta_adf, phi_adf, B=cons.Bn)
     energy_elm = en.recons_energy_from_voltage(scaling_factor, sin_alpha)
 
@@ -180,13 +181,13 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     e.shower.du_count = n_antennas
     e.shower.zenith_pwf = theta_pwf_rad
     e.shower.azimuth_pwf = phi_pwf_rad
-    e.shower.chi2_pwf = chi2_pwf_reduced
+    e.shower.chi2_pwf = chi2_pwf
 
     e.shower.zenith_swf = theta_swf_rad
     e.shower.azimuth_swf = phi_swf_rad
     e.shower.r_xmax = r_xmax
     e.shower.t_s = t_s
-    e.shower.chi2_swf = chi2_swf_reduced
+    e.shower.chi2_swf = chi2_swf
     e.shower.distance_source_antenna = l_ant
     e.shower.Xsource = Xsource
 
@@ -194,7 +195,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     e.shower.azimuth_adf = phi_adf
     e.shower.width = delta_omega
     e.shower.scaling_factor = scaling_factor
-    e.shower.chi2_adf = chi2_adf_reduced
+    e.shower.chi2_adf = chi2_adf
     e.shower.omega = omega
     e.shower.eta = eta
     e.shower.omega_cr = omega_cr
@@ -222,21 +223,21 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
 
     trecons.zenith_pwf = theta_pwf_rad
     trecons.azimuth_pwf = phi_pwf_rad
-    trecons.chi2_pwf = chi2_pwf_reduced
+    trecons.chi2_pwf = chi2_pwf
 
     trecons.zenith_swf = theta_swf_rad
     trecons.azimuth_swf = phi_swf_rad
     trecons.r_xmax = r_xmax
     trecons.t_s = t_s
     trecons.Xsource = [Xsource]  # stored with shape (1, 3), as in main_DOI.py
-    trecons.chi2_swf = chi2_swf_reduced
+    trecons.chi2_swf = chi2_swf
     trecons.distance_source_antenna = l_ant
 
     trecons.zenith_adf = theta_adf
     trecons.azimuth_adf = phi_adf
     trecons.width = delta_omega
     trecons.scaling_factor = scaling_factor
-    trecons.chi2_adf = chi2_adf_reduced
+    trecons.chi2_adf = chi2_adf
     trecons.omega = omega
     trecons.eta = eta
     trecons.omega_cr = omega_cr
@@ -259,19 +260,19 @@ for e in el_all:
     print(f"================ Event {ev_no} Run {run_no} ================")
 
     print("__________________PWF__________________")
-    print(f"zenith={np.rad2deg(e_sh.zenith_pwf):.2f}°, phi={np.rad2deg(e_sh.azimuth_pwf):.2f}°, chi2_pwf={e_sh.chi2_pwf:.2f} "
+    print(f"zenith={np.rad2deg(e_sh.zenith_pwf):.2f}°, phi={np.rad2deg(e_sh.azimuth_pwf):.2f}°, raw chi2_pwf={e_sh.chi2_pwf:.2f} "
         )
 
     print("__________________SWF__________________")
     print(f"zenith={np.rad2deg(e_sh.zenith_swf):.2f}°, phi={np.rad2deg(e_sh.azimuth_swf):.2f}°, "
-        f"t_s={e_sh.t_s:.3e}s, r_xmax={e_sh.r_xmax:.2f} m, chi2_swf={e_sh.chi2_swf:.2f},"
+        f"t_s={e_sh.t_s:.3e}s, r_xmax={e_sh.r_xmax:.2f} m, raw chi2_swf={e_sh.chi2_swf:.2f},"
         f"Xsource={e_sh.Xsource}"
     )
 
     print("__________________ADF__________________")
     print(f"zenith={np.rad2deg(e_sh.zenith_adf):.2f}°, phi={np.rad2deg(e_sh.azimuth_adf):.2f}°, "
         f"width={e_sh.width:.4f}, scaling={e_sh.scaling_factor:.2f}, "
-        f"chi2_adf={e_sh.chi2_adf:.2f}, "
+        f"raw chi2_adf={e_sh.chi2_adf:.2f}, "
         f"energy_elm={e_sh.energy_elm_voltage:.2e} eV, "
         f"omega={np.rad2deg(e_sh.omega)}, "
         f"omega_cherenkov={np.rad2deg(e_sh.omega_cr)}, "

@@ -6,6 +6,7 @@ import ROOT
 
 from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, grand_tree_list, TRun, logger, StdVectorListDesc, StdStringDesc, TTreeArrayDesc
 from grand.dataio import file_lock as _file_lock
+from grand.basis import validate as _validate
 
 
 @dataclass
@@ -43,6 +44,7 @@ class MotherEventTree(DataTree):
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
+        self._check_open("fill")
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
             raise NotUniqueEvent(
@@ -59,6 +61,8 @@ class MotherEventTree(DataTree):
 
         # Fill the tree
         self._tree.Fill()
+        # Held until written: dropping it now would lose this entry (#284)
+        grand_tree_list.pin(self)
 
         # If there is no entry list, create it
         if not self._entry_list:
@@ -181,11 +185,7 @@ class MotherEventTree(DataTree):
     ## List events in the tree together with runs
     def print_list_of_events(self):
         """List events in the tree together with runs"""
-        self._reset_read_cache(self._tree)
-        count = self._tree.Draw("event_number:run_number", "", "goff")
-        # Remove the Draw() generated histogram from current file to prevent saving
-        if tmph := ROOT.gDirectory.Get("htemp"):
-            tmph.SetDirectory(0)
+        count = self.draw("event_number:run_number", "", "goff")
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
         print("List of events in the tree:")
@@ -202,11 +202,7 @@ class MotherEventTree(DataTree):
         list of tuple
             Every ``(event number, run number)`` in the tree.
         """
-        self._reset_read_cache(self._tree)
-        count = self._tree.Draw("event_number:run_number", "", "goff")
-        # Remove the Draw() generated histogram from current file to prevent saving
-        if tmph := ROOT.gDirectory.Get("htemp"):
-            tmph.SetDirectory(0)
+        count = self.draw("event_number:run_number", "", "goff")
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
         return [(int(events[i]), int(runs[i])) for i in range(count)]
@@ -225,18 +221,28 @@ class MotherEventTree(DataTree):
         Returns
         -------
         int
-            Bytes read; zero when the event is absent.
+            Bytes read.
+
+        Raises
+        ------
+        LookupError
+            When the tree has no such event.  It returned 0 and left the
+            previous event's values loaded (#206).
         """
+        self._check_open("get_event")
         # Try to get the requested entry
         # res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
         # The above should work, but there is a bug in ROOT
-        res = self._tree.GetEntry(self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no)))
-        # If no such entry, return
-        if res == 0 or res == -1:
-            logger.error(
-                f"No event with event number {ev_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."
-            )
-            return 0
+        # int() gave a bare "invalid literal for int()" for get_event('x') (#236)
+        ev_no = self._integer(ev_no, "get_event", "ev_no")
+        run_no = self._integer(run_no, "get_event", "run_no")
+        self._current_index("run_number", "event_number")
+        entry = self._tree.GetEntryNumberWithIndex(run_no, ev_no)
+        res = self._tree.GetEntry(entry) if entry >= 0 else 0
+        if res <= 0:
+            raise LookupError(_validate.message(
+                type(self).__name__, "get_event: no event %d in run %d in the %s "
+                "tree" % (ev_no, run_no, self.tree_name)))
 
         self.assign_branches()
 
@@ -258,13 +264,11 @@ class MotherEventTree(DataTree):
         bool
             True when the tree holds that event.
         """
-        # Try to get the requested entry
-        res = self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no))
-        # If no such entry, return
-        if res == -1:
-            return False
-        else:
-            return True
+        self._check_open("has_event")
+        ev_no = self._integer(ev_no, "has_event", "ev_no")
+        run_no = self._integer(run_no, "has_event", "run_no")
+        self._current_index("run_number", "event_number")
+        return self._tree.GetEntryNumberWithIndex(run_no, ev_no) >= 0
 
     ## Builds index based on run_id and evt_id for the TTree
     def build_index(self, run_id, evt_id):
@@ -277,6 +281,7 @@ class MotherEventTree(DataTree):
         evt_id : str, optional
             Branch holding the event number.
         """
+        self._check_open("build_index")
         self._reset_read_cache(self._tree)
         self._tree.BuildIndex(run_id, evt_id)
 
@@ -295,7 +300,9 @@ class MotherEventTree(DataTree):
         # cache reset matters here: this runs on a tree that is being
         # appended to, every time it is reopened (issue #89).
         self._reset_read_cache(tree)
-        if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
+        with self._kept_buffers("run_number:event_number"):
+            count = tree.Draw("run_number:event_number", "", "goff")
+        if count > 0:
             v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count)).astype(int)
             v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count)).astype(int)
             self._entry_list = [(int(el[0]), int(el[1])) for el in zip(v1, v2)]
@@ -322,83 +329,49 @@ class MotherEventTree(DataTree):
         return True
 
     def get_traces_lengths(self):
-        """Gets the traces lengths for each event
+        """Gets the trace lengths of the current entry
 
         Returns
         -------
-        list of int
-            Trace length per detection unit.
+        list of list of int or None
+            For each detection unit of the loaded entry, the length of each of
+            its channels; ``None`` if this tree holds no traces.  (It looked
+            for branches named ``trace_x`` or ``trace_0``, which no tree has,
+            and always returned ``None``, #200.)
         """
-
-        # If there are no traces in the tree, return None
-        if not self._tree.GetListOfLeaves().FindObject("trace_x") and not self._tree.GetListOfLeaves().FindObject("trace_0"):
-            return None
-
-        traces_lengths = []
-        # For ADC traces - 4 traces, different names
-        if "ADC" in self.__class__.__name__ or "RawVoltage" in self.__class__.__name__:
-            traces_suffixes = [0, 1, 2, 3]
-        # Other traces
-        else:
-            traces_suffixes = ["x", "y", "z"]
-
-        # Get sizes of each traces
-        for i in traces_suffixes:
-            self._reset_read_cache(self._tree)
-            cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
-            traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
-            # Remove the Draw() generated histogram from current file to prevent saving
-            if tmph := ROOT.gDirectory.Get("htemp"):
-                tmph.SetDirectory(0)
-
-        return traces_lengths
+        for name in ("trace", "trace_ch"):
+            if self._tree.GetListOfLeaves().FindObject(name):
+                return [[len(channel) for channel in du] for du in getattr(self, name)]
+        return None
 
     def get_list_of_dus(self):
-        """Gets the list of all detector units used for each event
+        """Gets the detector units of the current entry
 
         Returns
         -------
-        list of int
-            Detection units in the current event.
+        list of int or None
+            Detection units in the loaded entry, in its order; ``None`` if this
+            tree has no ``du_id``.  (It returned the units of the whole tree,
+            as `get_list_of_all_used_dus` does, #200.)
         """
-
-        # If there are no detector unit ids in the tree, return None
         if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
-
-        # Try to store the currently read entry
-        try:
-            current_entry = self._tree.GetReadEntry()
-        # if failed, store None
-        except:
-            current_entry = None
-
-        count = self.draw("du_id", "", "goff")
-        detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
-
-        # Get the detector units branch
-        # It has to be here, not before the draw(), due to a bug in PyROOT
-        du_br = self._tree.GetBranch("du_id")
-
-        # If there was an entry read before this action, come back to this entry
-        if current_entry is not None:
-            du_br.GetEntry(current_entry)
-
-        return detector_units
+        return [int(du) for du in self.du_id]
 
     def get_list_of_all_used_dus(self):
         """Compiles the list of all detector units used in the events of the tree
 
         Returns
         -------
-        list of int
-            Every detection unit appearing anywhere in the tree.
+        list of int or None
+            Every detection unit appearing anywhere in the tree, sorted;
+            ``None`` if this tree has no ``du_id``.
         """
-        dus = self.get_list_of_dus()
-        if dus is not None:
-            return np.unique(np.array(dus).flatten()).tolist()
-        else:
+        if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
+        # draw() keeps the loaded entry's du_id (#196)
+        count = self.draw("du_id", "", "goff")
+        return np.unique(np.frombuffer(self.get_v1(), dtype=np.float64, count=count).astype(int)).tolist()
 
     def get_dus_indices_in_run(self, trun):
         """Gets an array of the indices of DUs of the current event in the TRun tree
@@ -411,10 +384,27 @@ class MotherEventTree(DataTree):
         Returns
         -------
         ndarray
-            Index of each unit of this event within the run unit list.
-        """
+            Index of each unit of this event within the run unit list, in the
+            event's order, so that ``run_array[indices]`` lines up with this
+            event's traces.
 
-        return np.nonzero(np.isin(np.asarray(trun.du_id), np.asarray(self.du_id)))[0]
+        Raises
+        ------
+        ValueError
+            If a unit of this event is not in the run.
+        """
+        # In the event's order: this returned the matches in the run's order,
+        # pairing positions and sampling times with the wrong traces whenever
+        # the two orders differ, and dropped units missing from the run (#199)
+        index = {int(du): i for i, du in enumerate(trun.du_id)}
+        event_dus = [int(du) for du in self.du_id]
+        missing = [du for du in event_dus if du not in index]
+        if missing:
+            raise ValueError(_validate.message(
+                "%s.get_dus_indices_in_run" % type(self).__name__,
+                "units %s of event %s (run %s) are not in the run's du_id"
+                % (missing, self.event_number, self.run_number)))
+        return np.array([index[du] for du in event_dus], dtype=int)
 
 
 @dataclass
@@ -463,7 +453,7 @@ class TADC(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
     trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -748,7 +738,7 @@ class TRawVoltage(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -865,7 +855,7 @@ class TVoltage(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -882,7 +872,7 @@ class TVoltage(MotherEventTree):
 
     ## Voltage traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
-    """Voltage traces for antenna arms (x,y,z)"""
+    """Voltage traces for the antenna arms (x, y, z), in µV, one row per DU"""
     # _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     ## Peak2peak amplitude (muV)
@@ -890,7 +880,7 @@ class TVoltage(MotherEventTree):
     """Peak2peak amplitude (muV)"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """(Computed) peak time"""
+    """(Computed) peak time, in ns"""
 
     ## Version of GRANDlib that produced this file
     grandlib_version: StdStringDesc = field(default=StdStringDesc())
@@ -942,7 +932,7 @@ class TEfield(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
-    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int", maximum=999999999, unit="ns"))
     """Nanoseconds of the trigger for this DU"""
 
     trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
@@ -951,7 +941,7 @@ class TEfield(MotherEventTree):
 
     ## Efield traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
-    """Efield traces for antenna arms (x,y,z)"""
+    """Electric-field traces (x, y, z), in µV/m, one row per DU"""
     ## FFT magnitude for antenna arms (x,y,z)
     fft_mag: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
     """FFT magnitude for antenna arms (x,y,z)"""
@@ -967,7 +957,7 @@ class TEfield(MotherEventTree):
     """Efield polarisation info"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """(Computed) peak time"""
+    """(Computed) peak time, in ns"""
 
 
 @dataclass
@@ -989,8 +979,8 @@ class TShower(MotherEventTree):
     energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, unit="GeV"))
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
     ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
-    azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Shower azimuth  (coordinates system = NWU + origin = core, "comes from")"""
+    azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=360, unit="degrees"))
+    """Shower azimuth, in degrees, measured from north towards west (NWU frame, origin at the core); the direction the shower *comes from*"""
     ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=180, unit="degrees"))
     """Shower zenith  (coordinates system = NWU + origin = core, "comes from")"""
@@ -1012,7 +1002,7 @@ class TShower(MotherEventTree):
     """Atmospheric model parameters"""
     ## Magnetic field parameters: Inclination, Declination, modulus
     magnetic_field: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Magnetic field parameters: Inclination, Declination, modulus"""
+    """Magnetic field: inclination (degrees), declination (degrees), strength (µT).  Files written by the CoREAS converter before #232 hold the strength in mT, or in Gauss"""
     ## Ground Altitude at core position (m asl)
     core_alt: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Ground Altitude at core position (m asl)"""
@@ -1034,7 +1024,7 @@ class TShower(MotherEventTree):
     """Unix time when the shower was at the core position (seconds after epoch)"""
     ## Unix time when the shower was at the core position (seconds after epoch)
     core_time_ns: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float64))
-    """Unix time when the shower was at the core position (seconds after epoch)"""
+    """Nanoseconds part of the time the shower was at the core position (added to core_time_s)"""
 
 
 @dataclass
@@ -1162,22 +1152,24 @@ class TRecons(MotherEventTree):
     ## Number of triggered antennas
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
-    # Plane Wave Fits (PWF) reconstruction outputs 
+    # Plane Wave Fits (PWF) reconstruction outputs
+    ## The angles and their bounds are in radians: a value in degrees by
+    ## mistake (85.0) warns, as it lies outside 0 to pi (#206)
     ## Shower zenith angle from PWF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## Shower azimuth angle from PWF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    ## Non-reduced chi² from PWF
-    ## Divide by du_count to obtain the reduced chi²
+    azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=2 * np.pi, unit="radians"))
+    ## Non-reduced (raw) chi² from PWF; NaN if not filled
+    ## Divide by du_count - 2, the degrees of freedom, to obtain the reduced chi²
     chi2_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
     # Spherical Wave Fits (SWF) Reconstruction outputs 
     ## polar zenith from SWF (in rad) 
-    zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## polar azimuth from SWF (in rad)
-    azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=2 * np.pi, unit="radians"))
     ## Distance between the reconstructed Xsource and the origin = layout center (in meters)
     r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Emission time from SWF (in seconds)
@@ -1188,8 +1180,8 @@ class TRecons(MotherEventTree):
     ## y = r_xmax * sin(theta_swf) * sin(phi_swf)
     ## z = r_xmax * cos(theta_swf)
     Xsource: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    ## Non-reduced chi² from SWF
-    ## Divide by du_count to obtain the reduced chi²
+    ## Non-reduced (raw) chi² from SWF; NaN if not filled
+    ## Divide by du_count - 4, the degrees of freedom, to obtain the reduced chi²
     chi2_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Distance between the reconstructed Xsource and each antenna (in meters)
     distance_source_antenna:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
@@ -1197,16 +1189,16 @@ class TRecons(MotherEventTree):
     # Angular Distribution Function (ADF)
     ## Shower zenith angle from ADF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## Shower azimuth angle from ADF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
-    azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=2 * np.pi, unit="radians"))
     ## Width parameter from ADF fit (delta_omega)
     width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Scaling factor A from ADF fit
     scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    ## Non-reduced chi² from ADF
-    ## Divide by du_count to obtain the reduced chi²
+    ## Non-reduced (raw) chi² from ADF; NaN if not filled
+    ## Divide by du_count - 4, the degrees of freedom, to obtain the reduced chi²
     chi2_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Azimuth angle in the shower plane (in radians)
     eta: StdVectorListDesc = field(default=StdVectorListDesc("float"))
@@ -1221,27 +1213,39 @@ class TRecons(MotherEventTree):
     ## (Electromagnetic energy in eV, obtained directly from voltage data)
     energy_elm_voltage:  TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
-    ## Cramér-Rao (lower) bound (CRB)
+    ## Cramér-Rao (lower) bound (CRB); NaN if not filled (main_DOI.py fills them, main_AOI.py does not)
     ## CRB of shower zenith angle from ADF (in radians)
-    crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of shower azimuth angle from ADF (in radians)
-    crb_azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of scaling factor A from ADF fit
     crb_scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of width parameter from ADF fit (delta_omega)
     crb_width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of shower zenith from SWF (in rad)
-    crb_zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of shower azimuth from SWF (in rad)
-    crb_azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of distance between the reconstructed Xsource and the origin = layout center (in meters)
     crb_r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of emission time from SWF (in seconds)
     crb_t_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of shower zenith from PWF (in radians)
-    crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
     ## CRB of shower azimuth from PWF (in radians)
-    crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=np.pi, unit="radians"))
+
+    def __post_init__(self):
+        super().__post_init__()
+        # An unfilled chi² or bound read 0.0, which looks like a perfect fit or
+        # no uncertainty (#211); NaN says it was not computed.
+        for name in self._unfilled_as_nan:
+            setattr(self, name, np.nan)
+
+    _unfilled_as_nan = ("chi2_pwf", "chi2_swf", "chi2_adf",
+                        "crb_zenith_adf", "crb_azimuth_adf", "crb_scaling_factor", "crb_width",
+                        "crb_zenith_swf", "crb_azimuth_swf", "crb_r_xmax", "crb_t_s",
+                        "crb_zenith_pwf", "crb_azimuth_pwf")
 
 
    

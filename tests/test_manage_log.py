@@ -21,10 +21,10 @@ def test_get_logger_path():
     assert ret == "toto.gran.tutu"
 
 
-def test_get_logger_for_script():
+def test_get_logger_for_script(tmp_path):
     logger = mlg.get_logger_for_script(__file__)
     r_log = mlg._get_logger_path(__file__)
-    fn_log = "tests/test_log.txt"
+    fn_log = str(tmp_path / "test_log.txt")      # not into tests/ (#271)
     mlg.create_output_for_logger(log_file=fn_log, log_stdout=False)
     logger.info("test")
     logger.info(mlg.string_begin_script())
@@ -41,11 +41,11 @@ def test_get_logger_for_script():
         assert all_log.find("Chrono duration") > 0
 
 
-def test_get_logger_for_script_out_pkg():
+def test_get_logger_for_script_out_pkg(tmp_path):
     p_script = "/home/user/test/script.py"
     logger = mlg.get_logger_for_script(p_script)
     r_log = "home.user.test.script"
-    fn_log = "tests/test_log_out_pkg.txt"
+    fn_log = str(tmp_path / "test_log_out_pkg.txt")
     mlg.create_output_for_logger(log_file=fn_log, log_stdout=False)
     logger.info("test")
     logger.info(mlg.string_begin_script())

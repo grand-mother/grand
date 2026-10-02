@@ -1,9 +1,13 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
+import atexit
+import calendar
 import datetime
+import numbers
 import glob
 import os
 from dataclasses import dataclass, field
 from logging import getLogger
+import warnings
 import weakref
 import ROOT
 
@@ -16,9 +20,132 @@ from grand.dataio import file_lock as _file_lock
 
 logger = getLogger(__name__)
 
-## A list of generated Trees
-grand_tree_list = []
-"""Internal list of generated Trees"""
+
+
+#: (file, branch) pairs already reported as missing (#194)
+_missing_branches_reported = set()
+
+
+def _report_missing_branch(tree, branch_name):
+    r"""Says once per file and branch, at INFO, that an older file lacks a branch.
+
+    It was a warning on every read of every committed sample, which a reader
+    took for an error (#194).
+    """
+    key = (getattr(tree, "_file_name", None), branch_name)
+    if key not in _missing_branches_reported:
+        _missing_branches_reported.add(key)
+        logger.info("%s has no branch '%s' (written before it existed); the field keeps its "
+                    "default", key[0] or "the input", branch_name)
+
+def _to_unix(value):
+    r"""Returns the Unix time of `value`; a naive datetime is taken as UTC.
+
+    ``datetime.timestamp()`` reads a naive datetime as *local* time, so the
+    UTC creation time was stored off by the machine's UTC offset (#203).
+    """
+    return calendar.timegm(value.utctimetuple())
+
+
+def _from_unix(value):
+    r"""Returns Unix time `value` as a naive UTC datetime (#203)."""
+    return datetime.datetime.fromtimestamp(value, datetime.timezone.utc).replace(tzinfo=None)
+
+
+class _TreeRegistry:
+    r"""The live tree objects, held by weak reference.
+
+    It was a plain list, which kept every tree -- and the file it opened --
+    alive until ``stop_using()``: a loop that only dropped its trees grew by
+    about 630 kB a file (#284).  It iterates over the trees still alive, in
+    creation order, and supports what the code uses of a list: ``append``,
+    ``remove``, ``len``, ``in`` (by identity) and iteration.
+    """
+
+    def __init__(self):
+        self._refs = []
+        # Trees with entries filled but not written are held strongly: a tree
+        # dropped then would lose them silently (an example that let its
+        # Event objects go wrote 1 event of 10)
+        self._pinned = {}
+
+    def append(self, tree):
+        self._refs.append(weakref.ref(tree))
+
+    def pin(self, tree):
+        r"""Holds `tree` until :meth:`unpin`: it has unwritten entries."""
+        self._pinned[id(tree)] = tree
+
+    def unpin(self, tree):
+        self._pinned.pop(id(tree), None)
+
+    def _live(self):
+        live = [ref() for ref in self._refs]
+        if None in live:                          # forget the dead, now and then
+            self._refs = [ref for ref, tree in zip(self._refs, live) if tree is not None]
+        return [tree for tree in live if tree is not None]
+
+    def __iter__(self):
+        return iter(self._live())
+
+    def __len__(self):
+        return len(self._live())
+
+    def __contains__(self, tree):
+        return any(other is tree for other in self._live())
+
+    def __getitem__(self, index):
+        return self._live()[index]
+
+    def remove(self, tree):
+        r"""Removes `tree`, by identity; nothing if it is not held."""
+        self._refs = [ref for ref in self._refs if ref() is not None and ref() is not tree]
+        self.unpin(tree)
+
+    def clear(self):
+        self._refs = []
+        self._pinned = {}
+
+
+## The generated Trees
+grand_tree_list = _TreeRegistry()
+"""Internal registry of the live tree objects (weak references, #284)"""
+
+
+#: The finalizer of each live tree object, keyed by id(tree) (#284)
+_finalizers = {}
+
+
+def _release_dropped_tree(file, tree_address, owner_id):
+    r"""Finalizer of a tree object dropped without ``stop_using()`` (#284).
+
+    Closes the file the tree opened itself, unless another live tree uses it,
+    and forgets the branch binding it held, so that a tree sharing the TTree
+    rebinds before reading.
+    """
+    _finalizers.pop(owner_id, None)
+    if _branch_owner.get(tree_address) == owner_id:
+        del _branch_owner[tree_address]
+    _written_entries.pop(owner_id, None)
+    _absent_from_file.pop(owner_id, None)
+    if file is None:
+        return
+    try:
+        addr = ROOT.addressof(file)
+    except TypeError:
+        return
+    if addr not in _files_opened_by_trees:
+        return
+    for inst in grand_tree_list:
+        try:
+            if inst._file is not None and ROOT.addressof(inst._file) == addr:
+                return
+        except TypeError:
+            continue
+    del _files_opened_by_trees[addr]
+    if file.IsOpen():
+        file.Close()
+    _file_lock.release(file.GetName())
 
 ## ROOT files that the trees opened themselves from a file name, keyed by the TFile address
 _files_opened_by_trees = {}
@@ -28,6 +155,180 @@ _files_opened_by_trees = {}
 A ``ROOT.TFile`` handed in by the caller is never listed, so the caller keeps control of it.
 This is needed because PyROOT stops owning a TFile once ``TTree.SetDirectory(file)`` is called
 with it, so dropping the last Python reference does not close it (GitHub issue #71)."""
+
+
+#: Entries each tree object had on disk at its last write (or when it was
+#: opened), keyed by id(tree): entries beyond it were filled but not written.
+#: Kept outside the instance because every instance attribute is taken for a
+#: branch.
+_written_entries = {}
+
+
+#: File names of the trees that opened an existing file which did not hold
+#: their tree, keyed by id(tree): ``TEfield(shower_file)``.  Writing such a
+#: tree unfilled only added an empty tree to the user's file (#206).
+_absent_from_file = {}
+
+
+def _unwritten(tree):
+    r"""Number of entries ``tree`` filled since it was opened or last written."""
+    t = tree._tree
+    if t is None or tree.is_tchain:
+        return 0
+    written = _written_entries.get(id(tree))
+    if written is None:                 # already released, or never tracked
+        return 0
+    try:
+        return max(0, int(t.GetEntries()) - written)
+    except (ReferenceError, TypeError):
+        return 0
+
+
+def _close_with_trees(f, extra=()):
+    r"""Closes ``f`` and marks every tree object stored in it as gone (#274).
+
+    Parameters
+    ----------
+    f : ROOT.TFile
+        The file to close.
+    extra : iterable of DataTree, optional
+        Tree objects to mark as well, besides those in ``grand_tree_list``.
+    """
+    if f is None:
+        return
+    try:
+        addr = ROOT.addressof(f)
+    except TypeError:
+        return
+    gone = []
+    if f.IsOpen():
+        # Matched on the TFile object, which survives Close(), never by asking
+        # a tree for its directory: another object's tree may already have
+        # been deleted with its own file, and touching it corrupts memory
+        for inst in list(grand_tree_list) + list(extra):
+            if inst._tree is None or inst.is_tchain or inst._file is None:
+                continue
+            try:
+                if ROOT.addressof(inst._file) == addr:
+                    gone.append(inst)
+            except TypeError:
+                continue
+        f.Close()
+    _forget_opened_file(f)
+    for inst in gone:
+        inst._tree = None
+
+
+#: Which tree object a ROOT tree's branches are bound to, keyed by the tree's
+#: address: several objects may wrap one tree (two opened on one file, or the
+#: trees a DataFile holds and those an Event opens), and the branches write
+#: into and read from the buffers of whichever bound them last (#273).
+_branch_owner = {}
+
+
+def _tree_alive(inst):
+    r"""Whether ``inst``'s ROOT tree certainly still exists.
+
+    It must be listed by ROOT itself -- in its open file, or in memory -- with
+    the same address: a handle can outlive its tree (deleted with its file),
+    and only the address is compared, never the tree touched.
+    """
+    if inst._tree is None or inst.is_tchain:
+        return False
+    try:
+        key = ROOT.addressof(inst._tree)
+        places = [ROOT.gROOT]
+        if inst._file is not None and inst._file.IsOpen():
+            places.insert(0, inst._file)
+        for place in places:
+            for obj in place.GetList():
+                if ROOT.addressof(obj) == key:
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def _detach_buffers(inst):
+    r"""Makes ROOT forget the Python-owned buffers ``inst`` bound to its tree."""
+    if not _tree_alive(inst):
+        return
+    try:
+        key = ROOT.addressof(inst._tree)
+        if _branch_owner.get(key) == id(inst):
+            inst._tree.ResetBranchAddresses()
+            del _branch_owner[key]
+    except Exception:
+        pass
+
+
+def _detach_everything_at_exit():
+    r"""Detaches the trees from Python's buffers before ROOT's own cleanup.
+
+    At exit ROOT deletes every tree it still holds, after Python has begun
+    freeing the buffers the trees' branches point to, and a script that only
+    read an event crashed or hung there about a third of the time (#234).
+    Registered with ``atexit`` after ROOT is imported, so it runs first, while
+    every buffer is still alive.
+
+    Only trees ROOT itself still lists -- in an open file, or in memory -- are
+    touched: a tree object's handle may point at a tree already deleted with
+    its file, and touching that crashes.
+    """
+    try:
+        places = [ROOT.gROOT] + [f for f in ROOT.gROOT.GetListOfFiles() if f.IsOpen()]
+    except Exception:
+        return
+    for place in places:
+        try:
+            for obj in list(place.GetList()):
+                if obj.InheritsFrom("TTree"):
+                    obj.ResetBranchAddresses()
+        except Exception:
+            pass
+
+
+atexit.register(_detach_everything_at_exit)
+
+
+def partial_name(final):
+    r"""The temporary name an output is written under before it is complete (#240).
+
+    Hidden (leading dot), so a DataDirectory scan of the folder never sees it.
+
+    Parameters
+    ----------
+    final : str
+        The output's final path.
+
+    Returns
+    -------
+    str
+        The temporary path, in the same directory.
+    """
+    head, tail = os.path.split(os.fspath(final))
+    return os.path.join(head or ".", "." + tail + ".partial.root")
+
+
+def replace_output(partial, final):
+    r"""Moves a completed output into place, replacing an earlier one (#240).
+
+    The earlier file may be open in this process -- an input DataDirectory
+    opens every file of its folder -- and is closed first, so that nothing
+    reads or writes the replaced file afterwards.
+
+    Parameters
+    ----------
+    partial : str
+        The completed file, written under :func:`partial_name`.
+    final : str
+        Where it goes.
+    """
+    previous = ROOT.gROOT.GetListOfFiles().FindObject(os.fspath(final))
+    if previous:
+        _close_with_trees(previous)
+    _file_lock.release(final)
+    os.replace(partial, final)
 
 
 def _register_opened_file(f):
@@ -121,11 +422,31 @@ class DataTree:
         "_analysis_level",
         "_modification_history",
         "__setattr__",
+        "_guard_ready",
         "is_tchain"
     ]
     """Fields that are not branches"""
 
-    # def __setattr__(self, key, value):
+    def __setattr__(self, key, value):
+        r"""Refuses a name the tree class does not define, once it is built.
+
+        ``t.zenit = 5`` for ``zenith`` was accepted and stored nowhere: the
+        guard below was assigned to the instance, where Python never looks
+        for ``__setattr__`` (#202).  Private names, the class's fields and
+        properties, and attributes the instance already has are allowed.
+        """
+        if key[0] != "_" and self.__dict__.get("_guard_ready") and key not in self.__dict__:
+            if "_known_names" not in type(self).__dict__:   # per class, not inherited
+                type(self)._known_names = {name for klass in type(self).__mro__[:-1]
+                                           for name in list(klass.__dict__) + list(getattr(klass, "__annotations__", {}))}
+            if key not in type(self)._known_names:
+                import difflib
+
+                close = difflib.get_close_matches(key, sorted(n for n in type(self)._known_names if n[0] != "_"), 1)
+                raise AttributeError(_validate.message(
+                    type(self).__name__, "has no field %r%s" % (key, "; did you mean %r?" % close[0] if close else "")))
+        super().__setattr__(key, value)
+
     def mod_setattr(self, key, value):
         # Create a list of attributes and properties for the class if it doesn't exist
         r"""Sets an attribute, recording the change in the modification history.
@@ -309,9 +630,9 @@ class DataTree:
             # two lines were the other way round, so reading back after
             # setting a datetime gave an int (found while triaging #136).
             val_dt = val
-            val = int(val.timestamp())
+            val = _to_unix(val)
         elif type(val) == int:
-            val_dt = datetime.datetime.fromtimestamp(val)
+            val_dt = _from_unix(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
 
@@ -385,10 +706,10 @@ class DataTree:
             # two lines were the other way round, so reading back after
             # setting a datetime gave an int (found while triaging #136).
             val_dt = val
-            val = int(val.timestamp())
+            val = _to_unix(val)
         # If timestamp was given - this happens when initialising with self.assign_metadata()
         elif type(val) == int:
-            val_dt = datetime.datetime.fromtimestamp(val)
+            val_dt = _from_unix(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
 
@@ -529,8 +850,24 @@ class DataTree:
             if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
                 print("not set for", field)
 
-        self.__setattr__ = weakref.proxy(self.mod_setattr)
-        # self.__setattr__ = self.mod_setattr
+        # What is already on disk does not need writing (#275)
+        _written_entries[id(self)] = int(self._tree.GetEntries()) if self._tree else 0
+        # The branches were just bound to this object's buffers (#273)
+        if self._tree is not None and not self.is_tchain:
+            _branch_owner[ROOT.addressof(self._tree)] = id(self)
+
+        # Dropping the object releases what stop_using() would, its file
+        # included, when no other tree uses it (#284).  Not at exit: ROOT
+        # closes its files itself then.
+        # (Kept outside the instance: its attributes become branches.)
+        finalizer = weakref.finalize(
+            self, _release_dropped_tree, None if self.is_tchain else self._file,
+            ROOT.addressof(self._tree) if self._tree else 0, id(self))
+        finalizer.atexit = False
+        _finalizers[id(self)] = finalizer
+
+        # From here on, a misspelt field raises (#202)
+        self._guard_ready = True
 
     ## Return the iterable over self
     def __iter__(self):
@@ -557,23 +894,44 @@ class DataTree:
             self._file = f
             self._file_name = self._file.GetName()
         # If the filename string is given, check if chain, if not open/create the ROOT file with this name
+        elif isinstance(f, (list, tuple)) and f and all(isinstance(el, (str, os.PathLike)) for el in f):
+            # A list of files is a chain, as DataFile accepts (#205)
+            f = [os.fspath(el) for el in f]
+            self._file_name = f[0]
         elif isinstance(f, (str, os.PathLike)):
             f = os.fspath(f)
-            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
-            flist = glob.glob(f)
-            if len(flist) > 1:
-                f = flist
+            # A pattern is a chain of the files it matches, in sorted order.  A
+            # pattern matching nothing created a file named with the "*" (#205)
+            if glob.has_magic(f):
+                flist = sorted(glob.glob(f))
+                if not flist:
+                    raise FileNotFoundError(_validate.message(
+                        type(self).__name__, "no file matches %s" % f))
+                f = flist if len(flist) > 1 else flist[0]
+            if isinstance(f, list):
+                pass
             # Otherwise, it was a single file
             else:
                 self._file_name = f
                 # print(self._file_name)
-                # If the file with that filename is already opened, use it (do not reopen)
-                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
+                # If the file with that filename is already opened, use it (do
+                # not reopen) -- unless the file on disk was replaced, changed
+                # or removed since: the old contents were returned (#236)
+                f = ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)
+                if f and not _file_lock.is_current(self._file_name):
+                    logger.info(f"{self._file_name} changed on disk since it was opened; reading it afresh")
+                    ROOT.gROOT.GetListOfFiles().Remove(f)
+                    f = None
+                if f:
                     self._file = f
                 # If not opened, open
                 else:
                     # If file exists, initially open in the read-only mode (changed during write())
                     where = type(self).__name__
+                    if os.path.isfile(self._file_name) and not os.access(self._file_name, os.R_OK):
+                        # It was reported as "not a ROOT file, or damaged" (#236)
+                        raise PermissionError(_validate.message(
+                            where, "cannot open %s: permission denied" % self._file_name))
                     if os.path.isfile(self._file_name):
                         # Not while another process writes it, and remember its
                         # state, to refuse a stale write later (#281)
@@ -606,17 +964,26 @@ class DataTree:
                     _register_opened_file(self._file)
         else:
             raise TypeError(_validate.message(
-                type(self).__name__, "the file must be a file name or a ROOT.TFile, got %s"
-                % type(f).__name__))
+                type(self).__name__, "the file must be a file name, a list of them or a "
+                "ROOT.TFile, got %s" % type(f).__name__))
 
         # If a list is given, it's a Chain
         if isinstance(f, list):
             self.is_tchain = True
+            self._file = None
             # Create the TChain
             self._tree = ROOT.TChain(self._tree_name, self._tree_name)
             # Assign files to the chain
             for el in f:
                 self._tree.Add(el)
+            # Indexed, as DataFile's chains are: get_event() found nothing
+            # in a chain built from a pattern (#205)
+            if self._tree.GetBranch("event_number"):
+                self._reset_read_cache(self._tree)
+                self._tree.BuildIndex("run_number", "event_number")
+            elif self._tree.GetBranch("run_number"):
+                self._reset_read_cache(self._tree)
+                self._tree.BuildIndex("run_number")
 
 
     ## Init/readout the tree from a file
@@ -632,6 +999,8 @@ class DataTree:
         if isinstance(t, ROOT.TTree) or isinstance(t, ROOT.TChain):
             self._tree = t
             self._tree_name = t.GetName()
+            # A chain from DataFile read as not one (#205)
+            self.is_tchain = isinstance(t, ROOT.TChain)
         # If the tree name string is given, open/create the ROOT TTree with this name
         else:
             self._tree_name = t
@@ -639,11 +1008,25 @@ class DataTree:
             # Try to init with the TTree from file
             if self._file is not None:
                 self._tree = self._file.Get(self._tree_name)
+                # Without its run/event numbers a tree read as zeros, and
+                # listed no events while counting entries (#236)
+                if self._tree and self._tree.GetEntries() > 0:
+                    missing = [name for name in ("run_number", "event_number")
+                               if getattr(type(self), name, None) is not None
+                               and not self._tree.GetBranch(name)]
+                    if missing:
+                        raise ValueError(_validate.message(
+                            type(self).__name__, "the %s tree in %s has no %s branch: it was not "
+                            "written as a %s, or is damaged" % (self._tree_name, self._file.GetName(),
+                                                               " or ".join(missing), type(self).__name__)))
                 # There was no such tree in the file, so create one
                 if not self._tree:
-                    logger.warning(
+                    # The normal path when writing a new file: not a warning (#194)
+                    logger.debug(
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
+                    if self._file.GetListOfKeys().GetSize() > 0:
+                        _absent_from_file[id(self)] = self._file.GetName()
                     self._create_tree()
 
                 # Make the tree save itself in this file
@@ -656,8 +1039,10 @@ class DataTree:
 
         self.assign_metadata()
 
-        # Fill the runs/events numbers from the tree (important if it already existed)
-        self.fill_entry_list()
+        # The run/event numbers already in the tree are listed when a fill()
+        # first needs them for its duplicate check, not on every open: listing
+        # reads the whole tree, and opening a file once per appended event made
+        # each append slower than the last (#283)
 
     ## Create the tree
     def _create_tree(self, tree_name=""):
@@ -676,6 +1061,7 @@ class DataTree:
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
+        self._check_open("fill")
         pass
 
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
@@ -686,16 +1072,43 @@ class DataTree:
         close_file : bool, optional
             Close the file after writing.
         overwrite : bool, optional
-            Replace an existing tree of the same name.
+            Replace a tree of the same name that the file already holds.
+            Without it, writing into a file that already holds such a tree
+            (other than this one) is refused: to add events to it, open it
+            with this class first, ``TShower("file.root")``, then fill and
+            write. Other trees in the file are kept either way.
         force_close_file : bool, optional
             Close the file even if other trees reference it.
+
+        Raises
+        ------
+        FileExistsError
+            If the file already holds another tree of this name and
+            ``overwrite`` is False.
         """
+        self._check_open("write")
+        # TEfield(shower_file).write() added an empty tefield tree to the
+        # user's shower file (#206)
+        if (not args and id(self) in _absent_from_file
+                and self._tree.GetEntries() == 0):
+            warnings.warn(_validate.message(
+                "%s.write" % type(self).__name__,
+                "nothing was filled, and %s held no %s tree when it was opened; "
+                "not adding an empty one. Was it the file of another tree?"
+                % (_absent_from_file[id(self)], self._tree_name)),
+                _validate.GRANDlibWarning, stacklevel=2)
+            return
         # Add the tree friends to this tree
         self.add_proper_friends()
 
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
         creating_file = False
+        # A tree that already lives in another file is copied, not moved:
+        # SetDirectory() would leave the baskets already written behind, and
+        # the new file referenced data it did not hold (#198)
+        if len(args) > 0 and ".root" in args[0][-5:] and self._lives_elsewhere(args[0]):
+            return self._write_copy(args[0], overwrite)
         if len(args) > 0 and ".root" in args[0][-5:]:
             self._file_name = args[0]
             # The TFile object is already in memory, just use it
@@ -711,16 +1124,14 @@ class DataTree:
                 # One writer at a time (#281); opened afresh, so no stale view
                 if os.path.isfile(args[0]):
                     _file_lock.lock_for_writing(args[0], type(self).__name__, fresh=True)
-                # Overwrite requested
-                # ToDo: this does not really seem to work now
-                if overwrite:
-                    self._file = ROOT.TFile(args[0], "recreate")
-                else:
-                    # By default append
-                    self._file = ROOT.TFile(args[0], "update")
+                # Opened for update in both cases: "recreate" for overwrite
+                # wiped every other tree in the file as well (#197); the tree
+                # of this name alone is replaced below
+                self._file = ROOT.TFile(args[0], "update")
                 _file_lock.lock_for_writing(args[0], type(self).__name__, fresh=True)
                 # Opened here, so stop_using() may close it if it is not closed below
                 _register_opened_file(self._file)
+            self._check_tree_slot(self._file, overwrite, creating_file)
             # Make the tree save itself in this file
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
@@ -739,6 +1150,8 @@ class DataTree:
         # ToDo: make sure that the tree has different name than the trees existing in the file!
         # self._tree.Write(*args)
         self._tree.GetCurrentFile().Write(*args)
+        _written_entries[id(self)] = int(self._tree.GetEntries())
+        grand_tree_list.unpin(self)                 # nothing left to lose (#284)
 
         # If TFile was created here, close it
         if (creating_file and close_file) or force_close_file:
@@ -746,6 +1159,105 @@ class DataTree:
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
             _forget_opened_file(self._file)
+
+    def _lives_elsewhere(self, name):
+        r"""Whether the tree is stored in a file other than ``name``.
+
+        Parameters
+        ----------
+        name : str
+            The file about to be written.
+
+        Returns
+        -------
+        bool
+            True if the tree already has a file on disk and it is not ``name``.
+        """
+        if self.is_tchain:
+            return False
+        current = self._tree.GetCurrentFile()
+        if not current:
+            return False
+        return os.path.realpath(current.GetName()) != os.path.realpath(name)
+
+    def _write_copy(self, name, overwrite):
+        r"""Writes a full copy of the tree into another file (#198).
+
+        The tree object stays attached to its own file; ``name`` receives every
+        entry, those already written and those only filled.
+
+        Parameters
+        ----------
+        name : str
+            The file to write the copy into.
+        overwrite : bool
+            Replace a tree of the same name already in ``name``.
+        """
+        where = type(self).__name__
+        if os.path.isfile(name):
+            _file_lock.lock_for_writing(name, where, fresh=True)
+        target = ROOT.TFile(name, "update")
+        _file_lock.lock_for_writing(name, where, fresh=True)
+        try:
+            if target.GetListOfKeys().FindObject(self._tree_name):
+                if not overwrite:
+                    raise FileExistsError(_validate.message(
+                        "%s.write" % where,
+                        "%s already holds a %s tree; pass overwrite=True to replace it"
+                        % (name, self._tree_name)))
+                target.Delete(self._tree_name + ";*")
+            branches = " ".join(b.GetName() for b in self._tree.GetListOfBranches())
+            # CloneTree reads every entry through this object's buffers
+            with self._kept_buffers(branches):
+                target.cd()
+                copy = self._tree.CloneTree(-1)
+                copy.SetDirectory(target)
+                copy.Write("", ROOT.TObject.kWriteDelete)
+            target.Close()
+        finally:
+            if target.IsOpen():
+                target.Close()
+            _file_lock.release(name)
+            # The copy shares this object's branch addresses; give them back
+            self._tree.SetBranchStatus("*", 1)
+            self.create_branches()
+
+    def _check_tree_slot(self, f, overwrite, opened_here):
+        r"""Refuses to replace another tree of this name in ``f`` unless asked.
+
+        Writing a new tree object into a file that already held a tree of the
+        same name replaced it silently, with or without ``overwrite``: the
+        earlier events were lost (#197).
+
+        Parameters
+        ----------
+        f : ROOT.TFile
+            The file about to be written.
+        overwrite : bool
+            Replace the existing tree.
+        opened_here : bool
+            ``f`` was opened by this call, so it is closed before refusing.
+        """
+        directory = self._tree.GetDirectory()
+        try:
+            same = bool(directory) and ROOT.addressof(directory) == ROOT.addressof(f)
+        except TypeError:
+            same = False
+        if same or not f.GetListOfKeys().FindObject(self._tree_name):
+            return
+        if overwrite:
+            f.Delete(self._tree_name + ";*")
+            return
+        name = f.GetName()
+        if opened_here:
+            f.Close()
+            _forget_opened_file(f)
+            self._file = None
+        raise FileExistsError(_validate.message(
+            "%s.write" % type(self).__name__,
+            "%s already holds a %s tree; to add events to it, open it with %s(%r) and fill "
+            "that, or pass overwrite=True to replace it" % (name, self._tree_name,
+                                                           type(self).__name__, name)))
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):
@@ -764,7 +1276,12 @@ class DataTree:
 
     def scan(self, *args):
         """Print out the values of the specified members of the tree (TTree::Scan() interface)"""
+        self._check_open("scan")
         self._tree.Scan(*args)
+        # ROOT 6.38 prints through C++ streams: flush them, so the table
+        # appears before anything Python prints next
+        ROOT.std.cout.flush()
+        ROOT.gInterpreter.ProcessLine("fflush(stdout);")
 
     def get_entry(self, ev_no):
         """Read into memory the ev_no entry of the tree
@@ -777,11 +1294,48 @@ class DataTree:
         Returns
         -------
         int
-            Bytes read; zero when the entry does not exist.
+            Bytes read.
+
+        Raises
+        ------
+        IndexError
+            When the tree has no entry ``ev_no``.  It returned 0 and loaded
+            zeros, or left the previous entry's values in place (#206).
         """
+        self._check_open("get_entry")
+        ev_no = self._integer(ev_no, "get_entry", "ev_no")
+        n = int(self._tree.GetEntries())
+        if not 0 <= ev_no < n:
+            raise IndexError(_validate.message(
+                type(self).__name__, "get_entry: no entry %d; the %s tree has %d "
+                "entries" % (ev_no, self.tree_name, n)))
         res = self._tree.GetEntry(ev_no)
         self.assign_branches()
         return res
+
+    def _current_index(self, *branches):
+        r"""Builds the tree index when it is missing or misses filled entries.
+
+        ``get_event`` on a tree filled in memory found nothing until
+        ``build_index()`` or ``write()`` (#206).
+        """
+        index = self._tree.GetTreeIndex()
+        if not index or index.GetN() != self._tree.GetEntries():
+            self._reset_read_cache(self._tree)
+            self._tree.BuildIndex(*branches)
+
+    def _integer(self, value, action, name):
+        r"""Returns `value` as an ``int``, for ROOT.
+
+        NumPy integers -- including the trees' own ``run_number`` and
+        ``event_number``, and the indices ``np.where`` gives -- were refused
+        by ROOT with a ``TypeError`` (#276).  A bool is refused, not read as
+        0 or 1.
+        """
+        if isinstance(value, numbers.Integral) and not isinstance(value, (bool, np.bool_)):
+            return int(value)
+        raise TypeError(_validate.message(
+            type(self).__name__, "%s: %s must be an integer, got %r" % (action, name, value)))
 
     @staticmethod
     def _reset_read_cache(tree):
@@ -819,6 +1373,51 @@ class DataTree:
         if cache:
             cache.ResetCache()
 
+    def _kept_buffers(self, *expressions):
+        r"""Saves the values held for the branches named in ``expressions``.
+
+        ``TTree::Draw()`` reads every entry into the branch buffers this
+        instance is bound to, so afterwards the fields it touched held the last
+        entry's values while the others kept theirs -- whether those came from
+        ``get_entry()`` or had just been set for the next ``fill()`` (#196).
+        Use as ``with self._kept_buffers(varexp, selection): ...Draw(...)``.
+
+        Parameters
+        ----------
+        *expressions : str
+            The ROOT expressions the draw evaluates.
+
+        Returns
+        -------
+        contextlib.AbstractContextManager
+            Restores the saved values on exit.
+        """
+        import contextlib
+        import re
+
+        names = set(re.findall(r"[A-Za-z_]\w*", " ".join(e for e in expressions if e)))
+        saved = []
+        for name in names:
+            store = self.__dict__.get("_" + name)
+            if isinstance(store, np.ndarray):
+                saved.append((store, store.copy()))
+            elif isinstance(store, StdVectorList):
+                saved.append((store._vector, type(store._vector)(store._vector)))
+            elif isinstance(store, StdString):
+                saved.append((store.string, ROOT.string(store.string)))
+
+        @contextlib.contextmanager
+        def keep():
+            try:
+                yield
+            finally:
+                for target, copy in saved:
+                    if isinstance(target, np.ndarray):
+                        target[...] = copy
+                    else:
+                        target.swap(copy)       # std::vector / std::string, in place
+        return keep()
+
     def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0, delete_temp_histogram=True):
         """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX().
 
@@ -842,9 +1441,12 @@ class DataTree:
         int
             Number of entries drawn.
         """
+        self._check_open("draw")
 
         self._reset_read_cache(self._tree)
-        count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
+        # The values of the loaded or about-to-be-filled entry are kept (#196)
+        with self._kept_buffers(varexp, selection):
+            count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
 
         # Delete the temporary histogram created by draw, so it is not saved in a file
         if delete_temp_histogram:
@@ -902,6 +1504,7 @@ class DataTree:
         int
             Number of entries in the tree.
         """
+        self._check_open("get_entries")
         return self._tree.GetEntries()
 
     def get_number_of_entries(self):
@@ -912,6 +1515,7 @@ class DataTree:
         int
             Number of entries in the tree.
         """
+        self._check_open("get_number_of_entries")
         return self.get_entries()
 
     def get_number_of_events(self):
@@ -920,7 +1524,8 @@ class DataTree:
         Returns
         -------
         int
-            Number of distinct events, which differs from the entry count when a tree holds several entries per event.
+            Number of entries.  Every tree holds one entry per event (or
+            per run), so this is also the number of events (#206).
         """
         return self.get_number_of_entries()
 
@@ -1096,7 +1701,7 @@ class DataTree:
                 try:
                     self._tree.SetBranchAddress(branch_name, getattr(self, value_name).string)
                 except:
-                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
+                    _report_missing_branch(self, branch_name)
         elif isinstance(value, ROOT.string):
             # Create the branch
             if not set_branches:
@@ -1108,7 +1713,7 @@ class DataTree:
                 try:
                     self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
                 except:
-                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
+                    _report_missing_branch(self, branch_name)
         else:
             raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 
@@ -1139,10 +1744,10 @@ class DataTree:
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
         self.type = self._type
         self.comment = ""
-        self.creation_datetime = datetime.datetime.utcnow()
+        self.creation_datetime = _from_unix(int(datetime.datetime.now(datetime.timezone.utc).timestamp()))
         self.modification_history = ""
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
-        self.source_datetime = datetime.datetime.fromtimestamp(0)
+        self.source_datetime = _from_unix(0)
         # Which code wrote the tree (issue #137).  A tool that derives this tree
         # from another may overwrite both, as extract_events.py does.
         from grand import provenance
@@ -1164,8 +1769,13 @@ class DataTree:
                 setattr(self, el.GetName(), el.GetVal())
 
     ## Get entry with indices
-    def get_entry_with_index(self, run_no=0, evt_no=0):
+    def get_entry_with_index(self, *args, run_no=0, evt_no=0):
         """Get the event with run_no and evt_no
+
+        The arguments are keyword-only: given by position, the run came first,
+        the reverse of ``get_event(ev_no, run_no)`` and of the tuples
+        ``get_list_of_events()`` returns, so a tuple passed through looked up
+        another event (#206).
 
         Parameters
         ----------
@@ -1177,14 +1787,26 @@ class DataTree:
         Returns
         -------
         int
-            Bytes read; zero when the pair matches no entry.
+            Bytes read.
+
+        Raises
+        ------
+        LookupError
+            When no entry has that run and event number.
         """
+        if args:
+            raise TypeError(_validate.message(
+                type(self).__name__, "get_entry_with_index: give run_no= and "
+                "evt_no= by name (got %d positional arguments); get_event(ev_no, "
+                "run_no) takes the event first" % len(args)))
+        self._check_open("get_entry_with_index")
+        run_no = self._integer(run_no, "get_entry_with_index", "run_no")
+        evt_no = self._integer(evt_no, "get_entry_with_index", "evt_no")
         res = self._tree.GetEntryWithIndex(run_no, evt_no)
         if res == 0 or res == -1:
-            logger.error(
-                f"No event with event number {evt_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."
-            )
-            return 0
+            raise LookupError(_validate.message(
+                type(self).__name__, "get_entry_with_index: no event %d in run %d "
+                "in the %s tree" % (evt_no, run_no, self.tree_name)))
 
         self.assign_branches()
         return res
@@ -1237,9 +1859,10 @@ class DataTree:
             except:
                 val = el.GetTitle()
 
-            # Convert unix time if this is the datetime
-            if "datetime" in el.GetName() and val!=0:
-                val = datetime.datetime.fromtimestamp(val)
+            # Convert unix time if this is the datetime; 0 too, as the
+            # properties do (it read 0 here and 1970-01-01 there, #203)
+            if "datetime" in el.GetName() and isinstance(val, (int, float)):
+                val = _from_unix(val)
 
             metadata[el.GetName()] = val
 
@@ -1284,15 +1907,60 @@ class DataTree:
 
         return mem_size, disk_size
 
+    def _check_open(self, action):
+        r"""Raises if this tree's data went with a closed file.
+
+        Closing a file deletes the trees stored in it; using one afterwards
+        crashed the interpreter (#274).
+
+        Parameters
+        ----------
+        action : str
+            The method being called, for the message.
+        """
+        if self._tree is None:
+            raise RuntimeError(_validate.message(
+                "%s.%s" % (type(self).__name__, action),
+                "this tree's file was closed (close_file(), stop_using(), or the close() of its "
+                "DataFile or DataDirectory), so its data is gone; open the file again with a "
+                "new tree object"))
+        self._own_branches()
+
+    def _own_branches(self):
+        r"""Binds the tree's branches to this object's buffers, if another object had them.
+
+        Two objects on one tree shared the branch buffers: one object's fill()
+        wrote the other's values, and reading with one changed the other's
+        fields (#273).  Each object now takes the branches back before it uses
+        the tree, so every object reads into, and fills from, its own fields.
+        """
+        if self.is_tchain or self._tree is None:
+            return
+        key = ROOT.addressof(self._tree)
+        if _branch_owner.get(key) == id(self):
+            return
+        # Rebinding repeats the construction-time notes about branches the
+        # file lacks; they were given once already
+        level, ROOT.gErrorIgnoreLevel = ROOT.gErrorIgnoreLevel, ROOT.kFatal
+        quiet = logger.level
+        logger.setLevel("ERROR")
+        try:
+            self.create_branches()
+        finally:
+            ROOT.gErrorIgnoreLevel = level
+            logger.setLevel(quiet)
+        _branch_owner[key] = id(self)
+
     def close_file(self):
         """Close the file associated to the tree
 
         The file is closed even if other tree instances still read from it.
+        Every tree object stored in it, this one included, can no longer be
+        used: calling it raises a clear error rather than crashing.
         To release a tree when you are done with it, prefer ``stop_using()``
         or the ``with`` form, which close the file only when no other tree uses it.
         """
-        self._file.Close()
-        _forget_opened_file(self._file)
+        _close_with_trees(self._file, [self])
 
     def stop_using(self, close_file=True):
         """Stop using this instance and release the memory it holds
@@ -1316,17 +1984,35 @@ class DataTree:
         underlying TTree is gone and ``tree`` is ``None``. A tree that was
         filled but not written is not saved; call ``write()`` first.
 
+        The first ``fill()`` reopens an existing file for update, as ROOT
+        writes full baskets while filling.  Closing it then rewrites ROOT's
+        bookkeeping in the file even when nothing is written: its trees are
+        unchanged, but its checksum is not (#206).
+
         Parameters
         ----------
         close_file : bool, optional
             Close the ROOT file the tree opened, if no other tree uses it.
             Pass ``False`` to only remove the instance from ``grand_tree_list``.
         """
+        # Filled entries were dropped here without a word (#275)
+        if (pending := _unwritten(self)):
+            warnings.warn(_validate.message(
+                "%s.stop_using" % type(self).__name__,
+                "%d entries were filled but not written, and are discarded; call write() "
+                "first to keep them" % pending), _validate.GRANDlibWarning, stacklevel=2)
+        _written_entries.pop(id(self), None)
+        _absent_from_file.pop(id(self), None)
+        # The tree may outlive this object (another object, or a file the
+        # caller keeps open): it must not keep pointing at this object's
+        # buffers once Python frees them (#234)
+        _detach_buffers(self)
+
         # Remove by identity: the dataclass __eq__ compares field values and could match another instance
-        for i, inst in enumerate(grand_tree_list):
-            if inst is self:
-                del grand_tree_list[i]
-                break
+        grand_tree_list.remove(self)
+        finalizer = _finalizers.pop(id(self), None)
+        if finalizer is not None:
+            finalizer.detach()
 
         if close_file:
             self._release_file()
@@ -1370,7 +2056,11 @@ class DataTree:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Call ``stop_using()`` when leaving the ``with`` block
+        """Write what was filled, then call ``stop_using()``, when leaving the ``with`` block
+
+        Entries filled but not written are written when the block ends
+        normally; if it ends with an exception they are discarded, with a
+        warning.
 
         Parameters
         ----------
@@ -1386,5 +2076,10 @@ class DataTree:
         bool
             ``False``, so an exception raised in the block propagates.
         """
+        # Leaving the block normally writes what was filled, as leaving a
+        # ``with open(...)`` block flushes; after an exception nothing is
+        # written, and stop_using() warns about what is discarded (#275)
+        if exc_type is None and _unwritten(self):
+            self.write()
         self.stop_using()
         return False

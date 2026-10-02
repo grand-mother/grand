@@ -71,19 +71,9 @@ subtracts the undulation from it.  **Check for ``nan`` after every elevation
 lookup.**
 
 **A geoid undulation returned ``nan`` and the coordinates look fine.**  The
-site is west of Greenwich and you used the keyword form.  The shipped EGM96 map
-is indexed 0–360°, and only the :class:`~grand.geo.coordinates.Geodetic` path
-normalises:
-
-.. code-block:: python
-
-    >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
-    nan
-    >>> topography.geoid_undulation(
-    ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
-    25.583896785168232
-
-Pass a ``Geodetic``.  See :ref:`issue-geoid-longitude-convention`.
+site is west of Greenwich and you are on a version before the fix for
+:ref:`issue-geoid-longitude-convention`: the keyword form did not wrap a
+negative longitude.  Upgrade, or pass a ``Geodetic``.
 
 The numbers are wrong but nothing failed
 ----------------------------------------
@@ -98,19 +88,22 @@ out as 600 : 400 : 1.  See :doc:`simulation` and notebook 06.
 **Changing ``vga_gain`` changes nothing.**  It is ignored.  See
 :ref:`issue-vga-gain-ignored`.
 
-**Two noise levels disagree by a factor of two.**  Compare the ``du_type``.
-The three values resolve to two distinct sets of numbers whose levels differ by
-up to 2.1×, and two of the three read a byte-identical file.  See
-:ref:`issue-galactic-noise-tables`.
+**Two noise levels disagree by a factor of two.**  If either was simulated
+before 2026-09-07, compare the ``du_type``: until then the three values
+resolved to two distinct sets of numbers, differing by up to 2.1×, and two of
+the three read a byte-identical file (:ref:`issue-galactic-noise-tables`).
+Since then each reads its own table, and the three agree to about 10 %.
 
 **A frequency is out by** :math:`10^6`.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
 stores its frequency axis in **hertz**; everything in
 :mod:`grand.sim.detector.rf_chain` uses **megahertz**, and the attribute name
 carries no unit suffix.  Divide by ``1e6`` when crossing between them.
 
-**An angle is out by a factor of 57.3.**  Every angle in GRANDlib is in
-**degrees**, never radians — including ``zenith``, ``azimuth``, and the
-``phi``/``theta`` axes of the antenna tables.
+**An angle is out by a factor of 57.3.**  The trees, the simulation chain and
+the antenna tables take angles in **degrees** — ``zenith``, ``azimuth``, and
+the ``phi``/``theta`` axes of the tables — while :mod:`grand.analysis` and the
+event viewer work in **radians**.  The analysis functions warn when given a
+value larger than :math:`2\pi`.
 
 **``leff_theta`` is ``None``.**  The loaded tables hold the real/imaginary form
 in ``leff_theta_reim``; the polar attributes ``leff_theta``, ``leff_phi``,
@@ -168,8 +161,9 @@ Messages that look like errors and are not
 ------------------------------------------
 
 ``No valid trun TTree in the file ...  Creating a new one.``
-    Expected when writing.  Constructing a tree class on a file that does not
-    yet contain that tree creates it.  Only worry if you see it while *reading*
+    Expected when writing, and logged only at debug level now (older versions
+    printed it as a warning).  Constructing a tree class on a file that does
+    not yet contain that tree creates it.  Only worry if you see it while *reading*
     a file you expected to be populated — that means the tree is absent or
     named differently.
 

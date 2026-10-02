@@ -157,7 +157,7 @@ def provenance():
               'place is overwritten by the next build, and `--check` will say '
               'so.*'
               % (PROVENANCE_MARKER, stamp, commit,
-                 ' with uncommitted changes' if dirty else '',
+                 ' plus the changes being committed with it' if dirty else '',
                  platform.python_version()))
 
 
@@ -286,8 +286,9 @@ relying on the constructor alone: `du_grandcs`, `axis_enu`.'''),
     md(r'''## 3. Magnetic versus geographic north
 
 `magnetic=True` measures the horizontal axes from magnetic north. The
-declination at Dunhuang is a few degrees, which over a 10 km array is hundreds
-of metres — a choice to make deliberately, not a default to inherit.
+declination at Dunhuang is small — computed below — and it changes with the
+date; elsewhere it reaches several degrees. Either way it is a choice to make
+deliberately, not a default to inherit.
 
 > **The date matters, and the shipped model has expired.** `data/geomagnet/IGRF13.COF`
 > is IGRF-13, defined to 2025, so any `obstime` from 2025-01-01 onward raises
@@ -299,7 +300,12 @@ mag = ECEF(LTP(x=1000.0, y=0.0, z=0.0, location=SITE,
                orientation='ENU', magnetic=True, obstime='2024-06-01'))
 
 print("geographic vs magnetic north, 1 km out: %.1f m apart"
-      % np.linalg.norm(np.asarray(geo).ravel() - np.asarray(mag).ravel()))'''),
+      % np.linalg.norm(np.asarray(geo).ravel() - np.asarray(mag).ravel()))
+for date in ('2020-01-01', '2024-06-01'):
+    d = LTP(x=0.0, y=0.0, z=0.0, location=SITE, orientation='ENU',
+            magnetic=True, obstime=date).declination
+    print("declination at Dunhuang on %s: %+.3f deg, %.0f m at 10 km"
+          % (date, float(np.ravel(d)[0]), 1e4 * np.radians(abs(float(np.ravel(d)[0])))))'''),
     md(r'''## 4. Heights need a reference
 
 A height is meaningless without saying what it is measured from. The ellipsoid
@@ -311,9 +317,10 @@ print("1200 m above the ellipsoid is %.2f m above sea level" % (1200.0 - undulat
 print("available references:", list(Reference))'''),
     md(r'''## 5. A detector layout, in two frames
 
-A small hexagonal array in `GRANDCS`, then the same units as latitude and
-longitude. This is the round trip every simulation performs, drawn.'''),
-    code(r'''# a hexagonal layout, 1 km spacing, in the array frame
+A small array in `GRANDCS` — a centre and two rings, at 1 and 2 km — then the
+same units as latitude and longitude. This is the round trip every simulation
+performs, drawn.'''),
+    code(r'''# a centre and two rings of 6 and 12 units, at 1 and 2 km, in the array frame
 spacing = 1000.0
 positions = [(0.0, 0.0)]
 for ring in (1, 2):
@@ -328,8 +335,9 @@ geodetic = np.array([
     for x, y in positions])
 
 fig, (left, right) = plt.subplots(1, 2, figsize=(11, 4.6))
-left.scatter(positions[:, 1] / 1000, positions[:, 0] / 1000, s=28)
-left.set_xlabel('y  [km]  (west)'); left.set_ylabel('x  [km]  (north)')
+# East to the right, as on the longitude axis: GRANDCS y runs west, so plot -y
+left.scatter(-positions[:, 1] / 1000, positions[:, 0] / 1000, s=28)
+left.set_xlabel('-y  [km]  (east)'); left.set_ylabel('x  [km]  (north)')
 left.set_title('GRANDCS'); left.set_aspect('equal'); left.grid(alpha=.3)
 
 right.scatter(geodetic[:, 1], geodetic[:, 0], s=28, color='C1')
@@ -363,7 +371,10 @@ for d, (lat, lon, h) in zip(np.linspace(0, 20, 6), along):
     print("  %5.1f km along the axis -> lat %.4f, lon %.4f, height %7.1f m"
           % (d, lat, lon, h))'''),
     md(r'''The height climbs as the axis rises, and the latitude increases because the
-shower comes from the north — both consistent with `GRANDCS` `x` running north.'''),
+shower comes from the north — both consistent with `GRANDCS` `x` running north.
+*Magnetic* north, strictly: `GRANDCS` takes its axes from the geomagnetic
+field, 0.29° from geographic north here, which over these 20 km moves the end
+point about 100 m (section 3).'''),
     footer(
         r'''[02 — Reading and writing GRAND data](02_data_model.ipynb)''',
         r'''[03 — The antenna response](03_antenna_response.ipynb)''',
@@ -377,8 +388,8 @@ books['02_data_model.ipynb'] = notebook(
     r'''Everything GRAND records or simulates lives in ROOT `TTree`s, and
 `grand.dataio` is the layer that reads and writes them. This notebook builds a
 file from nothing, reads it back, and works through the conventions that govern
-how files are grouped — which are not written down anywhere else and which I
-got wrong three times while testing them.
+how files are grouped — which are not written down anywhere else and are easy
+to get wrong.
 
 The long form of the [data model page](https://grand-mother.github.io/grand-docs/datamodel.html).''',
     [
@@ -465,21 +476,27 @@ several runs *silently merges them*.'''),
     code(r'''directory = DataDirectory(workdir)
 print("files found  :", [os.path.basename(f) for f in directory.get_list_of_files()])
 print("handles      :", len(directory.get_list_of_files_handles()))'''),
-    md(r'''**The level in the filename must match the level inside the trees.** The
-scanner takes the analysis level from the `_L0_`/`_L1_` marker in the name, then
-looks for a tree attribute named for the level recorded *in the tree*. When
-they disagree you get `AttributeError: 'DataFile' object has no attribute
-'tefield_l1'` — naming something you never wrote, and saying nothing about the
-real cause.'''),
-    code(r'''bad = os.path.join(workdir, 'mismatch_20260101_000000_RUN0_L1_0000.root')
+    md(r'''**The level in the filename should match the level inside the trees.** The
+scanner takes the analysis level from the `_L0_`/`_L1_` marker in the name and
+checks it against the level recorded *in the tree*. When they disagree it warns,
+naming the file and both levels, and uses the tree's level. A file whose name
+does not start with a tree type (`run_`, `efield_`, ...) is ignored, also with
+a warning. (Before grand-mother/grand#187 the first case failed with an
+`AttributeError` naming a tree you never wrote, and the second was silent.)'''),
+    code(r'''import warnings
+from grand.basis.validate import GRANDlibWarning
+
+bad = os.path.join(workdir, 'run_20260101_000000_RUN0_L1_0000.root')
 r = TRun(bad); r.run_number = 0; r.du_id = [0]; r.du_xyz = [[0., 0., 0.]]
 r.t_bin_size = [0.5]; r.analysis_level = 0          # name says L1, tree says 0
-r.fill(); r.write()
+r.fill(); r.write(); r.stop_using()
 
-try:
-    DataDirectory(workdir).get_list_of_files_handles()
-except AttributeError as exc:
-    print("AttributeError:", exc)'''),
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always", GRANDlibWarning)
+    DataDirectory(workdir)
+for w in caught:
+    print(w.message)
+os.remove(bad)                                     # keep the rest of the notebook clean'''),
     md(r'''**Both levels are returned, but the bare attribute follows the highest.** With
 an L0 and an L1 file present, `directory.tefield` refers to L1 while
 `tefield_l0` and `tefield_l1` name them individually. A script reading
@@ -488,7 +505,9 @@ file beside the L0 one.
 
 ## 5. Provenance
 
-`TRun` carries `software_version`, `analysis_level`, `site` and `site_layout`.
+`TRun` carries `data_generator_version`, `analysis_level`, `site` and
+`site_layout`, and every tree records the software that last wrote it
+(`modification_software`, `modification_software_version`).
 This matters more than it sounds: a change to the Galactic-noise normalisation
 alters every voltage in a file without changing its shape, and the version
 stamp is the only way to tell two such files apart.'''),
@@ -496,16 +515,17 @@ stamp is the only way to tell two such files apart.'''),
 for field_name in ('run_number', 'site', 'site_layout', 'analysis_level'):
     print("%-16s %r" % (field_name, getattr(handle.trun, field_name, None)))'''),
     md(r'''That paragraph was not hypothetical. The normalisation did change, in
-September 2026, by a factor of $\sqrt2$ (notebook 05, section 7), and
-`TRun.software_version` records what produced the *run* rather than what
-produced the *voltages*.
+September 2026, by a factor of $\sqrt2$ (notebook 05, section 7), and the run's
+version fields record what produced the *run* rather than what produced the
+*voltages*.
 
 So `TVoltage` now carries `grandlib_version` of its own, written by
 `Efield2Voltage` at the moment the traces are computed. Files written before
 that change do not have the branch, and it reads back as an empty string --
-which is the useful part: an empty stamp is not missing information, it is the
-statement *this predates September 2026*, and the $\sqrt2$ question applies to
-every voltage in it.'''),
+which is the useful part: for a file written by `Efield2Voltage`, an empty
+stamp is not missing information, it is the statement *this predates September
+2026*, and the $\sqrt2$ question applies to every voltage in it. (A voltage
+file written some other way may carry no stamp for other reasons.)'''),
     code(r'''from importlib.metadata import version
 from grand.dataio.event_trees import TVoltage
 
@@ -653,8 +673,9 @@ fig.suptitle(r'effective length at $\phi=45^\circ$, $\theta=60^\circ$')
 fig.tight_layout()'''),
     md(r'''Two things to read off this figure.
 
-First, the resonance near 100–150 MHz: that is where the arms are electrically
-a useful fraction of a wavelength.
+First, the resonances: near 100–150 MHz for the horizontal arms and near
+50 MHz for the Z arm, where each is electrically a useful fraction of a
+wavelength.
 
 Second, **the Z arm is not a scaled copy of the horizontal arms**. It has a
 different shape entirely, and it carries almost all of its response in
@@ -780,10 +801,11 @@ import matplotlib.pyplot as plt
 
 from grand.sim.detector.rf_chain import RFChain
 
-# The GRAND band, in MHz and on a 1 MHz grid.  Everything in rf_chain.py takes
-# and returns MHz -- unlike the antenna model of notebook 03, which stores Hz.
-# Mixing the two up is the most common mistake in this module.
-freqs_mhz = np.arange(30.0, 251.0)
+# 10-400 MHz on a 1 MHz grid: wider than the GRAND band (30-250 MHz), so that
+# its edges show.  Everything in rf_chain.py takes and returns MHz -- unlike the
+# antenna model of notebook 03, which stores Hz.  Mixing the two up is the most
+# common mistake in this module.
+freqs_mhz = np.arange(10.0, 401.0)
 
 # 20 dB is the GRANDProto300 default.  Section 5 shows that this argument is
 # currently ignored, so every chain built here is a 20 dB chain regardless.
@@ -813,8 +835,11 @@ for name in stages:
     md(r'''## 2. What each stage does on its own
 
 $|S_{21}|$ in dB is the forward gain of a stage measured into a matched load.
-Plotting them together shows the division of labour: the LNA supplies the gain,
-the cable takes some back, and the VGA/filter stage defines the band edges.'''),
+Plotting them together shows the division of labour. Two stages supply the
+gain: the LNA, about +21 dB, and the VGA/filter stage, about +18 dB at the
+20 dB setting, which also defines the band edges. The matching network (1 to
+6 dB) and the second balun (about 3 dB) take some back; the cable costs well
+under 1 dB.'''),
     code(r'''fig, ax = plt.subplots(figsize=(8, 4.2))
 for name in stages:
     # s21 is stored per arm; arm 0 is representative and keeps the figure legible.
@@ -866,9 +891,10 @@ M = getattr(chain, order[0]).ABCD_matrix
 for name in order[1:]:
     M = matmul(M, getattr(chain, name).ABCD_matrix)
 
-# Index [0, 0, 0, 70] is the A element, arm X, at 30 + 70 = 100 MHz.
-print("hand-cascaded  A(100 MHz), arm X:", M[0, 0, 0, 70])
-print("chain.total_ABCD_matrix         :", chain.total_ABCD_matrix[0, 0, 0, 70])
+# Index [0, 0, 0, i100] is the A element, arm X, at 100 MHz.
+i100 = int(np.argmin(np.abs(freqs_mhz - 100.0)))
+print("hand-cascaded  A(100 MHz), arm X:", M[0, 0, 0, i100])
+print("chain.total_ABCD_matrix         :", chain.total_ABCD_matrix[0, 0, 0, i100])
 print("agree:", np.allclose(M, chain.total_ABCD_matrix, rtol=1e-4))'''),
     md(r'''## 4. The total transfer function
 
@@ -878,7 +904,10 @@ factor by which the chain multiplies $V_{\rm oc}$.'''),
 for i, arm in enumerate('XYZ'):
     ax[0].plot(freqs_mhz, np.abs(tf[i]), label=arm)
     # Unwrapped so the delay shows as a straight line rather than a sawtooth.
-    ax[1].plot(freqs_mhz, np.degrees(np.unwrap(np.angle(tf[i]))), label=arm)
+    # Phase over the band only: outside it the gain is -50 dB or less and the
+    # phase is noise
+    band = (freqs_mhz >= 30) & (freqs_mhz <= 250)
+    ax[1].plot(freqs_mhz[band], np.degrees(np.unwrap(np.angle(tf[i][band]))), label=arm)
 
 ax[0].set_ylabel(r'$|V_{\rm out}/V_{\rm oc}|$')
 ax[1].set_ylabel('phase [deg]')
@@ -900,9 +929,10 @@ smooth and steeply sloped: the chain delays the pulse by a fixed amount, which
 the reconstruction has to know about.'''),
     md(r'''## 5. A bug you can see
 
-`RFChain` takes a `vga_gain` argument. S-parameters are shipped for −5, 0, 5
-and 20 dB, so four different chains should give four different curves separated
-by 25 dB end to end.
+`RFChain` takes a `vga_gain` argument. S-parameters are shipped for 0, 5 and
+20 dB (`filter+vga{0,5,20}db+filter.s2p`), so three different settings should
+give three curves spanning 20 dB end to end; −5 dB is accepted too, though
+there is no table for it.
 
 They do not.'''),
     code(r'''settings = [-5, 0, 5, 20]
@@ -1003,9 +1033,10 @@ print("T at  30 MHz  %8.0f to %8.0f K" % (temp_30.min(), temp_30.max()))
 print("T at 250 MHz  %8.0f to %8.0f K" % (temp_250.min(), temp_250.max()))
 print("median ratio  %8.0f" % (np.median(temp_30) / np.median(temp_250)))'''),
     md(r'''Two hundred thousand kelvin at the bottom of the band, two thousand at the
-top. **That factor of ~180 across GRAND's own band is the single most important
-fact about its noise**, and it is why every spectrum later in this notebook
-falls steeply to the right.
+top. **That factor of about 180 across GRAND's own band (the median pixel; the
+extremes give 124) is the single most important fact about its noise.** It is
+a fact about the sky temperature: the voltage the antenna delivers per
+frequency bin does not fall the same way, as section 5 shows.
 
 The bright ridge in the maps below is the Galactic plane sweeping through the
 field of view as the Earth turns — which is also why the noise depends on the
@@ -1108,15 +1139,20 @@ for arm, name in enumerate(("SN", "EW", "Z")):
 ax.set_xlabel("local sidereal time (h)")
 ax.set_ylabel(r"open-circuit noise ($\mu$V RMS)")
 ax.set_xlim(0, 24); ax.legend(fontsize=8)
-ax.set_title("the Galaxy passing overhead")
+ax.set_title("the Galactic plane moving through the sky")
 fig.tight_layout()
 
-print("quietest %.1f uV at %.1f h,  busiest %.1f uV at %.1f h,  ratio %.2f"
+print("quietest %.1f uV at %.1f h,  busiest %.1f uV at %.1f h,  ratio %.2f  (SN arm)"
       % (levels[:, 0].min(), hours[levels[:, 0].argmin()],
          levels[:, 0].max(), hours[levels[:, 0].argmax()],
-         levels[:, 0].max() / levels[:, 0].min()))'''),
-    md(r'''About a third, between the quietest hour and the busiest — larger than the
-spread between the three antenna models, and not something to average over.
+         levels[:, 0].max() / levels[:, 0].min()))
+print("busiest / quietest per arm (SN, EW, Z): %s"
+      % "  ".join("%.2f" % r for r in levels.max(axis=0) / levels.min(axis=0)))'''),
+    md(r'''A third to a half, depending on the arm, between the quietest hour and the
+busiest — larger than the spread between the three antenna models, and not
+something to average over. (At GRAND's latitude the Galactic Centre culminates
+only about 20° above the horizon: the variation is the Galactic plane moving
+through the antenna pattern, not the Centre passing overhead.)
 
 **A quoted noise level without a sidereal time is incomplete.** This is not a
 defect; it is the sky. But "the GRAND noise floor is X µV" is an unfinished
@@ -1126,16 +1162,23 @@ anything.
 ## 5. What the simulation returns
 
 `galactic_noise` draws one realisation: complex Fourier coefficients whose
-magnitudes follow the table and whose phases are random.'''),
+magnitudes follow the table and whose phases are random. Its first argument is
+the local sidereal time, here 18 h; the frequencies must be those of the FFT
+bins the coefficients go into.'''),
     code(r'''from grand.sim.noise.galaxy import galactic_noise
 
-FREQS = np.arange(30.0, 251.0)
-SIZE = 2048
+SIZE = 2048                                   # samples of 0.5 ns: 2 GHz
+# The frequencies of the FFT bins themselves: 2000/2048 = 0.977 MHz apart, not
+# 1 MHz.  Placing a 1 MHz grid into these bins shifts the band 2 % low (#190).
+freqs = np.fft.rfftfreq(SIZE, d=0.5e-9) / 1e6     # MHz
+band = (freqs >= 30) & (freqs <= 250)
+FREQS = freqs[band]
 
+# The first argument is the local sidereal time, in hours.
 spectrum = galactic_noise(18.0, SIZE, FREQS, nb_ant=200, seed=1,
                           du_type="GP300")
 full = np.zeros((200, 3, SIZE // 2 + 1), dtype=complex)
-full[:, :, 30:251] = spectrum
+full[:, :, band] = spectrum
 traces = np.fft.irfft(full, n=SIZE, axis=-1)
 
 print("spectrum", spectrum.shape, "  traces", traces.shape)
@@ -1148,11 +1191,13 @@ axes[0].set_title("one realisation, SN arm")
 
 for arm, name in enumerate(("SN", "EW", "Z")):
     axes[1].loglog(FREQS, np.abs(spectrum[0, arm]), lw=0.8, label=name)
-axes[1].set_xlabel("frequency (MHz)"); axes[1].set_ylabel("|V| (arb.)")
+axes[1].set_xlabel("frequency (MHz)"); axes[1].set_ylabel(r"|V| per FFT bin ($\mu$V)")
 axes[1].set_title("its spectrum"); axes[1].legend(fontsize=8)
 fig.tight_layout()'''),
-    md(r'''The spectrum falls steeply with frequency, which is the sky map from section 1
-seen a different way.
+    md(r'''The spectrum does **not** fall steeply, although the sky temperature drops by
+about 180 across the band: the antenna's response rises with frequency over
+most of it. The horizontal arms deliver most noise per bin around 100–200 MHz;
+only the Z arm is largest at the low end.
 
 Note that the *same seed gives the same noise*, which matters more than it
 sounds: a simulation whose noise changes between runs cannot be compared with
@@ -1200,7 +1245,7 @@ section 2 — so:
 > **Every simulated voltage produced before 2026-09-07 is low by $\sqrt2$.**
 
 New files record the version that wrote them, in `TVoltage.grandlib_version`.
-Files with no stamp predate the fix. Whether anything is reprocessed is an open
+Voltage files from `Efield2Voltage` with no stamp predate the fix. Whether anything is reprocessed is an open
 question for the collaboration, not a code one.
 
 ## 8. What is still not checked here
@@ -1244,6 +1289,7 @@ import matplotlib.pyplot as plt
 from grand import Efield2Voltage
 from grand.dataio.event_trees import TEfield, TShower, TVoltage
 from grand.dataio.run_trees import TRun
+from grand.dataio.xmax_frame import arrival_direction
 
 # Everything this notebook writes goes into a temporary directory that the last
 # cell removes.  Nothing is left in the repository.
@@ -1270,8 +1316,8 @@ SITE = [40.98, 93.95, 1200.0]        # GRANDProto300: lat, lon, altitude
 path = os.path.join(workdir, 'efield.root')
 
 # --- TRun: everything constant across the events of one run ------------------
-# Constructing a tree on a file that has no such tree prints "No valid trun
-# TTree ... Creating a new one" -- that is the expected path when writing.
+# Constructing a tree on a file that has no such tree creates it -- the
+# expected path when writing (logged at debug level only).
 run = TRun(path)
 run.run_number = 0
 run.du_id = list(range(N_DU))
@@ -1301,10 +1347,13 @@ efield.fill(); efield.write()
 # --- TShower: the geometry the antenna response is evaluated for -------------
 shower = TShower(path)
 shower.run_number, shower.event_number = 0, 0
-shower.zenith, shower.azimuth = 85.0, 0.0      # a very inclined shower
+shower.zenith, shower.azimuth = 85.0, 135.0    # a very inclined shower, from the south-west
 shower.energy_primary = 3.98e9                 # GeV
 shower.shower_core_pos = [0., 0., 1200.]
-shower.xmax_pos_shc = [0., 0., 10000.]         # shower-core frame, not the site frame
+# Xmax on the shower axis, 50 km up it from the core, in the shower-core frame
+# (not the site frame).  Off the axis, the reader warns that the geometry is
+# inconsistent.
+shower.xmax_pos_shc = list(50e3 * arrival_direction(85.0, 135.0))
 shower.fill(); shower.write()
 
 print("wrote %s  (%.1f kB)" % (path, os.path.getsize(path) / 1e3))
@@ -1317,7 +1366,8 @@ print("E-field trace:", trace.shape, " (du, component, sample)")'''),
 - `zenith` is measured from the vertical, so 85° is 5° above the horizon —
   the very inclined geometry GRAND is built for.
 - `origin_geoid` is `[latitude, longitude, altitude]` in degrees and metres;
-  everything angular in GRANDlib is in **degrees**, never radians.
+  the tree fields and the simulation chain take angles in **degrees**;
+  `grand.analysis` (notebook 11) and the event viewer work in radians.
 - `xmax_pos_shc` is in the shower-core frame, not the site frame.'''),
     md(r'''## 2. Running the chain
 
@@ -1386,21 +1436,22 @@ survive it. The ringing is real and appears in data; it is also why you cannot
 estimate the noise from "the part of the trace away from the pulse".
 
 **Amplitude decides everything.** At 500 µV/m the X arm has a signal-to-noise
-near 10 and is comfortably detectable. Drop the input to 1 µV/m and
-$V_{\rm oc}$ falls to 0.3 µV against a noise RMS of several hundred — a
-signal-to-noise of 0.03, invisible. GRAND's sensitivity is set by exactly this
+of about 5 and the Y arm about 3.4: detectable, not comfortably. Drop the input
+to 1 µV/m and everything scales down by 500 — $V_{\rm oc}$ on X falls to
+0.23 µV and its signal-to-noise to about 0.01, invisible. GRAND's sensitivity is set by exactly this
 ratio, which is why the $\sqrt2$ normalisation settled on 2026-09-07 was not a
 detail: it moved every voltage below by that factor.
 
-**The Z arm output is tiny — and not for the reason you would guess.**'''),
+**The Z arm output is the smallest — and not for the reason you would guess.**'''),
     md(r'''## 4. A trap: arm X is not "the X component of E"
 
-The input field has components in the ratio 1.0 : 0.6 : 0.2, but the output
-arms come out closer to 600 : 400 : 1. The Z arm is not receiving 0.2 of the
-signal; it is receiving almost none.
+The input field has components in the ratio 1.0 : 0.6 : 0.2, but the
+open-circuit voltages come out about 117 : 115 : 35 µV: X and Y nearly equal,
+Z a third of them. Neither ratio follows the field's.
 
-The reason is *not* that the Z arm is insensitive at this zenith angle. It is
-the most sensitive of the three:'''),
+The reason is *not* that the Z arm is insensitive at this zenith angle. It has
+by far the largest $|\ell_\theta|$ of the three; the horizontal arms respond
+almost only through $|\ell_\phi|$:'''),
     code(r'''from grand.sim.detector.antenna_model import AntennaModel
 
 model = AntennaModel()
@@ -1523,7 +1574,7 @@ books['07_topography.ipynb'] = notebook(
     r'''07 — Topography''',
     r'''GRAND is built to see showers arriving within a few degrees of the horizon.
 For those, the ground is not a flat plane a long way below the antennas — it is
-in the way. A ray at 89° zenith would travel eighty kilometres to drop one
+in the way. A ray at 89° zenith would travel 57 kilometres to drop one
 kilometre over flat ground, so whether it clears a ridge is decided by terrain
 tens of kilometres from the array.
 
@@ -1573,9 +1624,8 @@ different things depending on who wrote it down.
 The difference between them — the **geoid undulation** — reaches ±100 m
 worldwide, far larger than the vertical precision GRAND needs for timing. The
 EGM96 undulation map ships with the package, so this works with no downloads.'''),
-    code(r'''# Pass a Geodetic rather than latitude=/longitude= keywords.  Section 2 shows
-# why: the keyword form does not normalise the longitude and the Geodetic form
-# does, so this is the one that works everywhere.
+    code(r'''# A Geodetic or the latitude=/longitude= keywords give the same answer; a
+# negative (western) longitude is wrapped into [0, 360) either way.
 print("geoid undulation, in metres:")
 for name, lat, lon in [('GRANDProto300 site (China)', 40.98,  93.95),
                        ('Auger site (Argentina)',    -35.20, -69.32),
@@ -1593,28 +1643,15 @@ cannot be treated as a constant offset for an array that spans any distance.
 
 The rule in GRANDlib: `Geodetic.height` is **ellipsoidal**, and
 `topography.elevation(..., reference='sea')` converts.'''),
-    md(r'''## 2. Two silent failures worth knowing about
+    md(r'''## 2. A silent failure worth knowing about
 
-Neither of these raises. Both return `nan`, which then propagates quietly into
+It does not raise. It returns `nan`, which then propagates quietly into
 whatever geometry you were computing and stays plausible for several steps.
 
-**First: the keyword form does not normalise longitude.** The shipped EGM96
-map is indexed over 0–360°, and the `latitude=`/`longitude=` path passes the
-value through unchanged, while the `Geodetic` path normalises it.'''),
-    code(r'''lat, lon = -35.20, -69.32          # the Auger site, in the western hemisphere
+(Before grand-mother/grand#251 the keyword form, `latitude=`/`longitude=`, also
+returned `nan` west of Greenwich; it now wraps the longitude like `Geodetic`.)
 
-kw   = topography.geoid_undulation(latitude=lat, longitude=lon)
-wrap = topography.geoid_undulation(latitude=lat, longitude=lon + 360.0)
-geo  = topography.geoid_undulation(Geodetic(latitude=lat, longitude=lon, height=0.0))
-
-print("geoid_undulation(latitude=..., longitude=-69.32) :", kw)
-print("geoid_undulation(latitude=..., longitude=290.68) :", wrap)
-print("geoid_undulation(Geodetic(longitude=-69.32))     :", float(np.ravel(geo)[0]))'''),
-    md(r'''Same point, three calls, two different answers and one `nan`. Prefer the
-`Geodetic` form; if you must use the keywords, wrap the longitude into
-$[0, 360)$ yourself.
-
-**Second: a point with no elevation tile also returns `nan`.**'''),
+**A point with no elevation tile returns `nan`.**'''),
     code(r'''far = Geodetic(latitude=40.98, longitude=93.95, height=0.0)   # GP300 site
 print("elevation with no tile for this square:", topography.elevation(far))
 
@@ -1679,13 +1716,18 @@ This is what `topography.distance` answers: given a starting point and a
 direction, how far to the terrain? It marches along the ray and intersects the
 actual elevation model, not a plane.
 
-The direction is a Cartesian vector in the local ENU frame — x east, y north,
-z up — so a zenith angle $\theta$ and azimuth $\phi$ become
+The direction is read in **ECEF** unless you say otherwise. Here it is
+written in the local ENU frame — x east, y north, z up — and `frame="ENU"`
+says so; an `LTP` or `GRANDCS` can be passed as the frame too. A zenith angle
+$\theta$ and azimuth $\phi$ become
 
 $$\hat{d} = (\sin\theta\cos\phi,\; \sin\theta\sin\phi,\; -\cos\theta)$$
 
 with the minus sign on $z$ because we are looking downward, towards the
-ground.'''),
+ground. Note that in ENU this $\phi$ is measured from **East**, anticlockwise:
+it is not GRAND's azimuth, which runs from North towards West (notebooks 01, 06
+and 11). Leave out `frame` and this vector is taken as ECEF: straight down then
+comes out as 2.27 km instead of 1.5 km.'''),
     code(r'''if HAVE_TILES:
     ground = topography.elevation(CENTRE)
     origin = Geodetic(latitude=lat0 + 0.5, longitude=lon0 + 0.5,
@@ -1699,7 +1741,7 @@ ground.'''),
                                     z=-np.cos(th))
         # maximum_distance bounds the march; without it a ray that never meets
         # the ground searches a long way before giving up.
-        dist = float(np.ravel(topography.distance(origin, d,
+        dist = float(np.ravel(topography.distance(origin, d, frame="ENU",
                                                   maximum_distance=600e3))[0])
         # What a flat plane 1500 m below would have given, for comparison.
         flat = 1500.0 / np.cos(th)
@@ -1708,24 +1750,18 @@ ground.'''),
                  flat / 1e3))
 else:
     print("skipped: no tiles")'''),
-    md(r'''The two columns diverge, and they diverge in *both* directions.
+    md(r'''Up to 85° the terrain changes the path by a few per cent at this site:
+the same 1.52 km at 10°, 9.18 km against 8.64 km at 80°, 18.5 km
+against 17.2 km at 85°. The ground around the tile centre falls away gently, so
+the ray goes a little further than over a flat plane.
 
-At steep angles the real distance is **longer** than the flat-ground estimate —
-2.25 km against 1.52 km at 10° zenith — because the ground falls away below the
-launch point. The tile spans 1746 m to 2522 m and the centre sits at 2112 m, so
-a ray heading almost straight down has further to fall than the local surface
-suggests.
+At 88° and 89° the ray is not reached: it travels more than the 42 km to the
+tile's edge before dropping 1500 m, and beyond the tile there is no elevation
+data. For rays this close to the horizon, fetch the neighbouring tiles first
+(`topography.update_data` with a larger `radius`).
 
-Near the horizon the sign flips and the size grows. At 89° the flat-ground
-formula gives 86 km, while the real terrain stops the ray at 15 km: the ground
-rises into it. **A flat-ground calculation overestimates the path by a factor
-of nearly six there**, and puts the intersection point seventy kilometres
-wrong — which for an array a few kilometres across is the difference between a
-shower landing inside it and outside it.
-
-Neither error is a small correction to be applied afterwards. Which way it goes
-depends on the terrain and on the arrival direction, so there is no single
-factor to fold in.'''),
+Which way the terrain moves the answer, and by how much, depends on the site
+and the arrival direction, so there is no single factor to fold in.'''),
     md(r'''## 5. A profile along a shower axis
 
 Following the terrain along the ray gives the profile that decides whether a
@@ -1889,8 +1925,11 @@ this repository as bare `.npy` files with no record of how they were made, and
 closing that gap took a round trip to their author. A file whose whole purpose
 is to be compared against is the last place to repeat it.
 
-Now the scale. The pulse sits on a galactic-noise floor, and the ratio between
-them is what decides whether a given perturbation is detectable at all.'''),
+Now the scale. The input pulse is weak on purpose — about 12 µV after the
+chain — so the trace is almost entirely galactic noise: the "peak" below is a
+noise maximum, and the ratio is the noise's crest factor, not a
+signal-to-noise. That is what the test pins: one exact noise realisation, with
+a small signal riding on it.'''),
     code(r'''# The noise floor: sample the tail, away from the pulse.
 tail = reference[:, :, 400:]
 floor = tail.std()
@@ -1899,8 +1938,8 @@ print("noise floor  %8.2f uV  (RMS, samples 400-511)" % floor)
 print("peak         %8.1f uV" % np.abs(reference).max())
 print("ratio        %8.0f" % (np.abs(reference).max() / floor))
 print()
-print("a 1e-9 relative tolerance is %.2e uV — far below the noise floor,"
-      % (1e-9 * np.abs(reference).max()))
+print("the test's tolerance, %g of the peak, is %.2e uV — far below the noise floor,"
+      % (golden.TOLERANCE, golden.TOLERANCE * np.abs(reference).max()))
 print("so the test is pinning the exact realisation, not a statistical level.")'''),
     code(r'''fig, ax = plt.subplots(figsize=(9, 3.4))
 t_ns = np.arange(reference.shape[2]) * golden.T_BIN_NS
@@ -1929,9 +1968,11 @@ Same input, same seed, same configuration.'''),
 fresh = run()
 print("largest disagreement with the reference: %g uV"
       % np.abs(fresh - reference).max())'''),
-    md(r'''Exactly zero — bit for bit, not nearly. The $10^{-9}$ tolerance in the test
-exists so that a NumPy or BLAS upgrade reassociating a floating-point sum does
-not fail the build; nothing here needs it today.
+    md(r'''Zero, or at most a float32 rounding step (about $10^{-8}$ of the peak):
+whether a run reproduces bit for bit depends on the machine and its BLAS, which
+may reassociate a floating-point sum. The test's tolerance,
+`golden.TOLERANCE` = $10^{-6}$ of the peak, is set above that and far below any
+real change, and the table below uses the same tolerance (#217).
 
 ## What it catches, for real
 
@@ -1948,7 +1989,8 @@ for label, seed, over in [
 ]:
     out = run(seed=seed, **over)
     delta = np.abs(out - reference).max()
-    caught = not np.allclose(out, reference, rtol=1e-9, atol=0.0)
+    # The test's own criterion: the largest difference over the trace peak
+    caught = delta / np.abs(reference).max() > golden.TOLERANCE
     rows.append((label, delta, delta / np.abs(reference).max(), caught))
 
 print("%-30s %12s %10s   %s" % ("change", "max |diff|", "relative", "caught?"))
@@ -1974,8 +2016,9 @@ tolerance.
 The reference input is deliberately asymmetric — the three arms carry the same
 pulse at amplitudes 1.0, 0.6 and 0.2.
 
-That looked fussy when it was written. It is the difference between catching a
-swapped antenna arm and not, and it can be shown rather than argued.'''),
+That looked fussy when it was written. It is the difference between catching
+two swapped field components (SN and EW of the input) and not, and it can be
+shown rather than argued.'''),
     code(r'''from grand import Efield2Voltage
 from grand.dataio.event_trees import TEfield, TShower
 from grand.dataio.run_trees import TRun
@@ -2031,12 +2074,12 @@ for name, amps in [("asymmetric  1.0 / 0.6 / 0.2   (what we use)", (1.0, 0.6, 0.
     delta = np.abs(normal - swapped).max()
     print("%-44s swap changes it by %8.4g uV   %s"
           % (name, delta, "detected" if delta > 0 else "INVISIBLE"))'''),
-    md(r'''With a symmetric input, swapping two antenna arms changes **nothing** — the
-error passes straight through the regression and every other test in the suite.
-With the asymmetric input it shows up.
+    md(r'''With a symmetric input, swapping two field components changes **nothing** —
+the error passes straight through the regression and every other test in the
+suite. With the asymmetric input it shows up.
 
-The change is small, about 0.1 % of the peak, but the comparison is exact, so
-size does not matter — only that it is non-zero.
+The change is about 0.08 % of the noise peak but some 40 % of the 12 µV
+signal, far above the test's tolerance: what matters is that it is non-zero.
 
 This is the general lesson, and it outlives this notebook: **a regression test
 is only as good as the asymmetry of its input.** Symmetric inputs hide exactly
@@ -2371,9 +2414,12 @@ for e in event.efields:
     peak_at = t[np.argmax(np.abs(np.ravel(e.trace.x)))]
     print("%-6s %-22s %11.1f ns %11.1f ns"
           % (e.du_id, e.t0.astype("int64"), t[0], peak_at))'''),
-    md(r'''The units are spread over about nine microseconds of arrival time. Sample 0 of
-one trace is not sample 0 of another, and any comparison that ignores that is
-comparing different instants.
+    md(r'''The traces start over a span of about 9.4 µs (`t_vector[0]`). Sample 0 of one
+trace is not sample 0 of another, and any comparison that ignores that is
+comparing different instants. ("peak at" is each trace's largest sample: a
+pulse for the units the shower lit up, only the largest wiggle for the others.
+The absolute start, in nanoseconds since 1970, is a placeholder date in May
+1976 that `sim2root` writes when the simulation records none.)
 
 With a common axis, sampling the whole array at one moment is a single
 call.'''),
@@ -2578,9 +2624,8 @@ the same way as a remote.
     code(r'''found = dm.get_file("efield_5388_L0.root")
 print(found)
 print(type(found).__name__)'''),
-    md(r'''A `Path`, not a string. It was a string until June 2025, when
-`dev_database` changed `return str(found_file)` to `return found_file`; code
-that concatenates the result rather than passing it to `open` predates that.
+    md(r'''A `Path`, not a string: pass it to `open` or join it with `/`. (It used to be
+a string, so older code that concatenates the result with `+` fails on it.)
 
 The search descends, so a file need not sit at the top of a `localdir`:'''),
     code(r'''print(dm.get_file("efield_6914_L0.root"))   # two directories down
@@ -2676,17 +2721,14 @@ Five scripts wrap the same object, and they take the config file with `-c`:
 python -m granddb.register_file_in_db    -c config.ini  file.root
 python -m granddb.register_dir_in_db     -c config.ini  somedir/
 python -m granddb.register_dataset_in_db -c config.ini  somedir/
+python -m granddb.register_in_db         -c config.ini  file.root somedir/
 python -m granddb.refresh_mat_views      -c config.ini
 ```
 
 Each needs a `[database]` section, since registering is what they do.
 
-Two notes on them, both dated September 2026. Importing one of these modules
-used to run it — `parse_args()` and a database connection at import — so they
-now have a `main()` and a `__main__` guard; the commands above are unchanged.
-And `register_file_in_db` calls `os._exit(0)` after its first file, so passing
-it several registers one; the comment beside it says that avoids a deadlock in
-ROOT.
+One practical note: `register_file_in_db` stops after its first file, so
+passing it several registers only one. Use `register_dir_in_db` for many.
 
 ## 7. Where this leaves you
 
@@ -2752,7 +2794,12 @@ small box around the timing answer.
 
 - **Frame**: x North, y West, z Up, in metres, with the origin at the centre of
   the array. Heights are *above sea level*: the fits put the ground at
-  `constants.groundAltitude`, 1231 m, the GP13 site.
+  `constants.groundAltitude`, 1231 m, the GP13 site, which this notebook uses.
+  Simulation files are different: `TRun.du_xyz` gives z relative to the run's
+  `origin_geoid`, so take positions and ground altitude together from
+  `geom.antenna_positions_from_run(trun)` and pass the latter as
+  `groundAltitude`; the default would put the source over a kilometre too
+  high.
 - **Angles** in radians, and they say where the shower **comes from**: zenith 0
   is a shower falling straight down, azimuth 0 one arriving from the North,
   azimuth 90° one arriving from the West. The
@@ -2876,15 +2923,15 @@ ax.set_ylabel("zenith [deg]")
 ax.set_title("Plane-wave fit, 5 ns timing jitter")
 ax.legend()
 plt.show()'''),
-    md(r'''Hundredths of a degree, and noticeably worse in zenith than in azimuth. That
-asymmetry is geometry, not a flaw: at 75° the shower arrives nearly
-horizontally, so the array — which is almost flat — sees the azimuth along its
-full width, while the zenith has to be read from small height-dependent
-delays.
+    md(r'''A few hundredths of a degree in zenith, under one hundredth in azimuth: four
+times worse in zenith. That ratio is geometry, not a flaw. Across a flat array
+the arrival times measure the horizontal slowness, $\sin\theta / c$, so a
+timing error moves $\sin\theta$ by a fixed amount and $\theta$ by that amount
+over $\cos\theta$: at 75°, $1/\cos 75° = 3.9$, the ratio observed.
 
 The fit also offers a χ², `PWF_loss`. It is what `main_AOI.py` stores as
-`chi2_pwf`, divided by the degrees of freedom (antennas − 2). With the right
-`sigma` and a model that fits, the reduced value should be near 1:'''),
+`chi2_pwf`, raw; divided by the degrees of freedom (antennas − 2), with the
+right `sigma` and a model that fits, it should be near 1:'''),
     code(r'''noisy = times + rng.normal(0, SIGMA_T, len(times))
 best = fit.PWF_semianalytical(ANTENNAS, noisy)
 chi2 = fit.PWF_loss(best, ANTENNAS, noisy, sigma=SIGMA_T)
@@ -2974,9 +3021,9 @@ because the geomagnetic and charge-excess emission add on one side and cancel
 on the other.
 
 `ADF_parameters` evaluates all of that for a given shower. Give it the shower
-from step 2, a ring width of 2 and an amplitude scale $A_0$, and it returns
+from step 2, a ring width of 2 (dimensionless: it scales the angular term of the ADF) and an amplitude scale $A_0$, and it returns
 each antenna's angles and predicted amplitude:'''),
-    code(r'''WIDTH, SCALE = 2.0, 5.0e7                     # ring width; amplitude scale in ADC counts x metres
+    code(r'''WIDTH, SCALE = 2.0, 5.0e7                     # ring width (dimensionless); amplitude scale in ADC counts x metres
 
 eta, omega, omega_cr, ell, amplitude = fit.ADF_parameters(
     truth[0], truth[1], WIDTH, SCALE, ANTENNAS, XSOURCE)
@@ -3038,7 +3085,8 @@ nothing in `recons_ADF` or `main_AOI.py` flags it. The check is short:'''),
              "azimuth": (phi, phi_pwf - np.deg2rad(1), phi_pwf + np.deg2rad(1)),
              "width": (width, 1.25, 3.0),
              "scale": (scale, 1e6, 1e10)}
-    return [name for name, (value, low, high) in edges.items()
+    return ["%s (%s)" % (name, "lower" if np.isclose(value, low, rtol=1e-5) else "upper")
+            for name, (value, low, high) in edges.items()
             if np.isclose(value, low, rtol=1e-5) or np.isclose(value, high, rtol=1e-5)]
 
 
@@ -3164,7 +3212,7 @@ for event_number, run_number in events:
         Xsource=np.asarray(recons.Xsource)[0], Xants=np.asarray(recons.Xants),
         amps=np.asarray(recons.adf_amplitude), omega_cr=np.mean(recons.omega_cr)))
 
-print("\n  event   run  DUs   zenith  azimuth   (ADF)   source    energy")
+print("\n  event   run  DUs   ADF zenith, azimuth (deg)   source    energy")
 for r in rows:
     print("%7d %5d %4d  %7.2f  %7.2f          %5.1f km  %8.2g eV"
           % (r["event"], r["run"], r["antennas"], *r["adf"],
@@ -3183,10 +3231,10 @@ for r in rows:
 
 Now the quality of each fit: the χ² per degree of freedom of each step, how far
 the spherical and ADF directions moved from the plane-wave one, and the bound
-check from section 5. The stored χ² fields are **already** divided by the
-degrees of freedom — `main_AOI.py` divides before writing — so they are read
-as they are. (`display.py` divides `chi2_adf` a second time for its plot
-titles, so the value it prints is smaller than the one stored.)'''),
+check from section 5. The stored χ² fields are **raw**, as `TRecons`
+documents, so they are divided here by the degrees of freedom: antennas − 2
+for the plane wave, antennas − 4 for the spherical wave and the ADF, which
+have four parameters each.'''),
     code(r'''print("  event   chi2/ndf: PWF    SWF    ADF    SWF-PWF (zen, azi)   ADF-PWF (zen, azi)   on a bound")
 bounded = 0
 for event_number, run_number in events:
@@ -3197,8 +3245,10 @@ for event_number, run_number in events:
     edge = on_a_bound(recons.zenith_adf, recons.azimuth_adf, recons.width,
                       recons.scaling_factor, *pwf)
     bounded += bool(edge)
+    n = recons.du_count
     print("%7d  %13.1f %6.1f %6.1f     %+5.2f %+5.2f         %+5.2f %+5.2f         %s"
-          % (event_number, recons.chi2_pwf, recons.chi2_swf, recons.chi2_adf,
+          % (event_number, recons.chi2_pwf / (n - 2), recons.chi2_swf / (n - 4),
+             recons.chi2_adf / (n - 4),
              *swf, *adf, ", ".join(edge) or "-"))
 print("\n%d of %d ADF fits end on a bound" % (bounded, len(events)))'''),
     md(r'''This is where the real data parts company with section 7.
@@ -3207,15 +3257,17 @@ print("\n%d of %d ADF fits end on a bound" % (bounded, len(events)))'''),
   ring width. Those widths are where the minimiser was stopped; the amplitude data
   wanted a wider ring than the model allows. The directions and energies from
   those fits deserve less weight than the table above suggests.
-- **Most timing χ²/ndf are far above 1** — tens to over a hundred — with the
-  5 ns timing uncertainty the script assumes. Either the real timing error is
-  several times larger, or the fronts are not the spheres the model draws.
+- **Most timing χ²/ndf are above 1** — 4 to 12 for the plane wave in eight of
+  the ten events — with the 5 ns timing uncertainty the script assumes. The
+  two five-antenna events sit below 1. Either the real timing error is two to
+  three times larger, or the fronts are not the spheres the model draws.
   Which one is a question the data in this file cannot settle.
 - **The spherical fit moves the azimuth by up to about 3°** from the plane
   wave. The ADF moves it by at most 1°, because that is its bound.
 
-Where they came from, drawn as a sky map looking up — North at the top, West
-to the left, the horizon at the edge:'''),
+Where they came from, drawn as a map seen from above — North at the top, West
+to the left, the horizon at the edge. (Looking up at the sky with North at the
+top, East and West would swap sides.)'''),
     code(r'''fig, ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(5.5, 5.5))
 ax.set_theta_zero_location("N")
 ax.set_theta_direction(1)                    # azimuth grows towards West: anticlockwise
@@ -3305,14 +3357,14 @@ energy are known, and measure the bias and resolution. That has not been done
 on `dev-next`.
 
 **On real data** (section 8): most of the ten GP13 candidates have timing
-χ²/ndf far above 1, and most ADF fits stop on a bound. Those are the first
+χ²/ndf well above 1, and most ADF fits stop on a bound. Those are the first
 things to understand before trusting a reconstructed direction or energy.
 
 **Known behaviours to watch for.** Pinned by tests, so a change is noticed:
 `recons_swf` ignores `sigma`.
 Not pinned: `compute_Xsource_cartesian_coords` returns shape (1, 3); an ADF fit
-on its bounds is not flagged; `display.py` divides the stored, already
-reduced, `chi2_adf` by the degrees of freedom again.'''),
+on its bounds is not flagged. The stored χ² fields are raw; divide them by the
+degrees of freedom, as `display.py` and section 8 do.'''),
     footer(
         r'''[01 — Coordinate systems](01_coordinates.ipynb) — the frame and the "comes from" convention the fits use''',
         r'''[06 — From electric field to ADC counts](06_efield_to_adc.ipynb) — the forward chain that the reconstruction inverts''',
@@ -3446,7 +3498,8 @@ print("antennas hit   %d" % viewer.nhits)
 print("peaks span     %.1f microseconds" % (np.ptp(viewer.peaktime) * 1e6))
 print("brightest      %.0f uV/m" % viewer.peakamplitude.max())'''),
     md(r'''**How it picks the peak.** For each antenna it band-passes the three field
-components to 50–200 MHz (`viewer.fmin`, `viewer.fmax` — GRAND's band), takes
+components to 50–200 MHz (`viewer.fmin`, `viewer.fmax` — the viewer's band;
+the simulation chain of notebooks 03–06 uses 30–250 MHz), takes
 the Hilbert envelope of each, and records the largest envelope value and the
 moment it occurs. Changing the band means setting those two attributes
 *before* `view()`.
@@ -3477,7 +3530,7 @@ sc = ax.scatter(viewer.hitX / 1e3, viewer.hitY / 1e3, c=viewer.peaktime * 1e6,
 ax.plot(viewer.corex / 1e3, viewer.corey / 1e3, "k*", ms=14, label="core")
 fig.colorbar(sc, ax=ax, label="peak time [microseconds]")
 ax.set_xlabel("South-North [km]")
-ax.set_ylabel("East-West [km]")
+ax.set_ylabel("West [km]")
 ax.set_aspect("equal")
 ax.legend(fontsize=8, loc="upper left")
 ax.set_title("Footprint, as the viewer draws it")
@@ -3650,10 +3703,12 @@ ax.plot(corrected, v.peakamplitude, "o", label="Xmax above the ground (what the 
 ax.set_xlabel(r"$\omega$, angle from the axis seen from Xmax [deg]")
 ax.set_ylabel("peak amplitude [uV/m]")
 ax.set_title("Event 0, zenith %.1f deg" % np.degrees(v.zenith))
-ax.legend(fontsize=8)
+ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.2))   # below the axes: it hid the 1.7 deg point
+fig.tight_layout()
 plt.show()'''),
-    md(r'''Measured from the corrected Xmax, amplitude falls cleanly with angle: bright
-out to about 0.7°, dim beyond 1°. That is the shape notebook 11 fits. Measured
+    md(r'''Measured from the corrected Xmax, amplitude is organised by angle: it peaks
+near 0.5–0.7° — the Cherenkov ring — and is dim beyond 1°. That is the shape
+notebook 11 fits. Measured
 from the stored Xmax the same antennas scatter: the brightest reads 1.7°, and
 antennas of equal amplitude sit a degree apart, because moving the apex by
 1264 m changes each antenna's angle by a different amount. That scatter is
@@ -3723,12 +3778,19 @@ viewer's history and its open items.'''),
 
 
 if __name__ == '__main__':
+    import argparse
 
-    argv = sys.argv[1:]
-    if '--check' in argv:
+    # --help rebuilt and rewrote all twelve notebooks (#258)
+    parser = argparse.ArgumentParser(
+        description="Generate the tutorial notebooks from this file, and execute them.")
+    parser.add_argument("--check", action="store_true",
+                        help="only check that the committed notebooks match this generator")
+    parser.add_argument("--only", metavar="NAMES",
+                        help="comma-separated notebook file names to build, e.g. 05_galactic_noise.ipynb")
+    parser.add_argument("--no-execute", action="store_true",
+                        help="write the notebooks without executing them")
+    args = parser.parse_args()
+    if args.check:
         raise SystemExit(check())
-    chosen = None
-    if '--only' in argv:
-        chosen = [f.strip() for f in argv[argv.index('--only') + 1].split(',')
-                  if f.strip()]
-    build(execute='--no-execute' not in argv, only=chosen)
+    chosen = [f.strip() for f in args.only.split(',') if f.strip()] if args.only else None
+    build(execute=not args.no_execute, only=chosen)

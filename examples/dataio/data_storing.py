@@ -460,7 +460,8 @@ for i in range(tefield.get_entries()):
     tshower.energy_em = np.random.random(1) * 1e8
     tshower.energy_primary = tshower.energy_em*1.2
     tshower.azimuth = np.random.random(1) * 360
-    tshower.zenith = np.random.random(1) * 180 - 90
+    # 0 to 180 degrees: it drew -90 to 90, and every run warned (#218)
+    tshower.zenith = np.random.random(1) * 180
     tshower.shower_core_pos = np.random.random(3)
     tshower.atmos_model = "dense air dummy"
     tshower.atmos_model_param = np.random.random(3)

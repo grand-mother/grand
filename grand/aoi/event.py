@@ -1,12 +1,13 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
 from dataclasses import dataclass, field, fields
 
+import logging
 import numpy as np
 
 from grand.basis import validate as _validate
+import os
 import ROOT
 from pathlib import Path
-import shutil
 
 from grand import CartesianRepresentation
 from grand.aoi.timetrace import Voltage, Efield, TreeExists
@@ -15,6 +16,17 @@ from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent 
 import grand.dataio
 from grand.dataio.xmax_frame import xmax_above_ground
+
+#: Origin (latitude, longitude, height) of the GRANDCS frame in which
+#: :meth:`Event.fill_antennas` places GP300, GP80 and GP13 antennas computed
+#: from their GPS positions.  It was an unnamed literal.  It is *not* the
+#: run's ``origin_geoid`` -- (40.98456, 93.95225, 1200) in the GP80 files,
+#: about 3.8 km away -- and nothing records why this point was chosen; which
+#: of the two the positions should use is open for the data owners (#215).
+#: ``Event.antennas_origin`` says which origin an event's positions are in.
+GPS_ANTENNA_ORIGIN = (40.95068711, 93.96977396, 1200.0)
+
+logger = logging.getLogger(__name__)
 
 try:
     from line_profiler import profile
@@ -87,6 +99,11 @@ class Event:
 
     simshower: Shower() = None
     """Simulated shower for simulations"""
+
+    antennas_origin: tuple = None
+    """(latitude, longitude, height) of the GRANDCS frame the positions in
+    ``antennas`` are given in: the run's ``origin_geoid``, or
+    :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS (#215)."""
 
     ## ToDo: what is it?
     L: int = 0
@@ -213,6 +230,9 @@ class Event:
     # Choose the level of the efield
     tefield_level: int  = None
 
+    # Trees filled for writing with auto_file_close False, written by close_files()
+    _pending_writes: list = None
+
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
@@ -244,9 +264,11 @@ class Event:
             Path of the file this event is read from or written to.
         """
 
-        # If the _file is not yet TFile, make it so
+        # If the _file is not yet TFile, make it so; a path object or a file
+        # ROOT cannot open used to give a bare cppyy error (#235)
         if not isinstance(value, ROOT.TFile):
-            self._file = ROOT.TFile(value, "read")
+            from grand.dataio.data_handling import _open_root_file
+            self._file = _open_root_file(os.fspath(value))
         else:
             self._file = value
 
@@ -260,12 +282,12 @@ class Event:
 
     @property
     def directory(self):
-        """A single file that contains all the TTrees
+        """The directory the event's trees were read from
 
         Returns
         -------
-        str
-            Directory the event files live in.
+        DataDirectory or None
+            The directory, or None when the event was read from one file.
         """
         return self._directory
 
@@ -314,12 +336,13 @@ class Event:
 
     @property
     def origin_geoid(self):
-        """Origin of the coordinate system used for the array
+        """Origin of the array frame
 
         Returns
         -------
-        ndarray, shape (3,)
-            Latitude, longitude and height of the array origin.
+        CartesianRepresentation, shape (3, 1)
+            Latitude and longitude in degrees and height in metres, as x, y
+            and z; ``np.ravel`` gives three numbers.
         """
         return self._origin_geoid
 
@@ -377,8 +400,10 @@ class Event:
         """
         # Check if any of the files exist
         if not self._file and not self.file_trun and not self.file_trunrawvoltage and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
-            print("No files provided to init from. Aborting.")
-            return False
+            # Printed "Aborting." and returned False, which callers ignored,
+            # leaving a half-initialised Event (#256)
+            raise FileNotFoundError(_validate.message(
+                "Event.fill_event_from_trees", "no file or directory to read the event from"))
 
         # *** Set the run/event/entry number if requested.
 
@@ -390,7 +415,13 @@ class Event:
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?
         if entry_number is not None and (run_number is not None or event_number is not None):
-            print("Please provide only entry_number or event/run_number!")
+            raise ValueError(_validate.message(
+                "Event.fill_event_from_trees",
+                "give entry_number, or event_number and run_number, not both"))
+        # Only one of the two gave TypeError: int() ... NoneType (#277)
+        if (event_number is None) != (run_number is None) and entry_number is None:
+            raise ValueError(_validate.message(
+                "Event.fill_event_from_trees", "give both event_number and run_number, or entry_number"))
         if entry_number is not None:
             self._entry_number = entry_number
             # ToDo: this should be run number from an even tree with entry_number...
@@ -420,7 +451,7 @@ class Event:
             if trun := self.file_trun.Get("trun"):
                 self.trun = TRun(_tree=trun)
             else:
-                print("No Run tree. Run information will not be available.")
+                logger.debug("No Run tree. Run information will not be available.")   # narration, not news (#194)
                 # Make trun really None
                 self.trun = None
 
@@ -429,9 +460,9 @@ class Event:
             # Fill part of the event from trun
             ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
             if ret:
-                print("Run information loaded.")
+                logger.debug("Run information loaded.")   # narration, not news (#194)
             else:
-                print("No Run tree. Run information will not be available.")
+                logger.debug("No Run tree. Run information will not be available.")   # narration, not news (#194)
 
         # Check the TRunRawVoltage file existence
         if self.file_trunrawvoltage is not None:
@@ -441,7 +472,7 @@ class Event:
                 if trunrawvoltage := self.file_trunrawvoltage.Get("trunrawvoltage"):
                     self.trunrawvoltage = TRunRawVoltage(_tree=trunrawvoltage)
                 else:
-                    print("No TRunRawVoltage tree. RunRawVoltage information will not be available.")
+                    logger.debug("No TRunRawVoltage tree. RunRawVoltage information will not be available.")   # narration, not news (#194)
                     # Make trunrawvoltage really None
                     self.trunrawvoltage = None
 
@@ -450,11 +481,24 @@ class Event:
             # Fill part of the event from trunrawvoltage
             ret = self.fill_event_from_runrawvoltagetree(run_entry_number=run_entry_number)
             if ret:
-                print("RunRawVoltage information loaded.")
+                logger.debug("RunRawVoltage information loaded.")   # narration, not news (#194)
             else:
-                print("No RunRawVoltage tree. RunRawVoltage information will not be available.")
+                logger.debug("No RunRawVoltage tree. RunRawVoltage information will not be available.")   # narration, not news (#194)
 
         if self.file_tvoltage:
+            # With a directory the trees are opened once, so the voltage tree
+            # must be chosen on every call: a use_trawvoltage=True call left
+            # TRawVoltage in place, and the next default call failed on its
+            # missing 'trace' (#213)
+            if not init_trees and self.directory is not None:
+                if use_trawvoltage and self.directory.ftrawvoltages:
+                    self.tvoltage = self.directory.trawvoltage
+                elif not use_trawvoltage and self.directory.ftvoltages:
+                    self.tvoltage = self.directory.tvoltage
+            # Raw voltages are all the data holds: read them as such rather
+            # than fail on TRawVoltage's missing 'trace' (#213, #235)
+            if not use_trawvoltage and isinstance(self.tvoltage, TRawVoltage):
+                use_trawvoltage = True
             # Use standard voltage tree
             if not use_trawvoltage:
                 # If initialising trees requested
@@ -472,7 +516,7 @@ class Event:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree()
                     if ret:
-                        print("Voltage information loaded.")
+                        logger.debug("Voltage information loaded.")   # narration, not news (#194)
                     else:
                         # print("No Voltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
@@ -487,7 +531,7 @@ class Event:
                         self.tvoltage = TRawVoltage(_tree=tvoltage)
                         use_trawvoltage = True
                     else:
-                        print("No Voltage or TRawVoltage tree. Voltage information will not be available.")
+                        logger.debug("No Voltage or TRawVoltage tree. Voltage information will not be available.")   # narration, not news (#194)
                         # Make tvoltage really None
                         self.tvoltage = None
 
@@ -496,29 +540,34 @@ class Event:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
                     if ret:
-                        print("Voltage information (from TRawVoltage) loaded.")
+                        logger.debug("Voltage information (from TRawVoltage) loaded.")   # (#194)
                     else:
-                        print("No Voltage or TRawVoltage tree. Voltage information will not be available.")
+                        logger.debug("No Voltage or TRawVoltage tree. Voltage information will not be available.")   # narration, not news (#194)
                         # Make tvoltage really None
                         self.tvoltage = None
 
         # Check the Efield file existence
         if self.file_tefield:
+            # The analysis level is not part of the tree name: every file
+            # stores its tree as "tefield" and records the level in the
+            # tree's UserInfo. Selecting a level therefore means selecting
+            # a file, which only the DataDirectory knows how to do.  This is
+            # done on every call: it used to happen only when the trees were
+            # first opened, so a per-call level was ignored (#213).
+            if tefield_level is not None and self.directory is not None:
+                self.tefield = getattr(self.directory, f"tefield_l{tefield_level}", None)
+                if self.tefield is None:
+                    raise ValueError(_validate.message(
+                        "Event", f"no Efield tree of analysis level {tefield_level} in "
+                        f"{self.directory.dir_name}"))
+                self.tefield_level = tefield_level
+            # No level asked: the directory's default, not the last one asked for
+            elif self.directory is not None and not init_trees:
+                self.tefield = self.directory.tefield
             # If initialising trees requested
-            if init_trees:
-                # The analysis level is not part of the tree name: every file
-                # stores its tree as "tefield" and records the level in the
-                # tree's UserInfo. Selecting a level therefore means selecting
-                # a file, which only the DataDirectory knows how to do.
-                if tefield_level is not None and self.directory is not None:
-                    self.tefield = getattr(self.directory, f"tefield_l{tefield_level}", None)
-                    if self.tefield is None:
-                        raise ValueError(
-                            f"No Efield tree of analysis level {tefield_level} in "
-                            f"{self.directory.dir_name}.")
-                    self.tefield_level = tefield_level
+            elif init_trees:
                 # Check the Efield tree existence
-                elif tefield := self.file_tefield.Get("tefield"):
+                if tefield := self.file_tefield.Get("tefield"):
                     self.tefield = TEfield(_tree=tefield)
                     # Without a directory there is no choice of file, so the
                     # level is whatever the open one holds. Read it back rather
@@ -531,7 +580,7 @@ class Event:
                                 f"{tefield_level}.")
                         self.tefield_level = tefield_level
                 else:
-                    print("No Efield tree. Efield information will not be available.")
+                    logger.debug("No Efield tree. Efield information will not be available.")   # narration, not news (#194)
                     # Make tefield really None
                     self.tefield = None
 
@@ -540,24 +589,30 @@ class Event:
                 # Fill part of the event from tefield
                 ret = self.fill_event_from_efield_tree()
                 if ret:
-                    print("Efield information loaded.")
+                    logger.debug("Efield information loaded.")   # narration, not news (#194)
                 else:
-                    print("No Efield tree. Efield information will not be available.")
+                    logger.debug("No Efield tree. Efield information will not be available.")   # narration, not news (#194)
                     # Make tefield really None
                     self.tefield = None
 
         # Check the Shower file existence
         if self.file_tshower or self.file_tsimshower:
+            # With a directory, the trees its setter chose (tshower from L1,
+            # tsimshower from L0) stay: the default init_trees=True read the
+            # L1 file handle, None when there is only L0, and crashed (#277)
+            if self.directory is not None:
+                pass
             # If initialising trees requested
-            if init_trees:
+            elif init_trees:
                 # Check the Shower tree existence
-                if tshower := self.file_tshower.Get("tshower"):
+                shower_file = self.file_tsimshower if simshower else self.file_tshower
+                if shower_file and (tshower := shower_file.Get("tshower")):
                     if simshower:
                         self.tsimshower = TShower(_tree=tshower)
                     else:
                         self.tshower = TShower(_tree=tshower)
                 else:
-                    print("No Shower tree. Shower information will not be available.")
+                    logger.debug("No Shower tree. Shower information will not be available.")   # narration, not news (#194)
                     # Make tshower really None
                     if simshower:
                         self.tsimshower = None
@@ -569,9 +624,9 @@ class Event:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(simshower)
                 if ret:
-                    print("Shower information loaded.")
+                    logger.debug("Shower information loaded.")   # narration, not news (#194)
                 else:
-                    print("No Shower tree. Shower information will not be available.")
+                    logger.debug("No Shower tree. Shower information will not be available.")   # narration, not news (#194)
                     # Make tshower really None
                     if simshower:
                         self.tsimshower = None
@@ -586,7 +641,7 @@ class Event:
                 if tsimshower := self.file_tsimshower.Get("tshower"):
                     self.tsimshower = TShower(_tree=tsimshower)
                 else:
-                    print("No Simulated Shower tree. Simulated Shower information will not be available.")
+                    logger.debug("No Simulated Shower tree. Simulated Shower information will not be available.")   # narration, not news (#194)
                     # Make tsimshower really None
                     self.tsimshower = None
 
@@ -595,9 +650,9 @@ class Event:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(True)
                 if ret:
-                    print("Simulated shower information loaded.")
+                    logger.debug("Simulated shower information loaded.")   # narration, not news (#194)
                 else:
-                    print("No Simulated shower tree. Simulated shower information will not be available.")
+                    logger.debug("No Simulated shower tree. Simulated shower information will not be available.")   # narration, not news (#194)
                     # Make tsimshower really None
                     self.tsimshower = None
 
@@ -727,7 +782,7 @@ class Event:
             # If this is the first time we calculate antennas positions, or
             # the ones we hold were not built from GPS for this same site
             if not self._all_antennas or self._all_antennas_key != ("gps", self.site):
-                print("GP300 workaround: calculating all antennas positions")
+                logger.debug("GP300 workaround: calculating all antennas positions")   # (#194)
                 from grand import Geodetic, GRANDCS
 
                 # Get the coordinates for all DUs from all events
@@ -752,7 +807,8 @@ class Event:
                 du_alts = du_alts[unique_dus_idx]
 
                 # Get lat/lon/alt from xyz
-                origin = Geodetic(latitude=40.95068711, longitude=93.96977396, height=1200)
+                latitude, longitude, height = GPS_ANTENNA_ORIGIN
+                origin = Geodetic(latitude=latitude, longitude=longitude, height=height)
 
                 geod_ant = Geodetic(latitude=du_lats, longitude=du_lons, height=du_alts)
                 grandcs  = GRANDCS(geod_ant, location=origin)
@@ -771,6 +827,8 @@ class Event:
                     self._all_antennas[a.id] = a
 
                 self._all_antennas_key = ("gps", self.site)
+
+            self.antennas_origin = GPS_ANTENNA_ORIGIN
 
             # Fill the antenna part
             event_dus = cur_tree.du_id
@@ -799,7 +857,8 @@ class Event:
             # the event then has no antennas, as other missing trees are
             # skipped, rather than failing on trun.du_id.
             if self.trun is None:
-                print("No Run tree. Antenna positions will not be available.")
+                # Logged, not printed (#256)
+                logger.warning("No Run tree. Antenna positions will not be available.")
                 return
 
             # Fill the antenna part. With neither tree there is nothing to say
@@ -835,6 +894,9 @@ class Event:
                 self._all_antennas[a.id] = a
 
             self._all_antennas_key = ("run", self.site)
+            origin = getattr(self.trun, "origin_geoid", None)
+            self.antennas_origin = (None if origin is None
+                                    else tuple(float(v) for v in np.ravel(np.asarray(origin))))
 
 
 
@@ -854,6 +916,15 @@ class Event:
         bool
             True when traces were found.
         """
+        # A voltage has three components, so three channels are read; fewer
+        # crashed with IndexError (#213)
+        if use_trawvoltage:
+            channels = list(trawvoltage_channels)
+            if len(channels) != 3 or not all(isinstance(c, (int, np.integer)) and not isinstance(c, bool)
+                                             for c in channels):
+                raise ValueError(_validate.message(
+                    "Event", "'trawvoltage_channels' must name exactly 3 channels (the x, y "
+                    "and z of the voltage), got %r" % (trawvoltage_channels,)))
         ret = 1
         if self._entry_number is not None:
             ret = self.tvoltage.get_entry(self._entry_number)
@@ -937,6 +1008,8 @@ class Event:
             ret = self.tefield.get_entry(self._entry_number)
         else:
             ret = self.tefield.get_event(self.event_number, self.run_number)
+        # A missing event went on to "zero-size array to reduction operation"
+        # (#277); get_event and get_entry now raise LookupError for it (#206)
         self.efields = []
 
         # Obtain the start time of the earliest trace. ToDo: maybe the first trace in the file is always first in time? That would save time...
@@ -1006,6 +1079,13 @@ class Event:
         ## Shower Xmax [g/cm2]
         shower.Xmax = tree.xmax_grams
         ## Shower position in the site's reference frame
+        # The ground altitude comes from the run tree; without one this failed
+        # on "'NoneType' object has no attribute 'origin_geoid'" (#235)
+        if self.trun is None:
+            raise FileNotFoundError(_validate.message(
+                "Event", "the shower needs the run tree (the site's origin) and this input has "
+                "none: give the directory holding the run_*.root file, or a file with a trun "
+                "tree"))
         # Above the ground whichever frame the file used (grand-mother/grand#160).
         shower.Xmaxpos, _ = xmax_above_ground(
             tree.xmax_pos_shc, tree.zenith, tree.azimuth,
@@ -1078,11 +1158,33 @@ class Event:
         shower_filename, efields_filename, voltages_filename, run_filename : str, optional
             Individual destinations for each tree.
         overwrite : bool, optional
-            Replace existing files rather than appending.
+            Replace what this event's trees would add to: with file names, the
+            trees of those names in those files; with ``out_dir``, the files of
+            those tree kinds in that directory.  Nothing else is removed.
+            Without it, the event is added to what is there.
         out_dir : str, optional
             Directory to write into.
+
+        Raises
+        ------
+        ValueError
+            If neither ``out_dir`` nor a file name is given: writing back into
+            the files the event was read from is not supported.
+
+        Notes
+        -----
+        Writing never changes the trees this event was read from, so the event,
+        and the ``EventList`` it came from, can still be used afterwards.
+        Only the trees with a file name, explicit or through
+        ``common_filename``, are written.
         """
-        if out_dir is None or (isinstance(out_dir, str) and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory.dir_name==out_dir.dir_name):
+        # Before a fill it failed with "'NoneType' object is not iterable" (#277)
+        if self.run_number is None and self.event_number is None and not self.efields \
+                and not self.voltages and self.shower is None:
+            raise RuntimeError(_validate.message(
+                "Event.write", "the event is empty; fill it (fill_event_from_trees) or set its "
+                "contents first"))
+        if out_dir is None or (isinstance(out_dir, str) and self._directory and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory and self._directory.dir_name==out_dir.dir_name):
             # Give common_filename to all the filenames if not specified
             if common_filename:
                 if not shower_filename: shower_filename = common_filename
@@ -1090,11 +1192,20 @@ class Event:
                 if not voltages_filename: voltages_filename = common_filename
                 if not run_filename: run_filename = common_filename
 
-            # Invoke saving for each part
-            self.write_shower(shower_filename)
-            self.write_efields(efields_filename)
-            self.write_voltages(voltages_filename)
-            self.write_run(run_filename)
+            # Writing back into the source files was documented but crashed
+            # (AttributeError on a None tree, #212); it is refused clearly
+            if not any((shower_filename, efields_filename, voltages_filename, run_filename)):
+                raise ValueError(_validate.message(
+                    "Event.write", "give out_dir, common_filename or a file name per tree; "
+                    "writing back into the files the event was read from is not supported"))
+
+            # Invoke saving for each part, passing overwrite on (it was
+            # dropped, so common_filename always failed with TreeExists, #212)
+            # Parts the event does not hold are skipped rather than crashing
+            if shower_filename and self.shower is not None: self.write_shower(shower_filename, overwrite=overwrite)
+            if efields_filename and self.efields: self.write_efields(efields_filename, overwrite=overwrite)
+            if voltages_filename and self.voltages: self.write_voltages(voltages_filename, overwrite=overwrite)
+            if run_filename: self.write_run(run_filename, overwrite=overwrite)
 
         # *** Output directory was given ***
         else:
@@ -1102,9 +1213,13 @@ class Event:
             if isinstance(out_dir, str):
                 target_dir_path = Path(out_dir)
 
-                # Delete the directory if overwrite requested
+                # Replace only the files this write produces: this removed the
+                # whole directory, with whatever else the user kept in it (#212)
                 if target_dir_path.is_dir() and overwrite:
-                    shutil.rmtree(target_dir_path)
+                    for source_tree in self._trees or []:
+                        if source_tree:
+                            for old in target_dir_path.glob(source_tree.tree_name[1:] + "_*.root"):
+                                old.unlink()
 
                 # Create the target directory if it doesn't exist
                 target_dir_path.mkdir(exist_ok=True)
@@ -1154,7 +1269,7 @@ class Event:
                     target_tree.build_index("run_number", "event_number")
 
                 # Write the tree
-                print("Writing", target_tree.tree_name)
+                logger.info("Writing %s", target_tree.tree_name)
                 # target_tree._tree.GetCurrentFile().Write("", ROOT.TObject.kWriteDelete)
                 target_tree.write(force_close_file=True)
 
@@ -1164,14 +1279,16 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination.  Defaults to the name the event was read from.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
-            Replace an existing file rather than appending to it.
+            Replace the tree of this kind in that file rather than adding to it.
         """
-        self.fill_run_tree(filename=filename)
-        if self.auto_file_close:
-            self.trun.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = 'trun'
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_run_tree(filename=filename)
+        self._finish_write(tree, filename)
 
     ## Write the voltages to a file
     def write_voltages(self, filename, overwrite=False):
@@ -1179,14 +1296,16 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination.  Defaults to the name the event was read from.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
-            Replace an existing file rather than appending to it.
+            Replace the tree of this kind in that file rather than adding to it.
         """
-        self.fill_voltage_tree(filename=filename)
-        if self.auto_file_close:
-            self.tvoltage.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = 'tvoltage'
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_voltage_tree(filename=filename)
+        self._finish_write(tree, filename)
 
     ## Write the efields to a file
     def write_efields(self, filename, overwrite=False):
@@ -1194,14 +1313,16 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination.  Defaults to the name the event was read from.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
-            Replace an existing file rather than appending to it.
+            Replace the tree of this kind in that file rather than adding to it.
         """
-        self.fill_efield_tree(filename=filename)
-        if self.auto_file_close:
-            self.tefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = 'tefield'
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_efield_tree(filename=filename)
+        self._finish_write(tree, filename)
 
     ## Write the shower to a file
     def write_shower(self, filename, overwrite=False, tree_name="tshower"):
@@ -1209,17 +1330,19 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
-            Replace an existing file.
+            Replace the tree of this kind in that file rather than adding to it.
         tree_name : str, optional
             Name of the tree to write, which selects ``TShower`` or
             ``TShowerSim``.
         """
-        self.fill_shower_tree(filename=filename, tree_name=tree_name)
-        if self.auto_file_close:
-            self.tshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = tree_name
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_shower_tree(filename=filename, tree_name=tree_name)
+        self._finish_write(tree, filename)
 
 
     ## Fill the run tree from this Event
@@ -1236,36 +1359,52 @@ class Event:
         """
         if self.trun is not None and not overwrite:
             raise TreeExists("The trun TTree already exists!")
+        self.trun = self._make_run_tree(filename=filename)
+
+    def _make_run_tree(self, filename=None):
+        r"""Builds and fills a TRun for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+
+        Returns
+        -------
+        TRun
+            The filled tree.
+        """
 
         # Look for the TRun with the same file and name in the memory
         for el in grand_tree_list:
             # If the TRun with the same file and name in the memory exists, use it
             if type(el)==TRun and el._tree_name== "trun" and el._file_name==filename:
-                self.trun = el
+                tree = el
                 break
         # No same TRun in memory - create a new one
         else:
-            self.trun = TRun(_file_name=filename, _tree_name="trun")
+            tree = TRun(_file_name=filename, _tree_name="trun")
 
         # Copy the event into the tree
-        self.trun.run_number = self.run_number
-        self.trun.run_mode = self.run_mode
-        self.trun.data_source = self.data_source
-        self.trun.data_generator = self.data_generator
-        self.trun.data_generator_version = self.data_generator_version
-        self.trun.site = self.site
-        # self.trun.site_long = self.site_long
-        # self.trun.site_lat = self.site_lat
-        self.trun.origin_geoid = self.origin_geoid[:,0]
-        self.trun.t_bin_size = self._t_bin_size
+        tree.run_number = self.run_number
+        tree.run_mode = self.run_mode
+        tree.data_source = self.data_source
+        tree.data_generator = self.data_generator
+        tree.data_generator_version = self.data_generator_version
+        tree.site = self.site
+        # tree.site_long = self.site_long
+        # tree.site_lat = self.site_lat
+        tree.origin_geoid = self.origin_geoid[:,0]
+        # Read events hold one sampling time; the branch is a vector (#212)
+        tree.t_bin_size = np.atleast_1d(self._t_bin_size)
 
         # Fill the tree with values
         try:
-            self.trun.fill()
+            tree.fill()
         # If this Run already exists just don't fill
         except NotUniqueEvent:
             pass
-
+        return tree
 
     ## Fill the voltage tree from this Event
     def fill_voltage_tree(self, overwrite=False, filename=None):
@@ -1281,48 +1420,60 @@ class Event:
         """
         if self.tvoltage is not None and not overwrite:
             raise TreeExists("The tvoltage TTree already exists!")
+        self.tvoltage = self._make_voltage_tree(filename=filename)
+
+    def _make_voltage_tree(self, filename=None):
+        r"""Builds and fills a TVoltage for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+
+        Returns
+        -------
+        TVoltage
+            The filled tree.
+        """
 
         # Look for the TVoltage with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TVoltage with the same file and name in the memory exists, use it
             if type(el)==TVoltage and el._tree_name== "tvoltage" and el._file_name==filename:
-                self.tvoltage = el
+                tree = el
                 break
         # No same TVoltage in memory - create a new one
         else:
-            self.tvoltage = TVoltage(_file_name = filename)
+            tree = TVoltage(_file_name = filename)
 
-        self.tvoltage.run_number = self.run_number
-        self.tvoltage.event_number = self.event_number
+        tree.run_number = self.run_number
+        tree.event_number = self.event_number
 
         # Copy the contents of voltages to the tree
 
         # Set the DU id
-        self.tvoltage.du_id = [v.du_id for v in self.voltages]
+        tree.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        # self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
-        self.tvoltage.trace = [v.trace for v in self.voltages]
-        # self.tvoltage.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
+        # tree.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
+        tree.trace = [v.trace for v in self.voltages]
+        # tree.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        # tree.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        # tree.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
+        # tree.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
+        # tree.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
+        # tree.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
 
         # Fill the times from t0
-        self.tvoltage.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.voltages]
-        self.tvoltage.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.voltages]
+        tree.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.voltages]
+        tree.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.voltages]
 
-        # Copy the contents of antennas to the tree
-        # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tvoltage.atm_temperature = np.array([np.array(a.atm_temperature) for a in self.antennas])
-        self.tvoltage.atm_pressure = np.array([np.array(a.atm_pressure) for a in self.antennas])
-        self.tvoltage.atm_humidity = np.array([np.array(a.atm_humidity) for a in self.antennas])
-        self.tvoltage.battery_level = np.array([np.array(a.battery_level) for a in self.antennas])
-        self.tvoltage.firmware_version = np.array([np.array(a.firmware_version) for a in self.antennas])
+        # The antennas' monitoring fields (atm_*, battery_level,
+        # firmware_version) are not written: TVoltage has none of them, and
+        # assigning them stored nothing, and now raises (#202)
 
-        self.tvoltage.fill()
+        tree.fill()
+        return tree
 
     ## Fill the efield tree from this Event
     def fill_efield_tree(self, overwrite=False, filename=None):
@@ -1338,40 +1489,56 @@ class Event:
         """
         if self.tefield is not None and not overwrite:
             raise TreeExists("The tefield TTree already exists!")
+        self.tefield = self._make_efield_tree(filename=filename)
+
+    def _make_efield_tree(self, filename=None):
+        r"""Builds and fills a TEfield for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+
+        Returns
+        -------
+        TEfield
+            The filled tree.
+        """
 
         # Look for the TEfield with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TEfield with the same file and name in the memory exists, use it
             if type(el)==TEfield and el._tree_name== "tefield" and el._file_name==filename:
-                self.tefield = el
+                tree = el
                 break
         # No same TEfield in memory - create a new one
         else:
-            self.tefield = TEfield(_file_name = filename)
+            tree = TEfield(_file_name = filename)
 
-        self.tefield.run_number = self.run_number
-        self.tefield.event_number = self.event_number
+        tree.run_number = self.run_number
+        tree.event_number = self.event_number
 
         # Copy the contents of efields to the tree
 
         # Set the DU id
-        self.tefield.du_id = [v.du_id for v in self.voltages]
+        tree.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        # self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
-        self.tefield.trace = [v.trace for v in self.efields]
-        # self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
+        # tree.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        tree.trace = [v.trace for v in self.efields]
+        # tree.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
+        # tree.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
+        # tree.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
+        # tree.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
+        # tree.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
+        # tree.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
 
         # Fill the times from t0
-        self.tefield.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.efields]
-        self.tefield.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.efields]
+        tree.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.efields]
+        tree.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.efields]
 
-        self.tefield.fill()
+        tree.fill()
+        return tree
 
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
@@ -1389,50 +1556,95 @@ class Event:
         """
         if self.tshower is not None and not overwrite:
             raise TreeExists("The tshower TTree already exists!")
+        self.tshower = self._make_shower_tree(filename=filename, tree_name=tree_name)
+
+    def _make_shower_tree(self, filename=None, tree_name="tshower"):
+        r"""Builds and fills a TShower for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+        tree_name : str, optional
+            Which shower tree to fill.
+
+        Returns
+        -------
+        TShower
+            The filled tree.
+        """
 
         # Look for the TShower with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TShower with the same file and name in the memory exists, use it
             if type(el)==TShower and el._tree_name== "tshower" and el._file_name==filename:
-                self.tshower = el
+                tree = el
                 break
         # No same TShower in memory - create a new one
         else:
-            self.tshower = TShower(_file_name=filename, _tree_name=tree_name)
+            tree = TShower(_file_name=filename, _tree_name=tree_name)
 
-        self.tshower.run_number = self.run_number
-        self.tshower.event_number = self.event_number
+        tree.run_number = self.run_number
+        tree.event_number = self.event_number
 
 
-        self.tshower.energy_em = self.shower.energy_em
-        self.tshower.energy_primary = self.shower.energy_primary
+        tree.energy_em = self.shower.energy_em
+        tree.energy_primary = self.shower.energy_primary
         ## Shower Xmax [g/cm2]
-        self.tshower.xmax_grams = self.shower.Xmax
+        tree.xmax_grams = self.shower.Xmax
         ## Xmax relative to the shower core, above the ground: what the
         ## readers (this class included) read back
-        self.tshower.xmax_pos_shc = self.shower.Xmaxpos[:,0]
+        tree.xmax_pos_shc = self.shower.Xmaxpos[:,0]
         ## Xmax in the site's reference frame: the same point plus the core,
         ## as sim2root writes it (#104)
-        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0] + self.shower.core_ground_pos[:,0]
+        tree.xmax_pos = self.shower.Xmaxpos[:,0] + self.shower.core_ground_pos[:,0]
         ## Shower azimuth
-        self.tshower.azimuth = self.shower.azimuth
+        tree.azimuth = self.shower.azimuth
         ## Shower zenith
-        self.tshower.zenith = self.shower.zenith
+        tree.zenith = self.shower.zenith
         ## Poistion of the core on the ground in the site's reference frame
-        self.tshower.shower_core_pos = self.shower.core_ground_pos[:,0]
+        tree.shower_core_pos = self.shower.core_ground_pos[:,0]
 
-        self.tshower.fill()
+        tree.fill()
+        return tree
+
+    def _finish_write(self, tree, filename):
+        r"""Writes ``tree`` now, or keeps it for ``close_files()``.
+
+        Parameters
+        ----------
+        tree : DataTree
+            A tree built by one of the ``_make_*_tree`` methods.
+        filename : str
+            Its file.
+        """
+        if self.auto_file_close:
+            tree.write(filename, force_close_file=True)
+            tree.stop_using()
+        else:
+            if self._pending_writes is None:
+                self._pending_writes = []
+            if all(tree is not other for other in self._pending_writes):
+                self._pending_writes.append(tree)
 
     def close_files(self):
-        """Close all files of the all trees - needed when auto_file_close is False"""
-        self.tshower.write()
-        self.tefield.write()
-        self.tvoltage.write()
-        self.trun.write()
-        self.tshower.close_file()
-        self.tefield.close_file()
-        self.tvoltage.close_file()
-        self.trun.close_file()
+        """Writes and closes the files of the trees written with auto_file_close False.
+
+        Only trees this event filled for writing are written: the trees it was
+        read from are left untouched (this used to write them too, changing
+        the input files, #234).
+        """
+        pending = [tree for tree in self._pending_writes or [] if tree.tree is not None]
+        # All written before any file is closed: the trees usually share one
+        # file, and closing it after the first deleted the others' TTrees,
+        # so writing the second crashed the process (#218)
+        for tree in pending:
+            # The same tree may be shared with other events writing to the file
+            tree.write(close_file=False)
+        for tree in pending:
+            # Each file is closed once no other live tree uses it
+            tree.stop_using()
+        self._pending_writes = []
 
     def fill_t_vector(self, resolution=1):
         """Fills the event's time vector with resolution resolution
@@ -1496,7 +1708,7 @@ class Event:
         return np.array([el.get_value_at_time(t) for el in self.efields])
 
     def get_hilbert_voltage_at_time(self, t):
-        """Get the voltage signal value in all the DUs at the given time
+        """Get the Hilbert envelope of the voltage in all the DUs at the given time
 
         Parameters
         ----------
@@ -1511,7 +1723,7 @@ class Event:
         return np.array([el.get_hilbert_value_at_time(t) for el in self.voltages])
 
     def get_hilbert_efield_at_time(self, t):
-        """Get the efield signal value in all the DUs at the given time
+        """Get the Hilbert envelope of the efield in all the DUs at the given time
 
         Parameters
         ----------
@@ -1527,6 +1739,30 @@ class Event:
 
 
 # Create the tree and its file
+def _drop_tree(filename, tree_name):
+    r"""Removes ``tree_name`` from ``filename``, if the file holds it.
+
+    Parameters
+    ----------
+    filename : str
+        The ROOT file.
+    tree_name : str
+        Name of the tree to remove.
+    """
+    if not filename or not os.path.isfile(filename):
+        return
+    from grand.dataio import file_lock
+
+    file_lock.lock_for_writing(filename, "Event.write", fresh=True)
+    try:
+        f = ROOT.TFile(filename, "update")
+        if f.GetListOfKeys().FindObject(tree_name):
+            f.Delete(tree_name + ";*")
+        f.Close()
+    finally:
+        file_lock.release(filename)
+
+
 def create_file_tree(target_dir, tree_name, source_tree):
 
     # Check if the time string was already generated
@@ -1535,11 +1771,11 @@ def create_file_tree(target_dir, tree_name, source_tree):
     Parameters
     ----------
     target_dir : str
-    Directory the file lives in.
+        Directory the file lives in.
     tree_name : str
-    Name of the tree to create.
+        Name of the tree to create.
     source_tree : DataTree, optional
-    Tree whose structure and metadata to copy.
+        Tree whose structure and metadata to copy.
 
     Returns
     -------

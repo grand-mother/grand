@@ -3,8 +3,10 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, logger, StdStringDesc, TTreeArrayDesc, StdVectorListDesc
+from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, StdStringDesc, TTreeArrayDesc, StdVectorListDesc
+from grand.dataio.data_tree import grand_tree_list
 from grand.dataio import file_lock as _file_lock
+from grand.basis import validate as _validate
 
 
 @dataclass
@@ -16,6 +18,7 @@ class MotherRunTree(DataTree):
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
+        self._check_open("fill")
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
             raise NotUniqueEvent(
@@ -32,6 +35,8 @@ class MotherRunTree(DataTree):
 
         # Fill the tree
         self._tree.Fill()
+        # Held until written: dropping it now would lose this entry (#284)
+        grand_tree_list.pin(self)
 
         # Add the current run_number and event_number to the entry_list
         self._entry_list.append(self.run_number)
@@ -76,16 +81,24 @@ class MotherRunTree(DataTree):
         Returns
         -------
         int
-            Bytes read; zero when the run is absent.
+            Bytes read.
+
+        Raises
+        ------
+        LookupError
+            When the tree has no such run.  It returned 0 and left the
+            previous run's values loaded (#206).
         """
-        # Make sure we have an int
-        run_no = int(run_no)
-        # Try to get the run from the tree
-        res = self._tree.GetEntryWithIndex(int(run_no))
-        # If no such entry, return
-        if res == 0 or res == -1:
-            logger.error(f"No run with run number {run_no}. Please provide a proper number.")
-            return 0
+        self._check_open("get_run")
+        # Make sure we have an int; int() gave a bare ValueError for 'x' (#236)
+        run_no = self._integer(run_no, "get_run", "run_no")
+        self._current_index("run_number")
+        entry = self._tree.GetEntryNumberWithIndex(run_no)
+        res = self._tree.GetEntry(entry) if entry >= 0 else 0
+        if res <= 0:
+            raise LookupError(_validate.message(
+                type(self).__name__, "get_run: no run %d in the %s tree"
+                % (run_no, self.tree_name)))
 
         self.assign_branches()
 
@@ -105,15 +118,10 @@ class MotherRunTree(DataTree):
         bool
             True when the tree holds that run.
         """
-        # Make sure we have an int
-        run_no = int(run_no)
-        # Try to get the run from the tree
-        res = self._tree.GetEntryNumberWithIndex(run_no)
-        # If no such entry, return
-        if res == -1:
-            return False
-        else:
-            return True
+        self._check_open("has_run")
+        run_no = self._integer(run_no, "has_run", "run_no")
+        self._current_index("run_number")
+        return self._tree.GetEntryNumberWithIndex(run_no) >= 0
 
     def build_index(self, run_id):
         """Build the tree index (necessary for working with friends)
@@ -123,6 +131,7 @@ class MotherRunTree(DataTree):
         run_id : str, optional
             Branch holding the run number.
         """
+        self._check_open("build_index")
         self._reset_read_cache(self._tree)
         self._tree.BuildIndex(run_id)
 
@@ -143,6 +152,9 @@ class MotherRunTree(DataTree):
         bool
             True when no run number appears twice.
         """
+        # Listed on first use, not when the tree is opened (#283)
+        if not self._entry_list:
+            self.fill_entry_list()
         # If the entry list does not exist, the event is unique
         if self._entry_list and self.run_number in self._entry_list:
             return False
@@ -167,13 +179,13 @@ class TRun(MotherRunTree):
     """Run's first event"""
     ## First event time
     first_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """First event time"""
+    """Time of the first event, in Unix seconds"""
     ## Run's last event
     last_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """Run's last event"""
     ## Last event time
     last_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Last event time"""
+    """Time of the last event, in Unix seconds"""
 
     # These are not from the hardware
     ## Data source: detector, sim, other
@@ -199,15 +211,16 @@ class TRun(MotherRunTree):
     site_layout: StdStringDesc = field(default=StdStringDesc())
     """Site layout"""
     ## Origin of the coordinate system used for the array
-    origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Origin of the coordinate system used for the array"""
+    origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32, component_limits=(
+        ("latitude", -90, 90, "degrees"), ("longitude", -360, 360, "degrees"), None)))
+    """Origin of the array frame: (latitude in degrees, longitude in degrees, height in metres).  du_xyz is relative to it"""
 
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int", minimum=0, maximum=65535))
     """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Detector unit (antenna) (lat,lon,alt) position"""
+    """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in metres) per DU"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
     du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>", inner_length=3))
     """Detector unit (antenna) (x,y,z) position in site's referential"""
@@ -414,10 +427,10 @@ class TRunEfieldSim(MotherRunTree):
     refractivity_model_parameters: StdVectorListDesc = field(default=StdVectorListDesc("double"))
     ## Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)
     t_pre: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)"""
+    """Start of the antenna data window before the trigger, in ns (it can be shorter than the voltage trace, so this can differ from the voltage's)"""
     ## Finishing time of antenna data collection time window
     t_post: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Finishing time of antenna data collection time window"""
+    """End of the antenna data window after the trigger, in ns"""
 
     ## Site for which the efield simulation was done
     site: StdStringDesc = field(default=StdStringDesc())
@@ -517,10 +530,10 @@ class TRunNoise(MotherRunTree):
     """Info to retrieve the map of galactic noise"""
     ## LST time when we generate the noise
     gal_noise_LST: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """LST time when we generate the noise"""
+    """Local sidereal time, in hours (0 to 24), at which the galactic noise was generated"""
     ## Noise std dev for each arm of each antenna
     gal_noise_sigma: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Noise std dev for each arm of each antenna"""
+    """Galactic-noise standard deviation for each arm of each antenna, in µV"""
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.

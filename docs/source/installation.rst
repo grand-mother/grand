@@ -19,8 +19,10 @@ Recommended: the provided conda environment
 
 The first command creates an environment named ``grand-dev``; the third
 compiles TURTLE and GULL, builds the ``_core.abi3.so`` extension, sets the
-environment variables GRANDlib expects, and downloads the data model
-(topography, geomagnetic field and antenna models).
+environment variables GRANDlib expects, and downloads the model bundle with
+``data/download_data_grand.py`` (antenna, RF-chain and noise models).  The
+geomagnetic coefficients are in the repository; topography tiles are fetched on
+demand (:doc:`data_files`).
 
 ``--solver=libmamba`` is worth passing explicitly.  The environment pins
 around thirty packages on top of ROOT, and conda's classic solver is slow and

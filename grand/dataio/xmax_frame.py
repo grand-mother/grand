@@ -139,11 +139,12 @@ def xmax_above_ground(xmax_pos_shc, zenith, azimuth, ground_altitude):
         return stored, GROUND
     if as_shifted <= TOLERANCE_DEG:
         return shifted, SEA_LEVEL
+    # The two angles read like zeniths; they are offsets from the axis (#188)
     logger.warning(
-        "xmax_pos_shc %s follows neither reading of the shower direction "
-        "(zenith %.2f, azimuth %.2f): %.2f deg as stored, %.2f deg with the "
-        "ground altitude %.1f m removed. Using it as stored.",
-        stored, zenith, azimuth, as_stored, as_shifted, ground_altitude)
+        "xmax_pos_shc %s is not on the shower axis (zenith %.2f, azimuth %.2f deg): it is "
+        "%.2f deg off the axis as stored, and %.2f deg off with the ground altitude %.1f m "
+        "removed (tolerance %.2f deg). Using it as stored.",
+        stored, zenith, azimuth, as_stored, as_shifted, ground_altitude, TOLERANCE_DEG)
     return stored, UNDETERMINED
 
 
@@ -178,6 +179,9 @@ def xmax_in_site_frame(xmax_pos_shc, zenith, azimuth, ground_altitude, shower_co
     """
     stored = _vector3(xmax_pos_shc, "xmax_pos_shc", "xmax_in_site_frame")
     core = _vector3(shower_core_pos, "shower_core_pos", "xmax_in_site_frame")
+    # Before the unknown-Xmax shortcut, which skipped them (#267)
+    _angles(zenith, azimuth, "xmax_in_site_frame")
+    _validate.as_real(ground_altitude, "ground_altitude", "xmax_in_site_frame")
     if not np.all(np.isfinite(stored)):
         return np.full(3, np.nan), UNDETERMINED
     above_ground, frame = xmax_above_ground(stored, zenith, azimuth, ground_altitude)

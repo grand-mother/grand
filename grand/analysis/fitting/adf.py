@@ -1,14 +1,22 @@
 """Angular distribution function (ADF) fit of the antenna amplitudes."""
 
-import numpy as np 
+import logging
+
+import numpy as np
 import grand.analysis.constants as cons
 import grand.analysis.physics as che
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom.angles as an
 #print(sys.path)
-from iminuit import minimize
+try:
+    from iminuit import minimize
+except ImportError as _error:          # a bare ModuleNotFoundError named no remedy (#280)
+    raise ImportError("GRANDlib: grand.analysis needs the optional package iminuit: "
+                      "pip install -e \".[analysis]\" (it is in the conda environment)") from _error
 from grand.analysis import _checks
 from grand.basis import validate as _validate
+
+logger = logging.getLogger(__name__)
 
 def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAltitude=cons.groundAltitude, Bvec=None):
     """
@@ -18,10 +26,10 @@ def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAlt
         theta, phi          : shower direction angles (rad) (from ADF_recons, best fit values)
         delta_omega         : ADF shape parameter (output from ADF_recons, best fit values)
         amplitude           : ADF amplitude (output from ADF_recons, best fit values)
-        Xants  : (N,3) positions of antennas
+        Xants  : (N,3) positions of antennas: x North, y West, z above sea level (m)
         Xsource   : (3,) position of Xsource (from SWF)
         Bvec   : (3,) magnetic field
-        groundAltitude : altitude of ground
+        groundAltitude : height above sea level of the frame's origin (m): 1231 m (GP13) by default; for simulation files, the ground altitude grand.analysis.geom.antenna_positions_from_run returns (#252)
     
     Returns
     -------
@@ -117,6 +125,20 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
         raise ValueError(_validate.message(
             where, "'Xsource' must be three numbers (x, y, z), got shape %s" % (Xsource.shape,)))
     Xsource = Xsource.reshape(3)
+    # The loss divides by the amplitudes: a zero made it infinite everywhere,
+    # and the "fit" silently returned its starting point (#286)
+    bad = np.nonzero(~(Aants > 0))[0]
+    if bad.size:
+        raise ValueError(_validate.message(
+            where, "every amplitude in 'Aants' must be positive; antennas %s have %s (an "
+            "antenna below one ADC count reads 0: leave it out of the fit)"
+            % (bad.tolist(), Aants[bad].tolist())))
+    # A source at an antenna or below the antennas has no meaningful
+    # geometry; the minimizer ran for minutes, then returned the start (#286)
+    if not Xsource[2] > np.max(Xants[:, 2]):
+        raise ValueError(_validate.message(
+            where, "'Xsource' must lie above the antennas (z %.1f m, highest antenna at %.1f m)"
+            % (Xsource[2], np.max(Xants[:, 2]))))
     # Define bounds for each parameter
     bounds = [
         [theta_pwf - 2*np.pi/180, theta_pwf + 2*np.pi/180],
@@ -139,6 +161,15 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
         method="migrad",
         bounds=bounds
     )
+
+    # A loss that is not finite means no fit took place (#286)
+    if not np.isfinite(result.fun):
+        raise RuntimeError(_validate.message(
+            where, "the ADF fit failed: the loss is %s at the end, so the parameters "
+            "returned would be the starting point" % result.fun))
+    if not result.success:
+        logger.warning("recons_ADF: the minimizer reports no convergence (loss %.3g); the "
+                       "parameters may not be a minimum", result.fun)
 
     # Extract best-fit parameters from minimization result
     theta_adf, phi_adf, delta_omega, amplitude = result.x

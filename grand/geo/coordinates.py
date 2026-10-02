@@ -42,12 +42,11 @@ from . import turtle
 from grand import grand_get_path_root_pkg
 
 logger = getLogger(__name__)
-# add protection against casting complex to real. Need to try due to numpy versions incompatibilities
-try:
-    warnings.filterwarnings(action="error", category=np.ComplexWarning)
-# After numpy 1.25. In principle the np.ComplexWarning should still be accessible, but in 2.2.5 it isn't
-except:
-    warnings.filterwarnings(action="error", category=np.exceptions.ComplexWarning)
+# add protection against casting complex to real, in this module only: the
+# filter used to apply to every module, so after ``import grand`` a
+# ComplexWarning in the user's own code raised (#256)
+_ComplexWarning = getattr(getattr(np, "exceptions", np), "ComplexWarning", None) or np.ComplexWarning
+warnings.filterwarnings(action="error", category=_ComplexWarning, module=r"grand\.geo\.coordinates$")
 
 DATADIR: Final = grand_get_path_root_pkg() + "/data"  # for geoid_undulation egm96.png file.
 
@@ -148,7 +147,40 @@ class Reference(enum.IntEnum):
     GEOID = enum.auto()
 
 
-def geoid_undulation(latitude=None, longitude=None):
+def _latitude_longitude(coordinates, latitude, longitude, where):
+    r"""Resolves the arguments of :func:`geoid_undulation` to latitude and longitude.
+
+    Both ``geoid_undulation`` functions take a position object, keyword
+    ``latitude`` and ``longitude``, or two positional numbers (latitude,
+    longitude).  Their signatures differed, so ``grand.geoid_undulation(40.98,
+    93.95)`` raised TypeError (#261).
+    """
+    # Positions are ndarray subclasses too, so they are told apart first
+    if isinstance(coordinates, Coordinates):
+        if latitude is not None or longitude is not None:
+            raise TypeError(_validate.message(
+                where, "give a position or latitude and longitude, not both"))
+        geodetic = Geodetic(coordinates)
+        return geodetic.latitude, geodetic.longitude
+    if coordinates is not None:                      # geoid_undulation(lat, lon)
+        if longitude is not None:
+            raise TypeError(_validate.message(
+                where, "three values given; give latitude and longitude, or a position"))
+        latitude, longitude = coordinates, latitude
+    # A missing angle reads as NaN (with a warning), as it always has (#262);
+    # an angle out of range gave NaN, or a wrapped value, silently (#289)
+    for name, value, limit in (("latitude", latitude, 90.0), ("longitude", longitude, 360.0)):
+        if value is None:
+            continue
+        array = np.asarray(value, dtype=float)
+        bad = np.isfinite(array) & (np.abs(array) > limit)
+        if np.any(bad):
+            raise ValueError(_validate.message(
+                where, "%s must be within +-%g degrees, got %s" % (name, limit, array[bad].ravel()[0])))
+    return latitude, longitude
+
+
+def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     r"""Returns the height of the geoid above the ellipsoid, in metres.
 
     The geoid undulation is what converts between the two references of
@@ -158,9 +190,12 @@ def geoid_undulation(latitude=None, longitude=None):
 
     Parameters
     ----------
-    latitude : float or ndarray
+    coordinates : Geodetic, ECEF, LTP, GRANDCS or float, optional
+        The position; or, as a number, the latitude, with the longitude as
+        the second argument: ``geoid_undulation(40.98, 93.95)``.
+    latitude : float or ndarray, optional
         Geodetic latitude, in degrees.
-    longitude : float or ndarray
+    longitude : float or ndarray, optional
         Geodetic longitude, in degrees.
 
     Returns
@@ -168,6 +203,8 @@ def geoid_undulation(latitude=None, longitude=None):
     float or ndarray
         Undulation in metres, positive where the geoid lies above the
         ellipsoid.
+
+    A missing angle gives NaN, with a warning.
 
     Examples
     --------
@@ -177,16 +214,20 @@ def geoid_undulation(latitude=None, longitude=None):
 
         # The GRANDProto300 site at Dunhuang.
         print("%.2f m" % geoid_undulation(latitude=40.98, longitude=93.95))
+        print("%.2f m" % geoid_undulation(40.98, 93.95))
 
     Notes
     -----
-    Also defined in :mod:`grand.geo.topography`; repeated here to avoid a
-    circular import.
+    :func:`grand.geo.topography.geoid_undulation` has the same signature and
+    gives the same values; it is repeated here to avoid a circular import.
     """
+    latitude, longitude = _latitude_longitude(coordinates, latitude, longitude, "geoid_undulation")
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
     logger.debug(f"geoid_undulation for {latitude} {longitude}")
-    return geoid.elevation(longitude, latitude)
+    # The map spans longitudes 0 to 360: a negative one gave NaN, and every
+    # height west of Greenwich came out NaN with reference GEOID (#251)
+    return geoid.elevation(np.mod(np.asarray(longitude, dtype=float), 360.0), latitude)
 
 
 # Define functions to transform from one coordinate representation to
@@ -687,6 +728,11 @@ class SphericalRepresentation(Coordinates):
             theta, phi, r = _cartesian_to_spherical(arg.x, arg.y, arg.z)
         elif isinstance(arg, SphericalRepresentation):
             theta, phi, r = arg.theta, arg.phi, arg.r
+        elif isinstance(theta, (Number, np.ndarray)) and not isinstance(theta, (bool, np.bool_)):
+            # Out-of-range angles and negative radii were stored as given (#267)
+            _validate.in_range(theta, "theta", cls.__name__, 0, 180, "degrees")
+            if isinstance(r, (Number, np.ndarray)):
+                _validate.in_range(r, "r", cls.__name__, 0, None)
 
         if isinstance(theta, Number):
             n = 1
@@ -874,6 +920,13 @@ class HorizontalRepresentation(Coordinates):
             _validate.same_length(cls.__name__, azimuth=azimuth, elevation=elevation)
         else:
             raise TypeError(_validate.message(cls.__name__, "'azimuth', 'elevation' and 'norm' must be numbers or NumPy arrays, got %s" % type(azimuth).__name__))
+        # An elevation beyond the zenith, or a negative norm, was stored as given (#267)
+        elev = np.asarray(elevation, dtype=float)
+        if np.any(np.abs(elev[np.isfinite(elev)]) > 90 + 1e-9):     # rounding of conversions
+            raise ValueError(_validate.message(
+                cls.__name__, "'elevation' must be between -90 and 90 degrees, got %s"
+                % elev[np.isfinite(elev)][np.abs(elev[np.isfinite(elev)]) > 90 + 1e-9][0]))
+        _validate.in_range(norm, "norm", cls.__name__, 0, None)
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
         # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
@@ -1186,6 +1239,14 @@ def _check_geodetic(latitude, longitude, height, where):
     lat = np.asarray(latitude, dtype=float)
     _validate.in_range(lat[np.isfinite(lat)] if lat.ndim else (lat if np.isfinite(lat) else 0.0),
                        "latitude", where, -90, 90, "degrees")
+    # Accepted silently before (#267): a longitude past a full turn, and a
+    # height below the centre of the Earth
+    lon = np.asarray(longitude, dtype=float)
+    _validate.in_range(lon[np.isfinite(lon)] if lon.ndim else (lon if np.isfinite(lon) else 0.0),
+                       "longitude", where, -360, 360, "degrees")
+    alt = np.asarray(height, dtype=float)
+    _validate.in_range(alt[np.isfinite(alt)] if alt.ndim else (alt if np.isfinite(alt) else 0.0),
+                       "height", where, -6.4e6, None, "m")
     for name, value in given.items():
         if not np.all(np.isfinite(np.asarray(value, dtype=float))):
             _validate.warn(where, "'%s' contains NaN or infinity; positions computed from it "
@@ -1194,37 +1255,25 @@ def _check_geodetic(latitude, longitude, height, where):
 
 class Geodetic(GeodeticRepresentation):
     """
-    Generic container for Geodetic coordinate system. Center of this frame.
+    A position as latitude, longitude and height.
 
-    is the center of Earth.
+    Latitude
+        Degrees north of the equator, from -90 (South Pole) to +90 (North
+        Pole); negative in the southern hemisphere.
+    Longitude
+        Degrees east of the prime meridian (Greenwich), between -360 and 360
+        (beyond that it is refused, #267).  A negative value is stored plus
+        360, so -10 becomes 350.
+    Height
+        Metres above the WGS-84 ellipsoid, the reference surface of these
+        coordinates; not below -6400 km, the centre of the Earth.  The ellipsoid is *not* sea level: the geoid (mean sea
+        level) lies up to about 100 m above or below it, 61 m below at
+        Dunhuang.  Heights from other sources -- topography, site tables --
+        may be measured from the geoid; see :class:`Reference` and
+        :func:`geoid_undulation`.
 
-    Latitude:    Angle north and south of the equator. +ve in the northern hemisphere,
-                            -ve in the southern hemisphere. Range: -90 deg (South Pole)
-                            to +90 deg (North Pole). In equator, latitude = 0.
-    Longitude:    Angle east and west of the Prime Meridian. The Prime Meridian
-                            is a north-south line that passes through Greenwich, UK.
-                            +ve to the east of the Prime Meridian, -ve to the west.
-                            Range: 0 deg to 360 deg positive or negative. 
-                            Note that coordinate transformation is possible for +ve 0 to 360 deg.
-                            So negative values are changed to positive by adding 360.
-    Height:    Also called altitude or elevation, this represents the height above
-                    the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
-                    mathematical surface defined by a semi-major axis and a semi-minor axis.
-                    The most common values for these two parameters are defined by
-                    the World Geodetic Standard 1984 (WGS-84). The WGS-84 ellipsoid is
-                    intended to correspond to mean sea level. A Geodetic height of zero
-                    therefore roughly corresponds to sea level, with positive values increasing
-                    away from the Earth’s center. The theoretical range of height values is
-                    from the center of the Earth (about -6,371km) to positive infinity.
-
-    Imp:
-            It was necessary to divide __new__ into __new__ and __init__ to keep track
-            of reference attribute. Using __new__ only caused reference to be a class
-            attribute. So, if you change reference (as a class attribute) in any part
-            of the code, reference for all instances changes resulting in a wrong calculation.
-            To save reference as instance attribute instead of class attribute,
-            __init__ is necessary. Same approach is used in LTP.
-            Todo: There might be an elegant way to do this.
+    Conversions to and from the local frames (:class:`LTP`, :class:`GRANDCS`)
+    pass through :class:`ECEF`, whose origin is the centre of the Earth.
 
     Examples
     --------
@@ -1295,7 +1344,7 @@ class Geodetic(GeodeticRepresentation):
                     cls, latitude=placeholder, longitude=placeholder, height=placeholder
                 )
             else:
-                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP or GRANDCS, got %s" % type(arg).__name__))
         else:
             # TODO: This part maynot be required.
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -1383,7 +1432,7 @@ class Geodetic(GeodeticRepresentation):
                     geodetic.height,
                 )
             else:
-                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'latitude', 'longitude' and 'height' as numbers or arrays; got %s" % type(arg if arg is not None else latitude).__name__))
+                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP or GRANDCS) or 'latitude', 'longitude' and 'height' as numbers or arrays; got %s" % type(arg if arg is not None else latitude).__name__))
 
         if isinstance(latitude, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
@@ -1401,18 +1450,30 @@ class Geodetic(GeodeticRepresentation):
         else:
             raise TypeError(_validate.message(type(self).__name__, "'latitude', 'longitude' and 'height' must be numbers or NumPy arrays, got %s" % type(latitude).__name__))
 
-    def geodetic_to_horizontal(self):
-        r"""Returns this position in horizontal coordinates.
+    def geodetic_to_horizontal(self, location=None):
+        r"""Returns this position in horizontal coordinates, as seen from `location`.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
 
+        Parameters
+        ----------
+        location : Geodetic, ECEF, LTP or GRANDCS
+            Where the direction is measured from.
+
         Returns
         -------
-        HorizontalRepresentation
+        Horizontal
             Azimuth, elevation and norm.
+
+        Notes
+        -----
+        It was a stub that returned ``None`` (#251).
         """
-        pass
+        if location is None:
+            raise TypeError(_validate.message(
+                "Geodetic.geodetic_to_horizontal", "give the 'location' the direction is measured from"))
+        return Horizontal(self, location=location)
 
     def geodetic_to_ecef(self):
         r"""Returns this position in the :class:`ECEF` frame.
@@ -1427,18 +1488,24 @@ class Geodetic(GeodeticRepresentation):
         """
         return ECEF(self)
 
-    def geodetic_to_grandcs(self):
+    def geodetic_to_grandcs(self, location=None):
         r"""Returns this position in the :class:`GRANDCS` array frame.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Parameters
+        ----------
+        location : Geodetic, optional
+            Origin of the array frame.  Without it the default origin is
+            used, with a warning (it was used silently, #251).
 
         Returns
         -------
         GRANDCS
             The same position, in the array frame.
         """
-        return GRANDCS(self)
+        return _to_grandcs(self, location, "Geodetic.geodetic_to_grandcs")
 
     def geodetic_to_ltp(self, ltp):
         r"""Returns this position in a local tangent plane, :class:`LTP`.
@@ -1530,7 +1597,7 @@ class ECEF(CartesianRepresentation):
                 placeholder = np.nan * np.ones(len(arg[0]))
                 return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
             else:
-                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP or GRANDCS, got %s" % type(arg).__name__))
         else:
             # TODO: This part maynot be required.
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -1593,7 +1660,7 @@ class ECEF(CartesianRepresentation):
                 ecef = np.matmul(basis.T, arg) + origin
                 x, y, z = ecef.x, ecef.y, ecef.z
             else:
-                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'x', 'y' and 'z' as numbers or arrays; got %s" % type(arg if arg is not None else x).__name__))
+                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP or GRANDCS) or 'x', 'y' and 'z' as numbers or arrays; got %s" % type(arg if arg is not None else x).__name__))
 
         if isinstance(x, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
@@ -1621,18 +1688,24 @@ class ECEF(CartesianRepresentation):
         """
         return Geodetic(self, reference=reference)
 
-    def ecef_to_grandcs(self):
+    def ecef_to_grandcs(self, location=None):
         r"""Returns this position in the :class:`GRANDCS` array frame.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Parameters
+        ----------
+        location : Geodetic, optional
+            Origin of the array frame.  Without it the default origin is
+            used, with a warning (it was used silently, #251).
 
         Returns
         -------
         GRANDCS
             The same position, in the array frame.
         """
-        return GRANDCS(self)
+        return _to_grandcs(self, location, "ECEF.ecef_to_grandcs")
 
     def ecef_to_ltp(self, ltp):
         r"""Returns this position in a local tangent plane, :class:`LTP`.
@@ -1672,10 +1745,14 @@ grandcs_origin = Geodetic(
 class HorizontalVector(HorizontalRepresentation):
     """Deprecated alias, merged into :class:`Horizontal`.
 
-    by adding 'vector' attribute to reduce code duplication.
+    by adding 'vector' attribute to reduce code duplication.  It takes what
+    :class:`Horizontal` takes: ``location`` raised TypeError here (#267).
     """
 
-    pass
+    def __new__(cls, *args, **kwargs):
+        r"""Returns the same direction as ``Horizontal(*args, vector=True, **kwargs)``."""
+        kwargs.setdefault("vector", True)
+        return Horizontal(*args, **kwargs).view(cls)
 
 
 # RK: Rework on this class
@@ -1727,12 +1804,12 @@ class Horizontal(HorizontalRepresentation):
         obj = LTP(location=location, orientation="ENU", magnetic=False)
         ecef_loc = obj.location  # location is already in ECEF cs.
         ecef_basis = obj.basis  # basis is already in ECEF cs.
-        cls.location = ecef_loc  # used to convert back to ECEF, Geodetic etc.
-        cls.basis = ecef_basis  # used to convert back to ECEF, Geodetic etc.
-        cls.vector = vector
+        # Kept on the instance, set below: they were class attributes, so
+        # building a second Horizontal moved every earlier one (#251)
 
         if isinstance(arg, (Horizontal, HorizontalRepresentation)):
-            return Horizontal(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm)
+            return Horizontal(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm,
+                              location=location, vector=vector)
 
         if isinstance(azimuth, (Number, np.ndarray)):
             # check if input coordinates are of the right kind.
@@ -1751,9 +1828,9 @@ class Horizontal(HorizontalRepresentation):
                 else:
                     pos_v = np.vstack(
                         (
-                            ecef.x - cls.location.x,
-                            ecef.y - cls.location.y,
-                            ecef.z - cls.location.z,
+                            ecef.x - ecef_loc.x,
+                            ecef.y - ecef_loc.y,
+                            ecef.z - ecef_loc.z,
                         )
                     )
                 # Projecting positional vectors to 'ENU' LTP's cs basis.
@@ -1766,14 +1843,19 @@ class Horizontal(HorizontalRepresentation):
                 )  # x,y,z w.r.t to ENU basis.
                 r = np.sqrt(x * x + y * y + z * z)
                 azimuth = np.rad2deg(np.arctan2(x, y))
-                elevation = np.rad2deg(np.arcsin(z / r))
+                # arcsin(z / r) gave NaN for a zero-length vector (#289)
+                elevation = np.rad2deg(np.arctan2(z, np.sqrt(x * x + y * y)))
                 norm = r
             else:
                 raise TypeError(_validate.message(cls.__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'azimuth', 'elevation' and 'norm' as numbers or arrays; got %s" % type(arg if arg is not None else azimuth).__name__))
         else:
             raise TypeError(_validate.message(cls.__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'azimuth', 'elevation' and 'norm' as numbers or arrays; got %s" % type(arg if arg is not None else azimuth).__name__))
 
-        return super().__new__(cls, azimuth, elevation, norm)
+        self = super().__new__(cls, azimuth, elevation, norm)
+        self.location = ecef_loc  # used to convert back to ECEF, Geodetic etc.
+        self.basis = ecef_basis  # used to convert back to ECEF, Geodetic etc.
+        self.vector = vector
+        return self
 
     def horizontal_to_ecef(self):
         r"""Returns this direction in the :class:`ECEF` frame.
@@ -1886,7 +1968,7 @@ class LTP(CartesianRepresentation):
                 placeholder = np.nan * np.ones(len(ecef.x))
                 return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
             else:
-                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP or GRANDCS, got %s" % type(arg).__name__))
         else:
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
             # without giving any coordinates. Can also use np.empty((1,1)) instead of np.array([nan]).
@@ -1927,14 +2009,18 @@ class LTP(CartesianRepresentation):
         location : Geodetic, ECEF, LTP or GRANDCS, optional
             Origin of the frame.  A local frame without an origin cannot be
             converted to any other.
-        orientation : str, optional
-            Three characters, one per axis, from ``E``/``W``, ``N``/``S`` and
-            ``U``/``D``.  ``'ENU'`` is east-north-up.
+        orientation : str
+            Required unless `frame` is given.  Three characters, one per
+            axis, one from each of ``E``/``W``, ``N``/``S`` and ``U``/``D``:
+            ``'ENU'`` is east-north-up, ``'NWU'`` the GRAND convention.
         magnetic : bool, optional
             Measure the horizontal axes from magnetic north rather than
-            geographic north.  The declination is a few degrees at Dunhuang,
-            which is hundreds of metres across a 10 km array, so this is a
-            choice to make deliberately.
+            geographic north.  The declination is about 0.3 degrees at
+            Dunhuang (about 50 m across a 10 km array) and several degrees
+            elsewhere, so this is a choice to make deliberately.
+        rotation : 3x3 array_like, optional
+            Stored with the frame; it must be a rotation (orthogonal, with
+            determinant +1).
         obstime : str or datetime, optional
             Date used to evaluate the declination when `magnetic` is true.
 
@@ -1976,6 +2062,21 @@ class LTP(CartesianRepresentation):
             pass
         else:
             raise TypeError(_validate.message(type(self).__name__, "'orientation' must be a string such as 'ENU' or 'NWU', got %s" % type(orientation).__name__))
+        # It reported only the first bad character, as "Invalid frame orientation `X`" (#267)
+        axes = orientation.upper()
+        if len(axes) != 3 or sorted("".join({"E": "E", "W": "E", "N": "N", "S": "N", "U": "U",
+                                             "D": "U"}.get(c, "?") for c in axes)) != ["E", "N", "U"]:
+            raise ValueError(_validate.message(
+                type(self).__name__, "'orientation' must be three letters, one from each of E/W, N/S "
+                "and U/D (such as 'ENU' or 'NWU'), got %r" % (orientation,)))
+        # A non-orthogonal matrix was stored as given (#267)
+        if rotation is not None and not hasattr(rotation, "as_matrix"):
+            matrix = np.asarray(rotation, dtype=float)
+            if matrix.shape != (3, 3) or not np.allclose(matrix @ matrix.T, np.eye(3), atol=1e-6) \
+                    or not np.isclose(np.linalg.det(matrix), 1.0, atol=1e-6):
+                raise ValueError(_validate.message(
+                    type(self).__name__, "'rotation' must be a 3x3 rotation matrix (orthogonal, "
+                    "determinant +1)"))
 
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude
@@ -2100,21 +2201,24 @@ class LTP(CartesianRepresentation):
 
         return LTP(x=x, y=y, z=z, frame=ltp)
 
-    def ltp_to_grandcs(self):
+    def ltp_to_grandcs(self, location=None):
         r"""Returns this vector in the :class:`GRANDCS` array frame.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
 
+        Parameters
+        ----------
+        location : Geodetic, optional
+            Origin of the array frame.  Without it the default origin is
+            used, with a warning.
+
         Returns
         -------
         GRANDCS
-            The vector in the array frame.
+            The vector in the array frame.  (It returned ``None``, #251.)
         """
-        # just instantiating a GRANDCS CS to get it's basis and location. x, y, z values does not matter.
-        self = copy(self)
-        gcs = GRANDCS(x=0, y=0, z=0)
-        self.ltp_to_ltp(gcs)
+        return _to_grandcs(self, location, "LTP.ltp_to_grandcs")
 
     def ltp_to_ecef(self):
         r"""Returns this vector in the :class:`ECEF` frame.
@@ -2333,3 +2437,14 @@ class Rotation(_Rotation):
     """
 
     pass
+
+
+def _to_grandcs(position, location, where):
+    r"""``GRANDCS(position, location=location)``, warning when no origin is given (#251)."""
+    if location is None:
+        warnings.warn(_validate.message(
+            where, "no 'location' given: the default array origin (latitude %.3f, longitude "
+            "%.3f) is used, which is not your site's unless you set it so"
+            % (grd_origin_lat, grd_origin_lon)), _validate.GRANDlibWarning, stacklevel=3)
+        return GRANDCS(position)
+    return GRANDCS(position, location=location)

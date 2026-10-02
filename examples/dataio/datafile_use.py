@@ -6,8 +6,8 @@ from grand.dataio.data_handling import DataFile
 
 # Need to provide a file to read
 if len(sys.argv)<2:
-    print("Please provide a ROOT file name to read")
-    exit()
+    # It exited 0 (#218)
+    sys.exit("Please provide a ROOT file name to read")
 
 df = DataFile(sys.argv[1])
 

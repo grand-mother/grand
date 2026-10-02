@@ -51,7 +51,9 @@ HAND_MAINTAINED = {
         'Corrected by hand on 2026-09-08 (3a91507c): "Python Dependencies '
         '(Docker)" told readers to pip install requirements_vers.txt, a 2022 '
         'pin set carrying a Pillow with a critical advisory; the file was '
-        'removed and the section now points at the conda environment.',
+        'removed and the section now points at the conda environment.  '
+        'Also corrected by hand on 2026-10-01 (#257): its sim2root, CoREAS '
+        'converter and voltage/ADC commands failed as written.',
 }
 
 #: Statements in the Handbook that the code contradicts.  Each was checked
@@ -100,6 +102,31 @@ ERRATA = [
      '``env/conda/grand-dev.yml``. The online Directory Structure page is '
      'already corrected; the PDF is compiled from the unchanged source.',
      ':doc:`../installation`'),
+    ('Commands',
+     '``CoreasToRawROOT.py proton/``; ``sim2root.py <path>/*.rawroot -d ... -e '
+     'DC2Alpha``; ``convert_efield2voltage.py <efield.root> -o out.root`` then '
+     '``convert_voltage2adc.py out.root -o adc.root``.',
+     'Each fails. The CoREAS converter takes ``-d proton``; ``sim2root.py`` '
+     'needs ``-sl GP300``; both conversion scripts take the folder '
+     '``sim2root.py`` wrote, not a file, and name their outputs into it. The '
+     'Directory Structure page is corrected; the PDF is not.',
+     ':doc:`../sim2root`, :doc:`../simulation`'),
+    ('Installation commands',
+     '``conda env create -f reqmt_grandenv_2509.yml`` after ``cd grand``; '
+     '``grandlib_amd64.yml`` and ``requirements.txt``; a ``docker run -v '
+     '$PWD:/home/grandlib/dev:x`` line; Jupyter at ``https://localhost:8888``.',
+     'The environment file is ``env/conda/grand-dev.yml``; the other two files do '
+     'not exist; the ``docker run`` line is malformed; Jupyter serves '
+     '``http://localhost:8888``.',
+     ':doc:`../installation`'),
+    ('Removed code',
+     'Snippets use ``tests/tools/test_fake.py``, ``tests/recon/test_elec_field.py``, '
+     '``test_params_shower.py``, ``grand.io.root_trees``, ``from grand.topography '
+     'import Topography`` and ``data/test_efield.root``.',
+     'None of these exists any more. The readers are in ``grand.dataio``, topography '
+     'in ``grand.geo.topography``, and the tests under ``tests/`` as listed in '
+     ':doc:`../testing`.',
+     ':doc:`../api`'),
 ]
 
 
@@ -314,6 +341,17 @@ def repair(text):
     """
     text = text.replace('````\\ cd grand\\| ``source env/setup.sh``',
                         '``cd grand`` then ``source env/setup.sh``')
+
+    # Image options pandoc left behind with no image above them render as
+    # literal ":width: 60.0%" text (#258)
+    kept = []
+    for line in text.split('\n'):
+        if line.strip().startswith(':width:') and (not kept or not kept[-1].strip()
+                                                   or kept[-1].strip().startswith(':width:')):
+            if not any(k.strip().startswith(('.. image::', '.. figure::')) for k in kept[-2:]):
+                continue
+        kept.append(line)
+    text = '\n'.join(kept)
 
     out, lines, i = [], text.split('\n'), 0
     while i < len(lines):

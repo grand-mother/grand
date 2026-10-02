@@ -20,15 +20,24 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     verbose (bool): Verbose output, default is False.
     c (float): Speed of light in m/s, default is  299792458 m/s
     n (float or ndarray): Indices of refraction (vector or constant), default is 1.000136
+    sigma (float or ndarray, optional): Timing uncertainty of each antenna, in
+        seconds; weights the antennas (#216).
 
     Returns
     -------
-    ndarray: Theta and phi angles in radians.
+    ndarray: Theta in [0, pi] and phi in [0, 2*pi), in radians: the direction
+    the shower comes from.
     """
     where = "PWF_semianalytical"
     Xants = _checks.antennas(Xants, where, min_ants=3)
     tants = _checks.per_antenna(tants, Xants, "tants", where)
     sigma = _checks.sigma(sigma, where)
+    # Times in ns where seconds are expected gave another direction (#266)
+    if np.ptp(tants) > 1e-3:
+        import warnings
+        warnings.warn(_validate.message(where, "the peak times span %g s, more than a shower front "
+                                        "takes to cross any array; are they in ns rather than s?"
+                                        % np.ptp(tants)), _validate.GRANDlibWarning, stacklevel=2)
 
     PXT = Xants - mean(Xants, sigma)[None, :]
     # PXT = PXT - mean(PXT, sigma)[None, :]   #twice for numerical stability
@@ -37,8 +46,20 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     A = np.dot(PXT.T, PXT)
     b = np.dot(PXT.T, t_center) * c / n
     d, W = np.linalg.eigh(A)
+    # Antennas on one line leave the direction undetermined about that line:
+    # it returned [nan nan] with only a RuntimeWarning (#288)
+    if d[1] <= 1e-12 * d[2]:
+        raise ValueError(_validate.message(
+            where, "the antennas lie on one line; a plane-wave direction needs them spread in two dimensions"))
     beta = np.dot(b, W)
     nbeta = np.linalg.norm(beta)
+
+    # Equal times: the front is parallel to the array, and the shower comes
+    # along its normal.  The solver divided by |beta| = 0 and failed, for
+    # every vertical shower over a flat array (#288)
+    if nbeta == 0 or np.ptp(tants) == 0:
+        k_opt = W[:, 0] if W[2, 0] < 0 else -W[:, 0]
+        return _source_angles(k_opt)
 
     if (np.abs(beta[0] / nbeta) < 1e-14):
         if (verbose):
@@ -48,7 +69,9 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
         c_[1] = beta[1] / (d[1] + mu)
         c_[2] = beta[2] / (d[2] + mu)
         si = np.sign(np.dot(W[:, 0], np.array([0, 0, 1.])))
-        c_[0] = -si * np.sqrt(1 - c_[1]**2 - c_[2]**2)
+        # Rounding can take the radicand just below 0: a horizontal shower
+        # (zenith 90 degrees) gave NaN (#216)
+        c_[0] = -si * np.sqrt(max(0.0, 1 - c_[1]**2 - c_[2]**2))
         k_opt = np.dot(W, c_)
 
     else:
@@ -64,12 +87,19 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     if k_opt[2] > 1e-2:
         k_opt = k_opt - 2 * (k_opt @ W[:, 0]) * W[:, 0]
 
-    theta_opt = np.arccos(-k_opt[2])
-    phi_opt = np.arctan2(-k_opt[1], -k_opt[0])
+    return _source_angles(k_opt)
 
-    if phi_opt < 0:
-        phi_opt += 2 * np.pi
-    return np.array([theta_opt, phi_opt])
+
+def _source_angles(k):
+    """Theta in [0, pi] and phi in [0, 2*pi) of the direction -k."""
+    theta = np.arccos(np.clip(-k[2], -1.0, 1.0))
+    # It could return exactly 2*pi, i.e. 360 degrees, for an azimuth of 0
+    # (#216).  The modulo alone is not enough: a tiny negative angle rounds
+    # to exactly 2*pi.
+    phi = np.arctan2(-k[1], -k[0]) % (2 * np.pi)
+    if phi >= 2 * np.pi:
+        phi = 0.0
+    return np.array([theta, phi])
 
 def mean(X:np.ndarray, sigma=None):
     """Return the mean of ``X`` along its first axis, weighted by ``sigma``.
@@ -134,7 +164,28 @@ def PWF_residuals(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n
     return (res)
 
 def PWF_model(params, Xants, c=cons.c_light,  n=cons.n_atm, groundAltitude=cons.groundAltitude):
-    """Generate plane wavefront timings."""
+    """Generate plane wavefront timings.
+
+    Parameters
+    ----------
+    params : sequence
+        ``(theta, phi)`` in radians.
+    Xants : ndarray, shape (N, 3)
+        Antenna positions: x North, y West, z the height above sea level (m).
+    c, n : float, optional
+        Speed of light and refractive index.
+    groundAltitude : float, optional
+        Height above sea level of the frame's origin, where the source
+        distance is measured from (meters).  The default, 1231 m, is the GP13
+        site; for simulation files pass the ground altitude
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        For the plane wave it only shifts all times by one constant.
+
+    Returns
+    -------
+    ndarray, shape (N,)
+        Arrival times in seconds, relative to the origin's.
+    """
     theta, phi = params
     ct = np.cos(theta)
     st = np.sin(theta)

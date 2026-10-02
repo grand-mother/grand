@@ -56,13 +56,14 @@ def manage_args():
         "-o",
         "--out_file",
         default=None,
-        help="output file in GRANDROOT format. If the file exists it is overwritten.",
+        help="output file in GRANDROOT format, relative to -od when it is a bare name. If the file "
+             "exists it is replaced, as are the L1 run files.",
     )
     parser.add_argument(
         "-od",
         "--out_directory",
         default=None,
-        help="output directory in GRANDROOT format. If not given, is it the same as input directory",
+        help="output directory for the efield and run files. If not given, the input directory",
     )
     parser.add_argument(
         "--verbose",
@@ -108,6 +109,16 @@ def manage_args():
     )      
     # retrieve argument
     return parser.parse_args()
+
+def level1_name(level0_file, output_directory=None):
+    r"""Returns the L1 counterpart of `level0_file`, in `output_directory` if given.
+
+    Only the file name's ``_L0_`` changes: replacing "L0" in the whole path
+    changed a folder's name instead when it held "L0".
+    """
+    name = Path(level0_file).name.replace("_L0_", "_L1_", 1)
+    return str(Path(output_directory or Path(level0_file).parent) / name)
+
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     """
@@ -207,6 +218,7 @@ def impz(b, a):
     
 if __name__ == "__main__":
     import argparse
+    import os
     from typing import Union
     import numpy as np
     from pathlib import Path
@@ -232,62 +244,101 @@ if __name__ == "__main__":
     # If no output directory given, define it as input directory
     if args.out_directory is None:
         args.out_directory = args.directory
+    # A folder not yet made failed with FileNotFoundError (#182)
+    os.makedirs(args.out_directory, exist_ok=True)
 
     seed = args.seed
+    if seed < -1:
+        raise SystemExit("GRANDlib: convert_efield2efield: --seed must be a non-negative integer, got %d" % seed)
     logger.info(f"seed used for random number generator is {seed}.")
 
     noise = args.add_noise_uVm
-    assert noise >=0    
+    if not 0 <= noise < float("inf"):    # a bare AssertionError before (#233); inf wrote NaN (#288)
+        raise SystemExit("GRANDlib: convert_efield2efield: --add_noise_uVm must be finite and >= 0, got %s" % noise)
     if(noise>0):
       logger.info(f"We are going to apply gaussian noise of {noise} uV/m.")   
  
     jitter= args.add_jitter_ns
-    assert jitter >=0
+    if not 0 <= jitter < float("inf"):    # a bare AssertionError before (#233); inf wrote NaN (#288)
+        raise SystemExit("GRANDlib: convert_efield2efield: --add_jitter_ns must be finite and >= 0, got %s" % jitter)
     if(jitter>0):
       logger.info(f"We are going to apply a gaussian time jitter of {jitter} ns")   
  
     calsigma=args.calibration_smearing_sigma
-    assert calsigma>= 0
+    if not 0 <= calsigma < float("inf"):    # a bare AssertionError before (#233); inf wrote NaN (#288)
+        raise SystemExit("GRANDlib: convert_efield2efield: --calibration_smearing_sigma must be finite and >= 0, got %s" % calsigma)
     if(calsigma>0):
       logger.info(f"We are going to apply a gaussian calibration error of {calsigma} ")   
     
  
     padding_factor=1
-    assert padding_factor >=1
     target_sampling_rate_mhz = args.target_sampling_rate_mhz   # if different from 0, will resample  
-    assert  target_sampling_rate_mhz >= 0
+    # 0.001 or 0.5 (GHz typed for MHz) wrote traces of 0 to 4 samples (#288)
+    if not (target_sampling_rate_mhz == 0 or 10 <= target_sampling_rate_mhz < float("inf")):
+        raise SystemExit("GRANDlib: convert_efield2efield: --target_sampling_rate_mhz must be 0 (keep) or at least 10 MHz, got %s"
+                         % target_sampling_rate_mhz)
     target_duration_us = args.target_duration_us       # if different from 0, will adjust padding factor to get a trace of this lenght in us        
-    assert target_duration_us >= 0
+    if not target_duration_us >= 0:
+        raise SystemExit("GRANDlib: convert_efield2efield: --target_duration_us must be >= 0, got %s"
+                         % target_duration_us)
     
     filter = args.no_filter
     f_output=args.out_file
     output_directory=args.out_directory
     #############################################################################################
     #############################################################################################
+    def efield_output(f_input_file):
+        r"""Returns where the L1 efield made from `f_input_file` goes."""
+        f_output = args.out_file
+        if f_output is None:
+            # Replace only first occurrences
+            f_output = "L1".join(f_input_file.split("L0", 1))
+        # The output directory applies to a bare name; an -o with a directory
+        # in it is used as given (it was cut to its name and written into the
+        # input folder, #248)
+        if output_directory and (args.out_file is None or Path(f_output).parent == Path(".")):
+            f_output = output_directory + "/" + Path(f_output).name
+        return f_output
+
+    # The level-0 efield files are the input (tefield_l0 is read).  Earlier
+    # outputs are removed before the folder is opened: a rerun, or a folder
+    # already holding L1 files (as the committed sample does), failed with
+    # NotUniqueEvent, and a file still open in the DataDirectory is reused
+    # by name when reopened (#231).
+    input_files = sorted(glob.glob(os.path.join(args.directory, "efield_*_L0_*.root")))
+    if not input_files:
+        raise SystemExit("GRANDlib: convert_efield2efield: %s has no efield file (efield_*_L0_*.root)"
+                         % args.directory)
+    # The trees must exist and agree before anything is computed or removed:
+    # they failed deep inside, or were accepted silently (#249)
+    from grand.dataio.consistency import check_event_trees
+    checked = grand.dataio.DataDirectory(args.directory)
+    try:
+        if checked.tshower_l0 is None:
+            raise SystemExit("GRANDlib: convert_efield2efield: %s has no shower file "
+                             "(shower_*_L0_*.root)" % args.directory)
+        check_event_trees(checked.tefield_l0, checked.trun_l0, "convert_efield2efield", args.directory)
+    except (ValueError, FileNotFoundError) as error:
+        raise SystemExit(str(error))
+    finally:
+        checked.close()
+
+    outputs = [efield_output(f) for f in input_files]
+    run_outputs = [level1_name(f, output_directory)
+                   for pattern in ("run_*_L0_*.root", "runefieldsim_*_L0_*.root")
+                   for f in glob.glob(os.path.join(args.directory, pattern))[:1]]
+    for path in dict.fromkeys(outputs + run_outputs):
+        if os.path.exists(path):
+            logger.info(f"replacing the existing {path}")
+            os.remove(path)
+    if output_directory:
+        os.makedirs(output_directory, exist_ok=True)
+
     #Open file
     d_input = grand.dataio.DataDirectory(args.directory)
 
-    # Loop through the efield files
-    for f_input_file in d_input.ftefields[0].flist:
-
-        if args.out_file is None:
-            # Replace only first occurrences
-            f_output = "L1".join(f_input_file.split("L0", 1))
-
-        # # If output filename given, use it
-        # if f_output:
-        #    f_output = f_output
-        # # Otherwise, generate it from tefield filename
-        # else:                          #Matias: TODO: this will change from L0 to L1 when sim2root and the datadirectory can support it
-        #    f_output = d_input.ftefield.filename.replace("L0", "L1")
-
-        # If output directory given, use it
-        if output_directory:
-           f_output = output_directory + "/" + Path(f_output).name
-
-        logger.info(f"save result in {f_output}")
-        out_tefield = grand.dataio.TEfield(f_output)
-
+    # Loop through the level-0 efield files
+    for f_input_file, f_output in zip(input_files, outputs):
 
         df_input_file = grand.dataio.DataFile(f_input_file)
         tefield = df_input_file.tefield_l0
@@ -305,10 +356,16 @@ if __name__ == "__main__":
 
         nb_events = len(events_list)
 
-        # If there are no events in the file, exit
+        # If there are no events in the file, exit: this logged "Exiting." and
+        # went on to write empty output files (#248)
         if nb_events == 0:
           message = "There are no events in the file! Exiting."
           logger.error(message)
+          raise SystemExit("GRANDlib: convert_efield2efield: %s has no events" % f_input_file)
+
+        # Opened only once there is something to write
+        logger.info(f"save result in {f_output}")
+        out_tefield = grand.dataio.TEfield(f_output)
 
         ####################################################################################
         # start looping over the events
@@ -345,6 +402,23 @@ if __name__ == "__main__":
            sig_size = trace_shape[-1]
            traces = np.asarray(tefield.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
 
+           # A shower that hit no antenna is kept, empty, as at every other
+           # level (#91); it crashed here on f_samp_mhz[0] (#248)
+           if len(du_id) == 0:
+              out_tefield.run_number = tefield.run_number
+              out_tefield.event_number = tefield.event_number
+              out_tefield.du_count = 0
+              out_tefield.du_id = []
+              out_tefield.trace = np.zeros((0, 3, 0), dtype=np.float32)
+              out_tefield.du_seconds = []
+              out_tefield.du_nanoseconds = []
+              out_tefield.trigger_position = []
+              out_tefield.analysis_level = tefield.analysis_level+1
+              out_tefield.fill()
+              out_tefield.write()
+              logger.warning(f"Event {event_number} of run {run_number} has no antenna; written empty")
+              continue
+
 
            dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
            f_samp_mhz = 1e3/dt_ns                                 # MHz
@@ -365,7 +439,10 @@ if __name__ == "__main__":
               target_lenght=int(padding_factor * sig_size + 0.5) #add 0.5 to avoid any rounding error for the int conversion
               target_duration_us = target_lenght/f_samp_mhz[0]
 
-           assert padding_factor >= 1
+           if not padding_factor >= 1:      # a bare AssertionError before (#233)
+              raise SystemExit("GRANDlib: convert_efield2efield: --target_duration_us %s is shorter than the "
+                               "traces (%.4g us); the output cannot be shorter than the input"
+                               % (args.target_duration_us, sig_size / f_samp_mhz[0]))
 
 
            # common frequencies for all processing in Fourier domain. Fourier transform algorithms work better if the lenght of the trace is a multiple of 2,3 or 5
@@ -413,7 +490,7 @@ if __name__ == "__main__":
 
 
            # we initialize the random seed
-           if(seed>0):
+           if seed >= 0:  # 0 seeds too; -1 is the 'no seed' placeholder (#230)
              np.random.seed(seed*(event_idx+1))
 
            for du_idx in range(nb_du):
@@ -555,7 +632,7 @@ if __name__ == "__main__":
            if(jitter>0):
                logger.info(f"adding {jitter} ns of time jitter to the trigger times.")
                #reinitialize the random number
-               if(seed>0):
+               if seed >= 0:  # 0 seeds too; -1 is the 'no seed' placeholder (#230)
                  np.random.seed(seed*(event_idx+1))
                delays=np.round(np.random.normal(0,jitter,size=np.shape(du_nanoseconds)).astype(int))
                du_nanoseconds=du_nanoseconds+delays
@@ -580,6 +657,8 @@ if __name__ == "__main__":
            out_tefield.run_number = tefield.run_number
            out_tefield.event_number = tefield.event_number
            out_tefield.du_id = tefield.du_id
+           # Was never set, so every event read as having no antenna (#248)
+           out_tefield.du_count = len(du_id)
 
            out_tefield.trace=vout
            out_tefield.du_nanoseconds=du_nanoseconds
@@ -604,8 +683,9 @@ if __name__ == "__main__":
     #TODO: Ask Lech how to do this for files with multiple runs.
     #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
-    filename=glob.glob(args.directory+ "/run_*L0*.root")[0]
-    filename=filename.replace("L0", "L1")
+    # Into -od, with the efield files: they went into the input folder, so
+    # the -od folder could not feed the next step (#231)
+    filename = level1_name(glob.glob(args.directory+ "/run_*L0*.root")[0], output_directory)
     outrun = grand.dataio.TRun(filename)
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
@@ -620,8 +700,7 @@ if __name__ == "__main__":
     #TODO: if we changed the trace lenght this needs to update t_post acordingly.        
     #now, we copy trunefieldsim and change tpost (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
-    filename=glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0]
-    filename=filename.replace("L0", "L1")
+    filename = level1_name(glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0], output_directory)
     outrunefieldsim = grand.dataio.TRunEfieldSim(filename)
     outrunefieldsim.copy_contents(trunefieldsim)
     outrunefieldsim.analysis_level = trunefieldsim.analysis_level+1

@@ -66,7 +66,14 @@ As input you need to give the ROOT file containing `rawroot data TTrees`, as cre
 
 i.e.
 
-`python3 python  ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -d 20221026 -t 180000 -e DC2Alpha`
+`python3 ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -sl GP300 -d 20221026 -t 180000 -e DC2Alpha`
+
+(`-sl`, the site layout, is required.)
+
+A run stores one trace window (`t_pre`, `t_post`) for all its events. If the
+input events have different windows, `sim2root.py` stops before writing and
+asks for `--trigger_time_ns` and `--target_duration_us`, which give every
+event the same window (or use `-ss`, one run per file).
 
 additional options are available on command line, see sim2root --help for more information
 
@@ -76,19 +83,19 @@ The example shows how to use the two example rawroot file given in /grand/sim2ro
 
 You can use the rawroot file of your liking. 
 
-python  ../grand/sim2root/Common/RunSimPipe InputDirectory Extra
+python  ../grand/sim2root/Common/RunSimPipe.py InputDirectory Extra -sl GP300
 
-where "Extra" is the additional field that you can use in the directory name to make your directory cooler.
+where "Extra" is the additional field that you can use in the directory name to make your directory cooler, and `-sl` the site layout (required). The script stops if a step fails.
 
 Note that you have to edit the fields inside the script to the appropiate paths if you are running in a different directory
 
 For example, if you run here (and the two zhaires example rawroot files are there!)
 
-python RunSimPipe.py ../ZHAireSRawRoot ZHAireS
+python RunSimPipe.py ../ZHAireSRawRoot ZHAireS -sl GP300
 
 This will run
 1) rawroot 2 grandroot
-python ./sim2root.py ../ZHAireSRawRoot/ -e ZHAireS
+python ./sim2root.py ../ZHAireSRawRoot/ --target_duration_us=4.096 --trigger_time_ns 800 -sl GP300 -e ZHAireS
 2) compute voltage
 python ../../scripts/convert_efield2voltage.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/ --seed 1234 --target_duration_us=4.096 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/voltage_1618-13790_L0_0000.root
 3) compute adc
@@ -96,25 +103,25 @@ python ../../scripts/convert_voltage2adc.py sim_Xiaodushan_20221026_000000_RUN1_
 4) compute DC2 efield
 python ../../scripts/convert_efield2efield.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500
 
-## 3) Simulation Pipe WITHOUT NOISE example (in the Common directory)
+## 4) Simulation Pipe WITHOUT NOISE example (in the Common directory)
 
 The example shows how to use the example rawroot file given in /grand/sim2root/CoREASRawRoot/
 
 You can use the rawroot file of your liking. 
 
-python  ../grand/sim2root/Common/RunSimPipeNoJitter.py InputDirectory Extra
+python  ../grand/sim2root/Common/RunSimPipeNoJitter.py InputDirectory Extra -sl GP300
 
-where "Extra" is the additional field that you can use in the directory name to make your directory cooler.
+where "Extra" is the additional field that you can use in the directory name to make your directory cooler, and `-sl` the site layout (required). The script stops if a step fails.
 
 Note that you have to edit the fields inside the script to the appropiate paths if you are running in a different directory
 
 For example, if you run here (and the two zhaires example rawroot files are there!)
 
-python RunSimPipeNoJitter.py ../CoREASRawRoot CoREAS-NJ
+python RunSimPipeNoJitter.py ../CoREASRawRoot CoREAS-NJ -sl GP300
 
 This will run
 1) rawroot 2 grandroot
-python ./sim2root.py ../CoREASRawRoot/ -e CoREAS-NJ
+python ./sim2root.py ../CoREASRawRoot/ --target_duration_us=4.096 --trigger_time_ns 800 -sl GP300 -e CoREAS-NJ
 2) compute voltage
 python ../../scripts/convert_efield2voltage.py sim_Dunhuang_20170401_000000_RUN1_CD_CoREAS-NJ_0000/ --seed 1234 --target_duration_us=4.096 --verbose=info --no_noise -o sim_Dunhuang_20170401_000000_RUN1_CD_CoREAS-NJ_0000/voltage_4100-4100_L0_0000.root
 3) compute adc

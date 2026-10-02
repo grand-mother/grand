@@ -250,13 +250,11 @@ def _matches(read_back, written, element_type):
         return False
 
     for one_got, one_want in zip(got, want):
-        # PyROOT maps `unsigned char` to a one-character Python string, so a
-        # field written as the number 3 comes back as '\x03'.  The number is
-        # intact -- ord() recovers it -- and only the type changed, so this
-        # is decoded rather than treated as a failure.  The test at the
-        # bottom of the file is what pins the behaviour itself.
+        # `unsigned char` elements used to come back as one-character
+        # strings and were decoded with ord() here; they are numbers now
+        # (#201), so a string where a number was written is a failure.
         if isinstance(one_got, str) and not isinstance(one_want, str):
-            one_got = ord(one_got)
+            return False
         if isinstance(one_want, (str, bool, np.bool_)):
             if one_got != one_want:
                 return False
@@ -383,26 +381,20 @@ def test_the_comparison_would_notice_a_changed_value():
     assert not _matches(['a'], ['b'], 'string'), 'changed string'
 
 
-def test_unsigned_char_fields_come_back_as_characters(tmp_path):
-    r"""Fourteen fields change Python type across a write, and keep their value.
+def test_unsigned_char_fields_come_back_as_numbers(tmp_path):
+    r"""``unsigned char`` fields read back as the numbers that were written.
 
     ``unsigned char`` is what the data model uses for small counters and mode
-    flags, and PyROOT presents ``std::vector<unsigned char>`` as characters.
-    So ``tadc.qmax_ch`` is a list of ints before the file is written and a
-    list of one-character strings after it is read, and ``sum()`` over it
-    works in the first case and raises ``TypeError`` in the second.
-
-    The value is not lost -- ``ord`` recovers it exactly -- so this is a trap
-    rather than a defect, and changing the declared type to ``unsigned
-    short`` to avoid it would change the on-disk format for every file the
-    collaboration has already written.  It is therefore pinned here rather
-    than fixed: the test documents the behaviour and will fail if a future
-    ROOT or a schema change alters it, which is the moment to decide.
+    flags, and PyROOT presents ``std::vector<unsigned char>`` as characters:
+    ``tadc.qmax_ch`` was a list of ints before the write and of one-character
+    strings after it, so ``sum()`` over it raised ``TypeError``.  This test
+    pinned that; ``StdVectorList`` now converts the elements back (#201),
+    without changing the on-disk type.
     """
     tadc = _class_named('TADC')(_file_name=str(tmp_path / 'chars.root'))
     tadc.run_number, tadc.event_number = 1, 1
     tadc.qmax_ch = [[1, 2], [3, 4]]
-    tadc.test_pulse_rate_divider = [3, 5]
+    tadc.test_pulse_rate_divider = [3, 200]
     tadc.fill()
     tadc.write()
     tadc.close_file()
@@ -410,16 +402,9 @@ def test_unsigned_char_fields_come_back_as_characters(tmp_path):
     reopened = _class_named('TADC')(_file_name=str(tmp_path / 'chars.root'))
     reopened.get_entry(0)
 
-    divider = list(reopened.test_pulse_rate_divider)
-    assert all(isinstance(element, str) for element in divider), (
-        'unsigned char no longer reads back as characters; if PyROOT now '
-        'returns integers the workaround in _matches can go')
-    assert [ord(element) for element in divider] == [3, 5], (
-        'the numeric value did not survive, which would be a real defect'
-        ' rather than a presentation quirk')
-
-    qmax = [[ord(element) for element in row] for row in reopened.qmax_ch]
-    assert qmax == [[1, 2], [3, 4]], 'nested unsigned char lost its values'
+    assert list(reopened.test_pulse_rate_divider) == [3, 200]
+    assert list(reopened.qmax_ch) == [[1, 2], [3, 4]]
+    assert reopened.test_pulse_rate_divider.asnumpy().tolist() == [3, 200]
 
 
 def test_the_round_trip_is_not_vacuous(tmp_path):

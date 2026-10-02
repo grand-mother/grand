@@ -221,7 +221,8 @@ def GetThinningRelativeEnergyFromSry(sry_file,outmode="N/A"):
         Thinning
       except NameError:
         logging.error('warning Thinning energy not found, Aires has no default value, cannot continue')
-        exit()
+        # exit() here ended whatever program imported this module (#224)
+        raise ValueError("GRANDlib: GetThinningRelativeEnergyFromSry: no Thinning energy in %s; Aires has no default for it" % sry_file)
   except:
     logging.error("GetThinningRelativeEnergyFromSry:file not found or invalid:"+sry_file)
     raise
@@ -462,7 +463,8 @@ def GetPrimaryFromSry(sry_file,outmode="N/A"):
         primarytype
       except NameError:
         logging.error('warning primary not found, Aires has no default value, cannot continue')
-        exit()
+        # exit() here ended whatever program imported this module (#224)
+        raise ValueError("GRANDlib: GetPrimaryFromSry: no primary in %s; Aires has no default for it" % sry_file)
   except:
     logging.error("GetPrimaryFromSry:file not found or invalid:"+sry_file)
     raise
@@ -591,7 +593,8 @@ def GetTaskNameFromSry(sry_file,outmode="N/A"):
         taskname
       except NameError:
         logging.error('warning taskname not found, Aires has no default value, cannot continue')
-        exit()
+        # exit() here ended whatever program imported this module (#224)
+        raise ValueError("GRANDlib: GetTaskNameFromSry: no taskname in %s; Aires has no default for it" % sry_file)
   except:
     logging.error("GetTaskNameFromSry:file not found or invalid:"+sry_file)
     raise
@@ -613,7 +616,8 @@ def GetRandomSeedFromSry(sry_file,outmode="N/A"):
         randomseed
       except NameError:
         logging.error('warning randomseed not found, Aires has no default value, cannot continue')
-        exit()
+        # exit() here ended whatever program imported this module (#224)
+        raise ValueError("GRANDlib: GetRandomSeedFromSry: no randomseed in %s; Aires has no default for it" % sry_file)
   except:
     logging.error("GetRandomSeedFromSry:file not found or invalid:"+sry_file)
     raise
@@ -2087,12 +2091,14 @@ def DeprecatedReadAiresSry(sry_file,outmode="GRAND"):
         energy
     except NameError:
         logging.error('warning energy not found, Aires has no default value,  cannot continue')
-        exit()
+        # exit() here ended whatever program imported this module (#224)
+        raise ValueError("GRANDlib: DeprecatedReadAiresSry: no energy in %s; Aires has no default for it" % sry_file)
     try:
         primarytype
     except NameError:
         logging.error('warning primary not found, Aires has no default value, cannot continue')
-        exit()
+        # exit() here ended whatever program imported this module (#224)
+        raise ValueError("GRANDlib: DeprecatedReadAiresSry: no primary in %s; Aires has no default for it" % sry_file)
 
     try:
         xmax

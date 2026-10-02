@@ -5,7 +5,7 @@ import numpy as np
 import sim2root.Common.raw_root_trees as RawTrees
       
 #Author: Matias Tueros, with ChatGP3 help for documentation and error handling. it was Mar 24th 2023 in Barracas, Buenos Aires, Argentina
-def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, CorePosition, ArrayName, EventWeight=1, EventUnixTime=200854852, EventUnixNanosecond=0, OutMode="a", TestedPositions="None"):
+def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, CorePosition, ArrayName, EventWeight=1, EventUnixTime=0, EventUnixNanosecond=0, OutMode="a", TestedPositions="None"):
     '''
     The function generates an event parameters file in a specific format for use in simulation programs. 
     The file includes information such as the event name, primary particle, energy, zenith and azimuth angles, core position, 
@@ -239,9 +239,9 @@ def GetEventUnixTimeFromParametersFile(filename):
                     unix_time = int(line.strip().split(':')[1])
                 elif 'EventUnixNanosecond:' in line:
                     unix_ns = int(line.strip().split(':')[1])
-            if( unix_time==0 and unix_ns==0):
-              print('Unix time not found in file,or was 0,0...defaulting to 200854920,0')
-              unix_time=200854920            
+            # 0 means "not given": sim2root then uses the simulation date.
+            # This put in 200854920 (May 1976), and sim2root a different
+            # 200854852, so one event had several times (#225).
             return (unix_time, unix_ns)
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found")
@@ -263,8 +263,8 @@ def GenerateRawMetaTree(EventParametersFile,RunID,EventID,OutputFileName):
       # return i will not return, in order to be able to handle old sims. I will asign default or dummy values to the required variables
       ArrayName="Unknown"  
       CorePosition=(0,0,0)
-      UnixSecond=1
-      UnixNano=1
+      UnixSecond=0    # not given: sim2root uses the simulation date (#225)
+      UnixNano=0
       EventWeight=1
       TestedPositions=[]       
 

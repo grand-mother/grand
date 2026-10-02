@@ -3,6 +3,8 @@ Handling Detector Unit (DU) network, footprint plots
 """
 from logging import getLogger
 
+from grand.basis import validate as _validate
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -76,13 +78,17 @@ class DetectorUnitNetwork:
         """
         if du_id is None:
             du_id = list(range(du_pos.shape[0]))
+        # A tuple was refused as "not a list or array" (#267)
+        if isinstance(du_id, tuple):
+            du_id = list(du_id)
         self.du_pos = du_pos
         self.area_km2 = -1
         self.idx2idt = du_id
-        assert isinstance(self.du_pos, np.ndarray)
-        assert isinstance(self.idx2idt, (list, np.ndarray))
-        assert du_pos.shape[0] == len(du_id)
-        assert du_pos.shape[1] == 3
+        # Asserts, gone under python -O (#259)
+        if not isinstance(self.du_pos, np.ndarray) or self.du_pos.ndim != 2 or self.du_pos.shape[1] != 3:
+            raise ValueError(_validate.message("DetectorUnitNetwork.init_pos_id", "du_pos must be an array of shape (n_du, 3), got %s" % (np.shape(du_pos),)))
+        if not isinstance(self.idx2idt, (list, np.ndarray)) or len(du_id) != du_pos.shape[0]:
+            raise ValueError(_validate.message("DetectorUnitNetwork.init_pos_id", "du_id must be a list or array with one identifier per unit (%d), got %r" % (du_pos.shape[0], du_id)))
 
     def keep_only_du_with_index(self, l_idx):
         """Keep DU at index defined in list <l_idx>
@@ -147,27 +153,35 @@ class DetectorUnitNetwork:
         if self.area_km2 >= 0:
             return self.area_km2
         if self.du_pos.shape[0] < 3:
+            # It went on to triangulate, and failed
             self.area_km2 = 0
+            return self.area_km2
         pts = self.du_pos[:, :2].astype(np.float64)
-        self.delaunay = Delaunay(self.du_pos[:, :2])
+        self.delaunay = Delaunay(pts)
         triangle = self.delaunay.simplices
-        a_area = np.abs(
-            np.cross(
-                pts[triangle[:, 1], :] - pts[triangle[:, 0], :],
-                pts[triangle[:, 2], :] - pts[triangle[:, 0], :],
-            )
-        )
-        a_area /= 2
+        # The z of the 2-D cross product, written out: np.cross on 2-D vectors
+        # fails under NumPy 2 (#261)
+        u = pts[triangle[:, 1], :] - pts[triangle[:, 0], :]
+        v = pts[triangle[:, 2], :] - pts[triangle[:, 0], :]
+        a_area = np.abs(u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]) / 2
         self.area_km2 = np.sum(a_area) / 1e6
         return self.area_km2
 
     def get_max_dist_du(self):
-        """TODO
-        :return: [km] distance max between two DU of network
-        :rtype: float
+        """Return the largest distance between two DUs of the network.
+
+        It raised NotImplementedError while documenting a return value (#261).
+
+        Returns
+        -------
+        float
+            The distance, in kilometres; 0 for fewer than two DUs.
         """
-        # TODO:
-        raise NotImplementedError
+        pos = np.asarray(self.du_pos, dtype=np.float64)
+        if pos.shape[0] < 2:
+            return 0.0
+        dist = np.linalg.norm(pos[:, np.newaxis, :] - pos[np.newaxis, :, :], axis=-1)
+        return float(dist.max()) / 1e3
 
     ### PLOT
 
@@ -403,7 +417,8 @@ class DetectorUnitNetwork:
             Draws the figure.
         """
         # same number of sample
-        assert a_time.shape[0] == a3_values.shape[2]
+        if a_time.shape[0] != a3_values.shape[2]:   # (#259)
+            raise ValueError(_validate.message("DetectorUnitNetwork", "a_time has %d samples, a3_values %d" % (a_time.shape[0], a3_values.shape[2])))
         # we plot norm of 3D vector
         a_norm_val = np.linalg.norm(a3_values, axis=1)
         val_min = a_norm_val.min()

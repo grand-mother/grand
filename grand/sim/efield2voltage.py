@@ -2,6 +2,7 @@
 Master module for the detector unit simulation GRAND
 """
 import os
+import warnings
 import os.path
 from logging import getLogger
 import time
@@ -16,6 +17,7 @@ from pathlib import Path
 
 import grand.geo.coordinates as coord
 import grand.dataio as groot
+from grand.dataio.consistency import check_event_trees
 from grand.basis.type_trace import ElectricField
 
 from .detector.antenna_model import AntennaModel
@@ -61,7 +63,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
 
     Raises
     ------
-    AssertionError
+    ValueError
         If ``padding_factor`` is less than 1.
 
     Examples
@@ -92,6 +94,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     axis applied to all of them.  The ``ToDo`` in the body marks the same
     point.
     """
+    _validate.plausible(f_samp_mhz, "f_samp_mhz", "get_fastest_size_fft", "sampling_rate_mhz")   # (#266)
     if not padding_factor >= 1:
         raise ValueError(_validate.message(
             "get_fastest_size_fft", "'padding_factor' must be >= 1, got %s" % padding_factor))
@@ -122,7 +125,7 @@ def _grandlib_version():
 _MIN_XMAX_DISTANCE_M = 100.0
 
 
-def _trees_of_one_level(directory):
+def _trees_of_one_level(directory, level=None):
     r"""The efield, run and shower trees of `directory`, read at one level.
 
     ``DataDirectory`` picks the highest level of each tree type on its own, so
@@ -135,6 +138,9 @@ def _trees_of_one_level(directory):
     Parameters
     ----------
     directory : grand.dataio.DataDirectory
+    level : int, optional
+        Level of the efield to read; the highest present when omitted, with
+        a warning if there are several (#231: it was picked silently).
 
     Returns
     -------
@@ -154,7 +160,16 @@ def _trees_of_one_level(directory):
     if not efield_levels:
         raise FileNotFoundError(_validate.message(
             "Efield2Voltage", "%s holds no efield file (efield_*_L<level>_*.root)" % directory.dir_name))
-    level = efield_levels[-1]
+    if level is None:
+        level = efield_levels[-1]
+        if len(efield_levels) > 1:
+            _validate.warn("Efield2Voltage", "%s holds efield files at levels %s: reading the highest, "
+                           "%d; give efield_level (--level) to choose" % (
+                               directory.dir_name, ", ".join(str(v) for v in efield_levels), level))
+    elif level not in efield_levels:
+        raise FileNotFoundError(_validate.message(
+            "Efield2Voltage", "%s holds no efield file at level %s; it has levels %s"
+            % (directory.dir_name, level, ", ".join(str(v) for v in efield_levels))))
     trun = getattr(directory, "trun_l%d" % level, None)
     if trun is None:
         raise FileNotFoundError(_validate.message(
@@ -169,19 +184,57 @@ def _trees_of_one_level(directory):
                    getattr(tshower, "file_name", "?")))
     return tefield, trun, tshower
 
+
+#: The processing switches of `Efield2Voltage.params`, with their defaults.
+PARAM_DEFAULTS = {
+    "add_noise": True,
+    "lst": 18.0,
+    "add_rf_chain": True,
+    "add_rf_chain_nut": False,
+    "add_rf_chain_gaa": False,
+    "resample_to_mhz": 0,            # 0: keep the input rate; other rates: in memory only, save_voltage refuses them (#229)
+    "extend_to_us": 0,               # 0: keep the input trace length
+    "calibration_smearing_sigma": 0, # 0: no calibration smearing
+    "add_jitter_ns": 0,              # 0: no trigger-time jitter
+}
+
 class Efield2Voltage:
     """
-    Class to compute voltage with GRANDROOT IO
+    Computes the voltage at each detection unit from simulated electric fields.
 
-    Goals:
-      * Call simulator of detector units with ROOT data
-      * Call on more than one event
-      * Call on some stations of some event (not tested, not sure it would work as is) #TODO:
-      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
-      * Save output in ROOT format
+    Reads the folder ``sim2root.py`` wrote (efield, run and shower trees),
+    computes the voltage of every event or of one, and writes a voltage
+    file.  See :meth:`compute_voltage` for the steps.
+
+    Attributes
+    ----------
+    params : dict
+        The processing switches, with these keys and defaults (#261):
+
+        ``add_noise`` (True)
+            Add Galactic noise.
+        ``lst`` (18.0)
+            Local sidereal time for the Galactic noise, in hours, 0 to 24.
+        ``add_rf_chain`` (True)
+            Apply the GP300 RF chain.
+        ``add_rf_chain_nut`` (False), ``add_rf_chain_gaa`` (False)
+            Apply the RF chain up to the LNA output, or the G@Auger chain.
+        ``resample_to_mhz`` (0)
+            Resample to this rate; 0 keeps the input rate.  Other rates stay
+            in memory: :meth:`save_voltage` refuses them (#229).
+        ``extend_to_us`` (0)
+            Extend the traces to this duration, in µs; 0 keeps their length.
+        ``calibration_smearing_sigma`` (0)
+            Relative Gaussian smearing of each unit's amplitude calibration.
+        ``add_jitter_ns`` (0)
+            Gaussian jitter of the trigger times, in ns.
+
+        Unknown keys and invalid values are refused when the computation
+        starts.
     """
 
-    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300'):
+    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300',
+                 efield_level=None):
 
         # If directory given, use DataDirectory
         r"""Opens the input and prepares the antenna and RF-chain models.
@@ -189,11 +242,16 @@ class Efield2Voltage:
         Parameters
         ----------
         d_input : str
-            Input ROOT file, or a directory of them.
+            The simulation folder ``sim2root.py`` wrote, holding the
+            ``efield_*``, ``run_*`` and ``shower_*`` files.  A single e-field
+            file is not enough: the run and shower trees are read too.
         f_output : str, optional
-            Output file.  Derived from the input name when omitted.
+            Output file name, relative to `output_directory`.  Derived from
+            the input name when omitted, as ``voltage_*_L0_*.root``, which is
+            what ``convert_voltage2adc.py`` looks for.
         output_directory : str, optional
-            Directory to write into.
+            Directory to write into; the current directory when omitted
+            (``convert_efield2voltage.py`` passes the input folder).
         seed : int, optional
             Seed for the noise generator.  ``None`` gives an independent
             realisation each run; a fixed value makes it reproducible.
@@ -201,17 +259,25 @@ class Efield2Voltage:
             Zero-padding applied before the transform, which improves the
             frequency resolution.
         du_type : str, optional
-            Which antenna model to use.
+            The antenna model: ``'GP300'`` (HFSS simulation, the default),
+            ``'GP300_nec'`` (NEC) or ``'GP300_mat'`` (Matlab).  ``'Horizon'``
+            is no longer accepted: its model files are not in the data model
+            (#232).
+        efield_level : int, optional
+            For a folder holding efield files at several levels, the one to
+            read; the highest by default, with a warning (#231).
 
-                Raises
-                ------
-                IOError
-                    If `d_input` is neither a file nor a directory.
+        Raises
+        ------
+        FileNotFoundError
+            If `d_input` does not exist, or lacks a run, shower or efield file.
+        ValueError
+            If the trees do not agree (#249), or an argument is invalid.
 
-                Notes
-                -----
-                Construction reads the input file, so this object cannot be built
-                without one.
+        Notes
+        -----
+        Construction reads the input, so this object cannot be built without
+        one.
         """
         if os.path.isdir(d_input):
             self.d_input = groot.DataDirectory(d_input)
@@ -221,13 +287,24 @@ class Efield2Voltage:
             self.d_input = groot.DataFile(d_input)
             self.f_input = d_input
         else:
-            raise IOError("Input file/directory does not exist")
+            raise FileNotFoundError(_validate.message(
+                "Efield2Voltage", "no such file or directory: %s" % d_input))
+        # A single e-field file has no run or shower tree: it failed with
+        # "'DataFile' object has no attribute 'trun'" (#185, #265)
+        files = {"trun": "run", "tshower": "shower", "tefield": "efield"}
+        missing = [files[name] for name in files if getattr(self.d_input, name, None) is None]
+        if missing:
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "%s holds no %s file; give the folder sim2root.py wrote, with its "
+                "efield_*, run_* and shower_* files" % (d_input, " or ".join(missing))))
 
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
         if isinstance(self.d_input, groot.DataDirectory):
-            f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input)
+            f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input, efield_level)
+        # Runs, units and sampling times agree, before anything is computed (#249)
+        check_event_trees(f_input_TEfield, f_input_TRun, "Efield2Voltage", d_input)
 
         self.f_output = f_output
 
@@ -242,11 +319,30 @@ class Efield2Voltage:
         self.output_directory = ""
         if output_directory:
             self.output_directory = output_directory
+            # A folder not yet made failed when writing (#182)
+            Path(output_directory).mkdir(parents=True, exist_ok=True)
+        # A read-only folder failed only after the whole computation (#280)
+        for folder in {Path(self.output_directory or "."),
+                       Path(f_output).parent if f_output else Path(".")}:
+            if folder.is_dir() and not os.access(folder, os.W_OK):
+                raise PermissionError(_validate.message(
+                    "Efield2Voltage", "cannot write in the output folder %s" % folder))
             # self.f_output = output_directory + "/" + Path(self.f_output).name
 
 
         self.du_type = du_type                              # load antenna models
+        # None, or a non-negative integer: a negative seed was accepted and
+        # silently meant "unseeded", and so did 0 (#230)
+        if seed is not None and (isinstance(seed, bool) or not isinstance(seed, (int, np.integer)) or seed < 0):
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "'seed' must be None or a non-negative integer, got %r" % (seed,)))
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
+        # 0, negative, NaN or text failed later with a message about extend_to_us (#265)
+        # Below 1 it read as "'extend_to_us' = 0 us is shorter than the traces" (#233)
+        if not _validate.as_real(padding_factor, "padding_factor", "Efield2Voltage") >= 1:
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "'padding_factor' must be at least 1 (the output cannot be shorter "
+                "than the input), got %r" % (padding_factor,)))
         self.padding_factor = padding_factor               #
         self.events = f_input_TEfield        # traces and du_pos are stored here
         self.run = f_input_TRun                 # site_long, site_lat info is stored here. Used to define shower frame.
@@ -255,7 +351,7 @@ class Efield2Voltage:
         self.rf_chain = RFChain()                           # loads RF chain for GP13
         self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
         self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
-        self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
+        self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec' or 'GP300_mat'
         # Every key the class reads must be present here.  Four of them --
         # resample_to_mhz, extend_to_us, calibration_smearing_sigma and
         # add_jitter_ns -- used to be set only by
@@ -263,17 +359,7 @@ class Efield2Voltage:
         # the documented Python usage raised KeyError on the first call to
         # compute_voltage().  The defaults are the argparse defaults of that
         # script: zero, meaning the step is off.
-        self.params = {
-            "add_noise": True,
-            "lst": 18.0,
-            "add_rf_chain": True,
-            "add_rf_chain_nut": False,
-            "add_rf_chain_gaa": False,
-            "resample_to_mhz": 0,            # 0: keep the input rate; other rates: in memory only, save_voltage refuses them (#229)
-            "extend_to_us": 0,               # 0: keep the input trace length
-            "calibration_smearing_sigma": 0, # 0: no calibration smearing
-            "add_jitter_ns": 0,              # 0: no trigger-time jitter
-        }
+        self.params = dict(PARAM_DEFAULTS)
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -304,6 +390,16 @@ class Efield2Voltage:
         Either `event_idx`, or both `event_number` and `run_number`, must be
         given.
         """
+        # event_idx=True loaded event 1, and an index given with the numbers was
+        # silently ignored but kept (#277)
+        if event_idx is not None:
+            if isinstance(event_idx, (bool, np.bool_)) or not isinstance(event_idx, numbers.Integral):
+                raise TypeError(_validate.message(
+                    "Efield2Voltage.get_event", "event_idx must be an integer, got %r" % (event_idx,)))
+            if event_number is not None or run_number is not None:
+                raise ValueError(_validate.message(
+                    "Efield2Voltage.get_event", "give event_idx, or event_number and run_number, not both"))
+            event_idx = int(event_idx)
         self.event_idx = event_idx  # index of events. 0 is for the 1st event and so on. Just a placeholder if event_number and run_number are provided.
         if (event_number is not None) and (run_number is not None):
             self.event_number = event_number
@@ -315,7 +411,7 @@ class Efield2Voltage:
             message = f"Provide positive integer of either event_idx or both event_number and run_number. If event_idx is given, it must\
             be less than {len(self.events_list)}. If event_number and run_number are given, they must be from the list of (event_number, run_number)\
             {self.events_list}. Provided values are: event_idx={event_idx}, event_number={event_number}, run_number={run_number}."
-            logger.exception(message)
+            logger.error(message)  # not in an except block: .exception logged 'NoneType: None' (#256)
             raise Exception(message)
 
         # The pair must be one the input holds: otherwise the trees below
@@ -334,14 +430,18 @@ class Efield2Voltage:
         logger.info(f"Running on event_number: {self.event_number}, run_number: {self.run_number}")
 
         self.events.get_event(self.event_number, self.run_number)           # update traces, du_pos etc for event with event_idx.
-        self.shower.get_event(self.event_number, self.run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
+        # A lookup that found nothing left the previous entry loaded: the
+        # antenna response was then computed for another event's shower
+        # (issue #247).  It raises LookupError now (#206); say what it means.
+        try:
+            self.shower.get_event(self.event_number, self.run_number)       # update shower info (theta, phi, xmax etc) for event with event_idx.
+            found = True
+        except LookupError:
+            found = False
         if self.previous_run != self.run_number:                      # load only for new run.
             self.run.get_run(self.run_number)                         # update run info to get site latitude and longitude.
             self.previous_run = self.run_number
-        # A lookup that finds nothing leaves the previous entry loaded: the
-        # antenna response was then computed for another event's shower
-        # (issue #247).  Refuse instead.
-        if (int(self.shower.event_number), int(self.shower.run_number)) != (self.event_number, self.run_number):
+        if not found or (int(self.shower.event_number), int(self.shower.run_number)) != (self.event_number, self.run_number):
             raise KeyError(_validate.message(
                 "Efield2Voltage.get_event", "the shower tree has no entry for event %d of run %d; "
                 "the efield and shower files of the input do not match" % (self.event_number, self.run_number)))
@@ -356,6 +456,18 @@ class Efield2Voltage:
         self.traces = self.events.trace.asnumpy().astype(np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)        
         trace_shape = self.traces.shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
+        # A NaN or inf sample spread through the FFT to the whole voltage trace,
+        # and the ADC step then wrote it as the most negative integer (#239)
+        if self.traces.size and not np.all(np.isfinite(self.traces)):
+            bad = sorted({int(self.du_id[i]) for i in np.nonzero(~np.isfinite(self.traces))[0]})
+            raise ValueError(_validate.message(
+                "Efield2Voltage", "the e-field of event %s (run %s) has NaN or infinite samples, "
+                "for units %s" % (self.event_number, self.run_number, bad)))
+        # Calibration smearing draws from a generator seeded per event: it used
+        # NumPy's global one, which the seed never reached, so two runs with
+        # the same seed differed (#230)
+        self._smearing_rng = np.random.default_rng(
+            None if self.seed is None else [int(self.seed), int(self.event_number)])
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
@@ -392,6 +504,17 @@ class Efield2Voltage:
             return
 
         self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
+        # A bin of 0, < 0, NaN or >= 1000 ns, or a trace of a few samples,
+        # failed with IndexError deep in the interpolation (#288)
+        dt = np.asarray(self.dt_ns, dtype=float)
+        if dt.size and not (np.all(np.isfinite(dt)) and np.all(dt > 0) and np.all(dt < 1000)):
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_event", "the run's t_bin_size for this event must be between 0 and "
+                "1000 ns, got %s" % np.unique(dt)))
+        if self.sig_size < 16:
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_event", "the traces have %d samples; at least 16 are needed"
+                % self.sig_size))
         self.f_samp_mhz = 1e3/self.dt_ns             # MHz
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)
@@ -518,14 +641,12 @@ class Efield2Voltage:
         AntennaProcessing
             The response object for that unit's three arms.
         """
-        if self.du_pos[du_idx, 0]>22000000:
-            raise ValueError("du_pos_x is too large for computing!")
-        elif self.du_pos[du_idx, 1]>22000000:
-            raise ValueError("du_pos_y is too large for computing!")
-        elif self.du_pos[du_idx, 2]>22000000:
-            raise ValueError("du_pos_z is too large for computing!")
-        else:
-            pass
+        # It tested x > 2.2e7 only, so -3e7 m was accepted (#289)
+        position = np.asarray(self.du_pos[du_idx], dtype=float)
+        if not np.all(np.isfinite(position)) or np.any(np.abs(position) > 2.2e7):
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_leff", "the position of DU index %d is %s m; each "
+                "coordinate must be finite and within +-22000 km" % (du_idx, position.tolist())))
 
 
         antenna_location = coord.LTP(
@@ -581,13 +702,13 @@ class Efield2Voltage:
         Parameters
         ----------
         addend : ndarray
-            A frequency-domain quantity that broadcasts against ``vout_f``,
-            whose shape is ``(n_du, 3, n_freqs)``.  It must already be
-            evaluated on ``self.freqs_mhz``: nothing here interpolates it,
-            and a mismatched axis will broadcast silently into the wrong
-            frequencies.
+            A frequency-domain quantity of exactly the shape of ``vout_f``,
+            ``(n_du, 3, n_freqs)`` -- it is not broadcast; another shape
+            raises ``ValueError``.  It must already be evaluated on
+            ``self.freqs_mhz``: nothing here interpolates it.
         """
-        assert self.vout_f.shape==addend.shape
+        if np.shape(addend) != self.vout_f.shape:   # an assert, gone under python -O (#259)
+            raise ValueError(_validate.message("Efield2Voltage.add", "addend must have the shape of vout_f, %s, got %s" % (self.vout_f.shape, np.shape(addend))))
         self.vout_f += addend
 
     def multiply(self, multiplier):
@@ -603,7 +724,8 @@ class Efield2Voltage:
             whose shape is ``(n_du, 3, n_freqs)``, already evaluated on
             ``self.freqs_mhz``.
         """
-        assert self.vout_f.shape[-1]==multiplier.shape[-1]
+        if np.shape(multiplier)[-1:] != self.vout_f.shape[-1:]:   # (#259)
+            raise ValueError(_validate.message("Efield2Voltage.multiply", "multiplier must have %d frequencies, as vout_f, got shape %s" % (self.vout_f.shape[-1], np.shape(multiplier))))
         self.vout_f *= multiplier
 
     #def final_voltage(self):
@@ -614,9 +736,14 @@ class Efield2Voltage:
     #    self.vout[:] = sf.irfft(self.vout_f)
 
     def final_resample(self):
+        """Brings the voltage back to the time domain, resampled and cut as requested.
+
+        Called last: resamples to ``params["resample_to_mhz"]`` if set (by
+        Fourier interpolation), otherwise inverts the spectrum if noise or an
+        RF chain changed it, then truncates the traces to the target length.
+        The result is in ``self.vout``.
         """
-        after everything is done, change the sampling rate if needded and adjust to the desired target lenght:
-        """
+        self._require_event("final_resample")     # (#277)
         # No antenna in this event (issue #91): the empty output stays as it is
         if self.nb_du == 0:
             return
@@ -660,8 +787,11 @@ class Efield2Voltage:
         Stores the result on the instance rather than returning it: ``voc``
         in the time domain and ``voc_f`` in the frequency domain.
         """
+        # Any integer, NumPy ones too; an assert refused np.int64 and vanished
+        # under -O (#259); before an event, or out of range, it failed late (#277)
+        self._require_event("compute_voc_du")
+        du_idx = self._check_du_idx(du_idx, "compute_voc_du")
         logger.debug(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
-        assert isinstance(du_idx, int)
 
         self.get_leff(du_idx)
         #logger.debug(self.ant_leff_sn.model_leff)
@@ -669,7 +799,7 @@ class Efield2Voltage:
 
                     #add the calibration noise
         if(self.params["calibration_smearing_sigma"]>0):
-          calfactor=np.random.normal(1,self.params["calibration_smearing_sigma"])
+          calfactor=self._smearing_rng.normal(1,self.params["calibration_smearing_sigma"])
           logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")
         else:
           calfactor=1.0
@@ -738,6 +868,7 @@ class Efield2Voltage:
         Either `event_idx`, or both `event_number` and `run_number`, must be
         given.
         """
+        self._check_params()
         # update event. Provide either integer event_idx, or event_number and run_number.
         self.get_event(event_idx, event_number, run_number)
         for du_idx in range(self.nb_du):
@@ -751,7 +882,9 @@ class Efield2Voltage:
 
         1. the open-circuit voltage from the antenna response,
         2. Galactic noise, if ``params["add_noise"]``,
-        3. the RF chain, if ``params["add_rf_chain"]``.
+        3. the GP300 RF chain, if ``params["add_rf_chain"]``,
+        4. the RF chain up to the LNA output, if ``params["add_rf_chain_nut"]``,
+        5. the G@Auger RF chain, if ``params["add_rf_chain_gaa"]``.
 
         Parameters
         ----------
@@ -762,7 +895,8 @@ class Efield2Voltage:
         -----
         Which stages run is taken from ``self.params``, not from arguments.
         """
-        assert isinstance(du_idx, int)
+        self._require_event("compute_voltage_du")      # (#259, #277)
+        du_idx = self._check_du_idx(du_idx, "compute_voltage_du")
         self.compute_voc_du(du_idx)
 
         # ----- Add galactic noise -----
@@ -874,13 +1008,76 @@ class Efield2Voltage:
         
     # Primary method to compute voltage. 
     # Compute voltage in any one antennas of any one event. If None, voltage for all DUs of all events is computed.
-    def compute_voltage(self, 
-        event_idx=None, 
-        du_idx=None, 
-        event_number=None, 
-        run_number=None, 
-        append_file=True
-        ):
+    def _flush_voltage(self):
+        r"""Writes and releases the output tree kept open by compute_voltage()."""
+        batch = getattr(self, "_batch_volt", None)
+        if batch and batch.get("tree") is not None:
+            tree = batch["tree"]
+            batch["tree"] = None
+            tree.write()
+            tree.stop_using()
+            if batch.get("partial"):
+                groot.data_tree.replace_output(batch.pop("partial"), batch["name"])
+
+    def _discard_voltage(self):
+        r"""Drops the output of a compute_voltage() that failed, writing nothing (#240)."""
+        batch = getattr(self, "_batch_volt", None)
+        if batch and batch.get("tree") is not None:
+            tree = batch["tree"]
+            batch["tree"] = None
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                tree.stop_using()
+            if batch.get("partial") and os.path.exists(batch["partial"]):
+                os.remove(batch.pop("partial"))
+
+    def _require_event(self, action):
+        r"""Refuses `action` before an event is loaded (#277)."""
+        if not hasattr(self, "nb_du"):
+            raise RuntimeError(_validate.message(
+                "Efield2Voltage.%s" % action, "no event is loaded; call get_event() or "
+                "compute_voltage_event() first"))
+
+    def _check_du_idx(self, du_idx, action):
+        r"""Returns `du_idx` as an int in ``range(nb_du)``: -1 silently took the last unit (#277)."""
+        if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):
+            raise TypeError(_validate.message(
+                "Efield2Voltage.%s" % action, "du_idx must be an integer, got %r" % (du_idx,)))
+        du_idx = int(du_idx)
+        if not 0 <= du_idx < self.nb_du:
+            raise IndexError(_validate.message(
+                "Efield2Voltage.%s" % action, "du_idx must be 0 to %d for this event, got %d"
+                % (self.nb_du - 1, du_idx)))
+        return du_idx
+
+    def _check_params(self):
+        r"""Checks the processing switches before any work is done.
+
+        They were checked only when the first event was saved, after the whole
+        computation, and the failed run left a stub output file (#240).
+        """
+        # A misspelt key was ignored and the default used; a flag was read by
+        # truthiness, so the string 'no' turned the RF chain on (#265)
+        unknown = sorted(set(self.params) - set(PARAM_DEFAULTS))
+        if unknown:
+            raise KeyError(_validate.message(
+                "Efield2Voltage.params", "unknown key%s %s; the keys are %s"
+                % ("s" if len(unknown) > 1 else "", ", ".join(map(repr, unknown)),
+                   ", ".join(sorted(PARAM_DEFAULTS)))))
+        for name in ("add_noise", "add_rf_chain", "add_rf_chain_nut", "add_rf_chain_gaa"):
+            if not isinstance(self.params[name], (bool, np.bool_)):
+                raise TypeError(_validate.message(
+                    "Efield2Voltage.params", "%r must be True or False, got %r" % (name, self.params[name])))
+        lst = _validate.as_real(self.params["lst"], "lst", "Efield2Voltage")
+        if not 0 <= lst <= 24:
+            raise ValueError(_validate.message("Efield2Voltage.params", "'lst' must be 0 to 24 h, got %r" % lst))
+        for name, unit in (("resample_to_mhz", "MHz"), ("extend_to_us", "us"),
+                           ("calibration_smearing_sigma", ""), ("add_jitter_ns", "ns")):
+            _validate.non_negative(_validate.as_real(self.params[name], name, "Efield2Voltage"),
+                                   name, "Efield2Voltage", unit)
+
+    def compute_voltage(self, event_idx=None, du_idx=None, event_number=None, run_number=None,
+                        append_file=True):
         r"""Computes voltages for any or all events, and saves them.
 
         The primary entry point.  With no arguments it processes every event
@@ -909,11 +1106,37 @@ class Efield2Voltage:
         The result is written to ``self.f_output`` as a side effect; the
         method returns nothing.
         """
+        self._check_params()
+        self._batch_volt = {}
+        try:
+            self._compute_voltage(event_idx=event_idx, du_idx=du_idx, event_number=event_number,
+                                  run_number=run_number, append_file=append_file)
+        except BaseException:
+            self._discard_voltage()
+            self._batch_volt = None
+            raise
+        try:
+            self._flush_voltage()
+        finally:
+            self._batch_volt = None
+
+    def _compute_voltage(self, 
+        event_idx=None, 
+        du_idx=None, 
+        event_number=None, 
+        run_number=None, 
+        append_file=True
+        ):
+        r"""Body of :meth:`compute_voltage`."""
         # NumPy integer scalars (from arrays, events_list...) are integers too
         def _plain(value):
             return int(value) if isinstance(value, np.integer) else value
         event_idx, event_number, run_number, du_idx = (
             _plain(event_idx), _plain(event_number), _plain(run_number), _plain(du_idx))
+        # du_idx=3.5 was reported as a bad event index (#277)
+        if du_idx is not None and (isinstance(du_idx, (bool, float)) or not isinstance(du_idx, (int, list, np.ndarray))):
+            raise TypeError(_validate.message(
+                "Efield2Voltage.compute_voltage", "du_idx must be an integer or a list of them, got %r" % (du_idx,)))
 
         # compute voltage for all DUs of given event/s.
         if du_idx is None:
@@ -951,7 +1174,7 @@ class Efield2Voltage:
             else:
                 message = f"Provide positive integer or list of either event_idx or both event_number and run_number. \
                 Provided values are: event_idx={event_idx}, event_number={event_number}, run_number={run_number}."
-                logger.exception(message)
+                logger.error(message)  # not in an except block: .exception logged 'NoneType: None' (#256)
                 raise Exception(message)
 
         # Compute voltage of one DU of a given event. Note that this can be only done for one event.
@@ -981,7 +1204,7 @@ class Efield2Voltage:
         else:
             message = f"Provide positive integer or list of either event_idx or both event_number and run_number. \
             Provided values are: event_idx={event_idx}, event_number={event_number}, run_number={run_number}."
-            logger.exception(message)
+            logger.error(message)  # not in an except block: .exception logged 'NoneType: None' (#256)
             raise Exception(message)
 
     def save_voltage(self, append_file=True):
@@ -997,6 +1220,7 @@ class Efield2Voltage:
         The destination is ``self.f_output``, fixed when the object was
         constructed.
         """
+        self._require_event("save_voltage")     # (#277)
         # A resampled voltage cannot be saved: TVoltage has no sampling-rate
         # field and this class writes no run tree, so every later step (such as
         # convert_voltage2adc.py) would read the input's t_bin_size and treat
@@ -1022,20 +1246,45 @@ class Efield2Voltage:
         # File name change in other cases
         elif self.f_output is None:
             split_file = os.path.splitext(self.f_input)
-            self.f_output  = str(self.output_directory / split_file[0]+"_voltage.root")
+            self.f_output  = str(Path(self.output_directory) / (split_file[0]+"_voltage.root"))
             cur_f_output = self.f_output
             logger.info(f"No output file was defined. Output file is automatically defined as {cur_f_output}")
         else:
             cur_f_output = str(self.output_directory / Path(self.f_output))
 
-        if not append_file and os.path.exists(self.output_directory / self.f_output):
-            cur_f_output = str(self.output_directory / self.f_output)
-            logger.info(f"save on a new file and remove existing file {cur_f_output}")
-            os.remove(cur_f_output)
-            time.sleep(1)
+        # Within compute_voltage() the output tree stays open across events and
+        # is written once at the end: reopening and rewriting the file for every
+        # event made each event slower than the last (#283), and with
+        # append_file=False the file was deleted before every event, so only
+        # the last one was kept
+        batch = getattr(self, "_batch_volt", None)
+        if batch is not None and batch.get("name") == cur_f_output and batch.get("tree") is not None:
+            self.tt_volt = batch["tree"]
+        elif batch is not None and (not append_file or not os.path.exists(cur_f_output)):
+            # A new or replaced output is written under a temporary name and
+            # moved into place when complete: a run that failed late left a
+            # stub that broke every later run, and a re-run deleted the old
+            # output before it had a new one (#240)
+            self._flush_voltage()
+            partial = groot.data_tree.partial_name(cur_f_output)
+            if os.path.exists(partial):
+                os.remove(partial)
+            logger.info(f"save result in {cur_f_output}")
+            self.tt_volt = groot.TVoltage(partial)
+            batch.update(name=cur_f_output, tree=self.tt_volt, partial=partial)
+        else:
+            self._flush_voltage()
+            # Path(): output_directory may be a string, which crashed here
+            if not append_file and os.path.exists(Path(self.output_directory) / self.f_output):
+                cur_f_output = str(Path(self.output_directory) / self.f_output)
+                logger.info(f"save on a new file and remove existing file {cur_f_output}")
+                os.remove(cur_f_output)
+                time.sleep(1)
 
-        logger.info(f"save result in {cur_f_output}")
-        self.tt_volt = groot.TVoltage(cur_f_output)
+            logger.info(f"save result in {cur_f_output}")
+            self.tt_volt = groot.TVoltage(cur_f_output)
+            if batch is not None:
+                batch.update(name=cur_f_output, tree=self.tt_volt)
 
         # Fill voltage object. d_root = events
         self.tt_volt.du_count     = self.nb_du
@@ -1046,6 +1295,10 @@ class Efield2Voltage:
         # moved by sqrt(2) on 2026-09-07 -- and without this there is nothing
         # in a file to say which side of such a change it came from.
         self.tt_volt.grandlib_version = _grandlib_version()
+        # The level of the e-field it was made from, which the file name also
+        # carries: it was left at 0, so a voltage_*_L1_* file said level 0 and
+        # the next scan of the folder failed on the missing tvoltage_l1 (#240)
+        self.tt_volt.analysis_level = int(self.events.analysis_level)
 
         self.tt_volt.run_number   = self.events.run_number
         self.tt_volt.event_number = self.events.event_number
@@ -1072,7 +1325,8 @@ class Efield2Voltage:
         if(jitter>0):
            logger.info(f"adding {jitter} ns of time jitter to the trigger times.")
            #reinitialize the random number
-           if(self.seed>0):
+           # Seed 0 seeds too, and no seed no longer crashes (None > 0, #230)
+           if self.seed is not None:
              np.random.seed(self.seed*(self.events.event_number+1))
 
            delays=np.round(np.random.normal(0,jitter,size=np.shape(self.events.du_nanoseconds)).astype(int))
@@ -1100,5 +1354,6 @@ class Efield2Voltage:
         self.tt_volt.trace = self.vout
 
         self.tt_volt.fill()
-        self.tt_volt.write()
+        if batch is None:
+            self.tt_volt.write()
 

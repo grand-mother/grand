@@ -149,8 +149,10 @@ applied before the LNA.  And the ``vgaf`` stage loads
     print("transfer function shape (arms, frequencies):", tf.shape)
     print("peak |V_out/V_oc| per arm:", np.round(tf.max(axis=1), 1))
 
-The gain is a configuration choice: S-parameters are shipped for VGA gains of
-20 dB (the GRANDProto300 default), 5 dB, 0 dB and −5 dB.
+The gain is meant to be a configuration choice: S-parameters are shipped for
+VGA gains of 20 dB (the GRANDProto300 default), 5 dB and 0 dB.  At present the
+argument is ignored and every chain uses the 20 dB table
+(:ref:`issue-vga-gain-ignored`).
 
 Digitisation
 ------------
@@ -161,21 +163,31 @@ saturation of the ADC chip, producing the counts a ``TADC`` tree holds.
 Running it
 ----------
 
+The input is the folder ``sim2root.py`` wrote (see :doc:`sim2root`): a single
+e-field file is not enough, since the run and shower trees are read too.
+
 .. code-block:: python
 
     from grand import Efield2Voltage
 
-    signal = Efield2Voltage("input_efield.root", "output_voltage.root")
+    signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
     signal.params["add_noise"]    = True
     signal.params["add_rf_chain"] = True
     signal.compute_voltage()
 
-or:
+or, from a shell, both steps on the same folder:
 
 .. code-block:: bash
 
-    python scripts/convert_efield2voltage.py in.root -o out.root --lst 18
-    python scripts/convert_voltage2adc.py out.root -o adc.root
+    python scripts/convert_efield2voltage.py my_simulation --lst 18
+    python scripts/convert_voltage2adc.py my_simulation
+
+Without ``-o`` each script names its output (``voltage_*_L<level>_*.root``,
+then ``adc_*_L<level>_*.root``) and writes it into the folder, which is where
+the next step looks.  A bare name given with ``-o`` goes into the output
+folder: the input folder, unless ``-od`` names another.  An existing output
+is replaced.  A folder holding efield files at several levels is read at the
+highest, with a warning; ``--level`` chooses another.
 
 Run time is about 13 s per shower across a full GRANDProto300 array on one
 core, measured over 300 ZHAireS showers for the GRANDlib paper.

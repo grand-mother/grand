@@ -212,8 +212,11 @@ def plot(savefig=False, du_type='GP300', **kwargs):
 def main():
     parser = argparse.ArgumentParser(description="Plot function with command line arguments")
     parser.add_argument('--savefig', action='store_true', help="Flag to save the figure")
-    parser.add_argument('--du_type', type=str, default='GP300', help="Type of du")
-    parser.add_argument('--lst', type=float, default=18, help="LST info (defaults to 18)")
+    # 24 or 99 gave IndexError, -1 plotted 23 h and 3.7 plotted 3 h, silently (#246)
+    parser.add_argument('--du_type', type=str, default='GP300', choices=['GP300', 'GP300_nec', 'GP300_mat'],
+                        help="Type of du")
+    parser.add_argument('--lst', type=int, default=18, choices=range(24), metavar='{0..23}',
+                        help="local sidereal time, whole hours 0 to 23 (default 18)")
 
     args = parser.parse_args()
     # Call the plot function with provided arguments

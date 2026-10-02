@@ -169,7 +169,7 @@ def test_the_converter_still_parses():
     other test.  A syntax error here would otherwise reach whoever next tried
     to convert a shower.
     """
-    _tree()          # raises SyntaxError if not
+    assert isinstance(_tree(), ast.Module)          # raises SyntaxError if not
 
 
 # --------------------------------------------------------------------------

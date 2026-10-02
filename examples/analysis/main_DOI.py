@@ -146,14 +146,15 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
         Xants, peak_time, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=5e-9
     )
 
-    chi2_pwf_reduced = fit.PWF_loss(
+    # Raw chi2, as TRecons documents: readers divide by the degrees of freedom (#211)
+    chi2_pwf = fit.PWF_loss(
         (theta_pwf_rad, phi_pwf_rad), Xants, peak_time, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=5e-9
-    )/(num_antennas - 2)
+    )
 
     # Store PWF results
     trecons.zenith_pwf = theta_pwf_rad
     trecons.azimuth_pwf = phi_pwf_rad
-    trecons.chi2_pwf = chi2_pwf_reduced
+    trecons.chi2_pwf = chi2_pwf
 
     # ---------------------------------------------------------------
     # CRB calculation for PWF
@@ -173,7 +174,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     # Compute source position in cartesian coordinates in GRAND detector frame
     Xsource = fit.compute_Xsource_cartesian_coords(theta_swf_rad, phi_swf_rad, r_xmax)
 
-    chi2_swf_reduced = fit.SWF_loss(theta_swf_rad, phi_swf_rad, r_xmax, t_s, Xants, peak_time, sigma = 5e-9)/(num_antennas - 4)
+    chi2_swf = fit.SWF_loss(theta_swf_rad, phi_swf_rad, r_xmax, t_s, Xants, peak_time, sigma = 5e-9)
 
     # Store SWF results
     trecons.zenith_swf = theta_swf_rad
@@ -181,7 +182,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.r_xmax = r_xmax
     trecons.t_s = t_s
     trecons.Xsource = Xsource
-    trecons.chi2_swf = chi2_swf_reduced
+    trecons.chi2_swf = chi2_swf
     Xsource = np.asarray(trecons.Xsource)[0]
 
     l_ant = geom.distance_source_antenna(Xants, Xsource)
@@ -192,7 +193,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     theta_adf, phi_adf, delta_omega, scaling_factor = fit.recons_ADF(theta_pwf_rad, phi_pwf_rad, peak_amps, Xants, Xsource)
     eta, omega, omega_cr, l_ant, amplitude_model = fit.ADF_parameters(theta_adf, phi_adf, delta_omega, scaling_factor, Xants, Xsource, groundAltitude=cons.groundAltitude, Bvec=cons.Bvec)
     best_params = theta_adf, phi_adf, delta_omega, scaling_factor
-    chi2_adf_reduced = fit.ADF_loss(best_params, peak_amps, Xants, Xsource)/(num_antennas - 4)
+    chi2_adf = fit.ADF_loss(best_params, peak_amps, Xants, Xsource)
 
     # ---------------------------------------------------------------
     # Electromagnetic energy reconstruction 
@@ -214,7 +215,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.azimuth_adf = phi_adf
     trecons.width = delta_omega
     trecons.scaling_factor = scaling_factor
-    trecons.chi2_adf = chi2_adf_reduced
+    trecons.chi2_adf = chi2_adf
     trecons.omega = omega
     trecons.eta = eta
     trecons.omega_cr = omega_cr
@@ -251,16 +252,16 @@ for ev_no, run_no in t_recons.get_list_of_events():
     t_recons.get_event(ev_no, run_no)
     
     print("__________________PWF__________________")
-    print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_pwf)}, phi={np.rad2deg(t_recons.azimuth_pwf)}, chi2_pwf={t_recons.chi2_pwf}")
+    print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_pwf)}, phi={np.rad2deg(t_recons.azimuth_pwf)}, raw chi2_pwf={t_recons.chi2_pwf}")
 
     print("__________________SWF__________________")
     print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_swf)}, phi={np.rad2deg(t_recons.azimuth_swf)}, " 
-          f"t_s={t_recons.t_s}, r_xsource={t_recons.r_xmax}, chi2_swf={t_recons.chi2_swf},"
+          f"t_s={t_recons.t_s}, r_xsource={t_recons.r_xmax}, raw chi2_swf={t_recons.chi2_swf},"
           f"Xsource={t_recons.Xsource}")
     
     print("__________________ADF__________________")
     print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_adf)}, phi={np.rad2deg(t_recons.azimuth_adf)}, " 
-          f"width={t_recons.width}, scaling={t_recons.scaling_factor}, chi2_adf={t_recons.chi2_adf}, energy elm={t_recons.energy_elm_voltage},"
+          f"width={t_recons.width}, scaling={t_recons.scaling_factor}, raw chi2_adf={t_recons.chi2_adf}, energy elm={t_recons.energy_elm_voltage},"
           f"omega={np.rad2deg(t_recons.omega)},"
           f"omega cherenkov={np.rad2deg(t_recons.omega_cr)},"
           f"eta={np.rad2deg(t_recons.eta)},"

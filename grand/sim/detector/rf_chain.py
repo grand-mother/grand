@@ -2,14 +2,28 @@
 import os
 import xml.etree.ElementTree as ET
 import os.path
+import functools
 import numpy as np
 
 from grand.basis import validate as _validate
 from pathlib import Path
 
 from grand import grand_add_path_data
+from grand.basis import data_model as _data_model
+
 from logging import getLogger
 logger = getLogger(__name__)
+
+
+def _require(condition, what):
+    r"""Checks an internal condition; unlike ``assert``, it is not removed by ``python -O`` (#255)."""
+    if not condition:
+        raise RuntimeError(_validate.message("rf_chain", "internal check failed: %s" % what))
+
+
+def _loadtxt(path, *args, **kwargs):
+    r"""``np.loadtxt`` of a data-model file, checked first (#279)."""
+    return np.loadtxt(_data_model.check(path, "RF chain"), *args, **kwargs)
 
 """
 RF Chain Simulation with XML Configuration (modified by SN)
@@ -107,15 +121,21 @@ def read_config(xml_file):
 
     return components, csv_files
 
-# Load XML configuration
-# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"  # Ensure absolute path
-xml_file = Path(__file__).parent / "rf_chain_config.xml"  # Ensure absolute path
-components, csv_files = read_config(xml_file)
+#: The configuration file, read on first use (#255): it was parsed at import,
+#: so a broken file broke ``import grand.sim``
+xml_file = Path(__file__).parent / "rf_chain_config.xml"
+
+
+@functools.lru_cache(maxsize=None)
+def _config():
+    r"""The ``(components, csv_files)`` of :data:`xml_file`, read once."""
+    return read_config(xml_file)
+
 
 # Dictionary to map components that depend on axis
-axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}  # Adjust if necessary
+axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}
 
-# Function to get filenames dynamically based on axis
+
 def get_axis_filename(component_name, axis):
     """Returns the correct filename for a given component and axis.
 
@@ -123,48 +143,50 @@ def get_axis_filename(component_name, axis):
     ----------
     component_name : str
         Chain component.
-    axis : int
-        Antenna arm: 0 for X, 1 for Y, 2 for Z.
+    axis : int or str
+        Antenna arm: 0, 1, 2 or "X", "Y", "Z" (also "0", "1", "2").
 
     Returns
     -------
     str
         Path to that component measurements for that arm.
+
+    Raises
+    ------
+    KeyError
+        If the component is not in the configuration file.
+    ValueError
+        If the component is disabled there, or the axis is not one of the above.
+    FileNotFoundError
+        If the configuration gives no file for the component.
+
+    Notes
+    -----
+    Every problem used to be printed as "ERROR: ..." and answered with
+    ``None``, which the callers passed on until an unrelated TypeError; the
+    missing-component path even ended in ``NameError: Nonec`` (#255).
     """
-
-    # Define a dictionary that maps numerical and string axes correctly
-    axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}
-
-    # Ensure axis is properly converted if it is a string digit
+    where = "rf_chain.get_axis_filename"
+    components, _ = _config()
     if isinstance(axis, str) and axis.isdigit():
-        axis = int(axis)  # Convert "0", "1", "2" to integers
+        axis = int(axis)
+    if component_name not in components:
+        raise KeyError(_validate.message(
+            where, "%s is missing from %s" % (component_name, xml_file)))
+    if not _config()[0][component_name]["enabled"]:
+        raise ValueError(_validate.message(
+            where, "%s is disabled in %s" % (component_name, xml_file)))
+    filename_template = _config()[0][component_name]["s2p_file"]
+    if filename_template is None:
+        raise FileNotFoundError(_validate.message(
+            where, "no file is given for %s in %s" % (component_name, xml_file)))
+    if "{axis}" not in filename_template:
+        return filename_template
+    if axis not in axis_dict:
+        raise ValueError(_validate.message(
+            where, "invalid axis %r for %s: must be 0, 1, 2, X, Y or Z" % (axis, component_name)))
+    return filename_template.replace("{axis}", axis_dict[axis])
 
-    if component_name in components:
-        if not components[component_name]["enabled"]:
-            print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
-            return None
-
-        filename_template = components[component_name]["s2p_file"]
-
-        if filename_template is None:
-            print(f"ERROR: No filename template found for {component_name} in rf_chain_config.xml.")
-            return None
-
-        # Ensure axis replacement works correctly
-        if "{axis}" in filename_template:
-            if axis in axis_dict:
-                resolved_filename = filename_template.replace("{axis}", axis_dict[axis])
-                #print(f"DEBUG: Resolved filename for {component_name}: {resolved_filename}")
-                return resolved_filename
-            else:
-                #print(f"ERROR: Invalid axis '{axis}' for {component_name}. Must be 0, 1, 2, X, Y, or Z.")
-                return None
-
-        #print(f"DEBUG: Using static filename for {component_name}: {filename_template}")
-        return filename_template  # If no {axis} placeholder, return as is.
-
-    print(f"ERROR: {component_name} is missing from rf_chain_config.xml.")
-    return None
 
 # Function to safely set the filename for MatchingNetwork
 def _set_name_data_file(self, axis):
@@ -180,111 +202,7 @@ def _set_name_data_file(self, axis):
     str
         Path to the tabulated measurements for that arm.
     """
-    filename = get_axis_filename("MatchingNetwork", axis)
-
-    #print(f"DEBUG: Final MatchingNetwork filename for {axis}: {filename}")
-
-    if filename is None:
-        raise FileNotFoundError(f"ERROR: No valid file found for MatchingNetwork with axis {axis}. Check rf_chain_config.xml.")
-
-    return grand_add_path_data(filename)
-
-
-def read_config(xml_file):
-    """ Reads the XML configuration file and returns component settings.
-
-    Parameters
-    ----------
-    xml_file : str
-        Configuration file listing the chain components.
-
-    Returns
-    -------
-    dict
-        The components and their settings.
-    """
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
-
-    components = {}
-    for comp in root.find("Components"):
-        name = comp.attrib["name"]
-        s2p_file = comp.find("s2pFile").text if comp.find("s2pFile") is not None else None
-        s1p_file = comp.find("s1pFile").text if comp.find("s1pFile") is not None else None
-        enabled = comp.find("enabled").text.lower() == "true"
-
-        components[name] = {"s2p_file": s2p_file, "s1p_file": s1p_file, "enabled": enabled}
-
-    csv_files = {}
-    for csv in root.find("CSVFiles"):
-        name = csv.attrib["name"]
-        csv_file = csv.find("csvFile").text
-        enabled = csv.find("enabled").text.lower() == "true"
-
-        csv_files[name] = {"csv_file": csv_file, "enabled": enabled}
-
-    return components, csv_files
-
-# Load XML configuration
-#xml_file = "rf_chain_config.xml"
-#xml_file = "/home/grand/grand/grand/sim/detector/rf_chain_config.xml"
-# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"
-xml_file = Path(__file__).parent / "rf_chain_config.xml"
-components, csv_files = read_config(xml_file)
-
-# Dictionary to map components that depend on axis
-axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}  # Adjust if necessary
-
-# Function to get filenames dynamically based on axis
-#def get_axis_filename(component_name, axis):
-#    if component_name in components and components[component_name]["enabled"]:
-#        filename_template = components[component_name]["s2p_file"]
-#        if filename_template and "{axis}" in filename_template:
-#            return filename_template.replace("{axis}", axis_dict[axis])
-#        return filename_template
-#    return None
-
-def get_axis_filename(component_name, axis):
-    """Returns the correct filename for a given component and axis.
-
-    Parameters
-    ----------
-    component_name : str
-        Chain component.
-    axis : int
-        Antenna arm: 0 for X, 1 for Y, 2 for Z.
-
-    Returns
-    -------
-    str
-        Path to that component measurements for that arm.
-    """
-    if component_name in components:
-        if not components[component_name]["enabled"]:
-            print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
-            return None
-
-        filename_template = components[component_name]["s2p_file"]
-
-        if filename_template is None:
-            print(f"ERROR: No filename template found for {component_name} in rf_chain_config.xml.")
-            return None
-
-        # Ensure axis is valid before replacing it
-        if "{axis}" in filename_template:
-            if axis in axis_dict:
-                resolved_filename = filename_template.replace("{axis}", axis_dict[axis])
-                #print(f"DEBUG: Resolved filename for {component_name}: {resolved_filename}")
-                return resolved_filename
-            else:
-                print(f"ERROR: Invalid axis '{axis}' for {component_name}.")
-                return None
-
-        #print(f"DEBUG: Using static filename for {component_name}: {filename_template}")
-        return filename_template  # If no {axis} placeholder, return as is.
-
-    print(f"ERROR: {component_name} is missing from rf_chain_config.xml.")
-    return Nonec
+    return grand_add_path_data(get_axis_filename("MatchingNetwork", axis))
 
 def interp(x,y,z):
     r"""Returns `z` interpolated onto `x` from samples at `y`.
@@ -327,7 +245,8 @@ def interpol_at_new_x(a_x, a_y, new_x):
         outside it rather than extrapolated -- the S-parameter tables are
         measured over 30-250 MHz and have no meaning beyond it.
     """
-    assert a_x.shape[0] > 0
+    if np.shape(a_x)[0] == 0:
+        raise ValueError(_validate.message("interpol_at_new_x", "'a_x' is empty: nothing to interpolate"))
     #func_interpol = interpolate.interp1d(
     #    a_x, a_y, "cubic", bounds_error=False, fill_value=(1.0, 1.0)
     #)
@@ -502,9 +421,10 @@ def matmul(A, B):
         print("cascading with the identity is a no-op:",
               np.allclose(matmul(stage, identity), stage))
     """
-    assert A.shape[0]==2
-    assert A.shape[1]==2
-    assert A.shape[1]==B.shape[0]
+    if A.shape[:2] != (2, 2) or B.shape[0] != A.shape[1]:
+        raise ValueError(_validate.message(
+            "matmul", "expects ABCD matrices of shape (2, 2, n_freq), got %s and %s"
+            % (A.shape, B.shape)))
 
     return np.asarray([
         [A[0,0]*B[0,0] + A[0,1]*B[1,0], A[0,0]*B[0,1] + A[0,1]*B[1,1]],
@@ -567,15 +487,16 @@ class MatchingNetwork(GenericProcessingDU):
 
     """
     def __init__(self):
-        """
+        """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        :param size_sig: size of the trace after
+        Takes no parameters (the ``size_sig`` it documented does not exist,
+        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
         self.sparams = []
         for axis in range(3):
-            matcnet = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            matcnet = _loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(matcnet)
         self.freqs_in = matcnet[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
         self.nb_freqs_in = len(self.freqs_in)
@@ -631,7 +552,7 @@ class MatchingNetwork(GenericProcessingDU):
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
         # shape = (antenna_port, nb_freqs)
@@ -727,15 +648,16 @@ class gaa_frontend0db(GenericProcessingDU):
 
     """
     def __init__(self):
-        """
+        """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        :param size_sig: size of the trace after
+        Takes no parameters (the ``size_sig`` it documented does not exist,
+        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
         self.sparams = []
         for axis in range(3):
-            matcnet = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            matcnet = _loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(matcnet)
         self.freqs_in = matcnet[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
         #self.freqs_in = matcnet[:, 0]   # note: freqs_in for x and y ports is the same, but for z port is different.
@@ -791,7 +713,7 @@ class gaa_frontend0db(GenericProcessingDU):
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
         # shape = (antenna_port, nb_freqs)
@@ -873,15 +795,16 @@ class LowNoiseAmplifier(GenericProcessingDU):
     """
 
     def __init__(self):
-        """
+        """Loads this stage's measured S-parameters, one file per antenna arm.
 
-        :param size_sig: size of the trace after
+        Takes no parameters (the ``size_sig`` it documented does not exist,
+        #261); :meth:`compute_for_freqs` evaluates it on a frequency axis.
         """
         super().__init__()
         #self.data_lna = []
         self.sparams = []
         for axis in range(3):
-            lna = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            lna = _loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(lna)
         self.freqs_in = lna[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
         self.nb_freqs_in = len(self.freqs_in)
@@ -939,7 +862,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
         # shape = (antenna_port, nb_freqs)
@@ -1014,8 +937,8 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         """ """
         super().__init__()
-        #self.data_cable = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        #self.data_cable = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1044,7 +967,7 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         #filename = os.path.join("detector", "RFchain_v1", "balun_after_LNA.s2p")
         #filename = os.path.join("detector", "RFchain_v1", "balun46in.s2p")
-        filename = components["BalunIn"]["s2p_file"] if components["BalunIn"]["enabled"] else None
+        filename = _config()[0]["BalunIn"]["s2p_file"] if _config()[0]["BalunIn"]["enabled"] else None
         
         return grand_add_path_data(filename)
 
@@ -1064,7 +987,7 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1123,8 +1046,8 @@ class Cable(GenericProcessingDU):
         """
         """ """
         super().__init__()
-        #self.data_cable = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        #self.data_cable = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
 
         # shape = (antenna_port, nb_freqs)
@@ -1151,7 +1074,7 @@ class Cable(GenericProcessingDU):
         str
             Absolute path to the measurements for that arm.
         """
-        filename = components["CableConnector"]["s2p_file"] if components["CableConnector"]["enabled"] else None
+        filename = _config()[0]["CableConnector"]["s2p_file"] if _config()[0]["CableConnector"]["enabled"] else None
 
         return grand_add_path_data(filename)
 
@@ -1171,7 +1094,7 @@ class Cable(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1242,7 +1165,7 @@ class VGAFilter(GenericProcessingDU):
             raise ValueError(_validate.message(
                 "RFChain", "'vga_gain' must be one of -5, 0, 5 or 20 dB, got %r" % (gain,)))
         self.gain = gain
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
 
         # shape = (nports, nfreqs). self.nb_freqs here is 0.
@@ -1269,10 +1192,13 @@ class VGAFilter(GenericProcessingDU):
         axis : int, optional
             Antenna arm.
         """
-        assert self.gain in [-5, 0, 5, 20]
+        # A check, not an assert, which vanishes under python -O (#255)
+        if self.gain not in [-5, 0, 5, 20]:
+            raise ValueError(_validate.message(
+                "VGAFilter", "the gain must be -5, 0, 5 or 20 dB, got %r" % (self.gain,)))
         logger.info(f"vga gain: {self.gain} dB")
         #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
-        filename = components["Filter"]["s2p_file"] if components["Filter"]["enabled"] else None
+        filename = _config()[0]["Filter"]["s2p_file"] if _config()[0]["Filter"]["enabled"] else None
         
         return grand_add_path_data(filename)
 
@@ -1292,7 +1218,7 @@ class VGAFilter(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1353,14 +1279,14 @@ class BalunBeforeADC(GenericProcessingDU):
     """
 
     def __init__(self):
-        """ 
-        :param sparams: S-parameters data for x, y, and z ports. Same data is used for x, y, and z ports.
-        :param freqs_in: frequencies corresponding to the S-parameters data for x, y, and z ports.
-        :param s11, s21, s12, s22: S-parameters for x, y, and z ports. shape (3, nb_freqs).
-        :param ABCD_matrix: not normalized ABCD matrix corresponding to S-parameters. shape (2, 2, nb_ports, nb_freqs)
+        """Loads the balun's measured S-parameters, used for all three arms.
+
+        Takes no parameters (#261).  After :meth:`compute_for_freqs`, it holds
+        ``s11``, ``s21``, ``s12``, ``s22`` (shape ``(3, n_freq)``) and the
+        unnormalised ``ABCD_matrix`` (shape ``(2, 2, 3, n_freq)``).
         """
         super().__init__()
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1380,7 +1306,7 @@ class BalunBeforeADC(GenericProcessingDU):
         str
             Absolute path to this element's tabulated measurements.
         """
-        filename = components["BalunBeforeAD"]["s2p_file"] if components["BalunBeforeAD"]["enabled"] else None
+        filename = _config()[0]["BalunBeforeAD"]["s2p_file"] if _config()[0]["BalunBeforeAD"]["enabled"] else None
 
         return grand_add_path_data(filename)
 
@@ -1400,7 +1326,7 @@ class BalunBeforeADC(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1461,7 +1387,7 @@ class Rfchain_elements_db(GenericProcessingDU):
         super().__init__()
         self.filename = filename
 
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1497,7 +1423,7 @@ class Rfchain_elements_db(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1563,7 +1489,7 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         super().__init__()
         self.filename = filename
 
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1599,7 +1525,7 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1665,7 +1591,7 @@ class Rfchain_elements(GenericProcessingDU):
         super().__init__()
         self.filename = filename
         
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1701,7 +1627,7 @@ class Rfchain_elements(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1761,7 +1687,7 @@ class Rfchain_elements_rad(GenericProcessingDU):
         super().__init__()
         self.filename = filename
         
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1797,7 +1723,7 @@ class Rfchain_elements_rad(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         # shape = (antenna_port, nb_freqs)
         self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1857,7 +1783,7 @@ class Zload_arb(GenericProcessingDU):
         """
         super().__init__()
         self.filename = filename
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
@@ -1892,7 +1818,7 @@ class Zload_arb(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         # S1P File: Measurements: S22
@@ -1915,15 +1841,15 @@ class Zload(GenericProcessingDU):
     """
 
     def __init__(self):
-        """Reflection coefficient (self.s) is measured using VNA.
-        Same value is used for all ports.
-        :param sparams: S-parameters data to compute Zload for x, y, and z ports. Same Zload is used for x, y, and z ports.
-        :param freqs_in: frequencies corresponding to the S-parameters data for x, y, and z ports.
-        :param s: reflection coefficient for x, y, and z ports. shape (nb_freqs,).
-        :param Z_load: total impedance of the load that includes balun, 200 ohm resistor and AD chip.
+        """Loads the load's reflection coefficient, measured with a VNA.
+
+        Takes no parameters (#261).  The same load is used for all three
+        arms.  After :meth:`compute_for_freqs`, it holds the reflection
+        coefficient ``s`` and ``Z_load``, the total impedance of the balun,
+        200 ohm resistor and ADC chip, each of shape ``(n_freq,)``.
         """
         super().__init__()
-        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.sparams = _loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
@@ -1947,7 +1873,7 @@ class Zload(GenericProcessingDU):
             Absolute path to the measurements for that arm.
         """
         #filename = os.path.join("detector", "RFchain_v1", "zload_balun_200ohm.s1p")
-        filename = components["S_balun_AD"]["s1p_file"] if components["S_balun_AD"]["enabled"] else None
+        filename = _config()[0]["S_balun_AD"]["s1p_file"] if _config()[0]["S_balun_AD"]["enabled"] else None
 
         return grand_add_path_data(filename)
 
@@ -1967,7 +1893,7 @@ class Zload(GenericProcessingDU):
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
-        assert self.nb_freqs > 0
+        _require(self.nb_freqs > 0, 'self.nb_freqs > 0')
 
         self.s = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
         self.Z_load = np.zeros(self.nb_freqs, dtype=np.complex64) # shape = (nb_freqs, )
@@ -1995,8 +1921,11 @@ class RFChain(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Notes
         -----
@@ -2042,13 +1971,13 @@ class RFChain(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
         
-        assert self.matcnet.nb_freqs > 0
-        assert self.matcnet.ABCD_matrix.shape[-1] > 0
-        assert self.matcnet.nb_freqs==self.balun1.nb_freqs
+        _require(self.matcnet.nb_freqs > 0, 'self.matcnet.nb_freqs > 0')
+        _require(self.matcnet.ABCD_matrix.shape[-1] > 0, 'self.matcnet.ABCD_matrix.shape[-1] > 0')
+        _require(self.matcnet.nb_freqs==self.balun1.nb_freqs, 'self.matcnet.nb_freqs==self.balun1.nb_freqs')
         
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2076,9 +2005,9 @@ class RFChain(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2096,15 +2025,19 @@ class RFChain(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2166,8 +2099,11 @@ class RFChainNut(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Notes
         -----
@@ -2213,9 +2149,9 @@ class RFChainNut(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2245,9 +2181,9 @@ class RFChainNut(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2265,15 +2201,19 @@ class RFChainNut(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2319,8 +2259,11 @@ class RFChain_gaa(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Notes
         -----
@@ -2356,9 +2299,8 @@ class RFChain_gaa(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.gaa.nb_freqs > 0
-        assert self.gaa.ABCD_matrix.shape[-1] > 0
-        assert self.gaa.nb_freqs==self.gaa.nb_freqs
+        _require(self.gaa.nb_freqs > 0, 'self.gaa.nb_freqs > 0')
+        _require(self.gaa.ABCD_matrix.shape[-1] > 0, 'self.gaa.ABCD_matrix.shape[-1] > 0')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2376,9 +2318,9 @@ class RFChain_gaa(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2396,15 +2338,19 @@ class RFChain_gaa(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2455,8 +2401,11 @@ class RFChain_Balun1(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2504,9 +2453,9 @@ class RFChain_Balun1(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2535,9 +2484,9 @@ class RFChain_Balun1(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2555,15 +2504,19 @@ class RFChain_Balun1(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2610,8 +2563,11 @@ class RFChain_Match_net(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2659,9 +2615,9 @@ class RFChain_Match_net(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2690,9 +2646,9 @@ class RFChain_Match_net(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2710,15 +2666,19 @@ class RFChain_Match_net(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2764,8 +2724,11 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2813,9 +2776,9 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2846,9 +2809,9 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -2866,15 +2829,19 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -2920,8 +2887,11 @@ class RFChain_VGA(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -2969,9 +2939,9 @@ class RFChain_VGA(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2998,9 +2968,9 @@ class RFChain_VGA(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -3018,15 +2988,19 @@ class RFChain_VGA(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in
@@ -3071,8 +3045,11 @@ class RFChain_in_Balun1(GenericProcessingDU):
         Parameters
         ----------
         vga_gain : int, optional
-            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
-            for 20 (the GRANDProto300 default), 5, 0 and -5.
+            Gain of the variable-gain amplifier, in dB: -5, 0, 5 or 20.  **It
+            has no effect at present**: the filter and VGA S-parameters are
+            the file the RF-chain configuration names, not one chosen by the
+            gain (see "VGA gain setting has no effect" in the known issues).
+            Files ship for 0, 5 and 20 dB, none for -5.
 
         Useful for isolating one stage's contribution.
 
@@ -3120,9 +3097,9 @@ class RFChain_in_Balun1(GenericProcessingDU):
         self.zload.compute_for_freqs(freqs_mhz)
         #self.balun_after_vga.compute_for_freqs(freqs_mhz)
 
-        assert self.lna.nb_freqs > 0
-        assert self.lna.ABCD_matrix.shape[-1] > 0
-        assert self.lna.nb_freqs==self.balun1.nb_freqs
+        _require(self.lna.nb_freqs > 0, 'self.lna.nb_freqs > 0')
+        _require(self.lna.ABCD_matrix.shape[-1] > 0, 'self.lna.ABCD_matrix.shape[-1] > 0')
+        _require(self.lna.nb_freqs==self.balun1.nb_freqs, 'self.lna.nb_freqs==self.balun1.nb_freqs')
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -3151,9 +3128,9 @@ class RFChain_in_Balun1(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
-        Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
+        Zant_dat = _loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
         self.Z_ant[0] = interpol_at_new_x(freqs_in, Zant_dat[:,1], self.freqs_mhz)       # interpolate impedance for self.lna.freqs_mhz frequencies.
         self.Z_ant[0] += 1j * interpol_at_new_x(freqs_in, Zant_dat[:,2], self.freqs_mhz) # interpolate impedance for self.lna.freqs_mhz frequencies.
@@ -3171,15 +3148,19 @@ class RFChain_in_Balun1(GenericProcessingDU):
 
         Parameters
         ----------
-        voc_f : ndarray, shape (n_du, 3, n_freq)
+        voc_f : ndarray, shape (3, n_freq)
             Open-circuit voltage spectrum at the antenna feed point.
 
         Returns
         -------
-        ndarray, shape (n_du, 3, n_freq)
-            Voltage spectrum at the ADC input, after the chain.
+        ndarray, shape (3, n_freq)
+            Voltage spectrum after the chain, for one unit's three arms.
         """
-        assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
+        # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
+            raise ValueError(_validate.message(
+                "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
+                "frequencies of compute_for_freqs), got %s" % (self.Z_in.shape, np.shape(voc_f))))
 
         self.I_in_balunA = voc_f / (self.Z_ant + self.Z_in)
         self.V_in_balunA = self.I_in_balunA * self.Z_in

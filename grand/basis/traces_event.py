@@ -36,6 +36,7 @@ def get_psd(trace, f_samp_mhz, nperseg=0):
     tuple of ndarray
         Frequency axis in MHz, and power spectral density.
     """
+    _validate.plausible(f_samp_mhz, "f_samp_mhz", "get_psd", "sampling_rate_mhz")   # (#266)
     if nperseg == 0:
         nperseg = trace.shape[0] // 2
 
@@ -347,7 +348,8 @@ class Handling3dTraces:
         if norm_traces is None:
             norm_traces = self.get_max_norm()
         else:
-            assert norm_traces.shape[0] == self.get_nb_trace()
+            if norm_traces.shape[0] != self.get_nb_trace():   # (#259)
+                raise ValueError(_validate.message("Handling3dTraces", "norm_traces has %d values for %d traces" % (norm_traces.shape[0], self.get_nb_trace())))
         idx_ok = np.squeeze(np.argwhere(norm_traces > threshold))
         self.keep_only_trace_with_index(idx_ok)
         return idx_ok
@@ -382,7 +384,8 @@ class Handling3dTraces:
             my_copy = copy.copy(self)
         if new_traces is not None:
             if isinstance(new_traces, np.ndarray):
-                assert self.traces.shape == new_traces.shape
+                if self.traces.shape != new_traces.shape:   # (#259)
+                    raise ValueError(_validate.message("Handling3dTraces.copy", "new_traces must have shape %s, got %s" % (self.traces.shape, new_traces.shape)))
             elif new_traces == 0:
                 new_traces = np.zeros_like(self.traces)
             my_copy.traces = new_traces
@@ -456,14 +459,21 @@ class Handling3dTraces:
             tr_norm = np.linalg.norm(self.traces, axis=1)
             idx_max = np.argmax(tr_norm, axis=1)
             idx_max = idx_max[:, np.newaxis]
-            tmax = np.squeeze(np.take_along_axis(self.t_samples, idx_max, axis=1))
-            vmax = np.squeeze(np.take_along_axis(tr_norm, idx_max, axis=1))
+            tmax = np.take_along_axis(self.t_samples, idx_max, axis=1)
+            vmax = np.take_along_axis(tr_norm, idx_max, axis=1)
+        # One value per trace, whatever the number of traces: np.squeeze made
+        # them 0-d for a one-antenna event, which then crashed (#287)
+        n_trace = self.get_nb_trace()
+        tmax = np.reshape(np.asarray(tmax), (n_trace,))
+        vmax = np.reshape(np.asarray(vmax), (n_trace,))
         if interpol == "no":
             self.t_max = tmax
             self.v_max = vmax
             return tmax, vmax
         if interpol not in ["parab", "auto"]:
-            raise
+            raise ValueError(_validate.message(
+                "Handling3dTraces.get_tmax_vmax",
+                "'interpol' must be \"parab\", \"auto\" or \"no\", got %r" % (interpol,)))
         t_max = np.empty_like(tmax)
         v_max = np.empty_like(tmax)
         for idx in range(self.get_nb_trace()):
@@ -520,8 +530,13 @@ class Handling3dTraces:
 
         Returns
         -------
-        tuple of ndarray
-            Signal-to-noise ratio and noise level of each trace.
+        snr : ndarray
+            Signal-to-noise ratio of each trace.
+        v_max : ndarray
+            Peak of each trace's Hilbert envelope, in the traces' unit.
+        noise : ndarray
+            Noise level of each trace (largest standard deviation over the
+            three axes of the trace's last samples), in the same unit.
         """
         size_noise = np.min([100, int(self.get_size_trace() / 20)])
         noise = np.max(np.std(self.traces[:, :, -size_noise:], axis=-1), axis=-1)

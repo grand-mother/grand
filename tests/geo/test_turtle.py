@@ -154,7 +154,8 @@ class TurtleTest(TestCase):
         path = self.get_map_data()
         map_ = turtle.Map(path)
         self.assertNotEqual(map_._map, None)
-        self.assertEqual(map_.path, path)
+        # One cached map per file, whatever spelling loaded it first (#256)
+        self.assertEqual(os.fspath(map_.path), os.fspath(path))
 
         # Check the elevation getter for a single entry
         elevation = map_.elevation(0, 0)
@@ -169,10 +170,10 @@ class TurtleTest(TestCase):
         # Check the manual deletion
         del map_
 
-        # Check for invalid path case
-        with self.assertRaises(RuntimeError) as context:
+        # Check for invalid path case: named, not a libturtle error (#267)
+        with self.assertRaises(FileNotFoundError) as context:
             map_ = turtle.Map("")
-        self.assertRegex(context.exception.args[0], "^A TURTLE library error")
+        self.assertRegex(context.exception.args[0], "^GRANDlib: turtle.Map: no map file")
 
     def test_stepper(self):
         # Check the stepper wrapper

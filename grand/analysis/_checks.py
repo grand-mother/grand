@@ -75,6 +75,8 @@ def angles(where, **values):
             _validate.as_real(value, name, where)
         else:
             _validate.as_array(value, name, where, finite=True)
+        # Degrees given where radians are expected went through as radians (#266)
+        _validate.plausible(value, name, where, "angle_rad")
 
 
 def sigma(value, where, name="sigma"):

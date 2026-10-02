@@ -1,47 +1,58 @@
 # Coreas to Raw Root Converter
 
-## How to run just CoreasToRawRoot
+## How to run just CoreasToRawROOT.py
 ### Convert Multiple Showers in a Directory
 To convert data from multiple CoREAS showers located in the same directory, use the following command:
-`python3 CoreasToRawRoot.py -d <path_to_directory>`
+`python3 CoreasToRawROOT.py -d <path_to_directory>`
 The code will search for CoREAS .reas files in the specified directory and convert each of them into the GRANDROOT format.
 
 ### Convert a Single CoREAS Shower
 To convert data from a single CoREAS shower, use the following command:
-`python3 CoreasToRawRoot.py --file <path_to_SIMxxxxxx.reas>`
+`python3 CoreasToRawROOT.py --file <path_to_SIMxxxxxx.reas>`
 The code will convert the specified CoREAS simulation into GRANDROOT format.
 
+### Where the output goes
+Each shower is written to `Coreas_<simID>.rawroot` in the current folder, or in
+the folder given with `-o <folder>` (for a single shower `-o` may also name the
+file). An existing output file is refused, rather than appended to; give
+`--overwrite` to replace it. This folder already holds the committed sample
+`Coreas_004100.rawroot`, so converting `proton/` here needs `-o` or
+`--overwrite`.
 
-## How to run the whole CoreasToRawRoot + sim2root + efield2voltage
-`python3 coreas_pipeline.py -d <directory with Coreas Sim>`\
-optional: specify an output directory as well:\
-`python3 coreas_pipeline.py -d <directory with Coreas Sim> -o <output directory>`\
+
+## How to run the whole chain (CoreasToRawROOT + sim2root + efield2voltage)
+There is no single script for it any more. `../Common/RunSimPipeNoJitter.py`
+runs the steps after this converter on a folder of `.rawroot` files:\
+`python3 ../Common/RunSimPipeNoJitter.py <folder with .rawroot files> <extra> -sl GP300`
 
 
 ## Overview
-### CoreasToRawRoot.py
+### CoreasToRawROOT.py
 This Python code defines a function called `CoreasToRawRoot` that performs several tasks related to processing and converting data from a CORSIKA simulation with Coreas output into a ROOT file format. Here's a brief summary/explanation of the code:
 
 1. Importing Libraries:
    - The code begins by importing several Python modules, including `sys`, `glob`, `time`, and custom functions from `CorsikaInfoFuncs` and `raw_root_trees`.
 
 2. Function Definition:
-   - The `CoreasToRawRoot` function is defined, which takes a single argument `path`. This function is responsible for converting Coreas output data into a ROOT file.
+   - `CoreasToRawRoot(file, simID=None, output=".", overwrite=False)` converts one simulation, given by its `SIM??????.reas` file, into `Coreas_<simID>.rawroot`.
 
 3. Checking Input Files:
-   - The function checks for the existence of specific files (e.g., `.reas`, `.inp`, `.dat`, and `.log`) in the specified directory indicated by `path`.
+   - The function checks for the existence of specific files (e.g., `.reas`, `.inp`, `.dat`, and `.log`) beside the `.reas` file.
 
 4. Extracting Information:
    - Various information is extracted from the input files, including simulation parameters, energy, positions, and particle distributions.
 
 5. Creating and Filling ROOT Trees:
    - The code creates and fills several ROOT trees (e.g., `RawShower`, `RawEfield`, and `SimCoreasShower`) with the extracted information.
+   - All of them use run number = the `.reas` `EventNumber` and event number = the simulation number (4100 for `SIM004100`).
+   - The magnetic field strength is in µT, as from ZHAireS (#232); files converted before that hold it in mT (`.reas` path) or Gauss (`.inp` path).
+   - CoREAS gives no event time, so it is written as 0 and sim2root uses the simulation date; an unknown first-interaction height or injection altitude is NaN.
 
 6. Saving Results:
    - The ROOT trees are written to a ROOT file with a specific filename based on the simulation parameters.
 
 7. Main Function:
-   - The code checks if it's being run as a standalone script (not imported as a module) and extracts the `path` argument from the command line. It then calls the `CoreasToRawRoot` function with the provided `path`.
+   - Run as a script, it reads `--file`, `-d`, `-o` and `--overwrite` (see above) and converts each simulation.
 
 Overall, this code is used to convert Coreas simulation output data into a structured ROOT file format for further analysis and processing. It involves reading various input files, extracting relevant information, and organizing it into ROOT trees within a single output file.
 

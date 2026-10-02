@@ -82,6 +82,33 @@ DEFAULT_T1_CHANNELS = (0, 1, 2)
 T1_TRIGGER_FLAG = 1
 
 
+def _check_config(config, where="T1 trigger"):
+    r"""Refuses T1 parameters that cannot describe a trigger.
+
+    They were used as given (#267): a second threshold above the first, a
+    coincidence range with ``nc_min > nc_max``, negative windows.
+
+    Raises
+    ------
+    ValueError
+        Naming the parameters and their values.
+    """
+    def fail(text):
+        raise ValueError("GRANDlib: %s: %s" % (where, text))
+    for key in ("t_quiet", "t_period", "t_sepmax", "nc_min", "nc_max", "th1", "th2"):
+        if not config[key] >= 0:
+            fail("%s must be >= 0, got %r" % (key, config[key]))
+    if config["th2"] > config["th1"]:
+        fail("th2 (%r) must not exceed th1 (%r): T2 crossings are counted after a T1 crossing"
+             % (config["th2"], config["th1"]))
+    if config["nc_min"] > config["nc_max"]:
+        fail("nc_min (%r) must not exceed nc_max (%r)" % (config["nc_min"], config["nc_max"]))
+    # At 2 ns per sample, a period under 2 ns is an empty window, which
+    # failed with a bare IndexError (#289)
+    if config["t_period"] < 2:
+        fail("t_period must be at least 2 (ns, one sample), got %r" % (config["t_period"],))
+
+
 def _config(trigger_config):
     r"""The defaults, updated with `trigger_config`."""
     config = dict(DEFAULT_T1_CONFIG)
@@ -90,6 +117,7 @@ def _config(trigger_config):
         if unknown:
             raise KeyError(f"Unknown T1 trigger parameters: {sorted(unknown)}")
         config.update(trigger_config)
+        _check_config(config)
     return config
 
 
@@ -229,6 +257,17 @@ def t1_du_triggers(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     numpy.ndarray of bool
         One value per DU.
     """
+    # One DU's (3, N) channels were taken for three DUs of one channel each,
+    # and none triggered (#289)
+    if np.ndim(traces) != 3:
+        raise ValueError("GRANDlib: t1_du_triggers: traces must have shape (N_du, N_channels, "
+                         "N_samples), got %s; for one unit's channels, pass traces[None]"
+                         % (np.shape(traces),))
+    # A NaN trace still triggered (#288)
+    for index, du in enumerate(traces):
+        if not np.all(np.isfinite(np.asarray(du, dtype=float))):
+            raise ValueError("GRANDlib: t1_du_triggers: the trace of unit %d (index in the event) holds "
+                             "NaN or inf" % index)
     return np.array(
         [any(t1_channel_trigger(du[ch], trigger_config, baseline) for ch in channels)
          for du in traces],
@@ -249,3 +288,38 @@ def t1_trigger_flags(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     """
     passed = t1_du_triggers(traces, trigger_config, channels, baseline)
     return np.where(passed, T1_TRIGGER_FLAG, 0).astype(np.ushort)
+
+
+def t1_config_from_params(params):
+    r"""The T1 trigger parameters, from ``KEY=VALUE`` strings.
+
+    Parameters
+    ----------
+    params : list of str or None
+        Overrides of :data:`grand.sim.detector.trigger.DEFAULT_T1_CONFIG`,
+        e.g. ``['th1=120', 'nc_max=10']``.  The values are integers.
+
+    Returns
+    -------
+    dict
+        The full set of trigger parameters.
+
+    Raises
+    ------
+    ValueError
+        For a string that is not ``KEY=VALUE`` with an integer value, an
+        unknown key, or values that cannot describe a trigger (``th2 > th1``,
+        ``nc_min > nc_max``, a negative window; #267).
+    """
+    config = dict(DEFAULT_T1_CONFIG)
+    for param in params or []:
+        key, sep, value = param.partition('=')
+        key = key.strip()
+        if not sep or key not in DEFAULT_T1_CONFIG:
+            raise ValueError(f'Bad --t1_param {param!r}: expected KEY=VALUE with KEY in {sorted(DEFAULT_T1_CONFIG)}')
+        try:
+            config[key] = int(value)
+        except ValueError:
+            raise ValueError(f'Bad --t1_param {param!r}: the value must be an integer') from None
+    _check_config(config, "--t1_param")
+    return config

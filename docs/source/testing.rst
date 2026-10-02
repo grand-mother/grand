@@ -17,8 +17,8 @@ Current state, on the ``dev-next`` branch:
 
 .. code-block:: text
 
-    459 passed, 13 skipped, 10 xfailed, 1 xpassed
-    coverage: 73% over grand/, 17% over granddb/, 62% together
+    1233 passed, 10 skipped, 5 xfailed             (2026-10-02)
+    coverage: 80% over grand/, 23% over granddb/, 72% together   (measured 2026-10-01)
 
 Layout
 ------
@@ -33,15 +33,16 @@ largest; ``tests/sim/`` is the thinnest relative to what it guards.
 Known failures are marked, not hidden
 -------------------------------------
 
-Eight tests fail for reasons that need a decision rather than a patch.  They
+Three tests fail for reasons that need a decision rather than a patch.  They
 are registered in ``tests/conftest.py`` with the reason for each and who can
 settle it, so that the suite can be a required check in CI — a permanently red
 gate is a gate nobody looks at.
 
-They are marked ``xfail`` with ``strict=False``, so a test that starts passing
-is reported as ``xpassed`` rather than failing the run.  That is the signal to
-delete its entry, and it earns its keep: ``test_antenna`` xpassed as soon as
-the missing-frame guard was fixed.
+They are marked ``xfail`` strictly (``xfail_strict = true`` in
+``pyproject.toml``), so a test that starts passing fails the run until its
+entry is deleted.  With ``strict=False`` that went unnoticed: three tests
+passed for a while only where an untracked ``data/test_efield.root`` happened
+to lie (#271).
 
 Read the registry rather than a summary of it — it is the authority, it is
 short, and it says what each failure actually is.
@@ -96,7 +97,7 @@ Measured with:
 
     pytest tests/ -q --cov=grand --cov=granddb --cov-report=term
 
-64% today.  The number is worth less than it looks: line coverage counts
+72% today.  The number is worth less than it looks: line coverage counts
 executed lines, not verified behaviour, and the end-to-end test executed a
 great deal of the simulation chain while asserting only that an output file
 appeared.  Appendix C of the GRANDlib paper reports 84%, measured when CI

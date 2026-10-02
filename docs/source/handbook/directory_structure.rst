@@ -205,7 +205,7 @@ File Format
 ^^^^^^^^^^^
 
 | 
-| The files are stored as a NumPy ``.npz`` archive, which is a compressed container of multiple arrays. It provides the effective length response of the GP300 antenna model (East–West arm, denoted as EW or X arm , South–North denoted as SN or Y arm and Vertical denotes as Zarm) as a function of frequency and arrival direction.
+| The files are stored as a NumPy ``.npz`` archive, which is a compressed container of multiple arrays. It provides the effective length response of the GP300 antenna model (South–North arm, denoted SN or X arm, East–West arm, denoted EW or Y arm, and the vertical Z arm — corrected here; the PDF has X and Y the other way round, see :doc:`index`) as a function of frequency and arrival direction.
 
 Contents
 ^^^^^^^^
@@ -1043,7 +1043,7 @@ Basis: Minimal Analysis Pipeline
 
 The **basis** folder contains a minimal analysis pipeline built on top of the GRANDlib infrastructure. It is ideal for new users seeking a clean and reproducible entry point into GRANDlib-based analysis.
 
-**The script ``run_pipeline.py`` is currently non-functional. For E-field to Voltage conversion, refer to ``scripts/convert_efield2voltage.py``.**
+**The script ``run_pipeline.py`` is non-functional and has moved to ``examples/old/stubs/`` (#218). For E-field to Voltage conversion, refer to ``scripts/convert_efield2voltage.py``.**
 
 ``class_Handling3dTraces.ipynb:``\ (at dev_sim2root_merge_merge_with_dev)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1614,6 +1614,7 @@ Manual E-field :math:`\rightarrow` Voltage (``efield2voltage_manually.py``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | 
+| Moved to ``examples/old/stubs/``: it only prints that it does not work (#218).
 | Applies antenna effective length and RF chain step-by-step for validation.
 
 *This script is not working at the moment. To check on how to convert Efield to Voltage, please check scripts/convert_efield2voltage.py*
@@ -2508,18 +2509,18 @@ E-field / Voltage / ADC pipeline
 .. code:: bash
 
    # Basic (adds RF chain + galactic noise by default)
-   python3 scripts/convert_efield2voltage.py <efield.root> -o out_voltage.root
+   python3 scripts/convert_efield2voltage.py <sim_folder>
 
    # Reproducible noise and LST:
-   python3 scripts/convert_efield2voltage.py <efield.root> -o out_voltage.root \
+   python3 scripts/convert_efield2voltage.py <sim_folder> \
      --seed 0 --lst 18
 
    # Antenna model selection (GP300 | GP300_nec | GP300_mat | Horizon):
-   python3 scripts/convert_efield2voltage.py <efield.root> -o out_voltage.root \
+   python3 scripts/convert_efield2voltage.py <sim_folder> \
      --du_type GP300_nec
 
    # Pure Voc (no noise, no RF chain):
-   python3 scripts/convert_efield2voltage.py <efield.root> -o out_voc.root \
+   python3 scripts/convert_efield2voltage.py <sim_folder> -o voc.root \
      --no_noise --no_rf_chain
 
 *Notes:* Supports padding control (``--padding_factor``) or fixed duration (``--target_duration_us``). Specialized RF chain layouts: ``--rf_chain_gaa`` (Auger), ``--rf_chain_nut`` (after LNA at nut).
@@ -2537,10 +2538,10 @@ E-field / Voltage / ADC pipeline
 .. code:: bash
 
    # Pure conversion:
-   python3 scripts/convert_voltage2adc.py out_voltage.root -o out_adc.root
+   python3 scripts/convert_voltage2adc.py <sim_folder>
 
    # Add measured noise (do not double-add galactic noise):
-   python3 scripts/convert_voltage2adc.py out_voltage.root -o out_adc.root \
+   python3 scripts/convert_voltage2adc.py <sim_folder> \
      --add_noise_from /path/to/measured/noise_dir -s 42
 
 *Output:* A GRANDROOT file with a ``TADC`` tree mirroring the input TVoltage events/DUs.
@@ -2699,10 +2700,10 @@ Cheat Sheet — Daily Commands
    source env/setup.sh
 
    # 1) E-field -> Voltage (adds RF chain + galactic noise)
-   python scripts/convert_efield2voltage.py <efield.root> -o out_voltage.root
+   python scripts/convert_efield2voltage.py <sim_folder>
 
    # 2) Voltage -> ADC (add measured noise from a directory)
-   python convert_voltage2adc.py <voltage.root> -o <adc.root> --add_noise_from \
+   python scripts/convert_voltage2adc.py <sim_folder> --add_noise_from \
    <noise_dir> -s <seed>
 
    # 3) RF-chain overview (component or full chain)
@@ -2724,7 +2725,7 @@ Cheat Sheet — Daily Commands
 
 .. code:: bash
 
-   python3 scripts/convert_efield2voltage.py <efield.root> -o out_voltage.root \
+   python3 scripts/convert_efield2voltage.py <sim_folder> \
      --seed 0 --lst 18 --du_type GP300_nec
 
 Sim2Root
@@ -2765,9 +2766,9 @@ In GRAND we aim to simulate air showers using both ``ZHAireS`` and ``CoREAS``. T
 .. code:: bash
 
    # From inside CoREASRawRoot/
-   python3 CoreasToRawROOT.py proton/
+   python3 CoreasToRawROOT.py -d proton
    # or point to any CoREAS run directory
-   python3 CoreasToRawROOT.py /path/to/coreas/run_dir
+   python3 CoreasToRawROOT.py -d /path/to/coreas/run_dir
 
 | **1.b) ``ZHAireSRawRoot/ZHAireSRawToRawROOT.py``**
 | Scripts to produce ``RawRoot`` files from ZHAireS simulations.
@@ -2800,7 +2801,10 @@ This is equivalent to ``RunID="SuitYourself"``, ``EventID="LookForIt"``, ``Outpu
 .. code:: bash
 
    python3 ../grand/sim2root/Common/sim2root.py "<your_path>/*/*.rawroot" \
-     -d 20221026 -t 180000 -e DC2Alpha
+     -sl GP300 -d 20221026 -t 180000 -e DC2Alpha \
+     --trigger_time_ns 800 --target_duration_us 4.096
+   # -sl (site layout) is required; the two trace-window options are needed
+   # when the showers were simulated with different windows
    # For options:
    python3 ../grand/sim2root/Common/sim2root.py --help
 
@@ -2812,14 +2816,14 @@ This is equivalent to ``RunID="SuitYourself"``, ``EventID="LookForIt"``, ``Outpu
 .. code:: bash
 
    # From inside Common/
-   python3 RunSimPipe.py ../ZHAireSRawRoot ZHAireS
+   python3 RunSimPipe.py ../ZHAireSRawRoot ZHAireS -sl GP300
 
 This executes, in order:
 
 .. code:: bash
 
    # rawroot -> grandroot
-   python3 ./sim2root.py ../ZHAireSRawRoot/ -e ZHAireS
+   python3 ./sim2root.py ../ZHAireSRawRoot/ --target_duration_us=4.096 --trigger_time_ns 800 -sl GP300 -e ZHAireS
 
    # compute voltage
    python3 ../../scripts/convert_efield2voltage.py \
@@ -2844,14 +2848,14 @@ This executes, in order:
 .. code:: bash
 
    # From inside Common/
-   python3 RunSimPipeNoJitter.py ../CoREASRawRoot CoREAS-NJ
+   python3 RunSimPipeNoJitter.py ../CoREASRawRoot CoREAS-NJ -sl GP300
 
 This executes:
 
 .. code:: bash
 
    # rawroot -> grandroot
-   python3 ./sim2root.py ../CoREASRawRoot/ -e CoREAS-NJ
+   python3 ./sim2root.py ../CoREASRawRoot/ --target_duration_us=4.096 --trigger_time_ns 800 -sl GP300 -e CoREAS-NJ
 
    # compute voltage (no noise)
    python3 ../../scripts/convert_efield2voltage.py \
@@ -2879,7 +2883,7 @@ This executes:
 CoREASRawRoot/
 ~~~~~~~~~~~~~~
 
-CoreasToRawRoot.py
+CoreasToRawROOT.py
 ^^^^^^^^^^^^^^^^^^
 
 | 
@@ -2947,9 +2951,9 @@ CoreasToRawRoot.py
 
 .. code:: bash
 
-   python CoreasToRawRoot.py -d <path_to_directory>
-    or for a single Coreas shower :
-    python CoreasToRawRoot.py --file <path_to_SIMxxxxxx.reas>
+   python CoreasToRawROOT.py -d <path_to_directory>
+   # or for a single CoREAS shower:
+   python CoreasToRawROOT.py --file <path_to_SIMxxxxxx.reas>
 
 CorsikaInfoFuncs.py
 ^^^^^^^^^^^^^^^^^^^
@@ -3329,14 +3333,15 @@ This standardization makes the files immediately consumable by ``scripts/convert
 
 .. code:: bash
 
-   # 1) Convert RawRoot -> GRANDROOT (efield/shower)
-   python sim2root/Common/sim2root.py <RawRoot.root> -sl GP13 -o <sim_dir>
+   # 1) Convert RawRoot -> GRANDROOT (efield/shower); writes the folder
+   #    <parent_dir>/sim_<site>_<date>_<time>_RUN<run>_CD_<extra>_<serial>
+   python sim2root/Common/sim2root.py <RawRoot.root> -sl GP13 -o <parent_dir>
 
-   # 2) E-field -> Voltage (adds RF chain + galactic noise)
-   python scripts/convert_efield2voltage.py <efield.root> -o <output.root>
+   # 2) E-field -> Voltage (adds RF chain + galactic noise), into that folder
+   python scripts/convert_efield2voltage.py <sim_folder>
 
-   # 3) Voltage -> ADC (optionally add measured noise)
-   python scripts/convert_voltage2adc.py <output.root> -o <output.root> \
+   # 3) Voltage -> ADC (optionally add measured noise), into that folder
+   python scripts/convert_voltage2adc.py <sim_folder> \
      --add_noise_from /path/to/noise_dir -s 42
 
 | **Summary**
@@ -3450,13 +3455,13 @@ IllustrateSimPipe.py
      --target_duration_us 10.0 --trigger_time_ns 150 -o <sim_dir>
 
    # Full pipeline (default jitter + galactic noise)
-   python sim2root/Common/RunSimPipe.py        <input_dir_or_file> MyTag
+   python sim2root/Common/RunSimPipe.py        <input_dir_or_file> MyTag -sl GP300
 
    # Variant: add measured ADC noise during conversion
-   python sim2root/Common/RunSimPipeADCNoise.py <input_dir_or_file> ADCNoise
+   python sim2root/Common/RunSimPipeADCNoise.py <input_dir_or_file> ADCNoise -sl GP300
 
    # Variant: no timing jitter
-   python sim2root/Common/RunSimPipeNoJitter.py <input_dir_or_file> CoREAS-NJ
+   python sim2root/Common/RunSimPipeNoJitter.py <input_dir_or_file> CoREAS-NJ -sl GP300
 
    # Visualize a produced run directory
    python sim2root/Common/IllustrateSimPipe.py sim_<SITE>_<DATE>_.../<SN4>
@@ -3788,7 +3793,7 @@ Example:
 
 ::
 
-       python ../grand/sim2root/Common/sim2root.py <your path>/.rawroot -d 20221026 -t 180000 -e DC2Alpha
+       python ../grand/sim2root/Common/sim2root.py <your path>/*.rawroot -sl GP300 -d 20221026 -t 180000 -e DC2Alpha
 
 Additional options are available; see ``sim2root --help``.
 

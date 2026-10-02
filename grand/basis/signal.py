@@ -7,6 +7,8 @@
 
 from logging import getLogger
 
+from grand.basis import validate as _validate
+
 import numpy as np
 from scipy.signal import hilbert, butter, lfilter
 import scipy.fft as sf
@@ -250,8 +252,10 @@ def get_peakamptime_norm_hilbert(a2_time, a3_trace):
 
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
-    """
-    #RK: This function is copied to grand/simu/master_simu.py where it is used. Remove it from here if it is not used anywhere else.
+    """Returns an FFT-friendly transform length and its frequency axis.
+
+    The same as :func:`grand.sim.efield2voltage.get_fastest_size_fft`, whose
+    padding argument is named ``padding_factor``.
 
     Parameters
     ----------
@@ -267,7 +271,9 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     tuple
         Transform length, and the frequency axis in MHz.
     """
-    assert padding_fact >= 1
+    _validate.plausible(f_samp_mhz, "f_samp_mhz", "get_fastest_size_fft", "sampling_rate_mhz")   # (#266)
+    if not padding_fact >= 1:   # an assert, gone under python -O (#259)
+        raise ValueError(_validate.message("get_fastest_size_fft", "padding_fact must be at least 1, got %r" % (padding_fact,)))
     dt_s = 1e-6 / f_samp_mhz
     fastest_size_fft = sf.next_fast_len(int(padding_fact * sig_size + 0.5))
     freqs_mhz = sf.rfftfreq(fastest_size_fft, dt_s) * 1e-6
@@ -311,7 +317,8 @@ def interpol_at_new_x(a_x, a_y, new_x):
 
         print(interpol_at_new_x(a_x, a_y, np.array([10.0, 140.0, 400.0])))
     """
-    assert a_x.shape[0] > 0
+    if a_x.shape[0] == 0:   # (#259)
+        raise ValueError(_validate.message("interpol_at_new_x", "no sample positions to interpolate from"))
     func_interpol = interpolate.interp1d(
         a_x, a_y, "cubic", bounds_error=False, fill_value=(0.0, 0.0)
     )

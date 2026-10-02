@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from logging import getLogger
+
+from grand.basis import validate as _validate
 from typing import Union
 
 import numpy as np
@@ -47,7 +49,8 @@ class ElectricField:
 
         """
         self.fft_e_3d = np.zeros((3, 0))
-        assert self.a_time.shape[0] == self.e_xyz.shape[1]
+        if self.a_time.shape[0] != self.e_xyz.shape[1]:   # an assert, gone under python -O (#259)
+            raise ValueError(_validate.message("ElectricField", "a_time has %d samples but e_xyz has %d" % (self.a_time.shape[0], self.e_xyz.shape[1])))
 
     def get_fft(self, size_sig_pad):
         """
@@ -139,7 +142,19 @@ class Voltage:
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
 
+        Raises
+        ------
+        ValueError
+            If `t` is not 1-D, or the last axis of `V` does not have one
+            sample per time (nothing was checked, #267).
         """
+        t, v = np.asarray(self.t), np.asarray(self.V)
+        if t.ndim != 1:
+            raise ValueError(_validate.message("Voltage", "t must be 1-D, got shape %s" % (t.shape,)))
+        if v.ndim == 0 or v.shape[-1] != t.shape[0]:
+            raise ValueError(_validate.message(
+                "Voltage", "V must have %d samples on its last axis, one per time, got shape %s"
+                % (t.shape[0], v.shape)))
         self.v_fft = None
 
     def get_fft(self, size_sig_pad):

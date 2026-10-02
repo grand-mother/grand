@@ -4,14 +4,23 @@ import numpy as np
 
 def shower_direction_vector(theta, phi):
     """
-    Returns the shower direction vector K (orientation of the shower front).
+    Returns the unit vector the shower *propagates* along.
 
-    theta : zenith angle in radians
-    phi   : azimuth angle in radians
+    It points away from where the shower comes from: the opposite of
+    :func:`grand.dataio.xmax_frame.arrival_direction`, which points towards
+    the source (#261).
+
+    Parameters
+    ----------
+    theta : float
+        Zenith angle of the direction the shower comes from, in radians.
+    phi : float
+        Azimuth of that direction, in radians, from north towards west.
 
     Returns
     -------
-        K : numpy array of shape (3,)
+    ndarray, shape (3,)
+        ``K``, in the frame x North, y West, z Up; ``K[2] <= 0``.
     """
     ct = np.cos(theta)
     st = np.sin(theta)

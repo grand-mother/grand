@@ -388,6 +388,7 @@ if __name__ == "__main__":
         )
     parser.add_argument(
         "save_data_option",
+        choices=["Vin_balun1", "Vout_balun1", "Vout_match_net", "Vout_lna", "Vout_cable_connector", "Vout_VGA", "Vout_tot", "Vratio_Balun1", "Vratio_match_net", "Vratio_lna", "Vratio_cable_connector", "Vratio_vga", "Vratio_adc"],      # checked by argparse (#246)
         help="what do you want to print/save? example: Vout_lna.",
     )
     parser.add_argument(
@@ -397,11 +398,26 @@ if __name__ == "__main__":
         help="Create a txt file to store data.",
     )
 
+    parser.add_argument(
+        "--out_dir",
+        default=".",
+        help="folder for the --savedata text files (default: the current folder).",
+    )
     args = parser.parse_args()
+    # The files have fixed names and went into whatever folder the script was
+    # run from, overwriting silently (#246)
+    if args.savedata:
+        import os
+        try:
+            os.makedirs(args.out_dir, exist_ok=True)
+            os.chdir(args.out_dir)
+        except OSError as error:
+            raise SystemExit("GRANDlib: Compute_Vout_AT_Device_save: cannot write to %s: %s"
+                             % (args.out_dir, error))
 
     options_list = ["Vin_balun1", "Vout_balun1", "Vout_match_net", "Vout_lna", "Vout_cable_connector", "Vout_VGA", "Vout_tot", "Vratio_Balun1", "Vratio_match_net", "Vratio_lna", "Vratio_cable_connector", "Vratio_vga", "Vratio_adc"]
 
     if args.save_data_option in options_list:
         save_data(args.save_data_option, savedata=args.savedata)
     else:
-        raise Exception("Please provide a proper option for print and save output voltage. Options: Vin_balun1, Vout_balun1, Vout_match_net, Vout_lna,  Vout_cable_connector, Vout_VGA Vout_tot, Vratio_Balun1, Vratio_match_net, Vratio_lna, Vratio_cable_connector, Vratio_vga, Vratio_adc")
+        raise SystemExit("GRANDlib: Compute_Vout_AT_Device_save: unknown option %s" % args.save_data_option)

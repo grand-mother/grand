@@ -51,7 +51,8 @@ class GullTest(TestCase):
             self.assertAlmostEqual(m[i, 2], ref[2], tol)
 
     def test_snapshot_error(self):
-        with self.assertRaises(gull.LibraryError) as context:
+        # Named, not a libgull error (#267)
+        with self.assertRaises(FileNotFoundError) as context:
             snapshot = gull.Snapshot("Unknown")
 
 

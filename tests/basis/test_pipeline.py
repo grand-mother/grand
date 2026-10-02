@@ -5,7 +5,7 @@ Unit tests for the grand.dataio.protocol module
 import unittest
 from tests import TestCase
 from pathlib import Path
-import os
+import tempfile
 from grand.basis.pipeline import Pipeline
 from grand import grand_get_path_root_pkg
 
@@ -14,14 +14,13 @@ class PipelineTest(TestCase):
     """Unit tests for the pipeline module"""
 
     def test_add(self):
-        input_file = Path(grand_get_path_root_pkg()) / "data" / "test_efield.root"
-        output_file= Path(grand_get_path_root_pkg()) / "data" / "test_voltage.root"
+        # The committed sample, and a temporary output: it read the untracked
+        # data/test_efield.root and wrote into data/ (#271)
+        input_file = (Path(grand_get_path_root_pkg()) / "sim2root" / "Common"
+                      / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        output_file = Path(tempfile.mkdtemp()) / "test_voltage.root"
 
         self.assertTrue((input_file).exists())
-        try:
-            os.remove(output_file)
-        except:
-            pass
         self.assertFalse((output_file).exists())
 
         pipeline = Pipeline()

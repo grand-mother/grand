@@ -9,6 +9,7 @@ Reading many files in a loop grew by about 2.7 MB per file, even with
 opened, keeps files other trees or the caller still use, and can be repeated.
 """
 
+import gc
 import pathlib
 import shutil
 
@@ -131,13 +132,17 @@ def test_loop_over_many_files_leaves_none_open(tmp_path):
         shutil.copy(ADC_FILE, dst)
         paths.append(dst)
 
+    # Trees other tests dropped are released when the garbage collector runs
+    # (#284), which can happen during the loop: collect first, and compare
+    # with "no more than" -- the counts fell during the loop on ROOT 6.38
+    gc.collect()
     files_before = ROOT.gROOT.GetListOfFiles().GetSize()
     trees_before = len(grand_tree_list)
     for path in paths:
         with TADC(str(path)) as tadc:
             _read_all(tadc)
-    assert ROOT.gROOT.GetListOfFiles().GetSize() == files_before
-    assert len(grand_tree_list) == trees_before
+    assert ROOT.gROOT.GetListOfFiles().GetSize() <= files_before
+    assert len(grand_tree_list) <= trees_before
     assert not any(_is_open(p) for p in paths)
 
 

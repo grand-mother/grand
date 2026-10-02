@@ -32,8 +32,10 @@ Citing a specific version
 The paper describes the pipeline, not any particular release.  If a result
 depends on the version of the code that produced it — and for anything
 touching the noise model it does, see :doc:`known_issues` — record the
-version alongside the citation.  Files written by GRANDlib carry it in
-``TRun.software_version``.
+version alongside the citation.  Voltage files written by ``Efield2Voltage``
+carry it in ``TVoltage.grandlib_version``; every tree also records the
+software that last wrote it in its ``modification_software`` and
+``modification_software_version`` metadata.
 
 Citing the components
 ---------------------

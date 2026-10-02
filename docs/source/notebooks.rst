@@ -18,6 +18,12 @@ To run them rather than read them::
     source env/setup.sh
     jupyter lab notebooks/
 
+Run them from the ``notebooks/`` folder, with the repository root on
+``sys.path`` (``export PYTHONPATH=$PWD`` from the root before starting
+Jupyter): notebook 08 imports
+``tests.sim.test_pipeline_golden``, and notebooks 09, 11 and 12 read
+``../sim2root/...`` and ``../examples/...``.
+
 .. note::
 
    The notebooks are **not** built into this documentation.  Executing them on
@@ -89,8 +95,7 @@ Available
    The two definitions of height and the geoid undulation between them, a
    terrain map, and ray-ground intersection for very inclined showers —
    including how badly a flat-ground estimate does near the horizon.  Also the
-   two silent ``nan`` returns, one of which is
-   :ref:`issue-geoid-longitude-convention`.
+   silent ``nan`` a missing elevation tile returns.
 
 `08. Pinning the chain <https://github.com/grand-mother/grand/blob/dev-next/notebooks/08_pipeline_regression.ipynb>`_
    For the person about to change the chain: what will tell you the answer
@@ -126,7 +131,7 @@ Available
    shower it generated, so the answer is known, then the whole chain as
    ``examples/analysis/main_AOI.py`` runs it. Ends on the ten GP13 cosmic-ray
    candidates shipped with the examples, where the data parts company with
-   the model: most timing fits have χ²/ndf far above 1, and 8 of 10
+   the model: most timing fits have χ²/ndf well above 1, and 8 of 10
    amplitude fits stop on a bound. Says plainly that the fits are checked for
    self-consistency only, not yet against simulated showers.
 
@@ -147,4 +152,5 @@ Available
 
    Notebook 11 needs ``iminuit``, which the conda environment carries;
    elsewhere, ``pip install -e ".[analysis]"``. Notebook 12 needs the viewer's
-   plotting stack, which it does not: ``pip install -e ".[viewer]"``.
+   plotting stack, which the conda environment does not carry: install it with
+   ``pip install -e ".[viewer]"``.

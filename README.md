@@ -61,10 +61,15 @@ page](docs/source/installation.rst).
 
 ## Quickstart
 
+The input is a simulation directory as sim2root writes it (`efield_*`,
+`run_*` and `shower_*` files), for example
+`sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000`; a single
+e-field file is not enough, since the run and shower trees are needed too.
+
 ```python
 from grand import Efield2Voltage
 
-signal = Efield2Voltage("input_efield.root", "output_voltage.root")
+signal = Efield2Voltage("my_simulation", "voltage.root", output_directory=".", seed=1)
 signal.params["add_noise"]    = True
 signal.params["add_rf_chain"] = True
 signal.compute_voltage()
@@ -73,7 +78,7 @@ signal.compute_voltage()
 or from a shell:
 
 ```bash
-python scripts/convert_efield2voltage.py input_efield.root -o output_voltage.root
+python scripts/convert_efield2voltage.py my_simulation -o voltage.root -od .
 ```
 
 ## Documentation

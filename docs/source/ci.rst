@@ -25,7 +25,7 @@ Event                        What happens
 ===========================  ==============================================
 Push to any branch           The suite, the linter and a docs build
 Opening or updating a PR     The same, including pull requests from forks
-Merge to ``main``            The above, plus the documentation is deployed
+Push to dev-next or main     The above, plus the documentation is deployed
 Change to the data-format
 version file                 The format version is tagged
 ===========================  ==============================================
@@ -49,15 +49,21 @@ The workflows
    * - Workflow
      - Trigger
      - What it does
-   * - ``tests.yml``
-     - push, pull request
+   * - ``tests-conda.yml``
+     - push (except ``ci/**``), pull request
      - Runs the suite on two ROOT versions
    * - ``lint.yml``
-     - push, pull request
+     - push (except ``ci/**``), pull request
      - Runs ruff, and builds the docs with warnings as errors
+   * - ``notebooks.yml``
+     - change under ``notebooks/``; Mondays 05:00 UTC; by hand
+     - Executes every tutorial notebook and checks it matches its generator
    * - ``pages.yml``
-     - push to ``main``
+     - push to ``dev-next`` or ``main``; by hand
      - Deploys the documentation to GitHub Pages
+   * - ``docker.yml``
+     - push to ``ci/docker-test**``; by hand
+     - Tests a published Docker image (see below)
    * - ``root_version.yml``
      - change to ``grand/dataio/version``
      - Tags the ROOT data-format version

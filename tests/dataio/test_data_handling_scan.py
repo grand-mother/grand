@@ -163,21 +163,21 @@ def test_levels_are_separate_handles_and_the_highest_is_the_default(tmp_path):
         'the per-level attributes were not created')
 
 
-def test_filename_level_must_match_the_tree_level(tmp_path):
-    r"""A level in the name that disagrees with the tree raises.
+def test_filename_level_that_disagrees_with_the_tree_warns(tmp_path):
+    r"""A level in the name that disagrees with the tree warns, and the tree's is used.
 
-    The scanner takes the analysis level from the filename and then reads the
-    tree attribute named for the level recorded inside the tree.  When the two
-    disagree it fails with ``AttributeError: 'DataFile' object has no
-    attribute 'tefield_l1'`` -- naming an attribute the user never wrote and
-    saying nothing about the real cause.  Pinned here so that improving the
-    message is a visible change rather than a silent one.
+    It failed with ``AttributeError: 'DataFile' object has no attribute
+    'tefield_l1'`` -- naming an attribute the user never wrote and saying
+    nothing about the real cause.  Since #187 it warns, naming the file and
+    both levels.
 
     See :ref:`issue-reader-directory-coupling`.
     """
+    from grand.basis.validate import GRANDlibWarning
+
     _write_run_and_efield(str(tmp_path / 'efield_20260101_000000_RUN0_L1_0000.root'),
                           level=0)          # name says L1, tree says 0
 
-    with pytest.raises(AttributeError) as excinfo:
-        DataDirectory(str(tmp_path)).get_list_of_files_handles()
-    assert '_l1' in str(excinfo.value) or '_l0' in str(excinfo.value)
+    with pytest.warns(GRANDlibWarning, match="named level 1 but its tefield tree is level 0"):
+        directory = DataDirectory(str(tmp_path))
+    assert directory.tefield is not None

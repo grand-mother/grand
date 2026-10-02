@@ -29,19 +29,15 @@ if args.nv:
 else:
     verbose=True
 
-# Read the file name from command line
-if len(sys.argv) > 1:
-    dir_name = sys.argv[1]
-else:
-    print("Please provide a GRAND data output directory")
-    exit()
-
-print("Reading directory", dir_name)
+# argparse requires the directory; sys.argv[1] could be an option such as -p
+print("Reading directory", args.dirname)
 
 # Construct the command based on the arguments
-command = f"from grand.aoi import *; el = EventList('{args.dirname}', use_trawvoltage={args.use_trawvoltage});"
+# The name reaches the shell through the environment, never as code (#184)
+os.environ["GRAND_OPEN"] = args.dirname
+command = "import os; from grand.aoi import *; el = EventList(os.environ['GRAND_OPEN'], use_trawvoltage=%s);" % bool(args.use_trawvoltage)
 if not args.s:
-    command+=f" print(f'\\n\\033[0;31mCreated a list of events in directory {args.dirname} as el\\033[0m\\n');"
+    command+=" print('\\n\\033[0;31mCreated a list of events in directory %s as el\\033[0m\\n' % os.environ['GRAND_OPEN']);"
     command += " print('You can now iterate through events with, for example:\\n\\nfor i,e in enumerate(el):\\n  print(e.event_number)\\n  ...')"
  
 os.execlp(interp, interp, '-i', '-c', command)

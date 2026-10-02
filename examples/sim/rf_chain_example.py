@@ -1210,16 +1210,17 @@ def plot(args="galactic", savefig=False, **kwargs):
 if __name__ == "__main__":
     import argparse
 
+    options_list = ["lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain"]
+    # The help named ./plot_noise.py, listed other options than the check, and
+    # an unknown option raised a bare Exception (#218)
     parser = argparse.ArgumentParser(
-        description="Parser to select which noise quantity to plot. \
-        To Run: ./rf_chain_example.py <plot_option>. \
-        <plot_option>: galactic, lna balun_after_lna cable vga balun_before_adc rf_chain. \
-        Add --lst <int> for galactic noise. i.e ./plot_noise.py galactic --lst 18."
+        description="Plots the galactic noise or one stage of the RF chain. "
+                    "For example: ./rf_chain_example.py galactic --lst 18"
         )
     parser.add_argument(
         "plot_option",
-        default="galactic",
-        help="Option to select which noise quantity to plot.",
+        choices=["galactic"] + options_list,
+        help="what to plot",
         )
     parser.add_argument(
         "--lst",
@@ -1232,17 +1233,13 @@ if __name__ == "__main__":
         "--savefig",
         action="store_true",
         default=False,
-        help="don't add galactic noise.",
+        help="save the figure to a PNG file instead of only showing it",
     )
 
     args = parser.parse_args()
 
-    options_list = ["lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain"]
-
     if args.plot_option=="galactic":
         plot(args.plot_option, lst=args.lst, savefig=args.savefig)
-    elif args.plot_option in options_list:
-        plot(args.plot_option, savefig=args.savefig)
     else:
-        raise Exception("Please provide a proper option for plotting noise. Options: galactic, vswr, lna, vga, cable, rf_chain.")
+        plot(args.plot_option, savefig=args.savefig)
 

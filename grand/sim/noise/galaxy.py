@@ -5,6 +5,7 @@ Simulation of Galactic radio noise.
 import numpy as np
 
 from grand.basis import validate as _validate
+from grand.basis import data_model as _data_model
 
 from grand import grand_add_path_data
 
@@ -29,7 +30,8 @@ def interpol_at_new_x(a_x, a_y, new_x):
     """
     from scipy import interpolate
 
-    assert a_x.shape[0] > 0
+    if a_x.shape[0] == 0:   # an assert, gone under python -O (#259)
+        raise ValueError(_validate.message("galaxy.interpol_at_new_x", "no sample positions to interpolate from"))
     func_interpol = interpolate.interp1d(
         a_x,
         a_y,
@@ -68,9 +70,13 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     f_lst : float
         Local sidereal time in hours. Must satisfy ``0 <= f_lst < 24``.
     size_out : int
-        Length of the corresponding time-domain inverse FFT.
+        Length, in samples, of the time trace the spectrum belongs to.  It
+        sets the normalisation, so it must be the length the spectrum will be
+        inverted to, whatever part of the frequency axis `freqs_mhz` covers.
     freqs_mhz : ndarray, shape (nb_freq,)
-        Uniformly spaced output-frequency grid, in MHz.
+        Uniformly spaced output-frequency grid, in MHz: the full rFFT axis
+        of `size_out` samples (``size_out // 2 + 1`` points), or a band of it.
+        It is not checked against `size_out` (#261).
     nb_ant : int
         Number of detector units for which independent noise is generated.
     seed : int or None, optional
@@ -93,6 +99,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         not one of the three tabulated models, or if `freqs_mhz` is not
         uniformly spaced and increasing.
     """
+    _validate.plausible(freqs_mhz, "freqs_mhz", "galactic_noise", "frequency_mhz")   # Hz gave all zeros (#266)
     # The Galactic-noise tables sample LST every 20 minutes (72 bins/24 h).
     # Select the nearest available bin. Integer-hour values map exactly, e.g.
     # f_lst=18.0 -> bin 54 -> LST 18:00.
@@ -120,7 +127,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     gala_file = grand_add_path_data(gala_files[du_type])
     zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
 
-    gala_power = np.load(gala_file)
+    gala_power = np.load(_data_model.check(gala_file, "galactic_noise"))  # (#279)
     if gala_power.shape != (221, 72, 3):
         raise ValueError(
             f"Unexpected Galactic-noise table shape {gala_power.shape} "
@@ -138,7 +145,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
     poc_1mhz = 1e6 * poc_per_hz
 
     # Use the same antenna-resistance table used to construct the P_L tables.
-    zant = np.loadtxt(zant_file, delimiter=",", skiprows=1)
+    zant = np.loadtxt(_data_model.check(zant_file, "galactic_noise"), delimiter=",", skiprows=1)
     zant_complex = np.column_stack(
         [
             zant[:, 1] + 1j * zant[:, 2],  # Z(1,1)

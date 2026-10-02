@@ -75,3 +75,6 @@ sim2root/CoREASRawRoot/__pycache__/CorsikaInfoFuncs.cpython-310.pyc
 docs/build/
 docs/source/_static/version.css
 docs/source/_static/GRANDlib_Handbook.pdf
+
+# pip wheel's build directory (tests/test_packaging.py builds a wheel)
+build/

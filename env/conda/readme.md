@@ -49,6 +49,10 @@ conda deactivate
 
 Based on ROOT version : 6.36.04
 
+The supported environment is `env/conda/grand-dev.yml`, as in the top-level
+README (`conda env create -f env/conda/grand-dev.yml --solver=libmamba`).
+The pinned `reqmt_grandenv_2509.yml` below is the older, fully frozen variant.
+
 Start by update your conda and create the GRANDLIB environnement with file conf defined in grand/env/conda 
 
 ```
@@ -107,7 +111,7 @@ Finally launch tests suite package to
 
 ```
 python -m pip install -r quality/requirements.txt
-grand_quality_test_cov.bash
+quality/grand_quality_test_cov.bash
 ```
 
 

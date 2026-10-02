@@ -28,14 +28,19 @@ pytestmark = pytest.mark.skipif(len(RAWROOTS) != 2, reason="the committed sample
 
 
 def test_sim2root_converts_the_committed_samples(tmp_path):
-    r"""Both samples convert; the shower tree holds both events."""
+    r"""Both samples convert; the shower tree holds both events.
+
+    Their trace windows differ, and a run stores one, so the window is given
+    (#222).
+    """
     from grand.dataio import TShower
 
     for raw in RAWROOTS:
         shutil.copy(raw, tmp_path)
     done = subprocess.run(
         [sys.executable, str(SIM2ROOT)] + [p.name for p in sorted(tmp_path.glob("*.rawroot"))]
-        + ["-se", "1", "-sl", "GP300", "-s", "Xiaodushan"],
+        + ["-se", "1", "-sl", "GP300", "-s", "Xiaodushan",
+           "--trigger_time_ns", "500", "--target_duration_us", "2"],
         cwd=tmp_path, capture_output=True, text=True, timeout=900)
     assert done.returncode == 0, done.stderr[-2000:]
 

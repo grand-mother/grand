@@ -56,7 +56,7 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
     phi_adf : float
         Azimuth angle from ADF reconstruction (radians).
     delta_omega : float
-        Angular uncertainty (radians).
+        Width parameter of the ADF, in radians (not an uncertainty, #216).
     scaling_factor : float
         Scaling factor for the amplitude model.
     Xants : np.ndarray
@@ -68,8 +68,14 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
 
     Returns
     -------
-    np.ndarray
-        The computed Cramer-Rao Bound value for the ADF SWF model.
+    np.ndarray, shape (8,)
+        The smallest standard deviations (square roots of the diagonal of the
+        inverse Fisher matrix) an unbiased fit can reach, for the parameters
+        in the order of the arguments: theta_swf, phi_swf (radians),
+        r_xsource (m), t_s (s), theta_adf, phi_adf, delta_omega (radians),
+        scaling_factor.  All NaN if the Fisher matrix cannot be inverted
+        (#261).  They are bounds for the joint time-and-amplitude model, so
+        lower than a time-only spherical fit can reach (#216).
     """
     # Number of antennas
     where = "CRB_ADF_SWF"
@@ -172,14 +178,17 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
 
     Returns
     -------
-    np.ndarray
-        The computed Cramer-Rao Bound value for the PWF model.
+    np.ndarray, shape (2,)
+        The smallest standard deviations of theta_pwf and phi_pwf an unbiased
+        fit can reach, in radians (square roots of the diagonal of the
+        inverse Fisher matrix) (#261).  At zenith 0 or pi the azimuth is
+        undefined: its bound is ``inf``, with a warning, and the zenith bound
+        is the one for a known azimuth (#288).
     """
     # Number of antennas
     where = "CRB_PWF"
     Xants = _checks.antennas(Xants, where, min_ants=3)
-    _validate.as_real(theta_pwf, "theta_pwf", where)
-    _validate.as_real(phi_pwf, "phi_pwf", where)
+    _checks.angles(where, theta_pwf=theta_pwf, phi_pwf=phi_pwf)
     _validate.positive(_validate.as_real(uncertainty_time, "uncertainty_time", where), "uncertainty_time", where, "s")
     nants = Xants.shape[0]
 
@@ -192,17 +201,28 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
     h = 1e-6 * np.abs(params)
     h[h == 0] = 1e-6  # a parameter at exactly 0 (e.g. azimuth) would get no step, and 0/0
 
+    # At zenith 0 or 180 degrees the azimuth is undefined, and a central
+    # difference in theta crosses the pole and gives 0: both bounds came out
+    # NaN (#288).  Theta is differentiated one-sided there, and the azimuth
+    # bound is infinite.
+    at_pole = np.sin(theta_pwf) < 1e-9
+
     # Derivate on each antenna for each parameter
     for i in range(2):
         params_plus  = params.copy()
         params_plus[i]  += h[i]
         params_minus = params.copy()
         params_minus[i] -= h[i]
+        if at_pole and i == 0:
+            if np.cos(theta_pwf) > 0:
+                params_minus[i] = theta_pwf
+            else:
+                params_plus[i] = theta_pwf
 
         pred_time_plus  = pwf.PWF_model(params_plus, Xants)
         pred_time_minus = pwf.PWF_model(params_minus, Xants)
 
-        derivates_time[:, i] = (pred_time_plus - pred_time_minus) / (2.0 * h[i])
+        derivates_time[:, i] = (pred_time_plus - pred_time_minus) / (params_plus[i] - params_minus[i])
 
     # Fill Fisher Information Matrix
     sigma_time = (uncertainty_time) # in seconds
@@ -210,11 +230,17 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
     for i in range(nants):
         fisher_information_matrix += np.outer(derivates_time[i, :], derivates_time[i, :]) / (sigma_time ** 2)
     
+    if at_pole:
+        _validate.warn(where, "the azimuth is undefined at zenith %g rad: its bound is infinite"
+                       % theta_pwf, stacklevel=3)
+        return np.array([1.0 / np.sqrt(fisher_information_matrix[0, 0]), np.inf])
     _warn_if_ill_conditioned(fisher_information_matrix, where)
     try:
         cov_matrix = np.linalg.inv(fisher_information_matrix)
         crb_values = np.sqrt(np.diag(cov_matrix))
         return crb_values
     except np.linalg.LinAlgError:
-        print("Fisher Information Matrix is singular, cannot compute CRB on PWF.")
+        # Printed, not warned (#288)
+        _validate.warn(where, "the Fisher information matrix is singular; the bounds are NaN",
+                       stacklevel=3)
         return np.full(2, np.nan)

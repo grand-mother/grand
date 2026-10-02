@@ -26,7 +26,11 @@ from grand.geo.coordinates import (
 
 from .turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
 import grand.dataio.protocol as store
-from .._core import ffi, lib
+try:
+    from .._core import ffi, lib
+except ImportError as _error:          # (#280)
+    from grand import CORE_MISSING
+    raise ImportError(CORE_MISSING) from _error
 
 __all__ = [
     "elevation",
@@ -70,6 +74,7 @@ def distance(
     position: Any,
     direction: CartesianRepresentation,
     maximum_distance: float = None,
+    frame: Any = None,
 ):
     """Get the signed intersection distance with the topography.
 
@@ -77,10 +82,14 @@ def distance(
     ----------
     position : Geodetic, ECEF, LTP or GRANDCS
         Starting point.
-    direction : array_like
-        Direction to travel in.
+    direction : CartesianRepresentation or ECEF
+        Direction to travel in, in **ECEF** unless `frame` says otherwise.
     maximum_distance : float, optional
         Give up beyond this distance, in metres.
+    frame : LTP, GRANDCS or "ENU", optional
+        Frame `direction` is given in: the axes of an `LTP` or `GRANDCS`, or
+        ``"ENU"`` for east, north and up at the (single) starting point.  By
+        default it is ECEF.
 
     Returns
     -------
@@ -92,7 +101,30 @@ def distance(
     if _default_topography is None:
         DATADIR.mkdir(exist_ok=True)
         _default_topography = Topography(DATADIR)
-    return _default_topography.distance(position, direction, maximum_distance)
+    return _default_topography.distance(position, direction, maximum_distance, frame=frame)
+
+
+def _direction_to_ecef(direction, frame, position):
+    r"""Rotates `direction`, given in `frame`, to ECEF (see `Topography.distance`)."""
+    if isinstance(frame, str):
+        if frame.upper() != "ENU":
+            raise ValueError("GRANDlib: topography.distance: frame must be an LTP, a GRANDCS "
+                             "or \"ENU\", got %r" % frame)
+        if position.x.size != 1:
+            raise ValueError("GRANDlib: topography.distance: frame=\"ENU\" needs a single "
+                             "starting point; pass an LTP as the frame for several")
+        start = Geodetic(position)
+        frame = LTP(location=Geodetic(latitude=float(np.ravel(start.latitude)[0]),
+                                      longitude=float(np.ravel(start.longitude)[0]),
+                                      height=float(np.ravel(start.height)[0])),
+                    orientation="ENU", magnetic=False)
+    basis = getattr(frame, "basis", None)
+    if basis is None:
+        raise ValueError("GRANDlib: topography.distance: frame must be an LTP, a GRANDCS "
+                         "or \"ENU\", got %s" % type(frame).__name__)
+    local = np.vstack([np.ravel(direction.x), np.ravel(direction.y), np.ravel(direction.z)])
+    ecef = np.matmul(np.asarray(basis).T, local)
+    return CartesianRepresentation(x=ecef[0], y=ecef[1], z=ecef[2])
 
 
 def elevation(coordinates, reference: Optional[str] = _default_reference):
@@ -143,6 +175,39 @@ def _finite_points(a, b, frame_finite, where):
     return finite
 
 
+def _fill_elevation(n, finite, values):
+    r"""Puts the computed elevations back among the skipped points.
+
+    A point with a finite position that comes back NaN lies outside every
+    loaded tile. That used to be silent (#280): the warning says how many and
+    how to get the tiles.
+
+    Parameters
+    ----------
+    n : int
+        Total number of points.
+    finite : ndarray of bool
+        Which points were computed.
+    values : ndarray
+        Elevations of the computed points.
+
+    Returns
+    -------
+    ndarray
+        The `n` elevations, NaN where none could be computed.
+    """
+    missing = int(np.isnan(values).sum())
+    if missing:
+        warnings.warn(_validate.message(
+            "Topography.elevation", "%d of %d points are outside the loaded topography tiles; "
+            "their elevation is NaN. Download the tiles around them with "
+            "grand.topography.update_data(coordinates, radius=...)"
+            % (missing, values.size)), _validate.GRANDlibWarning, stacklevel=4)
+    elevation = np.full(n, np.nan)
+    elevation[finite] = values
+    return elevation
+
+
 def _get_geoid():
     r"""Returns the geoid map, loading it on first use.
 
@@ -161,13 +226,15 @@ def _get_geoid():
 
 
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
+    """Get the geoid undulation: the height of the geoid above the ellipsoid.
+
+    Same signature and values as :func:`grand.geo.coordinates.geoid_undulation`.
 
     Parameters
     ----------
-    coordinates : Geodetic, ECEF, LTP or GRANDCS
-        Position or positions to evaluate at.
+    coordinates : Geodetic, ECEF, LTP, GRANDCS or float, optional
+        Position or positions to evaluate at; or, as a number, the latitude,
+        with the longitude as the second argument.
     latitude : float or ndarray, optional
         Degrees north, instead of `coordinates`.
     longitude : float or ndarray, optional
@@ -177,6 +244,8 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     -------
     float or ndarray
         Height of the geoid above the ellipsoid, in metres.
+
+    A missing angle gives NaN, with a warning.
 
     Examples
     --------
@@ -189,23 +258,11 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
 
         print("%.2f m" % geoid_undulation(latitude=40.98, longitude=93.95))
     """
+    from grand.geo.coordinates import _latitude_longitude
+    latitude, longitude = _latitude_longitude(coordinates, latitude, longitude, "geoid_undulation")
     geoid = _get_geoid()
-
-    # Compute the geodetic coordinates
-    # if (not isinstance(latitude, type(None))) and (not isinstance(longitude, type(None))):
-    if (latitude is not None) and (longitude is not None):
-        pass
-        # elif not isinstance(coordinates, type(None)):
-    elif coordinates is not None:
-        geodetic = Geodetic(coordinates)
-        latitude = geodetic.latitude
-        longitude = geodetic.longitude
-    else:
-        raise TypeError(
-            "Provide coordinates in known coordinate frames or as latitude and longitude."
-        )
-
-    return geoid.elevation(longitude, latitude)
+    # The map spans longitudes 0 to 360: negative ones gave NaN (#251)
+    return geoid.elevation(np.mod(np.asarray(longitude, dtype=float), 360.0), latitude)
 
 
 def update_data(coordinates=None, clear: bool = False, radius: float = None):
@@ -469,9 +526,7 @@ class Topography:
             x.size,
         )
 
-        elevation = np.full(n, np.nan)
-        elevation[finite] = values
-        return elevation
+        return _fill_elevation(n, finite, values)
 
     def _global_elevation(self, coordinates, reference: str):
         """Get the topography elevation w.r.t. sea level or w.r.t. the
@@ -521,15 +576,14 @@ class Topography:
             latitude.size,
         )
 
-        elevation = np.full(n, np.nan)
-        elevation[finite] = values
-        return elevation
+        return _fill_elevation(n, finite, values)
 
     def distance(
         self,
         position: Any,
         direction: CartesianRepresentation,
         maximum_distance: float = None,
+        frame: Any = None,
     ):
         """Get the signed intersection distance with the topography.
 
@@ -537,10 +591,16 @@ class Topography:
         ----------
         position : Geodetic, ECEF, LTP or GRANDCS
             Starting point.
-        direction : array_like
-            Direction to travel in.
+        direction : CartesianRepresentation or ECEF
+            Direction to travel in, in **ECEF** unless `frame` says otherwise.
+            A local (east, north, up) vector passed without `frame` is read as
+            ECEF and gives a wrong distance (#210).
         maximum_distance : float, optional
             Give up beyond this distance, in metres.
+        frame : LTP, GRANDCS or "ENU", optional
+            Frame `direction` is given in: the axes of an `LTP` or `GRANDCS`,
+            or ``"ENU"`` for east, north and up at the (single) starting
+            point.  By default it is ECEF.
 
         Returns
         -------
@@ -554,12 +614,11 @@ class Topography:
             self._stepper = stepper
 
         position = ECEF(position)
-        if isinstance(direction, (CartesianRepresentation, ECEF)):
-            # TODO: Convert direction vector given in any known coordinate frame to ECEF frame.
-            #       direction must be in ECEF frame for lib.grand_topography_distance()
-            pass
-        else:
+        if not isinstance(direction, (CartesianRepresentation, ECEF)):
             raise TypeError("Direction must be in CartesianRepresentation in ECEF frame.")
+        # TURTLE needs an ECEF direction (#210)
+        if frame is not None:
+            direction = _direction_to_ecef(direction, frame, position)
 
         # Normalize the direction vector. Unit vector is required.
         norm = np.linalg.norm(direction)

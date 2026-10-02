@@ -52,7 +52,7 @@ Feb 2024 modified by SN to add antenna model selection.
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
     if f_hour < 0 or f_hour > 24:
-        raise argparse.ArgumentTypeError(f"lts must be > 0h and < 24h.")
+        raise argparse.ArgumentTypeError("--lst must be from 0 to 24 h, got %s" % s_hour)
     return f_hour
 
 
@@ -101,10 +101,18 @@ def manage_args():
         "-o",
         "--out_file",
         default=None,
-        help="output file in GRANDROOT format. If the file exists it is overwritten.",
+        help="output file in GRANDROOT format, relative to the output directory (-od, by default "
+             "the input folder). If the file exists it is overwritten.",
         # required=True,
         # PB with option ???
         # type=argparse.FileType("w"),
+    )
+    parser.add_argument(
+        "--level",
+        type=int,
+        default=None,
+        help="level of the efield files to read, for a folder holding several (default: the "
+             "highest, with a warning)",
     )
     parser.add_argument(
         "-od",
@@ -140,7 +148,9 @@ def manage_args():
         "--du_type",
         type=str,
         default='GP300',
-        help="Choose between 4 different antenna models, GP300 -using hfss simulations, GP300_nec -using nec simulations, GP300_mat -using matlab simulations, Horizon",
+        choices=["GP300", "GP300_nec", "GP300_mat"],
+        # Horizon was offered, but its antenna files are not in the data model (#232)
+        help="Antenna model: GP300 (HFSS simulations, the default), GP300_nec (NEC) or GP300_mat (Matlab)",
     )
     parser.add_argument(
         "--target_duration_us",
@@ -172,6 +182,7 @@ def manage_args():
 
 if __name__ == "__main__":
     import argparse
+    import os
     from typing import Union
     import numpy as np
 
@@ -187,6 +198,16 @@ if __name__ == "__main__":
     # The voltage file has nowhere to record a new sampling rate and the run
     # tree is not rewritten, so the next step (convert_voltage2adc.py) would
     # read the input rate and process the trace at the wrong rate (issue #229).
+    # 1e9 us tried to allocate terabytes; NaN and inf gave raw errors (#277)
+    if not 0 <= args.target_duration_us <= 1e4:
+        raise SystemExit("GRANDlib: convert_efield2voltage: --target_duration_us must be 0 (keep) to 10000 us, "
+                         "got %s" % args.target_duration_us)
+    if not 1 <= args.padding_factor < float("inf"):
+        raise SystemExit("GRANDlib: convert_efield2voltage: --padding_factor must be finite and at least 1, "
+                         "got %s" % args.padding_factor)
+    if not 0 <= args.calibration_smearing_sigma < float("inf"):
+        raise SystemExit("GRANDlib: convert_efield2voltage: --calibration_smearing_sigma must be finite and "
+                         ">= 0, got %s" % args.calibration_smearing_sigma)
     if args.target_sampling_rate_mhz:
         raise SystemExit(
             "GRANDlib: convert_efield2voltage: --target_sampling_rate_mhz is not supported: the "
@@ -197,6 +218,8 @@ if __name__ == "__main__":
     # If no output directory given, define it as input directory
     if args.out_directory is None:
         args.out_directory = args.directory
+    # A folder not yet made failed with FileNotFoundError (#182)
+    os.makedirs(args.out_directory, exist_ok=True)
 
     logger.debug(args.directory)
 
@@ -205,10 +228,13 @@ if __name__ == "__main__":
     logger.info(mlg.string_begin_script())
     # =============================================
     seed = None if args.seed==-1 else args.seed
+    if seed is not None and seed < 0:
+        raise SystemExit("GRANDlib: convert_efield2voltage: --seed must be a non-negative integer, got %d" % seed)
     logger.info(f"seed used for random number generator is {seed}.")
 
     # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
-    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
+    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type,
+                            efield_level=args.level)
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
@@ -220,7 +246,9 @@ if __name__ == "__main__":
     signal.params["add_rf_chain_gaa"] = args.rf_chain_gaa
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
-    signal.compute_voltage()    # saves automatically
+    # -o's help says an existing file is overwritten; it was appended to, and a
+    # re-run failed with NotUniqueEvent (#240)
+    signal.compute_voltage(append_file=False)    # saves automatically
 
     # =============================================
     logger.info(mlg.string_end_script())

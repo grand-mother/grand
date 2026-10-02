@@ -77,9 +77,10 @@ def sin_geomag_angle(theta, phi, B=None):
     if B is None:
         B = cons.Bn
     K = co.shower_direction_vector(theta, phi)
-    sin_alpha = np.cross(K.T,B)
-    sin_alpha = np.linalg.norm(sin_alpha)
-    return sin_alpha
+    # Per direction: without an axis the norm ran over every row together and
+    # returned one number, above 1, for an array of angles (#214)
+    sin_alpha = np.linalg.norm(np.cross(np.asarray(K).T, B), axis=-1)
+    return sin_alpha if np.ndim(sin_alpha) else float(sin_alpha)
     
 
 

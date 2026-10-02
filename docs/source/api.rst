@@ -3,11 +3,11 @@ API reference
 
 Generated from the docstrings.
 
-Every one of the 554 functions and methods in the package carries a
-description.  64 % also carry a ``Parameters`` section and 58 % a ``Returns``
-section; the remainder are functions that take no arguments or return nothing,
-where numpydoc asks for neither.  18 carry a worked example, concentrated on
-the entry points where an example earns its keep.
+Of the 702 functions and methods in the package, 691 carry a description.
+60 % also carry a ``Parameters`` section and 55 % a ``Returns`` section; the
+remainder are functions that take no arguments or return nothing, where
+numpydoc asks for neither.  17 carry a worked example, concentrated on the
+entry points where an example earns its keep.
 
 Run ``python quality/docstring_coverage.py`` to reproduce those figures.
 
@@ -65,6 +65,9 @@ for the conventions these classes assume.
    :members:
 
 .. automodule:: grand.dataio.protocol
+   :members:
+
+.. automodule:: grand.dataio.xmax_frame
    :members:
 
 Simulation
@@ -184,10 +187,31 @@ with a known answer and on ten GP13 candidates.
 .. automodule:: grand.analysis.cramer_rao_bounds.cramer_rao
    :members:
 
+.. automodule:: grand.analysis.physics.cherenkov_angle
+   :members:
+
+.. automodule:: grand.analysis.physics.atmosphere
+   :members:
+
+.. automodule:: grand.analysis.coords.array_shower
+   :members:
+
+.. automodule:: grand.analysis.geom.angles
+   :members:
+
+.. automodule:: grand.analysis.geom.footprint
+   :members:
+
+.. automodule:: grand.analysis.constants
+   :members:
+
 Support
 -------
 
 .. automodule:: grand.manage_log
+   :members:
+
+.. automodule:: grand.provenance
    :members:
 
 .. automodule:: grand.geo.gull

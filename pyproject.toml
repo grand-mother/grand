@@ -127,10 +127,17 @@ Issues = "https://github.com/grand-mother/grand/issues"
 include = ["grand*"]
 
 [tool.setuptools.package-data]
-grand = ["dataio/version"]
+# Every non-Python file the package opens from its own directory.  Without
+# them a wheel built where setuptools does not see the git checkout imported
+# with "macro vector_filling.C not found" and failed on the first vector
+# branch, and grand.sim.efield2voltage did not import at all (#278).
+grand = ["dataio/version", "dataio/vector_filling.C", "sim/detector/rf_chain_config.xml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# An expected failure that starts passing fails the run, so that a fix is
+# noticed and its marker removed (#271).
+xfail_strict = true
 
 [tool.ruff]
 line-length = 100

@@ -39,28 +39,33 @@ def _load(name, path):
 # ------------------------------------------------------------------ #95
 
 @pytest.mark.skipif(not SAMPLE.is_dir(), reason="the sample run is not present")
-def test_an_unknown_event_number_returns_none_not_a_stale_event():
-    r"""Asking for an event the input does not hold gives ``None``.
+def test_an_unknown_event_number_raises_not_a_stale_event():
+    r"""Asking for an event the input does not hold raises ``LookupError``.
 
     Before, a fresh list crashed in the reader ("zero-size array"), and after
     a valid event the call returned an Event labelled with the requested
-    number but still holding the previous event's traces.
+    number but still holding the previous event's traces.  It then printed
+    and returned ``None``, which a loop carried on with; since #256 it
+    raises.
     """
+    import pytest
+
     from grand.aoi.event_list import EventList
 
     quiet = io.StringIO()
     with contextlib.redirect_stdout(quiet):
         events = EventList(str(SAMPLE))
-        assert events.get_event(event_number=999999, run_number=1) is None
+        with pytest.raises(LookupError, match="no event with event number 999999"):
+            events.get_event(event_number=999999, run_number=1)
 
         first = events.get_event(event_number=1618, run_number=1)
         assert (first.event_number, len(first.efields)) == (1618, 5)
-        assert events.get_event(event_number=999999, run_number=1) is None
+        with pytest.raises(LookupError):
+            events.get_event(event_number=999999, run_number=1)
 
         # A valid event after a refused one still loads, with its own data.
         other = events.get_event(event_number=13790, run_number=1)
         assert (other.event_number, len(other.efields)) == (13790, 44)
-    assert "No event with event number 999999" in quiet.getvalue()
 
 
 # ------------------------------------------------------------------ #122

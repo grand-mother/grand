@@ -7,6 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 from logging import getLogger
+
+from grand.basis import validate as _validate
 from typing import Union, Any
 
 import numpy as np
@@ -152,8 +154,9 @@ class AntennaProcessing:
         a_freq : ndarray
             Output frequency axis, in MHz.
         """
-        assert isinstance(a_freq, np.ndarray)
-        assert a_freq[0] == 0
+        # Asserts, gone under python -O (#259)
+        if not isinstance(a_freq, np.ndarray) or a_freq.size == 0 or a_freq[0] != 0:
+            raise ValueError(_validate.message("AntennaProcessing.set_out_freq_mhz", "expected an array of frequencies starting at 0 MHz, as scipy.fft.rfftfreq gives"))
         self.freqs_out_hz = a_freq * 1e6
         # we used rfreqfft
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftfreq.html
@@ -248,9 +251,14 @@ class AntennaProcessing:
         # phi_efield between index ip0 and ip1 in phi antenna response representation
         dphi = self.model_leff.phi[1] - self.model_leff.phi[0]  # deg
         rp1 = (phi_efield - self.model_leff.phi[0]) / dphi
-        ip0 = int(np.ravel(np.floor(rp1) % self.model_leff.phi.size)[0])
+        # Periodic over 360 deg, i.e. over the number of steps in a turn, not
+        # over the number of grid points: the tables hold 0 to 360 inclusive
+        # (361 points), and wrapping by 361 read every negative azimuth one
+        # step off (#253)
+        period = int(round(360.0 / dphi))
+        ip0 = int(np.ravel(np.floor(rp1) % period)[0])
         ip1 = ip0 + 1
-        if ip1 == self.model_leff.phi.size:  # Results are periodic along phi
+        if ip1 >= self.model_leff.phi.size:  # a grid without the 360 deg column
             ip1 = 0
         rp1 -= np.floor(rp1)
         rp0 = 1 - rp1

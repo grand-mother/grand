@@ -67,6 +67,23 @@ A local frame needs an origin, supplied as ``location``:
 Compare that with the site itself — latitude 40.98, longitude 93.95.  Moving
 1 km along ``x`` changed the **latitude**, so **GRANDCS x points North**.
 
+The reverse -- a geodetic position into the array frame -- passes the
+position as the first argument:
+
+.. jupyter-execute::
+
+    north = Geodetic(latitude=40.99, longitude=93.95, height=1200.0)
+    local = GRANDCS(north, location=site)
+    print("0.01 deg north, in GRANDCS (m):", np.round(np.asarray(local).ravel(), 1))
+
+The point is due north, yet ``y`` is not zero: ``GRANDCS`` measures ``x``
+from **magnetic** north, 0.3° from geographic north at Dunhuang, and ``z`` is
+slightly negative because the Earth curves away below the tangent plane.
+
+Every frame stores its components as ``(3, n)`` arrays, so a single point
+comes back with shape ``(3, 1)``.  That is why the examples here print
+``np.asarray(x).ravel()``: it flattens one point to three numbers.
+
 .. _coordinates-the-trap:
 
 The trap: x is not x
@@ -118,9 +135,10 @@ Orientation strings
 
 ``magnetic=True`` measures the horizontal axes from **magnetic** north rather
 than geographic north, using the geomagnetic model at that place and date.
-The declination at Dunhuang is a few degrees, which over a 10 km array is
-hundreds of metres — so it is a choice to make deliberately, not a default to
-inherit.
+The declination at Dunhuang is small -- about 0.3° in 2020 by the shipped
+IGRF-13 model, roughly 50 m at the edge of a 10 km array -- and it changes
+with the date.  Elsewhere it reaches several degrees, so it is still a choice
+to make deliberately, not a default to inherit.
 
 Heights need a reference
 ------------------------
@@ -197,7 +215,7 @@ Common mistakes
      - Cause
    * - A detector lands outside the array
      - ``GRANDCS`` and ``LTP`` axes confused; see :ref:`coordinates-the-trap`
-   * - Positions off by a few hundred metres
+   * - Positions off by tens of metres (more at sites with a larger declination)
      - ``magnetic=True`` where geographic north was meant, or the reverse
    * - Heights off by a few metres
      - Ellipsoid and geoid references mixed
@@ -210,10 +228,9 @@ Common mistakes
 
 .. note::
 
-   A worked notebook is planned for this page — the frames and conversions
-   end to end, with a detector layout drawn in ``GRANDCS`` and again in
-   geodetic coordinates, a shower axis in both, and a terrain profile along
-   it. Tracked in ``resources/dev/dev-next/RECOVERY_PLAN.md``.
+   Notebook 01, *Coordinate systems* (see :doc:`notebooks`), works through this
+   page end to end: the frames and conversions, a detector layout drawn in
+   ``GRANDCS`` and again in geodetic coordinates, and a shower axis in both.
 
 Reference
 ---------

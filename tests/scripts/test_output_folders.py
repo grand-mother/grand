@@ -1,0 +1,90 @@
+# -*- coding: utf-8 -*-
+r"""Conversion scripts: missing output folders (#182) and a file for a folder (#180)."""
+
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+
+import pytest
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+ZHAIRES = sorted((ROOT / "sim2root" / "ZHAireSRawRoot").glob("*.rawroot"))
+
+pytestmark = pytest.mark.skipif(not ZHAIRES, reason="the committed samples are not present")
+
+
+def _run(*argv, cwd):
+    env = dict(os.environ, PYTHONPATH=str(ROOT))
+    done = subprocess.run([sys.executable, *map(str, argv)], cwd=cwd, env=env,
+                          capture_output=True, text=True, timeout=900)
+    assert done.returncode == 0, done.stderr[-2000:]
+
+
+@pytest.fixture(scope="module")
+def simulation(tmp_path_factory):
+    work = tmp_path_factory.mktemp("folders")
+    shutil.copy(ZHAIRES[0], work)
+    _run(ROOT / "sim2root" / "Common" / "sim2root.py", ZHAIRES[0].name, "-sl", "GP300", cwd=work)
+    (folder,) = work.glob("sim_*")
+    return folder
+
+
+def test_a_new_output_folder_is_created(simulation, tmp_path):
+    target = tmp_path / "new" / "sub"
+    _run(ROOT / "scripts" / "convert_efield2voltage.py", simulation, "--no_noise", "-od", target, cwd=tmp_path)
+    assert list(target.glob("voltage_*_L0_*.root"))
+    target = tmp_path / "other" / "sub"
+    _run(ROOT / "scripts" / "convert_efield2efield.py", simulation, "-od", target, cwd=tmp_path)
+    assert list(target.glob("*.root"))
+
+
+def test_voltage2adc_accepts_the_voltage_file(simulation, tmp_path):
+    _run(ROOT / "scripts" / "convert_efield2voltage.py", simulation, "--no_noise", cwd=tmp_path)
+    (voltage,) = simulation.glob("voltage_*_L0_*.root")
+    _run(ROOT / "scripts" / "convert_voltage2adc.py", voltage, cwd=tmp_path)
+    assert list(simulation.glob("adc_*_L1_*.root"))
+
+
+def _fails(*argv, cwd):
+    env = dict(os.environ, PYTHONPATH=str(ROOT))
+    done = subprocess.run([sys.executable, *map(str, argv)], cwd=cwd, env=env,
+                          capture_output=True, text=True, timeout=900)
+    assert done.returncode != 0
+    return done.stderr
+
+
+@pytest.mark.parametrize("option, message", [
+    (("--target_duration_us", "0.5"), "--target_duration_us 0.5 is shorter than the traces"),
+    (("--add_noise_uVm", "-3"), "--add_noise_uVm must be finite and >= 0"),
+    (("--add_noise_uVm", "inf"), "--add_noise_uVm must be finite and >= 0"),      # wrote NaN (#288)
+    (("--target_sampling_rate_mhz", "0.5"), "--target_sampling_rate_mhz must be 0 (keep) or at least 10 MHz"),                   # 2-4 samples (#288)
+])
+def test_efield2efield_explains_bad_options(simulation, tmp_path, option, message):
+    r"""#233: these failed with a bare AssertionError."""
+    stderr = _fails(ROOT / "scripts" / "convert_efield2efield.py", simulation, *option, "-od", tmp_path,
+                    cwd=tmp_path)
+    assert "GRANDlib: convert_efield2efield: " + message in stderr and "AssertionError" not in stderr
+
+
+def test_efield2voltage_names_padding_factor(simulation, tmp_path):
+    r"""#233: --padding_factor 0.5 was reported as "'extend_to_us' = 0 us is shorter"."""
+    stderr = _fails(ROOT / "scripts" / "convert_efield2voltage.py", simulation, "--padding_factor", "0.5",
+                    "-od", tmp_path, cwd=tmp_path)
+    assert "padding_factor" in stderr and "at least 1" in stderr and "extend_to_us" not in stderr
+    lst = _fails(ROOT / "scripts" / "convert_efield2voltage.py", simulation, "--lst", "25", cwd=tmp_path)
+    assert "--lst must be from 0 to 24 h" in lst
+
+
+@pytest.mark.parametrize("script, option, message", [
+    ("convert_efield2voltage.py", ("--target_duration_us", "1e9"), "--target_duration_us must be 0 (keep) to 10000 us"),
+    ("convert_efield2voltage.py", ("--padding_factor", "nan"), "--padding_factor must be finite"),
+    ("convert_efield2voltage.py", ("--calibration_smearing_sigma", "-1"), "--calibration_smearing_sigma must be finite"),
+    ("convert_voltage2adc.py", ("--seed", "-3"), "--seed must be a non-negative integer"),
+    ("convert_voltage2adc.py", ("--target_sampling_rate_mhz", "-5"), "--target_sampling_rate_mhz must not be negative"),
+])
+def test_script_options_are_checked(simulation, tmp_path, script, option, message):
+    r"""#277: these were accepted, or failed with raw errors deep in the run."""
+    stderr = _fails(ROOT / "scripts" / script, simulation, *option, cwd=tmp_path)
+    assert message in stderr, stderr[-1500:]

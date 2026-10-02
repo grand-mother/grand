@@ -143,6 +143,10 @@ logger = logging.getLogger(__name__)
 #############################
 
 
+#: Log files create_output_for_logger() opened in this process
+_log_files_written = set()
+
+
 def create_output_for_logger(
     log_level="info", log_file=None, log_stdout=True, log_root=NAME_ROOT_LIB
 ):
@@ -162,7 +166,8 @@ def create_output_for_logger(
     if isinstance(log_root, str):
         l_log_root = [log_root]
     else:
-        l_log_root = log_root
+        # A copy: the caller's list was extended with SCRIPT_ROOT_LOGGER (#256)
+        l_log_root = list(log_root)
     if SCRIPT_ROOT_LOGGER != "":
         l_log_root.append(SCRIPT_ROOT_LOGGER)
     ret_level = _check_logger_level(log_level)
@@ -170,14 +175,27 @@ def create_output_for_logger(
     root = l_log_root[0]
     my_logger = logging.getLogger(root)
     my_logger.setLevel(ret_level)
+    # Each call added handlers on top of the previous ones, so every message
+    # was printed once per call, and truncated the log file (#256): the
+    # handlers this function added before are replaced, and a file it already
+    # wrote to in this process is appended to
+    for name in l_log_root:
+        target = logging.getLogger(name)
+        for handler in list(target.handlers):
+            if getattr(handler, "_grand_managed", False):
+                target.removeHandler(handler)
     # first root logger NAME_ROOT_LIB define handler
     if log_file is not None:
-        f_hd = logging.FileHandler(log_file, mode="w")
+        mode = "a" if osp.abspath(log_file) in _log_files_written else "w"
+        _log_files_written.add(osp.abspath(log_file))
+        f_hd = logging.FileHandler(log_file, mode=mode)
+        f_hd._grand_managed = True
         f_hd.setLevel(ret_level)
         f_hd.setFormatter(formatter)
         my_logger.addHandler(f_hd)
     if log_stdout:
         s_hd = logging.StreamHandler()
+        s_hd._grand_managed = True
         s_hd.setLevel(ret_level)
         s_hd.setFormatter(formatter)
         my_logger.addHandler(s_hd)

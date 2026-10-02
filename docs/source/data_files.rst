@@ -16,7 +16,7 @@ What is in version control
 --------------------------
 
 ``data/.gitignore`` ignores everything and re-admits a handful of files, so a
-fresh checkout has 12 tracked files and no models:
+fresh checkout has 14 tracked files and no models:
 
 ==================================  ========================================
 Tracked                             What it is
@@ -30,6 +30,8 @@ Tracked                             What it is
 ``geomagnet/WMM2020.COF``           World Magnetic Model 2020 coefficients
 ``model_version.flag``              Which model release the download script
                                     should fetch: ``444342 20250313``
+``noise/galactic_PL_*.npy`` (3)     The Galactic-noise tables in use, one
+                                    per antenna model (see below)
 ``map.png``, ``readme.md``          Documentation assets
 ==================================  ========================================
 
@@ -59,13 +61,32 @@ holds roughly:
 .. note::
 
    ``data/test_efield.root`` appears on many developer machines and is **not**
-   tracked or downloaded by anything.  A test that needs it is marked xfail for
-   that reason; see :doc:`testing`.
+   tracked or downloaded by anything.  No test reads it any more: they use the
+   committed samples under ``sim2root/Common`` and write into temporary
+   folders, never into ``data/``.
+
+Checking the installation
+-------------------------
+
+``data/download_data_grand.py`` records the files it installs, with their
+sizes and SHA-256 sums, in ``data/data_model_manifest.json``.  The antenna,
+RF-chain and noise loaders check a file against it before reading: a missing
+file, or one whose size differs, stops with a message naming the file and the
+remedy, rather than a library traceback or, for a damaged file that still
+parses, silently different voltages.  The downloader re-downloads when the
+version matches but a directory or file is missing.  To check by hand, sums
+included::
+
+    python -m grand.basis.data_model            # verify
+    python -m grand.basis.data_model --write    # record the current files
+
+An installation from before the manifest gets one the next time the
+downloader runs.
 
 The download scripts
 --------------------
 
-Five scripts, four distinct archives, and one exact duplicate.
+Four scripts, four archives.
 
 ============================================  =================================
 Script                                        Fetches
@@ -76,11 +97,9 @@ Script                                        Fetches
 ``download_grand_antenna_models.py``          ``grand_model_20241218.tar.gz``
 ``download_LFmap_grand.py``                   ``LFmap.tar.gz``
 ``download_new_RFchain.py``                   ``RF_chain_20241218.tar.gz``
-``download_new_RFchain_grand.py``             the same archive
 ============================================  =================================
 
-The last two differ **only by a trailing newline** — they are the same file
-committed twice.  All of them fetch from ``forge.in2p3.fr``, which requires
+All of them fetch from ``forge.in2p3.fr``, which requires
 no credentials but is not a mirror-backed host: if it is down, a fresh
 environment cannot be built.
 
@@ -254,15 +273,17 @@ Each is shape ``(221, 24, 3)`` — frequency, LST hour, arm — and
 **The source data.**  ``PG_ALL_jifen.mat``, integrated sky power, and
 ``LFmap/``, the LFMap sky maps the tables were built from.
 
-Three problems, all in :ref:`issue-galactic-noise-tables`:
+Until 2026-09-07 these tables had three problems, all in
+:ref:`issue-galactic-noise-tables`, which matter for files simulated before
+then:
 
-- the ``_nec`` and ``_mat`` files are **byte-identical**, so ``du_type='GP300_nec'``
-  and ``'GP300_mat'`` select the same numbers;
-- the default ``du_type='GP300'`` reads none of the ``.npy`` tables — it
-  recomputes :math:`V_{\rm oc}^2 = 4 P R_{\rm ant}` from ``PG_ALL_jifen.mat``;
-- the ``_hfss`` tables, the highest-level ones shipped, are opened by nothing.
+- the ``_nec`` and ``_mat`` files were **byte-identical**, so ``du_type='GP300_nec'``
+  and ``'GP300_mat'`` selected the same numbers;
+- the default ``du_type='GP300'`` read none of the ``.npy`` tables — it
+  recomputed :math:`V_{\rm oc}^2 = 4 P R_{\rm ant}` from ``PG_ALL_jifen.mat``;
+- the ``_hfss`` tables, the highest-level ones shipped, were opened by nothing.
 
-Band-integrated level at LST 18 h, per arm, in microvolts:
+Band-integrated level at LST 18 h, per arm, in microvolts, as it was then:
 
 =====================  =========================  =====================
 Selector               Reads                      X, Y, Z
@@ -273,8 +294,8 @@ Selector               Reads                      X, Y, Z
 *(unreachable)*        ``Vocmax_..._hfss.npy``    59.6, 75.5, 66.9
 =====================  =========================  =====================
 
-**Quote the** ``du_type`` **with any absolute noise level.**  Without it the
-number is ambiguous by a factor of two, quite apart from the separate
+**For files from before 2026-09-07, quote the** ``du_type`` **with any absolute
+noise level.**  Without it the number is ambiguous by a factor of two, quite apart from the separate
 :math:`\sqrt2` question of :ref:`issue-galactic-noise-normalisation`.
 
 Topography
