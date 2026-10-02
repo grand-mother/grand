@@ -260,7 +260,7 @@ def db2reim(dB, phase):
     form.  This converts that pair to Cartesian form, using the voltage
     convention :math:`|z| = 10^{dB/20}` rather than the power convention
     :math:`10^{dB/10}`, because the S-parameters this module reads are
-    measured as voltage ratios by a vector network analyser.
+    measured as voltage ratios by a vector network analyzer.
 
     Parameters
     ----------
@@ -303,9 +303,9 @@ def db2reim(dB, phase):
     return re, im
 
 def s2abcd(s11, s21, s12, s22):
-    r"""Returns the normalised ABCD matrix of a two-port from its S-parameters.
+    r"""Returns the normalized ABCD matrix of a two-port from its S-parameters.
 
-    Scattering parameters are what a vector network analyser measures, but
+    Scattering parameters are what a vector network analyzer measures, but
     they do not cascade: the S-matrix of two networks in series is not the
     product of their S-matrices.  The ABCD (transmission) representation
     does cascade, which is the whole reason for this conversion — it is what
@@ -313,7 +313,7 @@ def s2abcd(s11, s21, s12, s22):
     multiplying the matrices of the LNA, the baluns, the cable and the
     VGA-plus-filter in order.
 
-    The normalised form returned here assumes equal reference impedances at
+    The normalized form returned here assumes equal reference impedances at
     both ports, which holds for the 50 :math:`\Omega` measurements this
     module reads.
 

@@ -21,7 +21,7 @@ class MotherEventTree(DataTree):
     """Event number, unique within its run"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -888,14 +888,14 @@ class TVoltage(MotherEventTree):
 
     Written by :class:`~grand.sim.efield2voltage.Efield2Voltage`.  It exists
     because the simulated voltage depends on the code as much as on the input:
-    the galactic-noise normalisation changed by a factor of :math:`\sqrt2` on
+    the galactic-noise normalization changed by a factor of :math:`\sqrt2` on
     2026-09-07, and before this field there was nothing in a file to say which
     side of that change it came from.
 
     Empty on files written before this field existed, which is itself the
     answer: no stamp means it predates 2026-09-07.
 
-    This is only worth reading if the version is bumped when behaviour changes.
+    This is only worth reading if the version is bumped when behavior changes.
     It sat at ``0.1.0.dev0`` across twenty-seven milestone tags, which would
     have made the stamp useless; see the note in ``pyproject.toml``.
     """
@@ -952,9 +952,9 @@ class TEfield(MotherEventTree):
     ## Peak-to-peak amplitudes for X, Y, Z (muV/m)
     p2p: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """Peak-to-peak amplitudes for X, Y, Z (muV/m)"""
-    ## Efield polarisation info
+    ## Efield polarization info
     pol: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Efield polarisation info"""
+    """Efield polarization info"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """(Computed) peak time, in ns"""
@@ -980,7 +980,7 @@ class TShower(MotherEventTree):
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
     ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
     azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=360, unit="degrees"))
-    """Shower azimuth, in degrees, measured from north towards west (NWU frame, origin at the core); the direction the shower *comes from*"""
+    """Shower azimuth, in degrees, measured from north toward west (NWU frame, origin at the core); the direction the shower *comes from*"""
     ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32, minimum=0, maximum=180, unit="degrees"))
     """Shower zenith  (coordinates system = NWU + origin = core, "comes from")"""
@@ -1013,7 +1013,7 @@ class TShower(MotherEventTree):
     xmax_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
     """Shower Xmax position in GRAND detector ref
 
-    In metres, in the frame of ``du_xyz`` and ``shower_core_pos``: the
+    In meters, in the frame of ``du_xyz`` and ``shower_core_pos``: the
     ground-relative ``xmax_pos_shc`` plus ``shower_core_pos``
     (``grand.dataio.xmax_frame.xmax_in_site_frame``).  NaN if unknown."""
     ## Shower Xmax position in shower coordinates

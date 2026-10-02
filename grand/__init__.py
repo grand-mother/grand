@@ -75,7 +75,7 @@ CORE_MISSING = ("GRANDlib: the compiled core (grand/_core, with TURTLE and GULL 
 # the same result without deleting anything.  See
 # resources/dev/dev-next/DECISIONS.md.
 #
-# Behaviour for users is unchanged: ``grand.Geodetic``,
+# Behavior for users is unchanged: ``grand.Geodetic``,
 # ``from grand import Efield2Voltage`` and ``from grand import *`` all work,
 # importing the module that defines the name at that moment (PEP 562).
 _LAZY = {

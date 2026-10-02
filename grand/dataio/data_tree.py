@@ -717,7 +717,7 @@ class DataTree:
             # setting a datetime gave an int (found while triaging #136).
             val_dt = val
             val = _to_unix(val)
-        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        # If timestamp was given - this happens when initializing with self.assign_metadata()
         elif type(val) == int:
             val_dt = _from_unix(val)
         else:
@@ -833,7 +833,7 @@ class DataTree:
         return cls._tree_name
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         self._type = type(self).__name__

@@ -138,7 +138,7 @@ def ecef_from_geodetic(latitude, longitude, altitude):
     Returns
     -------
     ndarray
-        ECEF position, in metres.
+        ECEF position, in meters.
     """
 
     # A string was parsed, None read as NaN and a complex number lost its
@@ -176,7 +176,7 @@ def ecef_from_horizontal(latitude, longitude, azimuth, elevation):
     longitude : float or ndarray
         Degrees east.
     azimuth : float or ndarray
-        Degrees from north towards east.
+        Degrees from north toward east.
     elevation : float or ndarray
         Degrees above the horizon.
 
@@ -218,12 +218,12 @@ def ecef_to_geodetic(ecef):
     Parameters
     ----------
     ecef : array_like
-        ECEF position, in metres.
+        ECEF position, in meters.
 
     Returns
     -------
     tuple
-        Latitude and longitude in degrees, altitude in metres.
+        Latitude and longitude in degrees, altitude in meters.
     """
 
     ecef = _regularize(ecef)
@@ -386,7 +386,7 @@ class Map(object):
         Returns
         -------
         float or ndarray
-            Elevation, in metres.
+            Elevation, in meters.
         """
 
         shape = numpy.shape(x)
@@ -475,7 +475,7 @@ class Stack:
         Returns
         -------
         float or ndarray
-            Elevation, in metres.
+            Elevation, in meters.
         """
 
         latitude, longitude, finite = _elevation_points(
@@ -550,7 +550,7 @@ class Stepper:
         data : Map or Stack
             The elevation data to consult.
         offset : float, optional
-            Constant offset applied to its elevations, in metres.
+            Constant offset applied to its elevations, in meters.
         """
         if data is not None:
             if isinstance(data, Map):

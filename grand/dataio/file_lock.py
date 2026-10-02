@@ -14,7 +14,7 @@ date, and writing would corrupt the file.  Readers take no lock, so reading is
 never blocked.
 
 Where ``flock`` is unavailable (Windows, or a file system without locks) the
-checks are skipped and the behaviour is the old one.
+checks are skipped and the behavior is the old one.
 """
 
 import errno

@@ -181,7 +181,7 @@ def _latitude_longitude(coordinates, latitude, longitude, where):
 
 
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
-    r"""Returns the height of the geoid above the ellipsoid, in metres.
+    r"""Returns the height of the geoid above the ellipsoid, in meters.
 
     The geoid undulation is what converts between the two references of
     :class:`Reference`: a height above mean sea level plus the undulation
@@ -201,7 +201,7 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     Returns
     -------
     float or ndarray
-        Undulation in metres, positive where the geoid lies above the
+        Undulation in meters, positive where the geoid lies above the
         ellipsoid.
 
     A missing angle gives NaN, with a warning.
@@ -251,7 +251,7 @@ def _cartesian_to_spherical(
         Polar angle from the :math:`+z` axis, in **degrees**, in
         :math:`[0, 180]`.
     phi : float or ndarray
-        Azimuth from the :math:`+x` axis towards :math:`+y`, in
+        Azimuth from the :math:`+x` axis toward :math:`+y`, in
         **degrees**, in :math:`(-180, 180]`.
     r : float or ndarray
         Radius, in the unit of the inputs.
@@ -298,7 +298,7 @@ def _cartesian_to_horizontal(
     Returns
     -------
     azimuth : float or ndarray
-        Degrees, measured from geographic north towards east.
+        Degrees, measured from geographic north toward east.
     elevation : float or ndarray
         Degrees above the horizon.
     norm : float or ndarray
@@ -381,8 +381,8 @@ def _spherical_to_horizontal(
     Returns
     -------
     azimuth : float or ndarray
-        :math:`90 - \phi`, in degrees: measured from north towards east
-        rather than from :math:`+x` towards :math:`+y`.
+        :math:`90 - \phi`, in degrees: measured from north toward east
+        rather than from :math:`+x` toward :math:`+y`.
     elevation : float or ndarray
         :math:`90 - \theta`, in degrees: measured up from the horizon
         rather than down from the zenith.
@@ -415,7 +415,7 @@ def _horizontal_to_cartesian(
     Parameters
     ----------
     azimuth : float or ndarray
-        Degrees from geographic north towards east.
+        Degrees from geographic north toward east.
     elevation : float or ndarray
         Degrees above the horizon.
     norm : float or ndarray
@@ -440,7 +440,7 @@ def _horizontal_to_spherical(
     Parameters
     ----------
     azimuth : float or ndarray
-        Degrees from geographic north towards east.
+        Degrees from geographic north toward east.
     elevation : float or ndarray
         Degrees above the horizon.
     norm : float or ndarray
@@ -563,7 +563,7 @@ class CartesianRepresentation(Coordinates):
 
     @property
     def x(self):
-        r"""Cartesian :math:`x` component, in metres.
+        r"""Cartesian :math:`x` component, in meters.
 
         Parameters
         ----------
@@ -590,7 +590,7 @@ class CartesianRepresentation(Coordinates):
 
     @property
     def y(self):
-        r"""Cartesian :math:`y` component, in metres.
+        r"""Cartesian :math:`y` component, in meters.
 
         Parameters
         ----------
@@ -617,7 +617,7 @@ class CartesianRepresentation(Coordinates):
 
     @property
     def z(self):
-        r"""Cartesian :math:`z` component, in metres.
+        r"""Cartesian :math:`z` component, in meters.
 
         Parameters
         ----------
@@ -671,7 +671,7 @@ class CartesianRepresentation(Coordinates):
         return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
 
     def norm(self):
-        r"""Returns the Euclidean length of the vector, in metres.
+        r"""Returns the Euclidean length of the vector, in meters.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
@@ -679,7 +679,7 @@ class CartesianRepresentation(Coordinates):
         Returns
         -------
         ndarray
-            Euclidean length of each vector, in metres.
+            Euclidean length of each vector, in meters.
         """
         return np.linalg.norm(self)
 
@@ -704,8 +704,8 @@ class SphericalRepresentation(Coordinates):
         with converted theta, phi, and r.
         n: number of coordinate points. 3xn np.ndarray object will be instantiated
            which will then be replaced by input theta, phi, and r. 'n' has to be predefined.
-        theta: angle from Z-axis towards XY plane. Also called zenith angle or colatitude. 0<=theta<=180 deg.
-        phi  : angle from X-axis towards Y-axis in XY plane. 0<=phi<=360 deg.
+        theta: angle from Z-axis toward XY plane. Also called zenith angle or colatitude. 0<=theta<=180 deg.
+        phi  : angle from X-axis toward Y-axis in XY plane. 0<=phi<=360 deg.
         r    : magnitude of a vector or a distance to a point from the origin.
 
         Parameters
@@ -717,7 +717,7 @@ class SphericalRepresentation(Coordinates):
         phi : float or ndarray, optional
             Azimuth from +x, in degrees.
         r : float or ndarray, optional
-            Radius, in metres.
+            Radius, in meters.
 
         Returns
         -------
@@ -817,28 +817,28 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def r(self):
-        r"""Radius, in metres.
+        r"""Radius, in meters.
 
         Parameters
         ----------
         v : float or ndarray
-            Radius, in metres.
+            Radius, in meters.
 
         Returns
         -------
         float or ndarray
-            Radius, in metres.
+            Radius, in meters.
         """
         return self[2]
 
     @r.setter
     def r(self, v):
-        r"""Sets the radius, in metres.
+        r"""Sets the radius, in meters.
 
         Parameters
         ----------
         v : float or ndarray
-            Radius, in metres.
+            Radius, in meters.
         """
         self[2] = v
 
@@ -891,18 +891,18 @@ class HorizontalRepresentation(Coordinates):
         n        : number of coordinate points. 3xn np.ndarray object will be instantiated
                            which will then be replaced by input azimuth, elevation, and norm.
                            'n' has to be predefined.
-        azimuth  : angle from true North towards East.
-        elevation: angle from horizontal plane (NE plane) towards zenith.
+        azimuth  : angle from true North toward East.
+        elevation: angle from horizontal plane (NE plane) toward zenith.
         norm     : distance from the origin to the point.
 
         Parameters
         ----------
         azimuth : float or ndarray, optional
-            Degrees from north towards east.
+            Degrees from north toward east.
         elevation : float or ndarray, optional
             Degrees above the horizon.
         norm : float or ndarray, optional
-            Length, in metres.
+            Length, in meters.
 
         Returns
         -------
@@ -940,17 +940,17 @@ class HorizontalRepresentation(Coordinates):
 
     @property
     def azimuth(self):
-        r"""Azimuth from geographic north towards east, in degrees.
+        r"""Azimuth from geographic north toward east, in degrees.
 
         Parameters
         ----------
         v : float or ndarray
-            Degrees from geographic north towards east.
+            Degrees from geographic north toward east.
 
         Returns
         -------
         float or ndarray
-            Degrees from north towards east.
+            Degrees from north toward east.
         """
         return self[0]
 
@@ -961,7 +961,7 @@ class HorizontalRepresentation(Coordinates):
         Parameters
         ----------
         v : float or ndarray
-            Degrees from geographic north towards east.
+            Degrees from geographic north toward east.
         """
         self[0] = v
 
@@ -994,28 +994,28 @@ class HorizontalRepresentation(Coordinates):
 
     @property
     def norm(self):
-        r"""Length of the vector, in metres.
+        r"""Length of the vector, in meters.
 
         Parameters
         ----------
         v : float or ndarray
-            Length of the vector, in metres.
+            Length of the vector, in meters.
 
         Returns
         -------
         float or ndarray
-            Length of the vector, in metres.
+            Length of the vector, in meters.
         """
         return self[2]
 
     @norm.setter
     def norm(self, v):
-        r"""Sets the length, in metres.
+        r"""Sets the length, in meters.
 
         Parameters
         ----------
         v : float or ndarray
-            Length of the vector, in metres.
+            Length of the vector, in meters.
         """
         self[2] = v
 
@@ -1175,7 +1175,7 @@ class GeodeticRepresentation(Coordinates):
 
     @property
     def height(self):
-        r"""Height above the reference surface, in metres.
+        r"""Height above the reference surface, in meters.
 
         Parameters
         ----------
@@ -1191,7 +1191,7 @@ class GeodeticRepresentation(Coordinates):
 
     @height.setter
     def height(self, v):
-        r"""Sets the height, in metres.
+        r"""Sets the height, in meters.
 
         Parameters
         ----------
@@ -1240,7 +1240,7 @@ def _check_geodetic(latitude, longitude, height, where):
     _validate.in_range(lat[np.isfinite(lat)] if lat.ndim else (lat if np.isfinite(lat) else 0.0),
                        "latitude", where, -90, 90, "degrees")
     # Accepted silently before (#267): a longitude past a full turn, and a
-    # height below the centre of the Earth
+    # height below the center of the Earth
     lon = np.asarray(longitude, dtype=float)
     _validate.in_range(lon[np.isfinite(lon)] if lon.ndim else (lon if np.isfinite(lon) else 0.0),
                        "longitude", where, -360, 360, "degrees")
@@ -1266,14 +1266,14 @@ class Geodetic(GeodeticRepresentation):
         360, so -10 becomes 350.
     Height
         Metres above the WGS-84 ellipsoid, the reference surface of these
-        coordinates; not below -6400 km, the centre of the Earth.  The ellipsoid is *not* sea level: the geoid (mean sea
+        coordinates; not below -6400 km, the center of the Earth.  The ellipsoid is *not* sea level: the geoid (mean sea
         level) lies up to about 100 m above or below it, 61 m below at
         Dunhuang.  Heights from other sources -- topography, site tables --
         may be measured from the geoid; see :class:`Reference` and
         :func:`geoid_undulation`.
 
     Conversions to and from the local frames (:class:`LTP`, :class:`GRANDCS`)
-    pass through :class:`ECEF`, whose origin is the centre of the Earth.
+    pass through :class:`ECEF`, whose origin is the center of the Earth.
 
     Examples
     --------
@@ -1534,9 +1534,9 @@ class Geodetic(GeodeticRepresentation):
 
 
 class ECEF(CartesianRepresentation):
-    r"""Earth-Centred, Earth-Fixed Cartesian coordinates, in metres.
+    r"""Earth-Centred, Earth-Fixed Cartesian coordinates, in meters.
 
-    A right-handed frame whose origin is the centre of the Earth and which
+    A right-handed frame whose origin is the center of the Earth and which
     rotates with it.  Every conversion between a local frame and geodetic
     coordinates passes through ECEF; it is the common pivot, so that the
     ellipsoid constants live in one place.
@@ -1583,7 +1583,7 @@ class ECEF(CartesianRepresentation):
             A position to convert.  ECEF is the pivot every other frame
             converts through.
         x, y, z : float or ndarray, optional
-            Components in metres from the geocentre.
+            Components in meters from the geocentre.
 
         Returns
         -------
@@ -1622,7 +1622,7 @@ class ECEF(CartesianRepresentation):
         arg : Geodetic, LTP, GRANDCS or ECEF, optional
             A position to convert.
         x, y, z : float or ndarray, optional
-            Components in metres.
+            Components in meters.
         obstime : str or datetime, optional
             Date the coordinates refer to.  It matters because the
             geomagnetic field, and any magnetic-north orientation derived
@@ -1760,8 +1760,8 @@ class Horizontal(HorizontalRepresentation):
     """
     Generic container for horizontal coordinates.
 
-    azimuth  : angle (deg) starting from true North towards East.
-    elevation: angle (deg) from horizontal plane towards zenith.
+    azimuth  : angle (deg) starting from true North toward East.
+    elevation: angle (deg) from horizontal plane toward zenith.
     """
 
     def __new__(
@@ -1786,11 +1786,11 @@ class Horizontal(HorizontalRepresentation):
         arg : Geodetic, ECEF, LTP or GRANDCS, optional
             A position to convert into this representation.
         azimuth : float or ndarray, optional
-            Degrees from north towards east.
+            Degrees from north toward east.
         elevation : float or ndarray, optional
             Degrees above the horizon.
         norm : float or ndarray, optional
-            Length, in metres.
+            Length, in meters.
         location : Geodetic, ECEF, LTP or GRANDCS, optional
             Origin the direction is measured from.
         vector : bool, optional
@@ -1943,7 +1943,7 @@ class LTP(CartesianRepresentation):
         arg : ECEF, LTP, GRANDCS or Geodetic, optional
             A position to convert into this frame.
         x, y, z : float or ndarray, optional
-            Components in metres, along the axes named by the frame's
+            Components in meters, along the axes named by the frame's
             ``orientation``.
 
         Returns
@@ -2005,7 +2005,7 @@ class LTP(CartesianRepresentation):
         arg : Geodetic, ECEF, LTP or GRANDCS, optional
             A position to convert into this frame.
         x, y, z : float or ndarray, optional
-            Components in metres along the frame's own axes.
+            Components in meters along the frame's own axes.
         location : Geodetic, ECEF, LTP or GRANDCS, optional
             Origin of the frame.  A local frame without an origin cannot be
             converted to any other.
@@ -2324,7 +2324,7 @@ class GRANDCS(LTP):
         arg : Geodetic, ECEF, LTP or GRANDCS, optional
             A position to convert into the array frame.
         x, y, z : float or ndarray, optional
-            Components in metres: x north, y west, z up.
+            Components in meters: x north, y west, z up.
         latitude, longitude, height : float or ndarray, optional
             Origin of the frame, if not given through `location`.
         location : Geodetic, ECEF, LTP or GRANDCS, optional

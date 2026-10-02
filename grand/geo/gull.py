@@ -185,7 +185,7 @@ class Snapshot:
         Returns
         -------
         tuple of float
-            Altitude range the snapshot is valid over, in metres.
+            Altitude range the snapshot is valid over, in meters.
         """
         return self._altitude
 

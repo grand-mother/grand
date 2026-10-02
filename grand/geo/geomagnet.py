@@ -114,7 +114,7 @@ class Geomagnet:
         data use north-west-up: there, x is this y and y is minus this x.
     declination : float or ndarray
         Angle of the horizontal field from geographic north, in degrees,
-        positive towards east.
+        positive toward east.
     inclination : float or ndarray
         Angle of the field below the horizontal, in degrees (positive in the
         northern hemisphere).

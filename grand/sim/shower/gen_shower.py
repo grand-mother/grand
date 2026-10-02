@@ -106,11 +106,11 @@ class ShowerEvent(_validate.CheckedFields):
     zenith: Optional[float] = None
     """Zenith angle of the direction the shower comes from, in degrees"""
     azimuth: Optional[float] = None
-    """Azimuth of the direction the shower comes from, in degrees, from north towards west"""
+    """Azimuth of the direction the shower comes from, in degrees, from north toward west"""
     primary: Optional[ParticleCode] = None
     """Primary particle type"""
     frame: Optional[Union[GRANDCS, LTP]] = None
-    """The shower frame: NWU, centred on the core, magnetic north"""
+    """The shower frame: NWU, centered on the core, magnetic north"""
     core: Optional[CartesianRepresentation] = None
     """Shower core, in m, in GRANDCS"""
     geomagnet: Optional[CartesianRepresentation] = None
@@ -265,7 +265,7 @@ class ShowerEvent(_validate.CheckedFields):
             logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
 
     def shower_frame(self):
-        # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
+        # Idea: Change the basis vectors by vectors pointing toward evB, evvB, and ev
         ev = self.core - self.maximum
         ev /= np.linalg.norm(ev)
         ev = ev.T[0]  # [[x], [y], [z]] --> [x, y, z]

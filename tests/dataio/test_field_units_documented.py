@@ -33,7 +33,7 @@ def _field_docs(module):
     ("event_trees.py", "TEfield.trace", "µV/m"),
     ("event_trees.py", "TEfield.time_max", "ns"),
     ("run_trees.py", "TRun.origin_geoid", "degrees"),
-    ("run_trees.py", "TRun.du_geoid", "metres"),
+    ("run_trees.py", "TRun.du_geoid", "meters"),
     ("run_trees.py", "TRun.first_event_time", "Unix seconds"),
     ("run_trees.py", "TRunEfieldSim.t_post", "ns"),
     ("run_trees.py", "TRunNoise.gal_noise_LST", "hours"),

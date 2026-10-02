@@ -12,7 +12,7 @@ def RefractionIndexAtPosition(X):
     Parameters
     ----------
     X : array-like
-        Position in metres, shape (3,).
+        Position in meters, shape (3,).
 
     Returns
     -------
@@ -35,9 +35,9 @@ def ZHSEffectiveRefractionIndex(X0,Xa):
     Parameters
     ----------
     X0 : array-like
-        Emission point in metres, shape (3,).
+        Emission point in meters, shape (3,).
     Xa : array-like
-        Antenna position in metres, shape (3,).
+        Antenna position in meters, shape (3,).
 
     Returns
     -------

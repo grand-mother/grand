@@ -24,7 +24,7 @@ def _warn_if_ill_conditioned(fisher, where, threshold=_ILL_CONDITIONED):
     r"""Warns when the Fisher matrix is close to singular.
 
     The matrix is first scaled to unit diagonal, so that parameters in very
-    different units (radians, metres, seconds) do not make every case look
+    different units (radians, meters, seconds) do not make every case look
     ill-conditioned.
     """
     diag = np.sqrt(np.abs(np.diag(fisher)))

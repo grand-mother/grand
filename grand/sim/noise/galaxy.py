@@ -71,7 +71,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         Local sidereal time in hours. Must satisfy ``0 <= f_lst < 24``.
     size_out : int
         Length, in samples, of the time trace the spectrum belongs to.  It
-        sets the normalisation, so it must be the length the spectrum will be
+        sets the normalization, so it must be the length the spectrum will be
         inverted to, whatever part of the frequency axis `freqs_mhz` covers.
     freqs_mhz : ndarray, shape (nb_freq,)
         Uniformly spaced output-frequency grid, in MHz: the full rFFT axis

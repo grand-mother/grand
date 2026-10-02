@@ -84,7 +84,7 @@ class EventList:
                         "EventList", "no ROOT files (*.root) in %s" % inp_name))
                 self.directory = DataDirectory(inp_name)
                 self.event_list = self.directory.get_max_list_of_events()
-                # Nothing recognised: this failed later on None, as "'NoneType'
+                # Nothing recognized: this failed later on None, as "'NoneType'
                 # object has no attribute 'f'" (#236)
                 if self.event_list is None:
                     names = [os.path.basename(name) for name in self.directory.unrecognised_files]
@@ -187,7 +187,7 @@ class EventList:
             if event_number is not None:
                 # An event that is not in the input used to crash deep in the
                 # reader (a zero-size minimum) or, after a valid event, to
-                # come back labelled with the requested number but holding
+                # come back labeled with the requested number but holding
                 # the previous event's traces (issue #95).  The list of events
                 # is known when a file or directory name was given.
                 if (self.event_list is not None

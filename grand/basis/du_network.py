@@ -72,7 +72,7 @@ class DetectorUnitNetwork:
         Parameters
         ----------
         du_pos : ndarray, shape (n_du, 3)
-            Position of each unit, in metres.
+            Position of each unit, in meters.
         du_id : sequence, optional
             Identifier of each unit.
         """
@@ -203,7 +203,7 @@ class DetectorUnitNetwork:
         Parameters
         ----------
         a_values : ndarray
-            Per-unit value to colour by.
+            Per-unit value to color by.
         title : str, optional
             Plot title.
         traces : Handling3dTraces, optional
@@ -211,7 +211,7 @@ class DetectorUnitNetwork:
         scale : str, optional
             ``"log"`` or ``"lin"``.
         unit : str, optional
-            Unit of `a_values`, for the colour bar.
+            Unit of `a_values`, for the color bar.
         """
         size_circle = 200
         cur_idx_plot = -1
@@ -321,9 +321,9 @@ class DetectorUnitNetwork:
         title : str, optional
             Plot title.
         same_scale : bool, optional
-            Use one colour scale for all components.
+            Use one color scale for all components.
         unit : str, optional
-            Unit for the colour bar.
+            Unit for the color bar.
 
         Returns
         -------
@@ -339,14 +339,14 @@ class DetectorUnitNetwork:
             ax : matplotlib.axes.Axes
                 Axes to draw into.
             values : ndarray
-                Per-unit quantity to colour the markers by.
+                Per-unit quantity to color the markers by.
             title : str
                 Panel title.
 
             Returns
             -------
             matplotlib.collections.PathCollection
-                The scatter drawn, so the caller can attach a colour bar.
+                The scatter drawn, so the caller can attach a color bar.
             """
             ax1 = plt_axis
             size_circle = 80

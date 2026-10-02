@@ -253,7 +253,7 @@ class Event(_validate.CheckedFields):
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         if self._file:
@@ -358,7 +358,7 @@ class Event(_validate.CheckedFields):
         Returns
         -------
         CartesianRepresentation, shape (3, 1)
-            Latitude and longitude in degrees and height in metres, as x, y
+            Latitude and longitude in degrees and height in meters, as x, y
             and z; ``np.ravel`` gives three numbers.
         """
         return self._origin_geoid
@@ -454,7 +454,7 @@ class Event(_validate.CheckedFields):
         # *** Check what TTrees are available and fill according to their availability
 
         #if self.trecons is not None:
-            # If initialising trees requested
+            # If initializing trees requested
         #    if init_trees:
                 # Check the TRecons tree existence
         #        if trecons:= self.trecons.Get("trecons"):
@@ -462,7 +462,7 @@ class Event(_validate.CheckedFields):
         #        else:
         #            print("No TRecons tree. Reconstructed event information will not be available.")
         #            self.trecons = None
-        # If initialising trees requested
+        # If initializing trees requested
         if init_trees:
             # Check the Run tree existence
             if trun := self.file_trun.Get("trun"):
@@ -472,7 +472,7 @@ class Event(_validate.CheckedFields):
                 # Make trun really None
                 self.trun = None
 
-        # If self.trun was successfully initialised
+        # If self.trun was successfully initialized
         if self.trun is not None:
             # Fill part of the event from trun
             ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
@@ -483,7 +483,7 @@ class Event(_validate.CheckedFields):
 
         # Check the TRunRawVoltage file existence
         if self.file_trunrawvoltage is not None:
-            # If initialising trees requested
+            # If initializing trees requested
             if init_trees:
                 # Check the TRunRawVoltage tree existence
                 if trunrawvoltage := self.file_trunrawvoltage.Get("trunrawvoltage"):
@@ -493,7 +493,7 @@ class Event(_validate.CheckedFields):
                     # Make trunrawvoltage really None
                     self.trunrawvoltage = None
 
-        # If self.trunrawvoltage was successfully initialised
+        # If self.trunrawvoltage was successfully initialized
         if self.trunrawvoltage is not None:
             # Fill part of the event from trunrawvoltage
             ret = self.fill_event_from_runrawvoltagetree(run_entry_number=run_entry_number)
@@ -518,7 +518,7 @@ class Event(_validate.CheckedFields):
                 use_trawvoltage = True
             # Use standard voltage tree
             if not use_trawvoltage:
-                # If initialising trees requested
+                # If initializing trees requested
                 if init_trees:
                     # Check the Voltage tree existence
                     if tvoltage := self.file_tvoltage.Get("tvoltage"):
@@ -528,7 +528,7 @@ class Event(_validate.CheckedFields):
                         # Make tvoltage really None
                         self.tvoltage = None
 
-                # If self.tvoltage was successfully initialised
+                # If self.tvoltage was successfully initialized
                 if self.tvoltage is not None:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree()
@@ -541,7 +541,7 @@ class Event(_validate.CheckedFields):
 
             # Use trawvoltage tree if requested or tvoltage tree not found
             if use_trawvoltage or self.tvoltage==None:
-                # If initialising trees requested
+                # If initializing trees requested
                 if init_trees:
                     # Check the Voltage tree existence
                     if tvoltage := self.file_tvoltage.Get("trawvoltage"):
@@ -552,7 +552,7 @@ class Event(_validate.CheckedFields):
                         # Make tvoltage really None
                         self.tvoltage = None
 
-                # If self.tvoltage was successfully initialised
+                # If self.tvoltage was successfully initialized
                 if self.tvoltage is not None:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
@@ -581,7 +581,7 @@ class Event(_validate.CheckedFields):
             # No level asked: the directory's default, not the last one asked for
             elif self.directory is not None and not init_trees:
                 self.tefield = self.directory.tefield
-            # If initialising trees requested
+            # If initializing trees requested
             elif init_trees:
                 # Check the Efield tree existence
                 if tefield := self.file_tefield.Get("tefield"):
@@ -601,7 +601,7 @@ class Event(_validate.CheckedFields):
                     # Make tefield really None
                     self.tefield = None
 
-            # If self.tefield was successfully initialised
+            # If self.tefield was successfully initialized
             if self.tefield is not None:
                 # Fill part of the event from tefield
                 ret = self.fill_event_from_efield_tree()
@@ -619,7 +619,7 @@ class Event(_validate.CheckedFields):
             # L1 file handle, None when there is only L0, and crashed (#277)
             if self.directory is not None:
                 pass
-            # If initialising trees requested
+            # If initializing trees requested
             elif init_trees:
                 # Check the Shower tree existence
                 shower_file = self.file_tsimshower if simshower else self.file_tshower
@@ -636,7 +636,7 @@ class Event(_validate.CheckedFields):
                     else:
                         self.tshower = None
 
-            # If self.t(sim)shower was successfully initialised
+            # If self.t(sim)shower was successfully initialized
             if (simshower and self.tsimshower is not None) or (not simshower and self.tshower is not None):
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(simshower)
@@ -652,7 +652,7 @@ class Event(_validate.CheckedFields):
 
         # Check the sim Shower file existence
         if self.file_tsimshower:
-            # If initialising trees requested
+            # If initializing trees requested
             if init_trees:
                 # Check the SimShower tree existence
                 if tsimshower := self.file_tsimshower.Get("tshower"):
@@ -662,7 +662,7 @@ class Event(_validate.CheckedFields):
                     # Make tsimshower really None
                     self.tsimshower = None
 
-            # If self.tsimshower was successfully initialised
+            # If self.tsimshower was successfully initialized
             if self.tsimshower is not None:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(True)
@@ -1386,7 +1386,7 @@ class Event(_validate.CheckedFields):
 
     ## Fill the run tree from this Event
     def fill_run_tree(self, overwrite=False, filename=None):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the run tree from this event's contents, ready to be written.
 
         Parameters
@@ -1447,7 +1447,7 @@ class Event(_validate.CheckedFields):
 
     ## Fill the voltage tree from this Event
     def fill_voltage_tree(self, overwrite=False, filename=None):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the voltage tree from this event's contents, ready to be written.
 
         Parameters
@@ -1516,7 +1516,7 @@ class Event(_validate.CheckedFields):
 
     ## Fill the efield tree from this Event
     def fill_efield_tree(self, overwrite=False, filename=None):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the electric-field tree from this event's contents, ready to be written.
 
         Parameters
@@ -1581,7 +1581,7 @@ class Event(_validate.CheckedFields):
 
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
-        # Fill only if the tree not initialised yet
+        # Fill only if the tree not initialized yet
         r"""Fills the shower tree from this event's contents.
 
         Parameters

@@ -107,11 +107,11 @@ def xmax_above_ground(xmax_pos_shc, zenith, azimuth, ground_altitude):
     Parameters
     ----------
     xmax_pos_shc : array-like, shape (3,)
-        As stored, in metres, x North, y West, z Up.
+        As stored, in meters, x North, y West, z Up.
     zenith, azimuth : float
         The shower's stored direction, in degrees, "comes from".
     ground_altitude : float
-        The site's ground altitude in metres, ``origin_geoid[2]``.
+        The site's ground altitude in meters, ``origin_geoid[2]``.
 
     Returns
     -------
@@ -160,13 +160,13 @@ def xmax_in_site_frame(xmax_pos_shc, zenith, azimuth, ground_altitude, shower_co
     Parameters
     ----------
     xmax_pos_shc : array-like, shape (3,)
-        As stored, in metres, in either vertical frame.
+        As stored, in meters, in either vertical frame.
     zenith, azimuth : float
         The shower's stored direction, in degrees, "comes from".
     ground_altitude : float
-        The ground altitude in metres that a sea-level ``z`` would carry.
+        The ground altitude in meters that a sea-level ``z`` would carry.
     shower_core_pos : array-like, shape (3,)
-        The core in the site frame, in metres.
+        The core in the site frame, in meters.
 
     Returns
     -------

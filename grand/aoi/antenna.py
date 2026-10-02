@@ -45,7 +45,7 @@ class Antenna(_validate.CheckedFields):
 
     @property
     def position(self):
-        """Antenna position in the array frame (GRANDCS), in metres.
+        """Antenna position in the array frame (GRANDCS), in meters.
 
         x runs north (magnetic), y west and z up, from the frame's origin;
         z is relative to the origin's height, not to sea level.  The origin
@@ -65,7 +65,7 @@ class Antenna(_validate.CheckedFields):
         Parameters
         ----------
         v : array_like
-            Position in the array frame, in metres.
+            Position in the array frame, in meters.
         """
         self._position = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 

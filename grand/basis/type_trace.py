@@ -51,7 +51,7 @@ class ElectricField:
     """Frame in which `e_xyz` and `pos_xyz` are expressed"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         self.fft_e_3d = np.zeros((3, 0))
@@ -149,7 +149,7 @@ class Voltage:
     """The three components, shape (3, n_samples), in the unit of the caller's input (µV in the voltage chain)"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         Raises
         ------

@@ -254,7 +254,7 @@ class Efield2Voltage:
             (``convert_efield2voltage.py`` passes the input folder).
         seed : int, optional
             Seed for the noise generator.  ``None`` gives an independent
-            realisation each run; a fixed value makes it reproducible.
+            realization each run; a fixed value makes it reproducible.
         padding_factor : float, optional
             Zero-padding applied before the transform, which improves the
             frequency resolution.
@@ -1292,7 +1292,7 @@ class Efield2Voltage:
         logger.debug(f"We will save voltage for {self.tt_volt.du_count} DUs.")
 
         # Stamp the producing version. The simulated voltage depends on the
-        # code as much as on the input -- the galactic-noise normalisation
+        # code as much as on the input -- the galactic-noise normalization
         # moved by sqrt(2) on 2026-09-07 -- and without this there is nothing
         # in a file to say which side of such a change it came from.
         self.tt_volt.grandlib_version = _grandlib_version()

@@ -70,7 +70,7 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
 
     if sigma is None:
         return float(res @ res)
-    # Residuals are in metres: the timing uncertainty becomes cr*sigma.  A
+    # Residuals are in meters: the timing uncertainty becomes cr*sigma.  A
     # vector of per-antenna uncertainties gave an array, not a chi2 (#289)
     sigma = np.asarray(sigma, dtype=float)
     if sigma.ndim == 2:
@@ -93,7 +93,7 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tants : np.ndarray
         Measured antenna times (seconds).
     Xants : np.ndarray
-        Antenna positions, shape (N, 3), in metres: x North, y West, z above
+        Antenna positions, shape (N, 3), in meters: x North, y West, z above
         sea level.
     sigma : float, ndarray of shape (N,) or (N, N), optional
         Timing uncertainty (seconds), as for :func:`SWF_loss`.  A single
@@ -109,7 +109,7 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tuple
         ``(theta_swf, phi_swf, r_xmax_swf, t_s_swf)``: the direction the
         shower comes from, in radians; the distance from the source to
-        ``(0, 0, groundAltitude)``, in metres; and the emission time, in
+        ``(0, 0, groundAltitude)``, in meters; and the emission time, in
         seconds (#261).
     """
     where = "recons_swf"

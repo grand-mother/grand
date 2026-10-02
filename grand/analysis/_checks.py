@@ -12,7 +12,7 @@ def antennas(Xants, where, min_ants=1, name="Xants"):
     Parameters
     ----------
     Xants : array-like
-        Antenna positions, in metres.
+        Antenna positions, in meters.
     where : str
         The calling function, for messages.
     min_ants : int, optional

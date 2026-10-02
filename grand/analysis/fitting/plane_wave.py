@@ -140,7 +140,7 @@ def PWF_loss(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n_atm,
     tants = _checks.per_antenna(tants, Xants, "tants", where)
     if sigma is None:
         raise TypeError(_validate.message(
-            where, "'sigma', the timing uncertainty in seconds, is required to normalise the chi2"))
+            where, "'sigma', the timing uncertainty in seconds, is required to normalize the chi2"))
     sigma = _checks.sigma(sigma, where)
     residuals = PWF_residuals(params, Xants, tants, verbose=verbose, c=c, n=n)
     chi2 = (residuals**2).sum()

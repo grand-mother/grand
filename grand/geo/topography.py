@@ -85,7 +85,7 @@ def distance(
     direction : CartesianRepresentation or ECEF
         Direction to travel in, in **ECEF** unless `frame` says otherwise.
     maximum_distance : float, optional
-        Give up beyond this distance, in metres.
+        Give up beyond this distance, in meters.
     frame : LTP, GRANDCS or "ENU", optional
         Frame `direction` is given in: the axes of an `LTP` or `GRANDCS`, or
         ``"ENU"`` for east, north and up at the (single) starting point.  By
@@ -94,7 +94,7 @@ def distance(
     Returns
     -------
     float or ndarray
-        Distance to the ground, in metres, or NaN if it was not reached.
+        Distance to the ground, in meters, or NaN if it was not reached.
     """
     global _default_topography
 
@@ -140,7 +140,7 @@ def elevation(coordinates, reference: Optional[str] = _default_reference):
     Returns
     -------
     float or ndarray
-        Ground elevation, in metres.
+        Ground elevation, in meters.
     """
     global _default_topography
 
@@ -243,7 +243,7 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     Returns
     -------
     float or ndarray
-        Height of the geoid above the ellipsoid, in metres.
+        Height of the geoid above the ellipsoid, in meters.
 
     A missing angle gives NaN, with a warning.
 
@@ -280,7 +280,7 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     clear : bool, optional
         Remove the cached tiles first.
     radius : float, optional
-        Fetch tiles within this radius, in metres.
+        Fetch tiles within this radius, in meters.
     """
     if clear:
         for p in DATADIR.glob("**/*.*"):
@@ -318,12 +318,12 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
 
                 # Find the maximum latitude and longitude at radius distance from the LTP origin.
                 # 3 points defined at radius distance from the origin, one point on each axis.
-                # Max latitude = origin+radius towards N. Min latitude = origin-radius towards N.
-                # Max longitude = origin+radius towards E. Min longitude = origin-radius towards E.
+                # Max latitude = origin+radius toward N. Min latitude = origin-radius toward N.
+                # Max longitude = origin+radius toward E. Min longitude = origin-radius toward E.
                 delta = -1 * radius if not i else radius
-                ltp_E = np.array([delta, 0, 0])  # delta distance [m] towards E from origin.
-                ltp_N = np.array([0, delta, 0])  # delta distance [m] towards N from origin.
-                ltp_U = np.array([0, 0, delta])  # delta distance [m] towards U from origin.
+                ltp_E = np.array([delta, 0, 0])  # delta distance [m] toward E from origin.
+                ltp_N = np.array([0, delta, 0])  # delta distance [m] toward N from origin.
+                ltp_U = np.array([0, 0, delta])  # delta distance [m] toward U from origin.
                 arg = np.column_stack(
                     (ltp_E, ltp_N, ltp_U)
                 )  # [[x1, x2, x3], [y1, y2, y3], [z1, z2, z3]]
@@ -437,7 +437,7 @@ class Topography:
         Returns
         -------
         float or ndarray
-            Ground elevation, in metres.
+            Ground elevation, in meters.
         """
         if isinstance(reference, str):
             reference = reference.upper()
@@ -491,7 +491,7 @@ class Topography:
         Returns
         -------
         ndarray
-            Elevation from the local tiles, in metres.
+            Elevation from the local tiles, in meters.
         """
         # Compute the x and y coordinate in local frame.
         x = coordinates.x
@@ -542,7 +542,7 @@ class Topography:
         Returns
         -------
         ndarray
-            Elevation from the global model, in metres.
+            Elevation from the global model, in meters.
         """
 
         # Compute the geodetic coordinates
@@ -596,7 +596,7 @@ class Topography:
             A local (east, north, up) vector passed without `frame` is read as
             ECEF and gives a wrong distance (#210).
         maximum_distance : float, optional
-            Give up beyond this distance, in metres.
+            Give up beyond this distance, in meters.
         frame : LTP, GRANDCS or "ENU", optional
             Frame `direction` is given in: the axes of an `LTP` or `GRANDCS`,
             or ``"ENU"`` for east, north and up at the (single) starting
@@ -605,7 +605,7 @@ class Topography:
         Returns
         -------
         float or ndarray
-            Distance to the ground, in metres.
+            Distance to the ground, in meters.
         """
         if self._stepper is None:
             stepper = _Stepper()

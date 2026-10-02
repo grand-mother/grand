@@ -121,7 +121,7 @@ class AntennaProcessing:
 
     def __post_init__(self):
         #assert isinstance(self.model_leff, TabulatedAntennaModel)
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         self.size_fft = 0

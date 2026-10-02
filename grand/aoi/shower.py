@@ -40,7 +40,7 @@ class Shower(_validate.CheckedFields):
     """Shower position in the site's reference frame"""
 
     azimuth: float = 0
-    """Shower azimuth, in degrees, from north towards west (NWU frame, origin at the core); the direction the shower *comes from*, as in ``TShower``"""
+    """Shower azimuth, in degrees, from north toward west (NWU frame, origin at the core); the direction the shower *comes from*, as in ``TShower``"""
 
     zenith: float = 0
     """Shower zenith, in degrees (NWU frame, origin at the core); the direction the shower *comes from*, as in ``TShower``"""
@@ -60,7 +60,7 @@ class Shower(_validate.CheckedFields):
         Returns
         -------
         CartesianRepresentation, shape (3, 1)
-            Position of shower maximum, in metres (x north, y west, z up).
+            Position of shower maximum, in meters (x north, y west, z up).
         """
         return self._Xmaxpos
 
@@ -82,7 +82,7 @@ class Shower(_validate.CheckedFields):
         Returns
         -------
         CartesianRepresentation, shape (3, 1)
-            Latitude and longitude in degrees and height in metres, as x, y
+            Latitude and longitude in degrees and height in meters, as x, y
             and z.
         """
         return self._origin_geoid
@@ -105,7 +105,7 @@ class Shower(_validate.CheckedFields):
         Returns
         -------
         CartesianRepresentation, shape (3, 1)
-            Shower core position at ground, in metres (x north, y west, z up).
+            Shower core position at ground, in meters (x north, y west, z up).
         """
         return self._core_ground_pos
 

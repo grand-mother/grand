@@ -61,7 +61,7 @@ def antenna_positions_from_run(trun):
     Returns
     -------
     Xants : ndarray, shape (N, 3)
-        Positions in metres, z above sea level, in ``trun.du_id`` order.
+        Positions in meters, z above sea level, in ``trun.du_id`` order.
     ground_altitude : float
         ``origin_geoid``'s height, to pass as ``groundAltitude``.
     """

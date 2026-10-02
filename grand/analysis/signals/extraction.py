@@ -119,7 +119,7 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
     Convert voltage traces to ADC counts.
 
     As :meth:`grand.ADC.process` does, without its noise: the counts are
-    truncated towards zero and saturate at ``+-adc_full_scale``.  They were
+    truncated toward zero and saturate at ``+-adc_full_scale``.  They were
     neither (1e12 µV gave 9.1e9 counts), and NaN passed through (#289).
 
     Parameters

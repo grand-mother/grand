@@ -214,14 +214,14 @@ class TRun(MotherRunTree):
     ## Origin of the coordinate system used for the array
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32, component_limits=(
         ("latitude", -90, 90, "degrees"), ("longitude", -360, 360, "degrees"), None)))
-    """Origin of the array frame: (latitude in degrees, longitude in degrees, height in metres).  du_xyz is relative to it"""
+    """Origin of the array frame: (latitude in degrees, longitude in degrees, height in meters).  du_xyz is relative to it"""
 
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int", minimum=0, maximum=65535))
     """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in metres) per DU"""
+    """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in meters) per DU"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
     du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>", inner_length=3))
     """Detector unit (antenna) (x,y,z) position in site's referential"""
@@ -245,7 +245,7 @@ class TRun(MotherRunTree):
     """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -317,7 +317,7 @@ class TRunVoltage(MotherRunTree):
     """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -400,7 +400,7 @@ class TRunRawVoltage(MotherRunTree):
     """ADC to voltage conversion factor"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -445,7 +445,7 @@ class TRunEfieldSim(MotherRunTree):
     """Simulator version string"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -505,7 +505,7 @@ class TRunShowerSim(MotherRunTree):
     """Simulator version string"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()
@@ -538,7 +538,7 @@ class TRunNoise(MotherRunTree):
     """Galactic-noise standard deviation for each arm of each antenna, in µV"""
 
     def __post_init__(self):
-        r"""Completes initialisation after the dataclass fields are set.
+        r"""Completes initialization after the dataclass fields are set.
 
         """
         super().__post_init__()

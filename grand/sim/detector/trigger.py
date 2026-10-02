@@ -144,7 +144,7 @@ def extract_trigger_parameters(trace, trigger_config=None, baseline=0):
         Trigger parameters overriding :data:`DEFAULT_T1_CONFIG`.
     baseline : float, optional
         Subtracted from the peak when computing ``Q``.  The thresholds are
-        applied to the raw trace, so it must already be centred on 0.
+        applied to the raw trace, so it must already be centered on 0.
 
     Returns
     -------
