@@ -98,7 +98,10 @@ def texify(text):
     text = re.sub(r':ref:`([^`]+)`', lambda m: m.group(1).replace('-', ' '), text)
     text = re.sub(r':doc:`[^`]*?([\w./]+)`', r'\1', text)
     text = re.sub(r'``([^`]+)``', r'\\texttt{\1}', text)
-    for char, escaped in (('&', r'\&'), ('%', r'\%'), ('#', r'\#'), ('_', r'\_')):
+    # '$' too: an unescaped one in an erratum (``docker run -v $PWD...``)
+    # opened math mode and failed the PDF build
+    for char, escaped in (('&', r'\&'), ('%', r'\%'), ('#', r'\#'), ('_', r'\_'), ('$', r'\$'),
+                          ('~', r'\textasciitilde{}'), ('^', r'\textasciicircum{}')):
         text = text.replace(char, escaped)
     return text
 
