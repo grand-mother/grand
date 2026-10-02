@@ -28,7 +28,7 @@ class EventList:
     directory: DataDirectory = None
     """The instance of the directory with files with TTrees containing the event."""
 
-    def __init__(self, inp_name, start_event = None, start_entry = None, tefield_level = None, **kwargs):
+    def __init__(self, inp_name, start_event = None, start_entry = None, tefield_level = None, gps_origin = None, **kwargs):
 
         r"""Opens a file or directory and prepares to iterate its events.
 
@@ -43,6 +43,9 @@ class EventList:
         tefield_level : int, optional
             Analysis level of the electric field to read, for every event
             unless a call to :meth:`get_event` asks for another.
+        gps_origin : None, "run" or (float, float, float), optional
+            Origin of antenna positions computed from GPS (GP300, GP80,
+            GP13): see :attr:`grand.aoi.event.Event.gps_origin` (#215).
         """
         self.event_list = None
 
@@ -108,7 +111,7 @@ class EventList:
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
 
-        self.event = Event(tefield_level = tefield_level)
+        self.event = Event(tefield_level = tefield_level, gps_origin = gps_origin)
         self.init_trees = True
 
         # No need to init trees if using a DataDirectory (which inits the trees)

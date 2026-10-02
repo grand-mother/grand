@@ -29,8 +29,9 @@ class FakeDataDirectory:
 
 class FakeEvent:
     """Minimal fake to stand in for grand.aoi.event.Event"""
-    def __init__(self, tefield_level=None):
+    def __init__(self, tefield_level=None, gps_origin=None):
         self.filled = False
+        self.gps_origin = gps_origin
         self.fill_args = None
         self._entry_number = None
         self.run_number = None

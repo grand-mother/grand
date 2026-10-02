@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The origin of GPS antenna positions can be chosen (#215): `EventList`
+  and `Event` take `gps_origin`, which is None for the fixed
+  `GPS_ANTENNA_ORIGIN` (the default, so positions are unchanged),
+  `"run"` for the run's `origin_geoid` (about 3.8 km away for GP80), or
+  an explicit (latitude, longitude, height); `antennas_origin` records the
+  one used.  Which origin the GP80 data intend is still for their owners
+  to say.
+
 - `sim2root.py -ef N` no longer keeps every file set in memory (#223, the
   last item): a tree that a closing `write()` takes out of its file, so
   that closing the file does not delete it, is now freed by

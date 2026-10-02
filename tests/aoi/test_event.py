@@ -4,7 +4,7 @@ import pathlib
 import numpy as np
 import pytest
 from grand.aoi.antenna import Antenna
-from grand.aoi.event import Event
+from grand.aoi.event import Event, GPS_ANTENNA_ORIGIN
 from grand.aoi.timetrace import Voltage
 
 def test_event_defaults():
@@ -338,7 +338,8 @@ def test_gps_built_positions_are_reused_for_the_same_site():
     cached.position.x, cached.position.y, cached.position.z = 1.0, 2.0, 3.0
     cached.tilt.x, cached.tilt.y = 0.0, 0.0
     e._all_antennas = {100: cached}
-    e._all_antennas_key = ("gps", "GP13")
+    # The key names the origin too, since #215 made it a choice
+    e._all_antennas_key = ("gps", "GP13", GPS_ANTENNA_ORIGIN)
 
     e.fill_antennas(gp300_workaround=True)
 

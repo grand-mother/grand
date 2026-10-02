@@ -114,6 +114,13 @@ class Event(_validate.CheckedFields):
     ``antennas`` are given in: the run's ``origin_geoid``, or
     :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS (#215)."""
 
+    gps_origin: object = None
+    """Origin for antenna positions computed from GPS (GP300, GP80, GP13):
+    None for :data:`GPS_ANTENNA_ORIGIN`, ``"run"`` for the run's
+    ``origin_geoid``, or ``(latitude, longitude, height)``.  Which one the
+    data intend is for their owners to say (#215); the default keeps the
+    positions as they were."""
+
     ## ToDo: what is it?
     L: int = 0
     """Event multiplicity"""
@@ -763,6 +770,27 @@ class Event(_validate.CheckedFields):
 
 
     ## Fill event's antennas
+    def _gps_origin(self):
+        r"""The origin GPS positions are expressed against, per ``gps_origin`` (#215)."""
+        choice = self.gps_origin
+        if choice is None:
+            return GPS_ANTENNA_ORIGIN
+        if isinstance(choice, str):
+            if choice != "run":
+                raise ValueError(_validate.message(
+                    "Event.gps_origin", "must be None, \"run\" or (latitude, longitude, "
+                    "height), got %r" % choice))
+            if self.trun is None:
+                raise ValueError(_validate.message(
+                    "Event.gps_origin", "\"run\" needs the run tree, and this event has none"))
+            return tuple(float(v) for v in np.ravel(np.asarray(self.trun.origin_geoid)))
+        values = np.asarray(choice, dtype=float).ravel()
+        if values.size != 3 or not np.all(np.isfinite(values)):
+            raise ValueError(_validate.message(
+                "Event.gps_origin", "must be None, \"run\" or three finite numbers "
+                "(latitude, longitude, height), got %r" % (choice,)))
+        return tuple(float(v) for v in values)
+
     def fill_antennas(self, gp300_workaround=True):
         """Fill event's antennas
 
@@ -789,9 +817,10 @@ class Event(_validate.CheckedFields):
                     "Event.fill_antennas", "cannot calculate the antenna positions: the event "
                     "has neither an efield nor a voltage tree"))
 
+            origin_geoid = self._gps_origin()
             # If this is the first time we calculate antennas positions, or
-            # the ones we hold were not built from GPS for this same site
-            if not self._all_antennas or self._all_antennas_key != ("gps", self.site):
+            # the ones we hold were not built from GPS for this same site and origin
+            if not self._all_antennas or self._all_antennas_key != ("gps", self.site, origin_geoid):
                 logger.debug("GP300 workaround: calculating all antennas positions")   # (#194)
                 from grand import Geodetic, GRANDCS
 
@@ -817,7 +846,7 @@ class Event(_validate.CheckedFields):
                 du_alts = du_alts[unique_dus_idx]
 
                 # Get lat/lon/alt from xyz
-                latitude, longitude, height = GPS_ANTENNA_ORIGIN
+                latitude, longitude, height = origin_geoid
                 origin = Geodetic(latitude=latitude, longitude=longitude, height=height)
 
                 geod_ant = Geodetic(latitude=du_lats, longitude=du_lons, height=du_alts)
@@ -836,9 +865,9 @@ class Event(_validate.CheckedFields):
 
                     self._all_antennas[a.id] = a
 
-                self._all_antennas_key = ("gps", self.site)
+                self._all_antennas_key = ("gps", self.site, origin_geoid)
 
-            self.antennas_origin = GPS_ANTENNA_ORIGIN
+            self.antennas_origin = origin_geoid
 
             # Fill the antenna part
             event_dus = cur_tree.du_id
