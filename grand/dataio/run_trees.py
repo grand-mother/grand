@@ -194,16 +194,16 @@ class TRun(MotherRunTree):
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
     run_mode: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment"""
+    """Run mode (calibration, test or physics).  The values are not yet defined."""
     ## Run's first event
     first_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Run's first event"""
+    """Number of the run's first event."""
     ## First event time
     first_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """Time of the first event, in Unix seconds"""
     ## Run's last event
     last_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Run's last event"""
+    """Number of the run's last event."""
     ## Last event time
     last_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """Time of the last event, in Unix seconds"""
@@ -211,26 +211,26 @@ class TRun(MotherRunTree):
     # These are not from the hardware
     ## Data source: detector, sim, other
     data_source: StdStringDesc = field(default=StdStringDesc("detector"))
-    """Data source: detector, sim, other"""
+    """Where the data come from: ``detector``, ``sim`` or ``other``."""
     ## Data generator: gtot (in this case)
     data_generator: StdStringDesc = field(default=StdStringDesc("GRANDlib"))
-    """Data generator: gtot (in this case)"""
+    """Name of the program that produced the data."""
     ## Generator version: gtot version (in this case)
     data_generator_version: StdStringDesc = field(default=StdStringDesc("0.1.0"))
-    """Generator version: gtot version (in this case)"""
+    """Version of the program that produced the data."""
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
     event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
+    """Trigger type: 0x1000 for the 10-second trigger, 0x8000 for a random trigger; any other value is a shower trigger."""
     ## Event format version of the DAQ
     event_version: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    """Event format version of the DAQ"""
+    """Version of the DAQ's event format."""
     ## Site name
     # _site: StdVectorList("string") = StdVectorList("string")
     site: StdStringDesc = field(default=StdStringDesc())
-    """Site name"""
+    """Name of the site, such as ``Dunhuang`` or ``Xiaodushan``."""
     ## Site layout
     site_layout: StdStringDesc = field(default=StdStringDesc())
-    """Site layout"""
+    """Name of the antenna layout, such as ``GP300``."""
     ## Origin of the coordinate system used for the array
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32, component_limits=(
         ("latitude", -90, 90, "degrees"), ("longitude", -360, 360, "degrees"), None)))
@@ -238,31 +238,31 @@ class TRun(MotherRunTree):
 
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int", minimum=0, maximum=65535))
-    """Detector unit (antenna) ID"""
+    """Identifier of each detection unit."""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """Detector unit (antenna) position: (latitude in degrees, longitude in degrees, height in meters) per DU"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
     du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>", inner_length=3))
-    """Detector unit (antenna) (x,y,z) position in site's referential"""
+    """Position of each unit in the array frame, in meters: x north, y west and z up, relative to ``origin_geoid``."""
     ## Detector unit type
     du_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
-    """Detector unit type"""
+    """Antenna type of each unit."""
     ## Detector unit (antenna) angular tilt
     du_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Detector unit (antenna) angular tilt"""
+    """Tilt of each antenna, as two angles."""
     ## Angular tilt of the ground at the antenna
     du_ground_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    """Angular tilt of the ground at the antenna"""
+    """Tilt of the ground at each antenna, as two angles."""
     ## Detector unit (antenna) nut ID
     du_nut: StdVectorListDesc = field(default=StdVectorListDesc("int"))
-    """Detector unit (antenna) nut ID"""
+    """Identifier of each unit's nut, the antenna head that holds the low-noise amplifier."""
     ## Detector unit (antenna) FrontEnd Board ID
     du_feb: StdVectorListDesc = field(default=StdVectorListDesc("int"))
-    """Detector unit (antenna) FrontEnd Board ID"""
+    """Identifier of each unit's front-end board."""
     ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
     t_bin_size: StdVectorListDesc = field(default=StdVectorListDesc("float", positive=True, unit="ns"))
-    """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
+    """Sampling interval of each unit's traces, in ns: the inverse of the sampling frequency."""
 
     def __post_init__(self):
         r"""Completes initialization after the dataclass fields are set.

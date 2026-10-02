@@ -1573,6 +1573,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The field descriptions of `TShower`, `TEfield`, `TVoltage`, `TADC` and
+  `TRun` are rewritten: each says what the field holds, in which unit and
+  frame, and the 38 undescribed `TADC` firmware fields are described.
+
 - Docstrings no longer cite issue numbers or narrate fixed bugs; that history
   is in this changelog and in the commit messages.
 

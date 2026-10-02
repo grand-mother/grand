@@ -405,7 +405,7 @@ class DataTree:
 
     ## Is the tree read from TChain
     is_tchain: bool = False
-    """Is the tree read from TChain"""
+    """True when the tree reads a chain of files (``TChain``) rather than one file."""
 
 
     ## Fields that are not branches
