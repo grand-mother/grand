@@ -38,6 +38,14 @@ comparison is strict, are for the trigger group to confirm, with the other
 open points listed in :func:`~grand.sim.detector.trigger.extract_trigger_parameters`.
 Until then, offline T1 results on noise-free simulations are not meaningful.
 
+**Trying the alternatives.** Two trigger parameters, off by default, select
+the other readings: ``sepmax_inclusive=1`` accepts a separation equal to
+``t_sepmax``, and ``sepmax_ends_count=1`` ends the count at a wider gap
+instead of rejecting the channel (``--t1_param sepmax_inclusive=1`` on the
+command line).  On the same pulses they show that the gap rule is not the
+only obstacle: with either, a clean pulse at 100--200 MHz counts 9 to 15
+crossings, above ``nc_max = 8``, and still does not trigger.
+
 .. _issue-galactic-noise-normalisation:
 
 Galactic-noise normalisation: resolved, RMS

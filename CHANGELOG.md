@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The T1 trigger's `t_sepmax` rule can be varied (#233, item 3): two
+  parameters, off by default so results are unchanged, select the other
+  readings the trigger group has to choose between: `sepmax_inclusive=1`
+  accepts a separation equal to `t_sepmax`, `sepmax_ends_count=1` ends the
+  count at a wider gap instead of rejecting the channel (also as
+  `--t1_param`).  The known issue records what they show on clean pulses:
+  the count then exceeds `nc_max`, so the gap rule is not the only
+  obstacle.
+
 - The origin of GPS antenna positions can be chosen (#215): `EventList`
   and `Event` take `gps_origin`, which is None for the fixed
   `GPS_ANTENNA_ORIGIN` (the default, so positions are unchanged),

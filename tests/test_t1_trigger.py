@@ -59,7 +59,9 @@ def test_the_defaults_are_those_of_the_offline_script():
     assert DEFAULT_T1_CONFIG == {
         "t_quiet": 512, "t_period": 512, "t_sepmax": 10, "nc_min": 2,
         "nc_max": 8, "q_min": 0, "q_max": 255, "th1": 100, "th2": 50,
-        "t_pretrig": 960, "t_overlap": 64, "t_posttrig": 1024}
+        "t_pretrig": 960, "t_overlap": 64, "t_posttrig": 1024,
+        # the offline script's t_sepmax rule; the alternatives are off (#233)
+        "sepmax_inclusive": 0, "sepmax_ends_count": 0}
 
 
 def test_a_clear_pulse_above_threshold_triggers():
@@ -309,3 +311,24 @@ def test_clean_pulses_do_not_pass_with_the_defaults(f_mhz, start):
                      * np.sin(2 * np.pi * f_mhz * 1e-3 * (t - start * 2)), 0)
     traces = np.stack([pulse, pulse, pulse])[None]
     assert not t1_du_triggers(traces).any()
+
+
+def _clean_pulse(f_mhz, start=400):
+    t = np.arange(1024) * 2.0
+    return np.where(t >= start * 2, 850 * np.exp(-(t - start * 2) / 30)
+                    * np.sin(2 * np.pi * f_mhz * 1e-3 * (t - start * 2)), 0)
+
+
+def test_the_t_sepmax_rule_can_be_chosen():
+    r"""#233: sepmax_inclusive and sepmax_ends_count, off by default, for the trigger group to compare."""
+    from grand.sim.detector.trigger import (extract_trigger_parameters, t1_config_from_params)
+
+    pulse = _clean_pulse(100)                  # crossings exactly 10 ns apart
+    with pytest.raises(ValueError, match="Violating Tsepmax"):
+        extract_trigger_parameters(pulse)      # the offline script's rule
+    assert extract_trigger_parameters(pulse, {"sepmax_inclusive": 1})["NC"] > 1
+    assert extract_trigger_parameters(_clean_pulse(60), {"sepmax_ends_count": 1})["NC"] == 1
+    config = t1_config_from_params(["sepmax_inclusive=1", "sepmax_ends_count=1"])
+    assert config["sepmax_inclusive"] == config["sepmax_ends_count"] == 1
+    with pytest.raises(ValueError, match="sepmax_ends_count must be 0 or 1"):
+        t1_config_from_params(["sepmax_ends_count=2"])

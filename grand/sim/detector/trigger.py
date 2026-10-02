@@ -66,6 +66,12 @@ DEFAULT_T1_CONFIG = {
     "q_max": 255,
     "th1": 100,
     "th2": 50,
+    # How T2 crossings further apart than t_sepmax are treated, for the
+    # trigger group to compare (#233): 0, 0 is the offline script's rule (a
+    # strict "<" and the channel rejected); sepmax_inclusive=1 accepts a
+    # separation equal to t_sepmax, sepmax_ends_count=1 ends the count there.
+    "sepmax_inclusive": 0,
+    "sepmax_ends_count": 0,
     # Configs of readout timewindow
     "t_pretrig": 960,
     "t_overlap": 64,
@@ -101,6 +107,9 @@ def _check_config(config, where="T1 trigger"):
     if config["th2"] > config["th1"]:
         fail("th2 (%r) must not exceed th1 (%r): T2 crossings are counted after a T1 crossing"
              % (config["th2"], config["th1"]))
+    for key in ("sepmax_inclusive", "sepmax_ends_count"):
+        if config[key] not in (0, 1):
+            fail("%s must be 0 or 1, got %r" % (key, config[key]))
     if config["nc_min"] > config["nc_max"]:
         fail("nc_min (%r) must not exceed nc_max (%r)" % (config["nc_min"], config["nc_max"]))
     # At 2 ns per sample, a period under 2 ns is an empty window, which
@@ -201,8 +210,11 @@ def extract_trigger_parameters(trace, trigger_config=None, baseline=0):
     j = 1
     for i, j in zip(index_t2[:-1], index_t2[1:]):
         separation = (j - i) * 2  # ns
-        if separation < config["t_sepmax"]:
+        if separation < config["t_sepmax"] or (config["sepmax_inclusive"]
+                                               and separation == config["t_sepmax"]):
             kept.append(int(j))
+        elif config["sepmax_ends_count"]:
+            break
         else:
             raise ValueError(f"Violating Tsepmax, the separation is {separation} ns.")
     n_crossings = len(kept)
