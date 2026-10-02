@@ -166,7 +166,28 @@ class MotherRunTree(DataTree):
 @dataclass
 ## A class wrapping around a TTree holding values common for the whole run
 class TRun(MotherRunTree):
-    """A class wrapping around a TTree holding values common for the whole run"""
+    """A class wrapping around a TTree holding values common for the whole run
+
+    Examples
+    --------
+    Read the site and the antenna layout of a run:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import numpy as np
+        import grand
+        from grand.dataio import TRun
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        with TRun(str(sample / "run_1_L0_0000.root")) as trun:
+            trun.get_entry(0)
+            print("site %s, origin (lat, lon, height) %s" % (trun.site, np.asarray(trun.origin_geoid)))
+            print("%d antennas; the first at %s m (x north, y west, z up)"
+                  % (len(trun.du_id), np.round(np.asarray(trun.du_xyz)[0], 1)))
+    """
 
     _type: str = "run"
 

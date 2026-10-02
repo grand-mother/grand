@@ -68,19 +68,19 @@ def test_event_list_raises_instead_of_printing():
 
 def test_aoi_logs_instead_of_printing(capsys):
     r"""#256: the remaining informational prints in grand.aoi are log records."""
+    import ast
     import pathlib
-    import re
 
     root = pathlib.Path(__file__).resolve().parents[1] / "grand" / "aoi"
     stray = []
     for name in ("event.py", "event_list.py"):
-        lines = (root / name).read_text().splitlines()
-        inside_print_method = False
-        for line in lines:
-            if re.match(r"\s*def print\(self", line):
-                inside_print_method = True
-            elif re.match(r"\s*def ", line):
-                inside_print_method = False
-            if re.match(r"\s*print\(", line) and not inside_print_method:
-                stray.append((name, line.strip()))
+        tree = ast.parse((root / name).read_text())
+        # Calls in the code, not in docstrings, whose examples may print
+        allowed = {node for method in ast.walk(tree)
+                   if isinstance(method, ast.FunctionDef) and method.name == "print"
+                   for node in ast.walk(method)}
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                    and node.func.id == "print" and node not in allowed):
+                stray.append((name, node.lineno))
     assert stray == []

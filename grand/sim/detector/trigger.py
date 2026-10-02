@@ -268,6 +268,29 @@ def t1_du_triggers(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     -------
     numpy.ndarray of bool
         One value per DU.
+
+    Examples
+    --------
+    Which units of a digitized event pass T1 with the default parameters:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import numpy as np
+        import grand
+        from grand.dataio import TADC
+        from grand.sim.detector.trigger import t1_du_triggers
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        with TADC(str(sample / "adc_1618-13790_L1_0000.root")) as tadc:
+            tadc.get_entry(0)
+            counts = np.asarray(tadc.trace_ch)
+            du_id = np.asarray(tadc.du_id)
+
+        passed = t1_du_triggers(counts)
+        print("units passing T1:", du_id[passed])
     """
     # One DU's (3, N) channels were taken for three DUs of one channel each,
     # and none triggered (#289)

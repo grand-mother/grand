@@ -231,6 +231,35 @@ class Efield2Voltage:
 
         Unknown keys and invalid values are refused when the computation
         starts.
+
+    Examples
+    --------
+    Simulate the voltages of the shower that ships with the repository, with the
+    Galactic noise of 6 h local sidereal time:
+
+    .. jupyter-execute::
+
+        import tempfile
+        from pathlib import Path
+
+        import numpy as np
+        import grand
+        from grand import Efield2Voltage
+        from grand.dataio import TVoltage
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        out = Path(tempfile.mkdtemp())
+
+        sim = Efield2Voltage(str(sample), "voltage.root", output_directory=str(out),
+                             seed=1, efield_level=0)
+        sim.params["lst"] = 6.0
+        sim.compute_voltage()
+
+        with TVoltage(str(out / "voltage.root")) as tvoltage:
+            tvoltage.get_entry(0)
+            traces = np.asarray(tvoltage.trace)
+        print("%d units, traces of shape %s, in µV" % (traces.shape[0], traces.shape[1:]))
     """
 
     def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300',

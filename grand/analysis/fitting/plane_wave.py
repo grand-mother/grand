@@ -27,6 +27,25 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     -------
     ndarray: Theta in [0, pi] and phi in [0, 2*pi), in radians: the direction
     the shower comes from.
+
+    Examples
+    --------
+    Recover the direction of a plane wave from the times it reaches 30 antennas.
+    Positions are in meters, times in seconds, angles in radians:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.analysis.fitting.plane_wave import PWF_model, PWF_semianalytical
+
+        rng = np.random.default_rng(0)
+        xants = np.column_stack([rng.uniform(-2000, 2000, 30),
+                                 rng.uniform(-2000, 2000, 30),
+                                 np.full(30, 1264.0)])
+        tants = PWF_model((np.radians(70.0), np.radians(30.0)), xants)
+
+        theta, phi = PWF_semianalytical(xants, tants)
+        print("zenith %.2f deg, azimuth %.2f deg" % (np.degrees(theta), np.degrees(phi)))
     """
     where = "PWF_semianalytical"
     Xants = _checks.antennas(Xants, where, min_ants=3)

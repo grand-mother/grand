@@ -140,6 +140,21 @@ class AntennaModel:
 
     Loads the tabulated response and provides it on whatever frequency and
     direction grid the caller needs.
+
+    Examples
+    --------
+    The tables of one arm.  The frequency axis is in **Hz**, unlike the rest of
+    the simulation, which works in MHz:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import AntennaModel
+
+        model = AntennaModel()                       # 'GP300', the HFSS simulation
+        sn = model.leff_sn                           # the south-north arm
+        print("frequencies from %.0f to %.0f MHz" % (sn.frequency[0] / 1e6, sn.frequency[-1] / 1e6))
+        print("table shape (frequency, azimuth, zenith):", np.shape(sn.leff_theta_reim))
     """
     def __init__(self, du_type="GP300"):
 

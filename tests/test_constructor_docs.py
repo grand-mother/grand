@@ -89,3 +89,12 @@ def test_comments_and_strings_both_count_and_code_is_skipped():
     assert "a : int\n    From a double-hash comment" in doc
     assert "b : int\n    From a single-hash comment" in doc and "old" not in doc
     assert "c : int\n    From a string" in doc
+
+
+def test_the_parameters_come_before_the_examples():
+    r"""numpydoc renders Examples last; a tree class with an example keeps that order."""
+    from grand.dataio.event_trees import TShower
+
+    doc = TShower.__doc__
+    assert doc.index("\nParameters\n") < doc.index("\nExamples\n")
+    assert doc.count("\nExamples\n") == 1

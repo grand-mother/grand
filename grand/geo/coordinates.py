@@ -1925,6 +1925,22 @@ class LTP(CartesianRepresentation):
 
     Basis and origin is calculated in ECEF frame.
     'location' and 'orientation' are required.
+
+    Examples
+    --------
+    The same three numbers name different places in different orientations: 1 km
+    along x is east in ``'ENU'`` and north in ``'NWU'``:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import Geodetic, LTP
+
+        site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+        for orientation in ("ENU", "NWU"):
+            point = LTP(x=1000.0, y=0.0, z=0.0, location=site,
+                        orientation=orientation, magnetic=False)
+            print(orientation, np.round(np.asarray(Geodetic(point)).ravel()[:2], 5))
     """
 
     def __new__(

@@ -1943,6 +1943,20 @@ class Zload(GenericProcessingDU):
 class RFChain(GenericProcessingDU):
     """
     Facade for all elements in RF chain
+
+    Examples
+    --------
+    The magnitude of the transfer function, from the open-circuit voltage to the
+    ADC input, for the three arms, at frequencies in MHz:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.detector.rf_chain import RFChain
+
+        chain = RFChain()
+        chain.compute_for_freqs(np.array([50.0, 100.0, 150.0, 200.0]))
+        print(np.round(np.abs(chain.get_tf()), 1))           # (arms, frequencies)
     """
 
     def __init__(self, vga_gain=20):

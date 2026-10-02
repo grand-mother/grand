@@ -904,7 +904,27 @@ class TVoltage(MotherEventTree):
 @dataclass
 ## The class for storing Efield traces and associated values for each event
 class TEfield(MotherEventTree):
-    """The class for storing Efield traces and associated values for each event"""
+    """The class for storing Efield traces and associated values for each event
+
+    Examples
+    --------
+    Read the electric-field traces of one event, one row per detection unit:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import numpy as np
+        import grand
+        from grand.dataio import TEfield
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        with TEfield(str(sample / "efield_1618-13790_L0_0000.root")) as tefield:
+            tefield.get_event(13790, 1)
+            traces = np.asarray(tefield.trace)               # (units, 3, samples), µV/m
+            print("%d units, peak %.0f µV/m" % (len(tefield.du_id), np.abs(traces).max()))
+    """
 
     _type: str = "efield"
 
@@ -963,7 +983,27 @@ class TEfield(MotherEventTree):
 @dataclass
 ## The class for storing reconstructed shower data common for each event
 class TShower(MotherEventTree):
-    """The class for storing shower data common for each event"""
+    """The class for storing shower data common for each event
+
+    Examples
+    --------
+    Read the shower of one event:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import grand
+        from grand.dataio import TShower
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        with TShower(str(sample / "shower_1618-13790_L0_0000.root")) as tshower:
+            print("events (event, run):", tshower.get_list_of_events())
+            tshower.get_event(13790, 1)
+            print("zenith %.2f deg, azimuth %.2f deg, energy %.3g GeV"
+                  % (tshower.zenith, tshower.azimuth, tshower.energy_primary))
+    """
 
     _type: str = "shower"
 

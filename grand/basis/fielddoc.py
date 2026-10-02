@@ -143,5 +143,10 @@ def document_fields(cls):
         section.append("%s : %s" % (name, kind))
         if text:
             section.extend("    " + line for line in text.splitlines())
-    cls.__doc__ = (doc + "\n\n" if doc else "") + "\n".join(section) + "\n"
+    # numpydoc puts Examples last, so the parameters go before them
+    head, sep, examples = doc.partition("\nExamples\n--------\n")
+    text = (head.rstrip() + "\n\n" if head.strip() else "") + "\n".join(section) + "\n"
+    if sep:
+        text += "\nExamples\n--------\n" + examples + "\n"
+    cls.__doc__ = text
     return cls

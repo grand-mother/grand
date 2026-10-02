@@ -46,6 +46,17 @@ class ADC:
         downsampled_voltage_trace : np.ndarray[double]
             Array of downsampled voltage traces, with shape (N_du,3,N_samples), in µV.
 
+        Examples
+        --------
+        Simulated voltages are sampled at 2 GHz; the ADC samples at 500 MHz:
+
+        .. jupyter-execute::
+
+            import numpy as np
+            from grand import ADC
+
+            voltage = np.zeros((1, 3, 8192))                     # one unit, 4.096 µs at 2 GHz
+            print(ADC().downsample(voltage, 2000.0).shape)
         '''
         # A rate of 0, NaN or below 0 failed with a bare ZeroDivisionError or
         # a negative dimension (#289)

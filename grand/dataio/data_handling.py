@@ -29,7 +29,26 @@ _ABSENT_TREE = re.compile(r"^f?t(run|runvoltage|runrawvoltage|rawvoltage|adc|vol
 
 
 class DataDirectory:
-    """Class holding the information about GRAND data in a directory"""
+    """Class holding the information about GRAND data in a directory
+
+    Examples
+    --------
+    Open every tree of a folder, and pick one by type and analysis level:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import grand
+        from grand.dataio import DataDirectory
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        folder = DataDirectory(str(sample))
+        tshower = folder.tshower_l0
+        tshower.get_entry(0)
+        print("primary %s, Xmax %.1f g/cm2" % (tshower.primary_type, tshower.xmax_grams))
+    """
 
     def __init__(self, dir_name: str, recursive: bool = False, analysis_level: int = -1, sim2root_structure: bool = True):
         """Indexes the GRAND files of a directory.

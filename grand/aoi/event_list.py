@@ -19,6 +19,24 @@ class EventList:
     returns the *same* :class:`Event` object, so ``list(EventList(d))`` holds
     that one object several times, showing the last event. Copy what you need
     from each event before reading the next.
+
+    Examples
+    --------
+    Loop over the events of a simulation folder.  The same ``Event`` object is
+    reused, so copy out what you need rather than keeping ``event``:
+
+    .. jupyter-execute::
+
+        from pathlib import Path
+
+        import grand
+        from grand.aoi.event_list import EventList
+
+        sample = (Path(grand.__file__).parents[1]
+                  / "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000")
+        for event in EventList(str(sample)):
+            print("event %5d: zenith %5.2f deg, %2d antennas"
+                  % (event.event_number, event.simshower.zenith, len(event.antennas)))
     """
 
     ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future

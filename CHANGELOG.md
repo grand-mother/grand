@@ -1403,6 +1403,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- Executed examples in the docstrings of the most used entry points:
+  `Efield2Voltage`, `EventList`, `DataDirectory`, `TShower`, `TEfield`,
+  `TRun`, `LTP`, `RFChain`, `galactic_noise`, `t1_du_triggers`,
+  `AntennaModel`, `PWF_semianalytical` and `ADC.downsample`.  They run on the
+  committed sample when the documentation is built.
+
 - `notebooks/import_notebook.py` brings a notebook edited in Jupyter, or a
   new one, into `make_notebooks.py`: it checks that the cells compile and use
   no absolute paths, writes the notebook's generator block, executes it
