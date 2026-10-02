@@ -19,21 +19,8 @@ terrain from :term:`TURTLE`, the geomagnetic field from :term:`GULL` and sky bri
 3. **An instrument-response model** — :term:`effective length`, Galactic noise, RF
    chain, :term:`ADC` (:mod:`grand.sim`).
 
-Composition
------------
-
-Lines of Python per subpackage, on 24 September 2026:
-
-======================================  =====  =====
-Subpackage                              Lines  Share
-======================================  =====  =====
-``grand.sim`` — instrument response     5856   29.1%
-``grand.dataio`` — data model           5086   25.3%
-``grand.geo`` — geometry and geodesy    3857   19.2%
-``grand.aoi`` — user-facing API         2171   10.8%
-``grand.basis`` — traces and array viz  1908   9.5%
-``grand.analysis`` — reconstruction     1261   6.3%
-======================================  =====  =====
+Forward and back
+----------------
 
 The simulation runs forward, from shower to field to voltage to ADC counts.
 :mod:`grand.analysis` (Marion Guelfand) runs back: it reconstructs the

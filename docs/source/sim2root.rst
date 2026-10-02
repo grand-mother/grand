@@ -73,93 +73,16 @@ made in the current directory or in the one ``-o`` names.
 authoritative usage document and is kept by the people who wrote the
 converters.
 
-What is in it
--------------
+Changing the converters
+-----------------------
 
-About 8600 lines:
-
-=========================================================  ======  ================================
-File                                                       Lines   What it does
-=========================================================  ======  ================================
-``ZHAireSRawRoot/AiresInfoFunctionsGRANDROOT.py``           2095   Reads ZHAireS output files
-``Common/raw_root_trees.py``                                1434   The RawRoot schema
-``ZHAireSRawRoot/ZHAireSRawToRawROOT.py``                   1049   ZHAireS to RawRoot
-``Common/sim2root.py``                                      1122   RawRoot to GRANDRoot
-``CoREASRawRoot/CoreasToRawROOT.py``                         733   CoREAS to RawRoot
-``Common/IllustrateSimPipe.py``                              574   Plots for the pipeline example
-``ZHAireSRawRoot/ZHAireSInputGenerator.py``                  492   Generates ZHAireS inputs
-``Common/EventParametersGenerator.py``                       353   Event parameter files
-``CoREASRawRoot/CorsikaInfoFuncs.py``                        455   Reads CORSIKA output
-``ZHAireSRawRoot/ZHAireSCompressEvent.py``                   219   Compresses an event
-``Common/RunSimPipe*.py``                                    287   Three pipeline examples
-=========================================================  ======  ================================
-
-``Common/raw_root_trees.py`` defines the RawRoot format, a second schema
-parallel to ``grand/dataio``.  A change to one does not reach the other.
-
-State of the code
------------------
-
-**It is outside the quality gates.**  The CI lint job checks ``grand/``,
-``tests/``, ``quality/``, ``notebooks/`` and ``docs/dev/``.  It does not check
-``sim2root/``.  The test suite does cover it, from outside: ``tests/sim2root/``
-runs the converters on the committed samples (conversion, the trace window,
-:term:`Xmax`, the no-antenna case, the documented commands), but nothing tests the
-modules piece by piece.
-
-**Ruff reports 837 findings there**, against zero in the gated scope.
-The largest groups are ``F405`` (372, names possibly undefined from star
-imports), ``D103`` (104, missing docstrings) and ``F821`` (98, undefined
-names).
-
-**Ninety-eight of those undefined names are in one block.**
-``ZHAireSRawToRawROOT.py`` has a longitudinal-tables section guarded by
-``if(NLongitudinal):`` that calls ``SimShower.*`` and ``HDF5handle``, neither of
-which exists anywhere in the file — they are leftovers from an HDF5-based
-predecessor.  The block is dead as written, because ``NLongitudinal=False`` is
-hard-coded at line 85 and the parameter that set it is commented out of the
-signature above it.  A commented usage example further down the same file
-passes ``NLongitudinal=True``; doing that would raise ``NameError`` on the
-first call.  The comment above the block says "not implemented yet", which is
-accurate.
-
-The converters produced the Data Challenge datasets and are tested end to
-end, but they have not had the cleanup the package has had.  A change there is
-checked only by the end-to-end tests.
-
-A stale twin: ``src_outlib/``
-------------------------------
-
-``src_outlib/`` holds an abandoned copy of part of this tooling; check which
-copy you are editing before changing anything named ``AiresInfo*``.
-
-``src_outlib/AiresInfoFunctionsGRANDROOT.py`` is a diverged copy of the file of
-the same name under ``ZHAireSRawRoot/`` — 1814 lines against 2095, missing a
-series of ``Get*FromSry`` functions the live one has.  And
-``src_outlib/ZHAireSRawToGRANDROOT.py`` has not been valid Python since 30 June
-2023, when a merge conflict was committed unresolved and never cleaned up.
-
-**``sim2root/ZHAireSRawRoot/`` is the live copy.**  Nothing imports
-``src_outlib/``, so a change there has no effect.
-
-It is not deleted yet because four branches still touch it; see
-:ref:`issue-src-outlib-conflict`.
-
-If you work on it
------------------
-
-- Read ``sim2root/README.md`` first; it is more current than the Handbook.
-- Test by round-tripping.  Convert, then read the result back with
-  ``grand.dataio`` and check the fields you touched.  Notebook 02 shows the
-  reading side and ``tests/sim/test_pipeline_end_to_end.py`` shows how to
-  build a small file from the tree classes rather than shipping one.
-- If you add a field on one side, check the other.  The RawRoot and GRANDRoot
-  schemas are maintained separately and
-  :ref:`issue-nutrig-field-names` is what happens when two branches name one
-  quantity twice.
-- Adding ``sim2root/`` to the lint gate is planned.  The undefined-name block
-  comes first, since it is the only group of findings that is an error rather
-  than a matter of style.
+``sim2root/README.md`` documents the converters in detail.  Their code is not
+yet linted and the tests check them end to end only, by converting the
+committed samples (``tests/sim2root/``).  After a change, convert a sample and
+read the result back with :mod:`grand.dataio`.  ``Common/raw_root_trees.py``
+defines the RawRoot format separately from ``grand/dataio``, so a field added
+to one must be added to the other.  Edit the files under ``sim2root/``, not
+the stale copy in ``src_outlib/`` (:ref:`issue-src-outlib-conflict`).
 
 Where next
 ----------

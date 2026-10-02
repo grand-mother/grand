@@ -1591,6 +1591,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- The documentation is shorter: developer detail moved out of the user pages
+  (sim2root, continuous integration, contributing, architecture, data
+  files), repeated conventions replaced by links, the notebook descriptions
+  and the known issues condensed, and the changelog page replaced by a link
+  to this file.
+
 - The main entry points' docstrings link to related functions in a See Also
   section: the simulation chain, the trees, the frames and the plane-wave fit.
 

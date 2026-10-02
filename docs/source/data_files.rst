@@ -57,13 +57,6 @@ holds roughly:
      - ~160 kB
      - The two coefficient files above
 
-.. note::
-
-   ``data/test_efield.root`` appears on many developer machines and is **not**
-   tracked or downloaded by anything.  No test reads it any more: they use the
-   committed samples under ``sim2root/Common`` and write into temporary
-   folders, never into ``data/``.
-
 Checking the installation
 -------------------------
 
@@ -82,30 +75,14 @@ included::
 An installation from before the manifest gets one the next time the
 downloader runs.
 
-The download scripts
+Where they come from
 --------------------
 
-Four scripts, four archives.
-
-============================================  =================================
-Script                                        Fetches
-============================================  =================================
-``download_data_grand.py``                    ``grand_model_<version>.tar.gz``,
-                                              the version taken from
-                                              ``model_version.flag``
-``download_grand_antenna_models.py``          ``grand_model_20241218.tar.gz``
-``download_LFmap_grand.py``                   ``LFmap.tar.gz``
-``download_new_RFchain.py``                   ``RF_chain_20241218.tar.gz``
-============================================  =================================
-
-All of them fetch from ``forge.in2p3.fr``, which requires
-no credentials but is not a mirror-backed host: if it is down, a fresh
-environment cannot be built.
-
-``env/setup.sh`` runs only ``download_data_grand.py``; the line for
-``download_new_RFchain.py`` is commented out.  So the versioned bundle is what
-a normal setup gets and the other three archives are fetched by hand when
-someone needs them.
+``env/setup.sh`` runs ``data/download_data_grand.py``, which fetches the model
+release named in ``data/model_version.flag`` from ``forge.in2p3.fr``.  That
+host has no mirror: when it is down, a new installation cannot download the
+data.  The other ``download_*.py`` scripts fetch older or separate archives
+by hand and are not needed for a normal installation.
 
 Antenna effective length
 ------------------------

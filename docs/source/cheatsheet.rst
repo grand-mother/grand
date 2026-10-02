@@ -88,6 +88,8 @@ From the shell:
     python scripts/convert_efield2voltage.py my_simulation --lst 18 --seed 1
     python scripts/convert_voltage2adc.py my_simulation --t1_trigger
 
+.. _cheatsheet-symptoms:
+
 When something looks wrong
 --------------------------
 

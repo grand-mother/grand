@@ -22,34 +22,21 @@ was given::
 
 :ref:`troubleshooting-messages` below lists the common ones, with what to do.
 
-The exceptions are the standard ones, so ``except ValueError`` and the like
-work as usual:
+They are the standard exceptions (``TypeError`` for the wrong kind of value,
+``ValueError`` for a value out of range or of the wrong shape,
+``FileNotFoundError`` for a missing file), so ``except`` works as usual.
 
-- ``TypeError``: the wrong kind of value (a string where a number is
-  expected, a fraction for an integer field);
-- ``ValueError``: the right kind but out of range, or the wrong shape or
-  length (antenna positions that are not (N, 3), fewer antennas than a fit
-  needs);
-- ``FileNotFoundError``, ``OSError``: a missing file or directory, or a file
-  that is not a ROOT file.
-
-Values that are suspicious but usable give a :class:`~grand.basis.validate.GRANDlibWarning`
-instead and are used as given.  A tree field outside its physical range is
-one: reading a file goes through the same code as writing one and existing
-files hold placeholders such as ``xmax_grams = -201``, which must stay
-readable.  ``NaN`` in a coordinate is another.  To find where they come from,
-turn them into errors::
+A value that is suspicious but usable, such as a tree field outside its
+physical range, gives a :class:`~grand.basis.validate.GRANDlibWarning` and is
+used as given.  To find where warnings come from, turn them into errors::
 
     import warnings
     from grand.basis.validate import GRANDlibWarning
     warnings.simplefilter("error", GRANDlibWarning)
 
-Two things are deliberately *not* errors.  Opening a tree on a file that does
-not exist creates it, because that is how trees are written, so a mistyped
-file name gives an empty tree; only a directory that does not exist is
-refused.  And an empty directory is a valid :class:`~grand.dataio.DataDirectory`
-for the same reason; :class:`~grand.aoi.event_list.EventList`, which only
-reads, refuses it.
+Opening a tree on a file that does not exist is *not* an error: it creates
+the file, because that is how trees are written.  A mistyped file name
+therefore gives an empty tree.
 
 Nothing raised, but the answer is ``nan``
 -----------------------------------------
@@ -73,12 +60,9 @@ lookup.**
 The numbers are wrong but nothing failed
 ----------------------------------------
 
-**The three arms do not match the field components you put in.**
-They are not meant to.  ``trace[:, 2]`` is the Z antenna arm, not
-:math:`E_z`: the response is the projection of the field onto the effective
-length in the spherical basis of the *arrival direction*, so which arm sees
-what depends on the geometry.  A field with components 1.0 : 0.6 : 0.2 can come
-out as 600 : 400 : 1.  See :doc:`simulation` and notebook 06.
+The most common causes (arms read as field components, hertz for megahertz,
+degrees for radians, mixed-up frames) are in the :ref:`cheat sheet's table
+<cheatsheet-symptoms>`.  The others:
 
 **Changing ``vga_gain`` changes nothing.**  It is ignored.  See
 :ref:`issue-vga-gain-ignored`.
@@ -86,16 +70,6 @@ out as 600 : 400 : 1.  See :doc:`simulation` and notebook 06.
 **Two noise levels disagree by a factor of two.**  If either was simulated
 before 7 September 2026, see :ref:`issue-galactic-noise-tables`.  Since then
 the three antenna models agree to about 10%.
-
-**A frequency is out by** :math:`10^6`.  :class:`~grand.sim.detector.antenna_model.AntennaModel`
-stores its frequency axis in **hertz**; everything in
-:mod:`grand.sim.detector.rf_chain` uses **megahertz**.  The attribute name
-carries no unit suffix.  Divide by ``1e6`` when crossing between them.
-
-**An angle is out by a factor of 57.3.**  The trees, the simulation chain and
-the antenna tables take angles in **degrees**; :mod:`grand.analysis` and the
-event viewer work in **radians**.  The analysis functions warn when given a
-value larger than :math:`2\pi`.
 
 **``leff_theta`` is ``None``.**  The loaded tables hold the real/imaginary form
 in ``leff_theta_reim``; the polar attributes ``leff_theta``, ``leff_phi``,
@@ -254,11 +228,7 @@ iteration (:ref:`datamodel-releasing-trees`).
 Environment and build
 ---------------------
 
-**The conda solve takes forever or fails.**  Use libmamba:
-
-.. code-block:: bash
-
-    conda env create -f env/conda/grand-dev.yml --solver=libmamba
+**The installation fails.**  See :doc:`installation`.
 
 **A result changed after a ROOT upgrade.**  Check first that the computation
 is deterministic: seed every random draw and reproduce the difference twice

@@ -80,14 +80,9 @@ in field names, arguments and these pages.
       The geomagnetic-field library GRANDlib compiles from source, wrapping
       IGRF and WMM.  Built by ``src/Makefile``.
 
-   Handle3dTraces
-      The in-memory container for a set of three-component traces, in
-      :mod:`grand.basis.traces_event`.  What most analysis code actually
-      manipulates.
-
-   HorizonAntenna
-      The GRAND antenna design: three arms, two horizontal and one vertical,
-      on a mast a few meters above the ground.
+   Handling3dTraces
+      The in-memory container for a set of three-arm traces, in
+      :mod:`grand.basis.traces_event`, with plotting and peak-finding methods.
 
    LFMap
       A low-frequency sky map of Galactic brightness temperature.  Folded

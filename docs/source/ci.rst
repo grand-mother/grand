@@ -62,33 +62,9 @@ supported version.
 Each job has a time limit (25 minutes for the tests), so a hang fails instead
 of holding a runner.
 
-How the checks are decided
---------------------------
-
-A first job, ``changes``, looks at what a push modified.  A push that touches
-only documentation skips the test suite, but still reports a result, so a
-required check never waits on a job that will not run.  When ``changes``
-cannot tell (a new branch, a force push), everything runs.
-
-The documentation build treats every warning as an error, with one exception:
-on some processors, ROOT's JIT compiler writes a CPU-feature diagnostic to
-standard error, which the notebook extension reports as a warning.  The job
-builds with ``--keep-going`` and fails on any warning in the log other than
-that one.  ``-W`` is not used, since it would fail on that diagnostic.
-
-The documentation links to the Handbook PDF.  The ``handbook`` job compiles it
-from its LaTeX source; the documentation job uses the copy in ``resources/``,
-so it needs no LaTeX installation.
-
-The model data
---------------
-
-Every job needs the model data, about 1 GB from ``forge.in2p3.fr``.  The
-workflows cache it, keyed on ``data/model_version.flag``, so it is downloaded
-only when the model version changes.  There is no fallback to an older
-version, so a job never runs against the wrong data.  The download script
-retries four times and checks the size of each file.  It replaces the
-previous data only after the new data have arrived.
+A push that changes only documentation skips the test suite.  The model data
+are cached between runs and downloaded again only when their version changes.
+The comments in the workflow files explain the details.
 
 Running the checks locally
 --------------------------
@@ -101,19 +77,14 @@ Running the checks locally
     cd docs && make html                                         # the documentation
     python notebooks/make_notebooks.py                           # the notebooks
 
-The documentation build should print no ``WARNING`` lines other than the ROOT
-diagnostic above.
+The documentation build should print no ``WARNING`` lines, except possibly a
+CPU-feature diagnostic from ROOT on some processors, which is harmless.
 
 Testing the Docker route
 ------------------------
 
-``docker.yml`` checks whether GRANDlib still installs and passes its tests
-inside a Docker image.  It is a diagnostic, not a merge gate.  It runs
-``env/setup.sh``, ``import grand``, the ``dataio`` tests and the full suite as
-separate steps, so a failure shows which stage broke.  By default it tests the
-published ``grandlib/dev:1.2`` image against ``dev-next`` and ``dev`` and
-builds the image of ``env/docker/grandlib.dockerfile``.
-
+``docker.yml`` checks that GRANDlib still installs and passes its tests inside
+a Docker image (:doc:`installation`).  It reports, but does not block a merge.
 GitHub offers manual runs only for workflows on the repository's default
 branch, which is currently ``master``.  Until ``dev-next`` becomes the
 default, start it by pushing to the trigger branch:
