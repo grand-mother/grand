@@ -64,9 +64,20 @@ class _TreeRegistry:
 
     def __init__(self):
         self._refs = []
+        # Trees with entries filled but not written are held strongly: a tree
+        # dropped then would lose them silently (an example that let its
+        # Event objects go wrote 1 event of 10)
+        self._pinned = {}
 
     def append(self, tree):
         self._refs.append(weakref.ref(tree))
+
+    def pin(self, tree):
+        r"""Holds `tree` until :meth:`unpin`: it has unwritten entries."""
+        self._pinned[id(tree)] = tree
+
+    def unpin(self, tree):
+        self._pinned.pop(id(tree), None)
 
     def _live(self):
         live = [ref() for ref in self._refs]
@@ -89,9 +100,11 @@ class _TreeRegistry:
     def remove(self, tree):
         r"""Removes `tree`, by identity; nothing if it is not held."""
         self._refs = [ref for ref in self._refs if ref() is not None and ref() is not tree]
+        self.unpin(tree)
 
     def clear(self):
         self._refs = []
+        self._pinned = {}
 
 
 ## The generated Trees
@@ -1118,6 +1131,7 @@ class DataTree:
         # self._tree.Write(*args)
         self._tree.GetCurrentFile().Write(*args)
         _written_entries[id(self)] = int(self._tree.GetEntries())
+        grand_tree_list.unpin(self)                 # nothing left to lose (#284)
 
         # If TFile was created here, close it
         if (creating_file and close_file) or force_close_file:

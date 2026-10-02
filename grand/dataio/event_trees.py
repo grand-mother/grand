@@ -61,6 +61,8 @@ class MotherEventTree(DataTree):
 
         # Fill the tree
         self._tree.Fill()
+        # Held until written: dropping it now would lose this entry (#284)
+        grand_tree_list.pin(self)
 
         # If there is no entry list, create it
         if not self._entry_list:

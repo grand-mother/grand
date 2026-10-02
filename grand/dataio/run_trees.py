@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, logger, StdStringDesc, TTreeArrayDesc, StdVectorListDesc
+from grand.dataio.data_tree import grand_tree_list
 from grand.dataio import file_lock as _file_lock
 
 
@@ -33,6 +34,8 @@ class MotherRunTree(DataTree):
 
         # Fill the tree
         self._tree.Fill()
+        # Held until written: dropping it now would lose this entry (#284)
+        grand_tree_list.pin(self)
 
         # Add the current run_number and event_number to the entry_list
         self._entry_list.append(self.run_number)
