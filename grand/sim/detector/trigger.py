@@ -103,8 +103,10 @@ def _check_config(config, where="T1 trigger"):
              % (config["th2"], config["th1"]))
     if config["nc_min"] > config["nc_max"]:
         fail("nc_min (%r) must not exceed nc_max (%r)" % (config["nc_min"], config["nc_max"]))
-    if config["t_period"] <= 0:
-        fail("t_period must be > 0, got %r" % (config["t_period"],))
+    # At 2 ns per sample, a period under 2 ns is an empty window, which
+    # failed with a bare IndexError (#289)
+    if config["t_period"] < 2:
+        fail("t_period must be at least 2 (ns, one sample), got %r" % (config["t_period"],))
 
 
 def _config(trigger_config):
@@ -255,6 +257,12 @@ def t1_du_triggers(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     numpy.ndarray of bool
         One value per DU.
     """
+    # One DU's (3, N) channels were taken for three DUs of one channel each,
+    # and none triggered (#289)
+    if np.ndim(traces) != 3:
+        raise ValueError("GRANDlib: t1_du_triggers: traces must have shape (N_du, N_channels, "
+                         "N_samples), got %s; for one unit's channels, pass traces[None]"
+                         % (np.shape(traces),))
     # A NaN trace still triggered (#288)
     for index, du in enumerate(traces):
         if not np.all(np.isfinite(np.asarray(du, dtype=float))):

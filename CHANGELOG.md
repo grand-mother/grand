@@ -15,6 +15,24 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Numerical edges (#289): `Efield2Voltage.get_leff` refuses a position
+  beyond ±22000 km on either side, or not finite, with a `GRANDlib:`
+  message (it tested `x > 2.2e7` only); `recons_swf` passes `sigma` to the
+  loss (it was documented but ignored), and `SWF_loss` weights per-antenna
+  uncertainties or takes their covariance matrix (a vector gave an array,
+  not a χ²); `t1_du_triggers` refuses traces that are not
+  (N_du, N_channels, N_samples) (one unit's (3, N) channels were read as
+  three units) and a `t_period` under 2 ns (an `IndexError`);
+  `analysis.convert_voltage_to_ADC` truncates and saturates at the full
+  scale, as `ADC.process` does, and refuses NaN; `ADC.downsample` refuses
+  a rate of 0, NaN or below 0, and rounds the new length (999 samples at
+  1 GHz give 500 at 500 MHz, not 499); the coordinate constructors no
+  longer list `Horizontal` among the positions they convert; a zero-length
+  vector's elevation is 0, not NaN; `geoid_undulation` refuses a latitude
+  beyond ±90° or a longitude beyond ±360° (it returned NaN, or wrapped);
+  a float32 field refuses a value that overflows to infinity and warns
+  when one underflows to 0.
+
 - The CoREAS converter writes one unit and one numbering (#232): the
   magnetic field strength is in µT, as from ZHAireS (it was mT from the
   `.reas` path and Gauss from the `.inp` path), and the tree docs say so;

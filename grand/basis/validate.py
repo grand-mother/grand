@@ -466,7 +466,17 @@ def coerce_to_dtype(value, dtype, where):
     if given.dtype.kind == "c":
         raise TypeError(message(where, "must be a real number, got the complex %s" % _show(value)))
     if dtype.kind == "f":
-        return given.astype(dtype)
+        with np.errstate(over="ignore", under="ignore"):
+            converted = given.astype(dtype)
+        # 1e39 in a float32 field read back as inf, and 1e-46 as 0 (#289)
+        finite = np.isfinite(given)
+        if np.any(finite & ~np.isfinite(converted)):
+            raise ValueError(message(where, "%s does not fit in %s (largest %g)"
+                                     % (_show(value), dtype, np.finfo(dtype).max)))
+        if np.any(finite & (given != 0) & (converted == 0)):
+            warn(where, "%s is below the smallest %s and is stored as 0" % (_show(value), dtype),
+                 stacklevel=5)
+        return converted
     # Integer storage
     if given.dtype.kind == "b":
         raise TypeError(message(where, "must be an integer, got a boolean"))

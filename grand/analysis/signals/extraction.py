@@ -118,6 +118,10 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
     """
     Convert voltage traces to ADC counts.
 
+    As :meth:`grand.ADC.process` does, without its noise: the counts are
+    truncated towards zero and saturate at ``+-adc_full_scale``.  They were
+    neither (1e12 µV gave 9.1e9 counts), and NaN passed through (#289).
+
     Parameters
     ----------
     trace : np.ndarray
@@ -132,7 +136,13 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
     Returns
     -------
     np.ndarray
-        Trace converted to ADC counts.
+        Trace converted to ADC counts, as floats holding whole numbers; the
+        channels not selected are returned unchanged.
+
+    Raises
+    ------
+    ValueError
+        If a selected channel holds NaN or infinity.
     """
     trace = _trace_channels(trace, channels, "convert_voltage_to_ADC")
     _validate.positive(_validate.as_real(voltage_ref, "voltage_ref", "convert_voltage_to_ADC"),
@@ -141,7 +151,12 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
     
     # Index as NumPy does, so a mask, a slice or a single index selects the
     # same channels as in get_peak_amplitude (issue #263)
-    ADC_trace[channels, :] = trace[channels, :] * 1e-6 * adc_full_scale / voltage_ref
+    selected = np.asarray(trace[channels, :], dtype=float)
+    if not np.all(np.isfinite(selected)):
+        raise ValueError(_validate.message(
+            "convert_voltage_to_ADC", "the selected channels hold NaN or infinity"))
+    counts = np.trunc(selected * 1e-6 * adc_full_scale / voltage_ref)
+    ADC_trace[channels, :] = np.clip(counts, -adc_full_scale, adc_full_scale)
             
     return ADC_trace
 

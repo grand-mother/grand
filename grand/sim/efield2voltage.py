@@ -641,14 +641,12 @@ class Efield2Voltage:
         AntennaProcessing
             The response object for that unit's three arms.
         """
-        if self.du_pos[du_idx, 0]>22000000:
-            raise ValueError("du_pos_x is too large for computing!")
-        elif self.du_pos[du_idx, 1]>22000000:
-            raise ValueError("du_pos_y is too large for computing!")
-        elif self.du_pos[du_idx, 2]>22000000:
-            raise ValueError("du_pos_z is too large for computing!")
-        else:
-            pass
+        # It tested x > 2.2e7 only, so -3e7 m was accepted (#289)
+        position = np.asarray(self.du_pos[du_idx], dtype=float)
+        if not np.all(np.isfinite(position)) or np.any(np.abs(position) > 2.2e7):
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_leff", "the position of DU index %d is %s m; each "
+                "coordinate must be finite and within +-22000 km" % (du_idx, position.tolist())))
 
 
         antenna_location = coord.LTP(

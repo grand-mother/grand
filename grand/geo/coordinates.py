@@ -167,7 +167,16 @@ def _latitude_longitude(coordinates, latitude, longitude, where):
             raise TypeError(_validate.message(
                 where, "three values given; give latitude and longitude, or a position"))
         latitude, longitude = coordinates, latitude
-    # A missing angle reads as NaN (with a warning), as it always has (#262)
+    # A missing angle reads as NaN (with a warning), as it always has (#262);
+    # an angle out of range gave NaN, or a wrapped value, silently (#289)
+    for name, value, limit in (("latitude", latitude, 90.0), ("longitude", longitude, 360.0)):
+        if value is None:
+            continue
+        array = np.asarray(value, dtype=float)
+        bad = np.isfinite(array) & (np.abs(array) > limit)
+        if np.any(bad):
+            raise ValueError(_validate.message(
+                where, "%s must be within +-%g degrees, got %s" % (name, limit, array[bad].ravel()[0])))
     return latitude, longitude
 
 
@@ -1335,7 +1344,7 @@ class Geodetic(GeodeticRepresentation):
                     cls, latitude=placeholder, longitude=placeholder, height=placeholder
                 )
             else:
-                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP or GRANDCS, got %s" % type(arg).__name__))
         else:
             # TODO: This part maynot be required.
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -1423,7 +1432,7 @@ class Geodetic(GeodeticRepresentation):
                     geodetic.height,
                 )
             else:
-                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'latitude', 'longitude' and 'height' as numbers or arrays; got %s" % type(arg if arg is not None else latitude).__name__))
+                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP or GRANDCS) or 'latitude', 'longitude' and 'height' as numbers or arrays; got %s" % type(arg if arg is not None else latitude).__name__))
 
         if isinstance(latitude, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
@@ -1588,7 +1597,7 @@ class ECEF(CartesianRepresentation):
                 placeholder = np.nan * np.ones(len(arg[0]))
                 return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
             else:
-                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP or GRANDCS, got %s" % type(arg).__name__))
         else:
             # TODO: This part maynot be required.
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -1651,7 +1660,7 @@ class ECEF(CartesianRepresentation):
                 ecef = np.matmul(basis.T, arg) + origin
                 x, y, z = ecef.x, ecef.y, ecef.z
             else:
-                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'x', 'y' and 'z' as numbers or arrays; got %s" % type(arg if arg is not None else x).__name__))
+                raise TypeError(_validate.message(type(self).__name__, "give either a position to convert (one of ECEF, Geodetic, LTP or GRANDCS) or 'x', 'y' and 'z' as numbers or arrays; got %s" % type(arg if arg is not None else x).__name__))
 
         if isinstance(x, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
@@ -1834,7 +1843,8 @@ class Horizontal(HorizontalRepresentation):
                 )  # x,y,z w.r.t to ENU basis.
                 r = np.sqrt(x * x + y * y + z * z)
                 azimuth = np.rad2deg(np.arctan2(x, y))
-                elevation = np.rad2deg(np.arcsin(z / r))
+                # arcsin(z / r) gave NaN for a zero-length vector (#289)
+                elevation = np.rad2deg(np.arctan2(z, np.sqrt(x * x + y * y)))
                 norm = r
             else:
                 raise TypeError(_validate.message(cls.__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'azimuth', 'elevation' and 'norm' as numbers or arrays; got %s" % type(arg if arg is not None else azimuth).__name__))
@@ -1958,7 +1968,7 @@ class LTP(CartesianRepresentation):
                 placeholder = np.nan * np.ones(len(ecef.x))
                 return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
             else:
-                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP, GRANDCS or Horizontal, got %s" % type(arg).__name__))
+                raise TypeError(_validate.message(cls.__name__, "the position to convert must be one of ECEF, Geodetic, LTP or GRANDCS, got %s" % type(arg).__name__))
         else:
             # return a placeholder with 1 entry. This is used if we just want to define LTP frame
             # without giving any coordinates. Can also use np.empty((1,1)) instead of np.array([nan]).

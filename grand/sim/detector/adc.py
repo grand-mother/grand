@@ -47,13 +47,19 @@ class ADC:
             Array of downsampled voltage traces, with shape (N_du,3,N_samples), in µV.
 
         '''
+        # A rate of 0, NaN or below 0 failed with a bare ZeroDivisionError or
+        # a negative dimension (#289)
+        input_sampling_rate_mhz = _validate.as_real(input_sampling_rate_mhz, "input_sampling_rate_mhz",
+                                                    "ADC.downsample")
+        _validate.positive(input_sampling_rate_mhz, "input_sampling_rate_mhz", "ADC.downsample", "MHz")
         _validate.plausible(input_sampling_rate_mhz, "input_sampling_rate_mhz", "ADC.downsample", "sampling_rate_mhz")   # (#266)
         if self.sampling_rate != input_sampling_rate_mhz : 
           #compute the fft
           voltage_trace_f=sf.rfft(voltage_trace)
           #compute new number of points
           ratio=(self.sampling_rate/input_sampling_rate_mhz)        
-          m=int(np.shape(voltage_trace)[2]*ratio)
+          # Rounded, not truncated: 999 samples at 1 GHz gave 499 at 500 MHz (#289)
+          m=int(round(np.shape(voltage_trace)[2]*ratio))
           logger.info(f"resampling the voltage from {input_sampling_rate_mhz} to an ADC of {self.sampling_rate} MHz")        
           downsampled_voltage_trace=sf.irfft(voltage_trace_f,m)*ratio
           #plt.plot(np.arange(0,len(downsampled_voltage_trace[0][0]))/ratio,downsampled_voltage_trace[0][0])
