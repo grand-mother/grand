@@ -586,17 +586,18 @@ class Efield2Voltage:
                 du_type=self.du_type
             )
         # compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.
-        if self.params["add_rf_chain"]:
-            #self.rf_chain.compute_for_freqs(self.freqs_mhz)
-            self.rf_chain.compute_for_freqs(self.freqs_mhz)
-
-        if self.params["add_rf_chain_nut"]:
-        #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
-            self.rf_chainnut.compute_for_freqs(self.freqs_mhz)
-
-        if self.params["add_rf_chain_gaa"]:
-        #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
-            self.rf_chaingaa.compute_for_freqs(self.freqs_mhz)
+        # The transfer function is computed once per frequency axis and kept;
+        # get_tf() recomputed it for every unit, and the chain's per-frequency
+        # arrays (about 1 GB for a million-sample trace) are then released
+        # (#284).  Call chain.compute_for_freqs() to inspect a chain's stages.
+        self._chain_tf = {}
+        for flag, name in (("add_rf_chain", "rf_chain"), ("add_rf_chain_nut", "rf_chainnut"),
+                           ("add_rf_chain_gaa", "rf_chaingaa")):
+            if self.params[flag]:
+                chain = getattr(self, name)
+                chain.compute_for_freqs(self.freqs_mhz)
+                self._chain_tf[name] = np.array(chain.get_tf())
+                chain.release_arrays()
 
     def _set_empty_event(self):
         r"""Prepares the state for an event with no detection unit.
@@ -909,15 +910,15 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
-            self.vout_f[du_idx] *= self.rf_chain.get_tf()
+            self.vout_f[du_idx] *= self._chain_tf["rf_chain"]
 
         if self.params["add_rf_chain_nut"]:
             #self.vout_f[du_idx] *= self.rf_chain.get_tf()
-            self.vout_f[du_idx] *= self.rf_chainnut.get_tf()
+            self.vout_f[du_idx] *= self._chain_tf["rf_chainnut"]
 
         if self.params["add_rf_chain_gaa"]:
             #self.vout_f[du_idx] *= self.rf_chain.get_tf()
-            self.vout_f[du_idx] *= self.rf_chaingaa.get_tf()
+            self.vout_f[du_idx] *= self._chain_tf["rf_chaingaa"]
 
         # Final voltage output for antenna with index du_idx
         if self.params["add_noise"] or self.params["add_rf_chain"]:
@@ -977,15 +978,15 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
-            self.multiply(self.rf_chain.get_tf())
+            self.multiply(self._chain_tf["rf_chain"])
 
         if self.params["add_rf_chain_nut"]:
             #self.multiply(self.rf_chain.get_tf())
-            self.multiply(self.rf_chainnut.get_tf())
+            self.multiply(self._chain_tf["rf_chainnut"])
 
         if self.params["add_rf_chain_gaa"]:
             #self.multiply(self.rf_chain.get_tf())
-            self.multiply(self.rf_chaingaa.get_tf())
+            self.multiply(self._chain_tf["rf_chaingaa"])
 
         # # Final voltage output for antenna with index du_idx
         # if self.params["add_noise"] or self.params["add_rf_chain"]:

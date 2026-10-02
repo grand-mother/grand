@@ -479,6 +479,36 @@ class GenericProcessingDU:
         self.freqs_mhz = freqs_mhz
         self.nb_freqs = freqs_mhz.shape[0]
         self.size_sig = (self.nb_freqs - 1) * 2
+        self._released = False
+
+    #: Measured tables a stage reads in ``__init__``; :meth:`release_arrays` keeps them
+    _INPUTS = ("freqs_mhz", "freqs_in", "sparams")
+
+    def release_arrays(self):
+        r"""Frees the arrays computed for the current frequencies (#284).
+
+        Every array whose last axis runs over the frequencies is dropped, in
+        this stage and in the stages it holds; the measured input tables are
+        kept.  A chain over a million-sample trace holds about 1 GB of them,
+        while a caller such as :class:`grand.sim.efield2voltage.Efield2Voltage`
+        needs only the transfer function.  Call :meth:`compute_for_freqs`
+        again before using the stage.
+        """
+        n = self.nb_freqs
+        for name, value in list(vars(self).items()):
+            if isinstance(value, GenericProcessingDU):
+                value.release_arrays()
+            elif (name not in self._INPUTS and isinstance(value, np.ndarray)
+                  and value.ndim and value.shape[-1] == n):
+                setattr(self, name, None)
+        self._released = True
+
+    def _check_computed(self, action):
+        r"""Refuses `action` after :meth:`release_arrays`, with a message rather than a crash."""
+        if getattr(self, "_released", False):
+            raise RuntimeError(_validate.message(
+                "%s.%s" % (type(self).__name__, action), "the arrays were released; call "
+                "compute_for_freqs() again first"))
 
 class MatchingNetwork(GenericProcessingDU):
     
@@ -2034,6 +2064,7 @@ class RFChain(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2210,6 +2241,7 @@ class RFChainNut(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2347,6 +2379,7 @@ class RFChain_gaa(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2513,6 +2546,7 @@ class RFChain_Balun1(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2675,6 +2709,7 @@ class RFChain_Match_net(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2838,6 +2873,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -2997,6 +3033,7 @@ class RFChain_VGA(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "
@@ -3157,6 +3194,7 @@ class RFChain_in_Balun1(GenericProcessingDU):
             Voltage spectrum after the chain, for one unit's three arms.
         """
         # A check, not a bare assert; only one unit's (3, n_freq) works (#261)
+        self._check_computed("vout_f")
         if np.shape(voc_f) != self.Z_in.shape:  # shape = (nports, nfreqs)
             raise ValueError(_validate.message(
                 "%s.vout_f" % type(self).__name__, "voc_f must have shape %s (3 arms, the "

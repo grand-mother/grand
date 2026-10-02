@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Less memory for long traces (#284, items 2 and 3): `Efield2Voltage`
+  computes each RF chain's transfer function once per frequency axis and
+  keeps it, instead of recomputing it for every unit, then releases the
+  chain's per-frequency arrays with the new `release_arrays()` (a stage
+  used on its own keeps them, so plots of its S-parameters work as
+  before).  For one event of 5 units at 524,288 samples the memory above
+  the baseline falls from 1087 to 798 MB, with identical voltages.  The
+  per-event growth of item 3 no longer reproduces: 50, 200 and 800 events
+  peak at 1116, 1158 and 1135 MB.
+
 - The `grand.aoi` classes and `ShowerEvent` check their fields as the tree
   setters do (#267, the last item): `Shower`, `Antenna`, the timetraces,
   `Event` and `ShowerEvent` refuse a string or boolean for a number, a
