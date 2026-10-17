@@ -1,0 +1,26 @@
+RESULT[dev]:
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+No files provided to init from. Aborting.
+1. Event().fill_event_from_trees() -> False
+Please provide only entry_number or event/run_number!
+2. events.get_event(entry_number=0, event_number=13790) -> None
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Please provide only entry_number or event/run_number!
+Run information loaded.
+Voltage information loaded.
+Efield information loaded.
+3. event.fill_event_from_trees(entry_number=0, event_number=13790, run_number=1) -> AttributeError: 'NoneType' object has no attribute 'Get'
+Run information loaded.
+No event with event number 99999 and run number 1 in the tvoltage tree. Please provide proper numbers.
+4. events.get_event(99999, 1) -> ValueError: zero-size array to reduction operation minimum which has no identity
+5. EventList(123).event_list -> None
+6. four channels, trawvoltage_channels=[1, 2, 3, 0] -> x, y, z start with [1.0, 2.0, 3.0]
+RESULT[dev-next]:
+1. Event().fill_event_from_trees() -> FileNotFoundError: GRANDlib: Event.fill_event_from_trees: no file or directory to read the event from
+2. events.get_event(entry_number=0, event_number=13790) -> ValueError: GRANDlib: EventList.get_event: give entry_number, or event_number and run_number, not both
+3. event.fill_event_from_trees(entry_number=0, event_number=13790, run_number=1) -> ValueError: GRANDlib: Event.fill_event_from_trees: give entry_number, or event_number and run_number, not both
+4. events.get_event(99999, 1) -> LookupError: GRANDlib: EventList.get_event: no event with event number 99999 and run number 1; this input holds 2 events: [(13790, 1), (1618, 1)]
+5. EventList(123).event_list -> TypeError: GRANDlib: EventList: the input must be a file or directory name, a ROOT.TFile, a DataFile or a DataDirectory, got int
+6. four channels, trawvoltage_channels=[1, 2, 3, 0] -> ValueError: GRANDlib: Event: 'trawvoltage_channels' must name exactly 3 channels (the x, y and z of the voltage), got [1, 2, 3, 0]

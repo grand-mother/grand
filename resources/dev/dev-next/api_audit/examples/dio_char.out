@@ -1,0 +1,16 @@
+RESULT[dev]:
+list(tadc.adc_input_channels_ch[0])      -> ['\x01', '\x02', '\x03', '\x04']
+tadc.test_pulse_rate_divider[0]          -> '\x03'
+tadc.test_pulse_rate_divider == [3, 5]   -> False
+test_pulse_rate_divider = ['\x03', '\x05'] -> None
+tadc.du_id == np.array([14, 21])         -> array([ True,  True])
+tadc.du_id == (14, 21)                   -> False
+hasattr(TADC, 'du_id')                   -> False
+RESULT[dev-next]:
+list(tadc.adc_input_channels_ch[0])      -> [1, 2, 3, 4]
+tadc.test_pulse_rate_divider[0]          -> 3
+tadc.test_pulse_rate_divider == [3, 5]   -> True
+test_pulse_rate_divider = ['\x03', '\x05'] -> TypeError: GRANDlib: TADC.test_pulse_rate_divider: must be a number, got ['\x03', '\x05']
+tadc.du_id == np.array([14, 21])         -> True
+tadc.du_id == (14, 21)                   -> True
+hasattr(TADC, 'du_id')                   -> True

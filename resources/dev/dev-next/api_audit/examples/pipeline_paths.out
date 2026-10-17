@@ -1,0 +1,22 @@
+RESULT[dev]:
+bintoroot.bash is in scripts/transfers; it takes the repository to be the checkout root
+  found   scripts/transfers/register_convert.py
+  found   granddb/register_file_in_db.py
+paths still used by scripts/transfers:
+  found   scripts/transfers/bintoroot.bash
+  found   scripts/transfers/refresh_mat_views.bash
+  found   scripts/transfers/register_transfer.bash
+  found   scripts/transfers/register_transfers.py
+  found   scripts/transfers/run_monitoring.bash
+  found   scripts/transfers/tar_logs.bash
+RESULT[dev-next]:
+bintoroot.bash is in scripts/pipeline; it takes the repository to be /scripts/pipeline
+  missing scripts/transfers/register_convert.py, looked for at scripts/pipeline/scripts/transfers/register_convert.py
+  missing granddb/register_file_in_db.py, looked for at scripts/pipeline/granddb/register_file_in_db.py
+paths still used by scripts/transfers:
+  missing scripts/transfers/bintoroot.bash
+  missing scripts/transfers/refresh_mat_views.bash
+  found   scripts/transfers/register_transfer.bash
+  missing scripts/transfers/register_transfers.py
+  missing scripts/transfers/run_monitoring.bash
+  missing scripts/transfers/tar_logs.bash

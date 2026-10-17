@@ -1,0 +1,20 @@
+RESULT[dev]:
+output holds ['notes.txt']
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Run information loaded.
+Voltage information loaded.
+Efield information loaded.
+Simulated shower information loaded.
+No valid trun TTree in the file output/run_00000_L1_0000.root. Creating a new one.
+Writing trun
+No valid tvoltage TTree in the file output/voltage_20261017_150653_0-0_L0_0000.root. Creating a new one.
+Writing tvoltage
+No valid tefield TTree in the file output/efield_20261017_150653_0-0_L1_0000.root. Creating a new one.
+Writing tefield
+No valid tshower TTree in the file output/shower_20261017_150653_0-0_L0_0000.root. Creating a new one.
+Writing tshower
+after event.write(out_dir='output', overwrite=True), output holds ['efield_20261017_150653_0-0_L1_0000.root', 'run_00000_L1_0000.root', 'shower_20261017_150653_0-0_L0_0000.root', 'voltage_20261017_150653_0-0_L0_0000.root']
+RESULT[dev-next]:
+output holds ['notes.txt']
+after event.write(out_dir='output', overwrite=True), output holds ['efield_20261017_150658_0-0_L1_0000.root', 'notes.txt', 'run_00000_L1_0000.root', 'shower_20261017_150658_0-0_L0_0000.root', 'voltage_20261017_150658_0-0_L0_0000.root']

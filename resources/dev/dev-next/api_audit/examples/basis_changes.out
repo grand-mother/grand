@@ -1,0 +1,18 @@
+RESULT[dev]:
+1. get_tmax_vmax for one antenna -> (array(7.5), array(58.26662853))
+2. f_samp_mhz after init_traces(..., f_samp_mhz=np.float32(2000)) -> np.float32(2000.0)
+grand/basis/traces_event.py:198: RuntimeWarning: divide by zero encountered in divide
+  delta_ns = 1e3 / self.f_samp_mhz
+/tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/numeric.py:990: RuntimeWarning: invalid value encountered in multiply
+  return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
+3. init_traces(..., f_samp_mhz=0) -> None
+4. Voltage(t=np.arange(4.0), V=np.zeros((4, 3))) -> (4, 3)
+5. after create_output_for_logger twice: handlers -> 2
+   run.log holds -> ['second', 'second']
+RESULT[dev-next]:
+1. get_tmax_vmax for one antenna -> (array([7.5]), array([58.26662853]))
+2. f_samp_mhz after init_traces(..., f_samp_mhz=np.float32(2000)) -> array([2000., 2000.])
+3. init_traces(..., f_samp_mhz=0) -> ValueError: GRANDlib: Handling3dTraces.init_traces: 'f_samp_mhz' must be positive (MHz), got 0.0
+4. Voltage(t=np.arange(4.0), V=np.zeros((4, 3))) -> ValueError: GRANDlib: Voltage: V must have 4 samples on its last axis, one per time, got shape (4, 3)
+5. after create_output_for_logger twice: handlers -> 1
+   run.log holds -> ['first', 'second']

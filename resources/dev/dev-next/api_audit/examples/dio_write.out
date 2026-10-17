@@ -1,0 +1,10 @@
+RESULT[dev]:
+1. a second tshower written to a.root -> None
+   a.root holds ['tshower;2 (1 entries)']
+2. a trun written to b.root with overwrite=True -> None
+   b.root holds ['trun;1 (1 entries)']
+RESULT[dev-next]:
+1. a second tshower written to a.root -> FileExistsError: GRANDlib: TShower.write: a.root already holds a tshower tree; to add events to it, open it with TShower('a.root') and fill that, or pass overwrite=True to replace it
+   a.root holds ['tshower;1 (1 entries)']
+2. a trun written to b.root with overwrite=True -> None
+   b.root holds ['trun;1 (1 entries)', 'tshower;1 (1 entries)']

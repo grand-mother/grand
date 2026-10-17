@@ -1,0 +1,20 @@
+RESULT[dev]:
+1. DataFile('file://' + ADC)                  -> ['TADC']
+2. DataFile('empty.root')                     -> []
+3. DataDirectory('no_such_folder')            -> 'DataDirectory'
+4. DataDirectory('renamed').trun              -> 'TRun'
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+5. DataDirectory(SAMPLE, analysis_level=1.0)  -> 'TRun'
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+6. DataDirectory(SAMPLE).tadc_L1             -> None
+RESULT[dev-next]:
+1. DataFile('file://' + ADC)                  -> FileNotFoundError: GRANDlib: DataFile: no such file: file://sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/adc_1618-13790_L1_0000.root
+2. DataFile('empty.root')                     -> ValueError: GRANDlib: DataFile: empty.root holds no GRAND tree
+3. DataDirectory('no_such_folder')            -> FileNotFoundError: GRANDlib: DataDirectory: no such directory: no_such_folder
+grand/dataio/data_handling.py:97: GRANDlibWarning: GRANDlib: DataDirectory: renamed/run_1_l0_0000.root does not end in _L<level>_<serial>.root; skipped
+  self.init_structure()
+4. DataDirectory('renamed').trun              -> 'NoneType'
+5. DataDirectory(SAMPLE, analysis_level=1.0)  -> ValueError: GRANDlib: DataDirectory: analysis_level must be -1 (the highest present) or a level >= 0, got 1.0
+6. DataDirectory(SAMPLE).tadc_L1             -> AttributeError: 'DataDirectory' object has no attribute 'tadc_L1'

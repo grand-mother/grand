@@ -1,0 +1,11 @@
+RESULT[dev]:
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Run information loaded.
+Voltage information loaded.
+Efield information loaded.
+Simulated shower information loaded.
+GP300 workaround: calculating all antennas positions
+TypeError: exceptions must derive from BaseException
+RESULT[dev-next]:
+44 antennas; the first: [(46, 6062.1), (55, 6928.1)]

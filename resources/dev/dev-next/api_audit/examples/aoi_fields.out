@@ -1,0 +1,26 @@
+RESULT[dev]:
+Antenna().id = -5 -> stored -5
+Event().run_number = -1 -> stored -1
+Shower().primary_type = 2212 -> stored 2212
+Shower().zenith = 200.0 -> stored 200.0
+Voltage().n_points = -1 -> stored -1
+Voltage().t_bin_size = -0.5 -> stored -0.5
+ShowerEvent().primary = 2212 -> stored 2212
+ShowerEvent().primary = 'Proton' -> stored 'Proton'
+ShowerEvent().zenith = 200.0 -> stored 200.0
+RESULT[dev-next]:
+Antenna().id = -5 -> ValueError: GRANDlib: Antenna.id: must be >= -1, got -5
+Event().run_number = -1 -> ValueError: GRANDlib: Event.run_number: must be >= 0, got -1
+Shower().primary_type = 2212 -> TypeError: GRANDlib: Shower.primary_type: must be a string, got int
+example.py:13: GRANDlibWarning: GRANDlib: Shower.zenith: should be between 0 and 180 degrees, got 200.0; stored as given
+  setattr(obj, field, value)
+Shower().zenith = 200.0 -> stored 200.0
+Voltage().n_points = -1 -> ValueError: GRANDlib: Voltage.n_points: must be >= 0, got -1
+example.py:13: GRANDlibWarning: GRANDlib: Voltage.t_bin_size: should be >= 0 ns, got -0.5; stored as given
+  setattr(obj, field, value)
+Voltage().t_bin_size = -0.5 -> stored -0.5
+ShowerEvent().primary = 2212 -> TypeError: GRANDlib: ShowerEvent.primary: must be a particle name or a ParticleCode, got int
+ShowerEvent().primary = 'Proton' -> stored 'Proton'
+example.py:13: GRANDlibWarning: GRANDlib: ShowerEvent.zenith: should be between 0 and 180 degrees, got 200.0; stored as given
+  setattr(obj, field, value)
+ShowerEvent().zenith = 200.0 -> stored 200.0

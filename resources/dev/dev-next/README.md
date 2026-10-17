@@ -14,6 +14,7 @@ edit the generator, not the file.
 | [`branches.svg`](branches.svg) | The same branches as a family tree. Columns are generations. | `docs/dev/make_branch_diagram.py` |
 | [`recovery.svg`](recovery.svg) | How far the repair has got, phase by phase. Read from the plan's own checkboxes. | `docs/dev/make_recovery_diagram.py` |
 | [`history.svg`](history.svg) | Every branch and merge since 2019, on a time axis. Context, not a working document. | `docs/dev/make_history_diagram.py` |
+| [`api_audit/`](api_audit/README.md) | The API audit of dev-next against `dev` (#293): what changed for code written for `dev`, function by function, with the examples run on both versions. A working record; the decisions are made in the issues. | — |
 | `README.md` | This file. | — |
 
 `RECOVERY_PLAN.md` is the one hand-written document, and deliberately so: the

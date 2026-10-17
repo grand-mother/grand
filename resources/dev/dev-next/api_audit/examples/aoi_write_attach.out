@@ -1,0 +1,20 @@
+RESULT[dev]:
+No valid tefield TTree in the file built.root. Creating a new one.
+1. built in memory, after write_efields: event.tefield is a TEfield in built.root
+No valid trun TTree in the file run.root. Creating a new one.
+   write_run("run.root") -> ValueError: Incorrect type for t_bin_size <class 'int'>. Either a list, an array or a ROOT.vector required.
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Run information loaded.
+Voltage information loaded.
+Efield information loaded.
+Simulated shower information loaded.
+2. read from files: event.tefield is a TEfield in input/efield_1618-13790_L1_0000.root
+   write_efields("read.root", overwrite=True) -> TreeExists: The tefield TTree already exists!
+   then event.tefield is a TEfield in input/efield_1618-13790_L1_0000.root
+RESULT[dev-next]:
+1. built in memory, after write_efields: event.tefield is None
+   write_run("run.root") -> written
+2. read from files: event.tefield is a TEfield in input/efield_1618-13790_L1_0000.root
+   write_efields("read.root", overwrite=True) -> written
+   then event.tefield is a TEfield in input/efield_1618-13790_L1_0000.root

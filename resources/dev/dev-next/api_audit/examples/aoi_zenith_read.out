@@ -1,0 +1,8 @@
+RESULT[dev]:
+written: zenith -9.37
+read back: zenith -9.369999885559082
+RESULT[dev-next]:
+grand/dataio/data_tree.py:457: GRANDlibWarning: GRANDlib: TShower.zenith: should be between 0 and 180 degrees, got -9.369999885559082; stored as given
+  super().__setattr__(key, value)
+written: zenith -9.37
+read back -> ValueError: GRANDlib: xmax_above_ground: 'zenith' must be between 0 and 180 degrees, got -9.369999885559082

@@ -1,0 +1,8 @@
+RESULT[dev]:
+1. galactic noise at LST 18 h, RMS -> 999.0
+2. galactic_noise at LST 24.0 h -> (1, 3, 1025)
+3. ADC.downsample of 1003 samples, 2000 to 500 MHz -> (1, 3, 250)
+RESULT[dev-next]:
+1. galactic noise at LST 18 h, RMS -> 1534.0
+2. galactic_noise at LST 24.0 h -> ValueError: GRANDlib: galactic_noise: 'f_lst' (local sidereal time) must satisfy 0 <= f_lst < 24 hours, got 24.0
+3. ADC.downsample of 1003 samples, 2000 to 500 MHz -> (1, 3, 251)
