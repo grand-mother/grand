@@ -1,0 +1,5 @@
+RESULT[dev]:
+No valid tefield TTree in the file efield.root. Creating a new one.
+efields of units [7, 8] written; the file says du_id = [3] with 2 traces
+RESULT[dev-next]:
+efields of units [7, 8] written; the file says du_id = [3] with 2 traces

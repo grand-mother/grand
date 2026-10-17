@@ -1,0 +1,10 @@
+RESULT[dev]:
+1. zenith computed from Xmaxpos, type -> CartesianRepresentation (1,)
+2. shower.zenith = that value -> CartesianRepresentation([11.30993247])
+3. shower.zenith = np.array([11.3]) -> array([11.3])
+4. shower.zenith = 11.3 -> 11.3
+RESULT[dev-next]:
+1. zenith computed from Xmaxpos, type -> CartesianRepresentation (1,)
+2. shower.zenith = that value -> TypeError: GRANDlib: Shower: 'zenith' must be a real number, got [11.30993247] (CartesianRepresentation)
+3. shower.zenith = np.array([11.3]) -> TypeError: GRANDlib: Shower: 'zenith' must be a real number, got [11.3] (ndarray)
+4. shower.zenith = 11.3 -> 11.3

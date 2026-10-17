@@ -1,0 +1,9 @@
+RESULT[dev]:
+No valid tshower TTree in the file shower.root. Creating a new one.
+in shower.root: xmax_pos [1000.0, 0.0, 5000.0] | xmax_pos_shc [0.0, 0.0, 0.0] | analysis_level 1
+fill_shower_tree() for event 1 -> filled
+fill_shower_tree() for event 2 -> filled
+RESULT[dev-next]:
+in shower.root: xmax_pos [1100.0, 0.0, 5000.0] | xmax_pos_shc [1000.0, 0.0, 5000.0] | analysis_level 0
+fill_shower_tree() for event 1 -> filled
+fill_shower_tree() for event 2 -> TreeExists: The tshower TTree already exists!

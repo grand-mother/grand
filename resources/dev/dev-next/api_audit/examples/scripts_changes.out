@@ -1,0 +1,12 @@
+RESULT[dev]:
+1. convert_voltage2adc.py input -o out.root: exit 0 | written to out.root | traces (44, 3, 8192)
+2. extract_events.py with a missing event: exit, last line = (0, 'No event with event number 99999 and run number 1 in the tadc tree. Please provide proper numbers.')
+3. extract_rf_chain.py, first run: exit, last line = (0, ' 2.3276554e-02+0.02229172j 3.7202574e-02+0.02379703j]')
+   extract_rf_chain.py, second run: exit, last line = (0, ' 2.3276554e-02+0.02229172j 3.7202574e-02+0.02379703j]')
+4. plot_noise.py --lst 18.0: exit, last line = (0, '')
+RESULT[dev-next]:
+1. convert_voltage2adc.py input -o out.root: exit 0 | written to input/out.root | traces (44, 3, 2048)
+2. extract_events.py with a missing event: exit, last line = (1, 'Not found: sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000 run 1 event 99')
+3. extract_rf_chain.py, first run: exit, last line = (0, 'wrote TF_RF_Chain.npy (4, 222)')
+   extract_rf_chain.py, second run: exit, last line = (1, 'GRANDlib: extract_rf_chain: TF_RF_Chain.npy exists; use --overwrite')
+4. plot_noise.py --lst 18.0: exit, last line = (2, "plot_noise.py: error: argument --lst: invalid int value: '18.0'")

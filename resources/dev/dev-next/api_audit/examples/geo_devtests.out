@@ -1,0 +1,8 @@
+RESULT[dev]:
+1. site.geodetic_to_horizontal() -> None
+2. gull.Snapshot('Unknown') -> caught by except gull.LibraryError
+3. turtle.Map(path).path == path -> True
+RESULT[dev-next]:
+1. site.geodetic_to_horizontal() -> TypeError: GRANDlib: Geodetic.geodetic_to_horizontal: give the 'location' the direction is measured from
+2. gull.Snapshot('Unknown') -> FileNotFoundError: GRANDlib: gull.Snapshot: no geomagnetic model file Unknown
+3. turtle.Map(path).path == path -> False

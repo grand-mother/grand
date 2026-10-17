@@ -1,0 +1,14 @@
+BEFORE[dev-next]:
+ground altitude 1264.0 m; wrote above_ground/shower_1618-13790_L0_0000.root
+RESULT[dev]:
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Xmax above sea level (the sample)  xmax_pos_shc z  13927.8 -> FIX_xmax_pos z  12663.8
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Xmax above the ground              xmax_pos_shc z  12663.8 -> FIX_xmax_pos z  11399.8
+BEFORE[dev-next]:
+ground altitude 1264.0 m; wrote above_ground/shower_1618-13790_L0_0000.root
+RESULT[dev-next]:
+Xmax above sea level (the sample)  xmax_pos_shc z  13927.8 -> FIX_xmax_pos z  12663.8
+Xmax above the ground              xmax_pos_shc z  12663.8 -> FIX_xmax_pos z  12663.8

@@ -1,0 +1,167 @@
+RESULT[dev]:
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+current ROOT directory: voltage_1618-13790_L0_0000.root
+the new tree is in: voltage_1618-13790_L0_0000.root
+filled: 1 entry
+RESULT[dev-next]:
+current ROOT directory: voltage_1618-13790_L0_0000.root
+the new tree is in: voltage_1618-13790_L0_0000.root
+ *** Break *** segmentation violation
+===========================================================
+There was a crash.
+This is the entire stack trace of all threads:
+===========================================================
+Thread 4 (Thread 0x7fb5301ff6c0 (LWP 21192) "python"):
+#0  0x00007fb575498d71 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7fb552bf22e0 <thread_status+96>) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7fb552bf22e0 <thread_status+96>) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word
+entry=0x7fb552bf22e0 <thread_status+96>, expected=expected
+entry=0, clockid=clockid
+entry=0, abstime=abstime
+entry=0x0, private=private
+entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fb57549b7ed in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7fb552bf2290 <thread_status+16>, cond=0x7fb552bf22b8 <thread_status+56>) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7fb552bf22b8 <thread_status+56>, mutex=0x7fb552bf2290 <thread_status+16>) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fb550a8f81c in blas_thread_server () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/../../../../libcblas.so.3
+#6  0x00007fb57549caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007fb575529c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+Thread 3 (Thread 0x7fb52f9fe6c0 (LWP 21193) "python"):
+#0  0x00007fb575498d71 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7fb552bf2360 <thread_status+224>) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7fb552bf2360 <thread_status+224>) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word
+entry=0x7fb552bf2360 <thread_status+224>, expected=expected
+entry=0, clockid=clockid
+entry=0, abstime=abstime
+entry=0x0, private=private
+entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fb57549b7ed in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7fb552bf2310 <thread_status+144>, cond=0x7fb552bf2338 <thread_status+184>) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7fb552bf2338 <thread_status+184>, mutex=0x7fb552bf2310 <thread_status+144>) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fb550a8f81c in blas_thread_server () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/../../../../libcblas.so.3
+#6  0x00007fb57549caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007fb575529c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+Thread 2 (Thread 0x7fb52f1fd6c0 (LWP 21194) "python"):
+#0  0x00007fb575498d71 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7fb552bf23e0 <thread_status+352>) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7fb552bf23e0 <thread_status+352>) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word
+entry=0x7fb552bf23e0 <thread_status+352>, expected=expected
+entry=0, clockid=clockid
+entry=0, abstime=abstime
+entry=0x0, private=private
+entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fb57549b7ed in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7fb552bf2390 <thread_status+272>, cond=0x7fb552bf23b8 <thread_status+312>) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7fb552bf23b8 <thread_status+312>, mutex=0x7fb552bf2390 <thread_status+272>) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fb550a8f81c in blas_thread_server () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/../../../../libcblas.so.3
+#6  0x00007fb57549caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007fb575529c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+Thread 1 (Thread 0x7fb57566a600 (LWP 21182) "python"):
+#0  0x00007fb575510813 in __GI___wait4 (pid=21206, stat_loc=stat_loc
+entry=0x7fffadb43d28, options=options
+entry=0, usage=usage
+entry=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+#1  0x00007fb57551091b in __GI___waitpid (pid=<optimized out>, stat_loc=stat_loc
+entry=0x7fffadb43d28, options=options
+entry=0) at ./posix/waitpid.c:38
+#2  0x00007fb5754585bb in do_system (line=<optimized out>) at ../sysdeps/posix/system.c:172
+#3  0x00007fb5749479c8 in TUnixSystem::StackTrace() () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/lib-dynload/../../libCore.so.6.36
+#4  0x00007fb574be4a70 in (anonymous namespace)::TExceptionHandlerImp::HandleException(int) () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/lib-dynload/../../libcppyy_backend.so
+#5  0x00007fb574947131 in TUnixSystem::DispatchSignals(ESignals) () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/lib-dynload/../../libCore.so.6.36
+#6  <signal handler called>
+#7  0x00007fb554055b67 in TTree::GetCurrentFile() const () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/../../libTree.so.6.36
+#8  0x00007fb529ae9018 in ?? ()
+#9  0x0000000000000000 in ?? ()
+===========================================================
+The lines below might hint at the cause of the crash. If you see question
+marks as part of the stack trace, try to recompile with debugging information
+enabled and export CLING_DEBUG=1 environment variable before running.
+You may get help by asking at the ROOT forum https://root.cern/forum
+preferably using the command (.forum bug) in the ROOT prompt.
+Only if you are really convinced it is a bug in ROOT then please submit a
+report at https://root.cern/bugs or (preferably) using the command (.gh bug) in
+the ROOT prompt. Please post the ENTIRE stack trace
+from above as an attachment in addition to anything else
+that might help us fixing this issue.
+===========================================================
+#7  0x00007fb554055b67 in TTree::GetCurrentFile() const () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/../../libTree.so.6.36
+#8  0x00007fb529ae9018 in ?? ()
+#9  0x0000000000000000 in ?? ()
+===========================================================
+ *** Break *** segmentation violation
+===========================================================
+There was a crash.
+This is the entire stack trace of all threads:
+===========================================================
+Thread 4 (Thread 0x7fb5301ff6c0 (LWP 21192) "python"):
+#0  0x00007fb575498d71 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7fb552bf22e0 <thread_status+96>) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7fb552bf22e0 <thread_status+96>) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word
+entry=0x7fb552bf22e0 <thread_status+96>, expected=expected
+entry=0, clockid=clockid
+entry=0, abstime=abstime
+entry=0x0, private=private
+entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fb57549b7ed in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7fb552bf2290 <thread_status+16>, cond=0x7fb552bf22b8 <thread_status+56>) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7fb552bf22b8 <thread_status+56>, mutex=0x7fb552bf2290 <thread_status+16>) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fb550a8f81c in blas_thread_server () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/../../../../libcblas.so.3
+#6  0x00007fb57549caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007fb575529c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+Thread 3 (Thread 0x7fb52f9fe6c0 (LWP 21193) "python"):
+#0  0x00007fb575498d71 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7fb552bf2360 <thread_status+224>) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7fb552bf2360 <thread_status+224>) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word
+entry=0x7fb552bf2360 <thread_status+224>, expected=expected
+entry=0, clockid=clockid
+entry=0, abstime=abstime
+entry=0x0, private=private
+entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fb57549b7ed in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7fb552bf2310 <thread_status+144>, cond=0x7fb552bf2338 <thread_status+184>) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7fb552bf2338 <thread_status+184>, mutex=0x7fb552bf2310 <thread_status+144>) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fb550a8f81c in blas_thread_server () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/../../../../libcblas.so.3
+#6  0x00007fb57549caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007fb575529c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+Thread 2 (Thread 0x7fb52f1fd6c0 (LWP 21194) "python"):
+#0  0x00007fb575498d71 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7fb552bf23e0 <thread_status+352>) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7fb552bf23e0 <thread_status+352>) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word
+entry=0x7fb552bf23e0 <thread_status+352>, expected=expected
+entry=0, clockid=clockid
+entry=0, abstime=abstime
+entry=0x0, private=private
+entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fb57549b7ed in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7fb552bf2390 <thread_status+272>, cond=0x7fb552bf23b8 <thread_status+312>) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7fb552bf23b8 <thread_status+312>, mutex=0x7fb552bf2390 <thread_status+272>) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fb550a8f81c in blas_thread_server () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/numpy/_core/../../../../libcblas.so.3
+#6  0x00007fb57549caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007fb575529c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+Thread 1 (Thread 0x7fb57566a600 (LWP 21182) "python"):
+#0  0x00007fb575510813 in __GI___wait4 (pid=21419, stat_loc=stat_loc
+entry=0x7fffadb43d28, options=options
+entry=0, usage=usage
+entry=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+#1  0x00007fb57551091b in __GI___waitpid (pid=<optimized out>, stat_loc=stat_loc
+entry=0x7fffadb43d28, options=options
+entry=0) at ./posix/waitpid.c:38
+#2  0x00007fb5754585bb in do_system (line=<optimized out>) at ../sysdeps/posix/system.c:172
+#3  0x00007fb5749479c8 in TUnixSystem::StackTrace() () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/lib-dynload/../../libCore.so.6.36
+#4  0x00007fb574be496f in (anonymous namespace)::TExceptionHandlerImp::HandleException(int) () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/lib-dynload/../../libcppyy_backend.so
+#5  0x00007fb574947131 in TUnixSystem::DispatchSignals(ESignals) () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/lib-dynload/../../libCore.so.6.36
+#6  <signal handler called>
+#7  0x00007fb554055b67 in TTree::GetCurrentFile() const () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/../../libTree.so.6.36
+#8  0x00007fb529ae9018 in ?? ()
+#9  0x0000000000000000 in ?? ()
+===========================================================
+The lines below might hint at the cause of the crash. If you see question
+marks as part of the stack trace, try to recompile with debugging information
+enabled and export CLING_DEBUG=1 environment variable before running.
+You may get help by asking at the ROOT forum https://root.cern/forum
+preferably using the command (.forum bug) in the ROOT prompt.
+Only if you are really convinced it is a bug in ROOT then please submit a
+report at https://root.cern/bugs or (preferably) using the command (.gh bug) in
+the ROOT prompt. Please post the ENTIRE stack trace
+from above as an attachment in addition to anything else
+that might help us fixing this issue.
+===========================================================
+#7  0x00007fb554055b67 in TTree::GetCurrentFile() const () from /tmp/mmroot/prefix/envs/grand-dev/lib/python3.12/site-packages/../../libTree.so.6.36
+#8  0x00007fb529ae9018 in ?? ()
+#9  0x0000000000000000 in ?? ()
+===========================================================

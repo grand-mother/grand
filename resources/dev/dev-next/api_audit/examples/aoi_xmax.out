@@ -1,0 +1,18 @@
+RESULT[dev]:
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+Run information loaded.
+Voltage information loaded.
+Efield information loaded.
+Simulated shower information loaded.
+event 13790: Xmax seen from the shower core, x y z [m]: [43622.6, -51987.4, 13927.8]
+Run information loaded.
+Voltage information loaded.
+Efield information loaded.
+Simulated shower information loaded.
+event 1618: Xmax seen from the shower core, x y z [m]: [-4050.6, 3988.9, 5763.4]
+ground altitude of the site [m]: 1264.0
+RESULT[dev-next]:
+event 13790: Xmax seen from the shower core, x y z [m]: [43622.6, -51987.4, 12663.8]
+event 1618: Xmax seen from the shower core, x y z [m]: [-4050.6, 3988.9, 4499.4]
+ground altitude of the site [m]: 1264.0

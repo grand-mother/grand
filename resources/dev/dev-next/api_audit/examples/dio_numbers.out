@@ -1,0 +1,12 @@
+RESULT[dev]:
+tadc.has_event(13790.0, 1.0)   -> True
+tadc.get_event(13790.0, 1.0)   -> 542704
+tadc.get_event('13790', '1')   -> 542704
+trun.has_run(1.0)              -> True
+trun.get_run(1.0)              -> 1934
+RESULT[dev-next]:
+tadc.has_event(13790.0, 1.0)   -> TypeError: GRANDlib: TADC: has_event: ev_no must be an integer, got 13790.0
+tadc.get_event(13790.0, 1.0)   -> TypeError: GRANDlib: TADC: get_event: ev_no must be an integer, got 13790.0
+tadc.get_event('13790', '1')   -> TypeError: GRANDlib: TADC: get_event: ev_no must be an integer, got '13790'
+trun.has_run(1.0)              -> TypeError: GRANDlib: TRun: has_run: run_no must be an integer, got 1.0
+trun.get_run(1.0)              -> TypeError: GRANDlib: TRun: get_run: run_no must be an integer, got 1.0

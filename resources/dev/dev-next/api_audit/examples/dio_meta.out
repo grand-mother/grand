@@ -1,0 +1,12 @@
+RESULT[dev]:
+1. a new tree: modification_software and its version -> ('', '')
+2. creation_datetime = datetime(2024, 7, 1, 12, 0), read back -> 1719828000
+3. written to run.root, then read: creation_datetime -> datetime.datetime(2024, 7, 1, 12, 0)
+4. the number stored in run.root for creation_datetime -> '1719828000, which is 2024-07-01 10:00 UTC'
+5. the same file: source_datetime, never set           -> 0
+RESULT[dev-next]:
+1. a new tree: modification_software and its version -> ('GRANDlib', '0.1.0.dev1')
+2. creation_datetime = datetime(2024, 7, 1, 12, 0), read back -> datetime.datetime(2024, 7, 1, 12, 0)
+3. written to run.root, then read: creation_datetime -> datetime.datetime(2024, 7, 1, 12, 0)
+4. the number stored in run.root for creation_datetime -> '1719835200, which is 2024-07-01 12:00 UTC'
+5. the same file: source_datetime, never set           -> datetime.datetime(1970, 1, 1, 0, 0)

@@ -1,0 +1,7 @@
+RESULT[dev]:
+<unknown>:1: SyntaxWarning: invalid escape sequence '\c'
+label: <B$_{v}$>$_{4\pi}$ [W$\cdot$m$^{-2}$$\cdot$sr$^{-1}$$\cdot$Hz$^{-1}$]
+matplotlib can draw it
+RESULT[dev-next]:
+label: <B$_{v}$>$_{4\\pi}$ [W$\cdot$m$^{-2}$$\cdot$sr$^{-1}$$\cdot$Hz$^{-1}$]
+ValueError: ParseSyntaxException: Expected end_group, found '\'  (at char 3), (line:1, col:4)

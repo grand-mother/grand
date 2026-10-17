@@ -1,0 +1,18 @@
+RESULT[dev]:
+1. Geodetic(latitude=100.0, longitude=90.0, height=0.0) -> [100.0]
+2. HorizontalRepresentation(azimuth=0.0, elevation=100.0, norm=1.0) -> [100.0]
+3. SphericalRepresentation(theta=190.0, phi=0.0, r=1.0) -> [190.0]
+4. geoid_undulation(latitude=-35.2, longitude=-69.2) -> nan
+5. geoid_undulation(-35.2, longitude=290.8) -> 25.53
+6. ECEF(site).ecef_to_grandcs(), no location -> GRANDCS
+7. directions[:, :1].location -> ECEF
+RESULT[dev-next]:
+1. Geodetic(latitude=100.0, longitude=90.0, height=0.0) -> ValueError: GRANDlib: Geodetic: 'latitude' must be between -90 and 90 degrees, got 100.0
+2. HorizontalRepresentation(azimuth=0.0, elevation=100.0, norm=1.0) -> ValueError: GRANDlib: HorizontalRepresentation: 'elevation' must be between -90 and 90 degrees, got 100.0
+3. SphericalRepresentation(theta=190.0, phi=0.0, r=1.0) -> ValueError: GRANDlib: SphericalRepresentation: 'theta' must be between 0 and 180 degrees, got 190.0
+4. geoid_undulation(latitude=-35.2, longitude=-69.2) -> 25.53
+5. geoid_undulation(-35.2, longitude=290.8) -> TypeError: GRANDlib: geoid_undulation: three values given; give latitude and longitude, or a position
+example.py:21: GRANDlibWarning: GRANDlib: ECEF.ecef_to_grandcs: no 'location' given: the default array origin (latitude 38.888, longitude 92.286) is used, which is not your site's unless you set it so
+  attempt("6. ECEF(site).ecef_to_grandcs(), no location", lambda: type(ECEF(site).ecef_to_grandcs()).__name__)
+6. ECEF(site).ecef_to_grandcs(), no location -> GRANDCS
+7. directions[:, :1].location -> AttributeError: 'Horizontal' object has no attribute 'location'

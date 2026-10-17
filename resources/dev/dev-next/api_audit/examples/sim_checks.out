@@ -1,0 +1,12 @@
+RESULT[dev]:
+1. RFChain().compute_for_freqs([-10.0, 50.0, 100.0]) -> None
+2. VGAFilter(gain=False).gain -> False
+The branch site was not found in the source file and will not be filled.
+The branch site was not found in the source file and will not be filled.
+3. Efield2Voltage with params add_noise=0, add_rf_chain=0 -> TypeError: only 0-dimensional arrays can be converted to Python scalars
+RESULT[dev-next]:
+1. RFChain().compute_for_freqs([-10.0, 50.0, 100.0]) -> ValueError: GRANDlib: RFChain: 'freqs_mhz' must not be negative (MHz), got -10.0
+2. VGAFilter(gain=False).gain -> ValueError: GRANDlib: RFChain: 'vga_gain' must be one of -5, 0, 5 or 20 dB, got False
+grand/sim/efield2voltage.py:342: GRANDlibWarning: GRANDlib: Efield2Voltage: sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000 holds efield files at levels 0, 1: reading the highest, 1; give efield_level (--level) to choose
+  f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input, efield_level)
+3. Efield2Voltage with params add_noise=0, add_rf_chain=0 -> TypeError: GRANDlib: Efield2Voltage.params: 'add_noise' must be True or False, got 0

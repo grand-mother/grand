@@ -1,0 +1,22 @@
+RESULT[dev]:
+TRun().my_note = 'x'             -> 'x'
+TRun().run_number = 1.5          -> np.uint32(1)
+TRun().run_number = '7'          -> np.uint32(7)
+TRun().origin_geoid = 5.0        -> [np.float32(5.0), np.float32(5.0), np.float32(5.0)]
+TRun().du_xyz = [[1.0, 2.0]]     -> [[1.0, 2.0]]
+grand/dataio/descriptors.py:366: RuntimeWarning: overflow encountered in cast
+  inst[0] = value
+TShower().energy_primary = 1e39  -> np.float32(inf)
+StdVectorList('int', 3)          -> [0, 0, 0]
+v = [1, 2, 3]; v[3] = 4          -> [1, 2, 3]
+RESULT[dev-next]:
+TRun().my_note = 'x'             -> AttributeError: GRANDlib: TRun: has no field 'my_note'
+TRun().run_number = 1.5          -> TypeError: GRANDlib: TRun.run_number: must be an integer, got 1.5
+example.py:18: GRANDlibWarning: GRANDlib: TRun.run_number: got the text '7'; stored as the number it reads as. Pass a number instead
+  setattr(tree, field, value)
+TRun().run_number = '7'          -> np.uint32(7)
+TRun().origin_geoid = 5.0        -> ValueError: GRANDlib: TRun.origin_geoid: must have 3 values (shape (3,)), got shape ()
+TRun().du_xyz = [[1.0, 2.0]]     -> ValueError: GRANDlib: TRun.du_xyz: each entry must have 3 values, entry 0 has 2
+TShower().energy_primary = 1e39  -> ValueError: GRANDlib: TShower.energy_primary: 1e+39 does not fit in float32 (largest 3.40282e+38)
+StdVectorList('int', 3)          -> TypeError: object of type 'int' has no len()
+v = [1, 2, 3]; v[3] = 4          -> IndexError: StdVectorList index 3 out of range for 3 elements
