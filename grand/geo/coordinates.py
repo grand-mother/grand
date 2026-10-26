@@ -1,7 +1,27 @@
 """
-units: 
+ Copyright (C) 2026 GRAND Collaboration
+ Contact: Ramesh Koirala (rkoirala.astro@gmail.com)
+
+ Credit: 
+ Many functions in this module are borrowed from the package: 
+  Topographic Utilities for tRansporting parTicules over Long rangEs (TURTLE)
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+units used in GRANDlib: 
  *	energy: GeV
- * time  : nanosecond
+ *  time  : nanosecond
  *	length: m
  *	voltage: microVolt
  * 	Efield: microVolt/m
@@ -21,30 +41,48 @@ import copy as _copy
 import enum
 import os
 from numbers import Number
+from numba import jit
 from logging import getLogger
 import warnings
 import numpy as np
-try:
-    from scipy.spatial.transform import Rotation as _Rotation
-except ImportError:
-    _Rotation = None
-from . import turtle
-from grand import grand_get_path_root_pkg
+from .egm import EGM2008
+from grand import path_grandlib_data, grandcs_origin
+
+#try:
+#    from scipy.spatial.transform import Rotation as _Rotation
+#except ImportError:
+#    _Rotation = None
+#from grand import grand_get_path_root_pkg
 
 logger = getLogger(__name__)
-# add protection against casting complex to real. Need to try due to numpy versions incompatibilities
-try:
-    warnings.filterwarnings(action="error", category=np.ComplexWarning)
-# After numpy 1.25. In principle the np.ComplexWarning should still be accessible, but in 2.2.5 it isn't
-except:
-    warnings.filterwarnings(action="error", category=np.exceptions.ComplexWarning)
+# add protection against casting complex to real
+#warnings.filterwarnings(action="error", category=np.ComplexWarning)
 
-DATADIR: Final = grand_get_path_root_pkg() + "/data"  # for geoid_undulation egm96.png file.
+#DATADIR: Final = grand_get_path_root_pkg() + "/data"  # for geoid_undulation egm96.png file.
+#DATADIR: Final = "/mnt/data/Ramesh/grand/data/topography"
+DATADIR: Final = path_grandlib_data("topography")
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
-grd_origin_lat = 38.88849  # degree
-grd_origin_lon = 92.28605  # degree
-grd_origin_height = 2920.522  # meter
+#grd_origin_lat = 38.88849  # degree
+#grd_origin_lon = 92.28605  # degree
+#grd_origin_height = 2920.522  # meter
+grd_origin_lat, grd_origin_lon, grd_origin_height, grd_reference = grandcs_origin()
+
+# RK: Instantiate EGM2008 class once after all imports. File size is 75MB.
+#     No need to load EGM file for each undulation calculation.
+#     EGM2008 class loads data once and uses same data for all locations.
+egm = EGM2008() # default EGM2008 file used: "egm2008-2_5.pgm".
+
+"""
+WGS84 ellipsoid
+"""
+#a   = 6378137           # semi-major axis of the ellipsoid (WGS84)
+#e   = 0.081819190842622 # eccentricity; 1/f = 298.257223563; e2 =f(2−f); e = sqrt(e2) (WGS84)
+#e2  = e*e               # eccentricity squared
+# angle conversion factor
+pi  = 3.14159265358979323846
+d2r = pi/180            # factor to convert angle from degree to radian
+r2d = 180/pi            # factor to convert angle from radian to degree
 
 __all__ = (
     "Coordinates",
@@ -92,16 +130,44 @@ class Reference(enum.IntEnum):
     GEOID = enum.auto()
 
 
-def geoid_undulation(latitude=None, longitude=None):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
-    This function is also defined in topography.py for Topography use.
-    """
-    path = os.path.join(DATADIR, "egm96.png")
-    geoid = turtle.Map(path)
-    logger.debug(f"geoid_undulation for {latitude} {longitude}")
-    return geoid.elevation(longitude, latitude)
+#def geoid_undulation(latitude=None, longitude=None):
+#    """Get the geoid undulation. This function calculates the height of
+#    the geoid w.r.t the ellipsoid at a given latitude and longitude.
+#    """
+#    path = os.path.join(DATADIR, "egm96.png")
+#    geoid = turtle.Map(path)
+#    return geoid.elevation(longitude, latitude)
 
+
+# Compute local East, North, Up (ENU) basis vectors
+def compute_enu(latitude, longitude):
+    """
+    Compute East, North, Up (ENU) unit vectors in ECEF frame given latitude and longitude.
+
+    Parameters:
+    latitude (float): latitude in degrees
+    longitude (float): longitude in degrees
+
+    Returns:
+    tuple: (e, n, u) where each is a list of 3 components
+    """
+    # Convert degrees to radians
+    lat = latitude * d2r   # latitude
+    lon = longitude * d2r  # longitude
+
+    slat, clat = np.sin(lat), np.cos(lat)
+    slon, clon = np.sin(lon), np.cos(lon)
+
+    if isinstance(lat, Number):
+        e = np.array([-slon, clon, 0.0])                # East
+    elif isinstance(lat, np.ndarray):
+        e = np.array([-slon, clon, np.zeros(len(lat))]) # East 
+    n = np.array([-clon * slat, -slon * slat, clat])    # North
+    u = np.array([clon * clat, slon * clat, slat])      # Up
+
+    # return basis vector of ENU orientation
+    return e, n, u
+    #return np.vstack((e, n, u)).T
 
 # Define functions to transform from one coordinate representation to
 # another coordinate representation. Cartesian, Spherical, and Horizontal
@@ -131,6 +197,7 @@ def _cartesian_to_horizontal(
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform Cartesian coordinates to horizontal"""
     theta, phi, r = _cartesian_to_spherical(x, y, z)
+
     return _spherical_to_horizontal(theta, phi, r)
 
 
@@ -181,6 +248,168 @@ def _horizontal_to_spherical(
     """Transform horizontal coordinates to spherical"""
     # return 0.5 * np.pi - elevation, 0.5 * np.pi - azimuth, norm
     return 90.0 - elevation, 90.0 - azimuth, norm
+
+
+# Convert from Geodetic (lat, lon, height) to ECEF (x, y, z)
+def geodetic_to_ecef(latitude, longitude, height):
+    """
+    Compute ECEF coordinates from latitude, longitude, and height.
+    Note: height is wrt the WGS84 ellipsoidal Earth model.
+    """
+    lat_rad = latitude * d2r
+    lon_rad = longitude * d2r
+    a = 6378137.0          # Semi-major axis (m)
+    e = 0.081819190842622  # Eccentricity
+
+    s = np.sin(lat_rad)
+    c = np.cos(lat_rad)
+    R = a / np.sqrt(1.0 - e * e * s * s)
+
+    x = (R + height) * c * np.cos(lon_rad)
+    y = (R + height) * c * np.sin(lon_rad)
+    z = (R * (1.0 - e * e) + height) * s
+
+    return x, y, z
+
+# Compute the geodetic coordinates from the ECEF; (x, y, z) --> (lat, lon, elev)
+#
+# Reference: Olson, D. K. (1996). "Converting earth-Centered,
+# Earth-Fixed Coordinates to Geodetic Coordinates," IEEE Transactions on
+# Aerospace and Electronic Systems, Vol. 32, No. 1, January 1996, pp. 473-476
+#@jit(nopython=True, cache=True) # 'jit' decorator is used to speed up 'for' loops
+def ecef_to_geodetic(x,y,z):
+    """Compute geodetic coordinates (lat, lon, alt) from ECEF coordinates."""
+    a  = 6378137.0              # Semi-major axis (m)
+    e2 = 0.081819190842622 ** 2 # Eccentricity**2
+    a1 = a * e2
+    a2 = a1 * a1
+    a3 = 0.5 * a1 * e2
+    a4 = 2.5 * a2
+    a5 = a1 + a3
+    a6 = 1.0 - e2
+
+    if np.isscalar(x) and np.isscalar(y) and np.isscalar(z):
+        # Handle poles for one location
+        if x == 0.0 and y == 0.0:
+            latitude = 90.0 if z >= 0 else -90.0
+            longitude = 0.0
+            height = abs(z) - np.sqrt(a*a * a6)
+            return latitude, longitude, height
+        else:
+            x = np.array([x])
+            y = np.array([y])
+            z = np.array([z])
+
+    longitude = np.arctan2(y, x) * r2d
+
+    zp = np.abs(z)
+    w2 = x * x + y * y
+    w  = np.sqrt(w2)
+    z2 = z * z
+    r2 = w2 + z2
+    r  = np.sqrt(r2)
+    s2 = z2 / r2
+    c2 = w2 / r2
+
+    #if c2 > 0.3:
+    #    u  = a2 / r
+    #    v  = a3 - a4 / r
+    #    s  = (zp / r) * (1.0 + c2 * (a1 + u + s2 * v) / r)
+    #    la = np.arcsin(s)
+    #    ss = s * s
+    #    c  = np.sqrt(1.0 - ss)
+    #else:
+    #    u  = a2 / r
+    #    v  = a3 - a4 / r
+    #    c  = (w / r) * (1.0 - s2 * (a5 - u - c2 * v) / r)
+    #    la = np.arccos(c)
+    #    ss = 1.0 - c * c
+    #    s  = np.sqrt(ss)
+    # RK: Replaced above if-else condition for one location with the following code to be used for array of locations. 
+    u  = a2 / r
+    v  = a3 - a4 / r
+    # c2g0p3 means c2>0.3
+    s_c2g0p3   = (zp / r) * (1.0 + c2 * (a1 + u + s2 * v) / r) 
+    la_c2g0p3  = np.arcsin(s_c2g0p3)
+    ss_c2g0p3  = s_c2g0p3 * s_c2g0p3
+    c_c2g0p3   = np.sqrt(1.0 - ss_c2g0p3)
+    # c2le0p3 means c2<=0.3
+    c_c2le0p3  = (w / r) * (1.0 - s2 * (a5 - u - c2 * v) / r) 
+    la_c2le0p3 = np.arccos(c_c2le0p3)
+    ss_c2le0p3 = 1.0 - c_c2le0p3 * c_c2le0p3
+    s_c2le0p3  = np.sqrt(ss_c2le0p3)
+    
+    # Implement c2>0.3 condition 
+    conditionC2 = c2>0.3
+    s  = np.where(conditionC2, s_c2g0p3, s_c2le0p3)
+    la = np.where(conditionC2, la_c2g0p3, la_c2le0p3)
+    ss = np.where(conditionC2, ss_c2g0p3, ss_c2le0p3)
+    c  = np.where(conditionC2, c_c2g0p3, c_c2le0p3)
+
+    g  = 1.0 - e2 * ss
+    rg = a / np.sqrt(g)
+    rf = a6 * rg
+    u  = w - rg * c
+    v  = zp - rf * s
+    f  = c * u + s * v
+    m  = c * v - s * u
+    p  = m / (rf / g + f)
+
+    la += p
+    #if z < 0.0:
+    #    la = -la
+    la = np.where(z<0, -la, la) 
+
+    latitude = la * r2d
+    height   = f + 0.5 * m * p
+
+    # Handle poles for array of locations
+    conditionP= (x==0) * (y==0)
+    latitude  = np.where(conditionP * (z>=0), 90, latitude)
+    latitude  = np.where(conditionP * (z<0), -90, latitude)
+    longitude = np.where(conditionP, 0, longitude)
+    height    = np.where(conditionP, abs(z) - np.sqrt(a*a * a6), height)
+
+    return latitude, longitude, height
+    
+
+# Convert from horizontal (az, el) to ECEF direction
+def horizontal_to_ecef(latitude, longitude, azimuth, elevation):
+    """Compute ECEF direction vector from local azimuth/elevation."""
+    e, n, u = compute_enu(latitude, longitude)
+
+    az = azimuth * d2r
+    el = elevation * d2r
+    ce = np.cos(el)
+    se = np.sin(el)
+    ca = np.cos(az)
+    sa = np.sin(az)
+
+    r0, r1, r2 = ce*sa, ce*ca, se
+    #direction  = r[0] * e + r[1] * n + r[2] * u
+    direction = r0*e + r1*n + r2*u
+
+    # RK: change output to x, y, z format.
+    return direction
+
+
+# Convert ECEF direction vector to horizontal (az, el)
+def ecef_to_horizontal(latitude, longitude, direction):
+    """Compute azimuth and elevation from ECEF direction vector."""
+    e, n, u = compute_enu(latitude, longitude)
+
+    x = np.dot(e, direction)
+    y = np.dot(n, direction)
+    z = np.dot(u, direction)
+
+    r = np.sqrt(np.dot(direction, direction))
+    if r < np.finfo(float).eps:
+        return None, None
+
+    azimuth = np.arctan2(x, y) * r2d
+    elevation = np.arcsin(z / r) * r2d
+
+    return azimuth, elevation
 
 
 # -----------Base Representation------------
@@ -506,9 +735,9 @@ class GeodeticRepresentation(Coordinates):
 
     def __new__(
         cls,
-        latitude: Union[float, int, np.ndarray] = None,
-        longitude: Union[float, int, np.ndarray] = None,
-        height: Union[float, int, np.ndarray] = None,
+        latitude: Union[Number, list, np.ndarray] = None,
+        longitude: Union[Number, list, np.ndarray] = None,
+        height: Union[Number, list, np.ndarray] = None,
     ):
         """
         Create a new instance from latitude, longitude, and height.
@@ -523,7 +752,17 @@ class GeodeticRepresentation(Coordinates):
             n = len(latitude)
             assert n == len(longitude)
             assert n == len(height)
-
+        elif (
+            isinstance(latitude, list)
+            and isinstance(longitude, list)
+            and isinstance(height, list)
+        ):
+            latitude  = np.asarray(latitude)
+            longitude = np.asarray(longitude)
+            height    = np.asarray(height)
+            n         = len(latitude)
+            assert n == len(longitude)
+            assert n == len(height)
         else:
             raise TypeError(type(latitude))
 
@@ -575,9 +814,7 @@ class Geodetic(GeodeticRepresentation):
     Longitude:	Angle east and west of the Prime Meridian. The Prime Meridian
                             is a north-south line that passes through Greenwich, UK.
                             +ve to the east of the Prime Meridian, -ve to the west.
-                            Range: 0 deg to 360 deg positive or negative. 
-                            Note that coordinate transformation is possible for +ve 0 to 360 deg.
-                            So negative values are changed to positive by adding 360.
+                            Range: -180 deg to +180 deg.
     Height:	Also called altitude or elevation, this represents the height above
                     the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
                     mathematical surface defined by a semi-major axis and a semi-minor axis.
@@ -601,14 +838,14 @@ class Geodetic(GeodeticRepresentation):
     def __new__(
         cls,
         arg: Any = None,
-        latitude: Union[float, int, np.ndarray] = None,
-        longitude: Union[float, int, np.ndarray] = None,
-        height: Union[float, int, np.ndarray] = None,
+        latitude: Union[Number, list, np.ndarray] = None,
+        longitude: Union[Number, list, np.ndarray] = None,
+        height: Union[Number, list, np.ndarray] = None,
         *args,
         **kwargs,
     ):
 
-        if isinstance(latitude, (float, np.ndarray)):
+        if isinstance(latitude, (Number, list, np.ndarray)):
             return super().__new__(cls, latitude=latitude, longitude=longitude, height=height)
         elif not isinstance(arg, type(None)):
             if isinstance(arg, (LTP, ECEF, Geodetic, GRANDCS)):
@@ -637,9 +874,9 @@ class Geodetic(GeodeticRepresentation):
     def __init__(
         self,
         arg: Any = None,
-        latitude: Union[float, int, np.ndarray] = None,
-        longitude: Union[float, int, np.ndarray] = None,
-        height: Union[float, int, np.ndarray] = None,
+        latitude: Union[Number, list, np.ndarray] = None,
+        longitude: Union[Number, list, np.ndarray] = None,
+        height: Union[Number, list, np.ndarray] = None,
         reference: Any = "GEOID",
     ):  # options: 'GEOID', 'ELLIPSOID'
         """
@@ -647,31 +884,37 @@ class Geodetic(GeodeticRepresentation):
         latitude, longitude, height values
         """
         reference = reference.upper()
+        if not (reference == "ELLIPSOID" or reference == "GEOID"):
+            raise TypeError(
+                f"Provide reference as GEOID or ELLIPSOID instead of {reference}."
+                )
         self.reference = reference
 
-        if not isinstance(arg, type(None)):
+        #if not isinstance(arg, type(None)):
+        if arg is not None:
             arg = copy(arg)
             if isinstance(arg, Geodetic):
                 arg = copy(arg)
                 latitude, longitude = arg.latitude, arg.longitude
                 # Use height wrt to ellipsoid or geoid (above sea level). Default is 'GEOID' (asl).
+                # Compute height wrt the given reference.
                 if reference == "GEOID":
                     if arg.reference == "GEOID":
                         height = arg.height
                     elif arg.reference == "ELLIPSOID":
-                        height = arg.height - geoid_undulation(
+                        height = arg.height - egm.geoid_undulation(
                             latitude=arg.latitude, longitude=arg.longitude
                         )
                 elif reference == "ELLIPSOID":
                     if arg.reference == "GEOID":
-                        height = arg.height + geoid_undulation(
+                        height = arg.height + egm.geoid_undulation(
                             latitude=arg.latitude, longitude=arg.longitude
                         )
                     elif arg.reference == "ELLIPSOID":
                         height = arg.height
                 else:
                     raise TypeError(
-                        "Provide reference as GEOID or ELLIPSOID istead of %s" % str(reference)
+                        "Provide reference as GEOID or ELLIPSOID instead of %s" % str(reference)
                     )
 
             elif isinstance(arg, Horizontal):
@@ -679,16 +922,14 @@ class Geodetic(GeodeticRepresentation):
                 pass
             elif isinstance(arg, ECEF):
                 # allows ECEF instance as an input. Convert it to Geodetic.
-                latitude, longitude, height = turtle.ecef_to_geodetic(
-                    arg.T
-                )  # height here is wrt ellipsoid.
+                latitude, longitude, height = ecef_to_geodetic(arg.x, arg.y, arg.z)  # height is wrt ellipsoid.
                 if reference == "GEOID":
-                    height = height - geoid_undulation(latitude=latitude, longitude=longitude)
+                    height = height - egm.geoid_undulation(latitude=latitude, longitude=longitude)
                 elif reference == "ELLIPSOID":
                     pass
                 else:
                     raise TypeError(
-                        "Provide reference as GEOID or ELLIPSOID istead of %s" % str(reference)
+                        "Provide reference as GEOID or ELLIPSOID instead of %s" % str(reference)
                     )
             elif isinstance(arg, (LTP, GRANDCS)):
                 ecef = ECEF(arg)
@@ -706,15 +947,8 @@ class Geodetic(GeodeticRepresentation):
 							ECEF, Geodetic, GRANDCS or Horizontal.",
                 )
 
-        if isinstance(latitude, (Number, np.ndarray)):
+        if isinstance(latitude, (Number, list, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
-            # RK: +ve 0 to 360 were only accepted for coordinate transformation. 
-            #     Now both +ve and -ve values are accepted for longitudes.
-            if isinstance(latitude, Number):
-                longitude = 360+longitude if longitude<0 else longitude
-            else:
-                longitude[longitude < 0] += 360
-
             self.latitude = latitude
             self.longitude = longitude
             self.height = height
@@ -722,7 +956,7 @@ class Geodetic(GeodeticRepresentation):
             raise TypeError(
                 type(latitude),
                 "latitude, longitude, and height type must be either \
-					   int, float, np.ndarray.",
+					   Number, list, or np.ndarray.",
             )
 
     def geodetic_to_horizontal(self):
@@ -821,22 +1055,23 @@ class ECEF(CartesianRepresentation):
                 # change height wrt geoid to wrt ellipsoid.
                 if arg.reference == "GEOID":
                     # height wrt ellipsoid
-                    height = arg.height + geoid_undulation(
+                    height = arg.height + egm.geoid_undulation(
                         latitude=arg.latitude, longitude=arg.longitude
                     )
                 elif (
                     arg.reference == "ELLIPSOID"
                 ):  # leave it as it is because turtle uses height wrt ellipsoid.
                     height = arg.height
-                ecef = turtle.ecef_from_geodetic(arg.latitude, arg.longitude, height)
-                if ecef.size == 3:
-                    x, y, z = ecef[0], ecef[1], ecef[2]
-                elif ecef.size > 3:
-                    x, y, z = ecef[:, 0], ecef[:, 1], ecef[:, 2]
+                #ecef = geodetic_to_ecef(arg.latitude, arg.longitude, height)
+                x, y, z = geodetic_to_ecef(arg.latitude, arg.longitude, height)
+                #if ecef.size == 3:
+                #    x, y, z = ecef[0], ecef[1], ecef[2]
+                #elif ecef.size > 3:
+                #    x, y, z = ecef[:, 0], ecef[:, 1], ecef[:, 2]
             elif isinstance(arg, (LTP, GRANDCS)):
-                basis = arg.basis
-                origin = arg.location
-                ecef = np.matmul(basis.T, arg) + origin
+                basis   = arg.basis
+                origin  = arg.location
+                ecef    = np.matmul(basis.T, arg) + origin
                 x, y, z = ecef.x, ecef.y, ecef.z
             else:
                 raise TypeError(
@@ -875,21 +1110,11 @@ grandcs_origin = Geodetic(
     latitude=grd_origin_lat,
     longitude=grd_origin_lon,
     height=grd_origin_height,
-    reference="GEOID",
+    reference=grd_reference, # "Ellipsoid"
 )
 
 
-# RK: Merged into Horizontal. Delete this class.
-class HorizontalVector(HorizontalRepresentation):
-    """
-    This class has been merged into Horizontal class
-    by adding 'vector' attribute to reduce code duplication.
-    """
-
-    pass
-
-
-# RK: Rework on this class
+# RK: Work on this class
 class Horizontal(HorizontalRepresentation):
     """
     Generic container for horizontal coordinates.
@@ -1054,16 +1279,16 @@ class LTP(CartesianRepresentation):
         x: Union[float, int, np.ndarray] = None,  # x-coordinate at LTP.
         y: Union[float, int, np.ndarray] = None,  # y-coordinate at LTP
         z: Union[float, int, np.ndarray] = None,  # z-coordinate at LTP
-        latitude: Union[float, int, np.ndarray] = None,  # latitude of LTP's location/origin
+        latitude: Union[float, int, np.ndarray] = None,   # latitude of LTP's location/origin
         longitude: Union[float, int, np.ndarray] = None,  # longitude of LTP's location/origin
-        height: Union[float, int, np.ndarray] = None,  # height of LTP's location/origin
-        reference: str = None,  # reference for Geodetic location
-        location: Any = None,  # location of LTP in Geodetic, GRANDCS, or ECEF
+        height: Union[float, int, np.ndarray] = None,     # height of LTP's location/origin
+        reference: str = None,    # reference for Geodetic location
+        location: Any = None,     # location of LTP in Geodetic, GRANDCS, or ECEF
         orientation: str = None,  # orientation of LTP. 'NWU', 'ENU' etc
-        magnetic: bool = False,  # shift orientation by magnetic declination?
-        magmodel: str = "IGRF13",  # if shift, which magnetic model to use?
+        magnetic: bool = False,   # shift orientation by magnetic declination?
+        magmodel: str = "WMMHR",  # if shift, which magnetic model to use?
         declination: Union[float, np.ndarray] = None,  # or simply provide the magnetic declination
-        obstime: Union[str, datetime] = "2020-01-01",  # calculate declination of what date?
+        obstime: Union[str, datetime] = "2026-01-01",  # calculate declination of what date?
         frame: Any = None,
         rotation=None,
     ):
@@ -1079,7 +1304,7 @@ class LTP(CartesianRepresentation):
             declination = frame.declination
             magmodel = frame.magmodel
             obstime = frame.obstime
-        elif latitude != None and longitude != None and height != None:
+        elif (latitude is not None) and (longitude is not None) and (height is not None):
             geodetic_loc = Geodetic(
                 latitude=latitude,
                 longitude=longitude,
@@ -1112,37 +1337,51 @@ class LTP(CartesianRepresentation):
         # Calculate magnetic field declination if magnetic=True. Used to define GRANDCS coordinate system.
         if magnetic and declination is None:
             from .geomagnet import Geomagnet
+            #from geomagnet import Geomagnet
 
             # Calculate a magnetic field declination at a given location at a give time.
-            geoB = Geomagnet(magmodel, location=geodetic_loc, obstime=obstime)
-            declination = geoB.declination
+            #geoB = Geomagnet(magmodel, location=geodetic_loc, obstime=obstime)
+            #declination = geoB.declination
+            geoB        = Geomagnet(model=magmodel, obstime=obstime)
+            declination = geoB.field(location=geodetic_loc).declination
 
         azimuth0 = 0.0 if declination is None else declination
-        magnetic = magnetic if declination is None else True
+        magnetic = False if declination is None else True
 
         def vector(name):
             tag = name[0].upper()
             if tag == "E":
-                return turtle.ecef_from_horizontal(latitude, longitude, 90 + azimuth0, 0)
+                return horizontal_to_ecef(latitude, longitude, 90 + azimuth0, 0)
             elif tag == "W":
-                return turtle.ecef_from_horizontal(latitude, longitude, 270 + azimuth0, 0)
+                return horizontal_to_ecef(latitude, longitude, 270 + azimuth0, 0)
             elif tag == "N":
-                return turtle.ecef_from_horizontal(latitude, longitude, azimuth0, 0)
+                return horizontal_to_ecef(latitude, longitude, azimuth0, 0)
             elif tag == "S":
-                return turtle.ecef_from_horizontal(latitude, longitude, 180 + azimuth0, 0)
+                return horizontal_to_ecef(latitude, longitude, 180 + azimuth0, 0)
             elif tag == "U":
-                return turtle.ecef_from_horizontal(latitude, longitude, 0, 90)
+                return horizontal_to_ecef(latitude, longitude, 0, 90)
             elif tag == "D":
-                return turtle.ecef_from_horizontal(latitude, longitude, 0, -90)
+                return horizontal_to_ecef(latitude, longitude, 0, -90)
 
             else:
                 raise ValueError(f"Invalid frame orientation `{name}`")
 
         # unit vectors (basis) in ECEF frame of reference.
         # These are the basis of the GRANDCS coordinate system if orientation='NWU' and magnetic=True.
+        # Do not provide multiple locations as the origin of LTP.
+        if isinstance(longitude, Number):
+            pass
+        elif isinstance(longitude, np.ndarray) and len(longitude)==1:
+            longitude = longitude.item()
+            latitude  = latitude.item()
+        else:
+            raise Exception(f"Provide single location as the origin of LTP. You provided latitude={latitude} and longitude={longitude}.")
+
+        # Get the basis vector in ECEF frame for the provided orientation.
         ux = vector(orientation[0])
         uy = vector(orientation[1])
         uz = vector(orientation[2])
+            
         # These objects share the same memory with arg and is overwritten if kept inside __new__.
         # Problem is solved if __new__ is redefined and __init__ is added with below attributes
         # in __init__ rather than in __new__.
@@ -1156,7 +1395,8 @@ class LTP(CartesianRepresentation):
         self.rotation = rotation
 
         # Scripts below is used only if coordinates (x,y,z) in LTP's frame is required.
-        if not isinstance(arg, type(None)):
+        #if not isinstance(arg, type(None)):
+        if arg is not None:
             arg = copy(arg)
             if isinstance(arg, (LTP, ECEF, Geodetic, GRANDCS)):
                 if isinstance(arg, ECEF):
@@ -1197,7 +1437,7 @@ class LTP(CartesianRepresentation):
         # just instantiating a GRANDCS CS to get it's basis and location. x, y, z values does not matter.
         self = copy(self)
         gcs = GRANDCS(x=0, y=0, z=0)
-        self.ltp_to_ltp(gcs)
+        return self.ltp_to_ltp(gcs)
 
     def ltp_to_ecef(self):
         # Basis forms a rotational matrix. Transpose is the inverse of rotational matrix (real).
@@ -1208,7 +1448,6 @@ class LTP(CartesianRepresentation):
         # Convert from GRANDCS to ECEF, then from ECEF to Geodetic.
         ecef = ECEF(self)
         return Geodetic(ecef, reference=reference)
-
 
 class GRANDCS(LTP):
     """
@@ -1243,7 +1482,7 @@ class GRANDCS(LTP):
         longitude: Union[float, int, np.ndarray] = None,  # longitude of LTP's location/origin
         height: Union[float, int, np.ndarray] = None,  # height of LTP's location/origin
         location: Any = grandcs_origin,
-        obstime: Union[str, datetime] = "2020-01-01",
+        obstime: Union[str, datetime] = "2026-01-01",
         rotation=None,
     ):
 
@@ -1274,7 +1513,7 @@ class GRANDCS(LTP):
             location=location,  # location of LTP in Geodetic, GRANDCS, or ECEF
             orientation="NWU",  # orientation of LTP. 'NWU', 'ENU' etc
             magnetic=True,  # shift orientation by magnetic declination?
-            magmodel="IGRF13",  # if shift, which magnetic model to use?
+            magmodel="WMMHR",  # if shift, which magnetic model to use?
             declination=None,  # or simply provide the magnetic declination
             obstime=obstime,  # calculate declination of what date?
             rotation=rotation,
@@ -1295,5 +1534,5 @@ class GRANDCS(LTP):
 
 
 # RK TODO: Rework on this class.
-class Rotation(_Rotation):
-    pass
+#class Rotation(_Rotation):
+#    pass

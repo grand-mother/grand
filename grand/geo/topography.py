@@ -1,247 +1,127 @@
-"""Topography wrapper for GRAND packages.
-"""
-
-from __future__ import annotations
-
-import enum
-import os
-from pathlib import Path
-from typing import Optional, Union, Any
-from typing_extensions import Final
+from typing import Union
 import numpy as np
+import os
+from numbers import Number
+from numba import njit
+import rasterio
+from rasterio.transform import rowcol
+from numba import njit     # njit is equivalent to jit(nopython=True)
+from .egm import EGM2008
+from .coordinates import Geodetic, ECEF, LTP, GRANDCS, CartesianRepresentation
+from grand import path_grandlib_data
 
-from grand import grand_get_path_root_pkg
+"""
+Topography code for GRANDlib.
+This code computes the elevation of the ground wrt to EGM2008 geoid or WGS84 ellipsoid.
+Copernicus data, maintained by European Space Agency, are used for elevation. Default elevation is wrt EGM2008. 
 
-from . import DATADIR
-from grand.geo.coordinates import (
-    ECEF,
-    Geodetic,
-    GeodeticRepresentation,
-    LTP,
-    GRANDCS,
-    CartesianRepresentation,
-)
+contact: Ramesh Koirala (rkoirala.astro@gmail.com)
+"""
+datadir = path_grandlib_data("topography")
 
-from .turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
-import grand.dataio.protocol as store
-from .._core import ffi, lib
-
-__all__ = [
-    "elevation",
-    "distance",
-    "geoid_undulation",
-    "update_data",
-    "cachedir",
-    "model",
-    "Reference",
-    "Topography",
-]
-
-
-class Reference(enum.IntEnum):
-    """Reference level for topography data"""
-
-    ELLIPSOID = enum.auto()
-    GEOID = enum.auto()
-    LOCAL = enum.auto()
-
-
-DATADIR: Final = Path(grand_get_path_root_pkg()) / "data" / "topography"
-"""Location of cached topography data"""
-
-
-_DEFAULT_MODEL: Final = "SRTMGL1"
-"""The default topographic model"""
-
-
-_default_topography: Optional["Topography"] = None
-"""Stack for the topographic data"""
-
-_default_reference: Optional[str] = "GEOID"  # options: 'GEOID', LOCAL', 'ELLIPSOID'
-"""Stack for the topographic data"""
-
-_geoid: Optional[_Map] = None
-"""Map with geoid undulations"""
-
-
-def distance(
-    position: Any,
-    direction: CartesianRepresentation,
-    maximum_distance: float = None,
-):
-    """Get the signed intersection distance with the topography."""
-    global _default_topography
-
-    if _default_topography is None:
-        DATADIR.mkdir(exist_ok=True)
-        _default_topography = Topography(DATADIR)
-    return _default_topography.distance(position, direction, maximum_distance)
-
-
-def elevation(coordinates, reference: Optional[str] = _default_reference):
-    """Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid."""
-    global _default_topography
-
-    if _default_topography is None:
-        DATADIR.mkdir(exist_ok=True)
-        _default_topography = Topography(DATADIR)
-    return _default_topography.elevation(coordinates, reference)
-
-
-def _get_geoid():
-    global _geoid
-
-    if _geoid is None:
-        # path = os.path.join(DATADIR, "egm96.png")
-        path = Path(grand_get_path_root_pkg()) / "data" / "egm96.png"
-        _geoid = _Map(path)
-    return _geoid
-
-
-def geoid_undulation(coordinates=None, latitude=None, longitude=None):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
+def bilinear_interpolation(dx, dy, v00, v10, v01, v11):
     """
-    geoid = _get_geoid()
+    Linearly interpolate function to find value at (x,y). Values of the function at four corners surrounding (x,y) are given.
+    Four corners: (x0,y0), (x0,y1), (x1,y0), and (x1,y1)
+    Values at corners: v00, v01, v10, and v11
+    dx = x - x0
+    dy = y - y0
+    """
+    # Interpolate in x-direction at y=y0
+    # v1 = v00 + (v10 - v00) * (x - x0) / (x1 - x0) # along the line where y=y0
+    v1 = v00 + (v10 - v00) * dx  # dx = x-x0, x1-x0 = 1
+    # Interpolate in x-direction at y=y1
+    # v2 = v01 + (v11 - v01) * (x - x0) / (x1 - x0) # along the line where y=y1
+    v2 = v01 + (v11 - v01) * dx # dx = x-x0, x1-x0 = 1
+    # Finally, interpolate in y-direction at x=x
+    # v = v1 + (v2 - v1) * (y - y0) / (y1 - y0)  # along the line where x=x
+    v = v1 + (v2 - v1) * dy
 
-    # Compute the geodetic coordinates
-    # if (not isinstance(latitude, type(None))) and (not isinstance(longitude, type(None))):
-    if (latitude is not None) and (longitude is not None):
-        pass
-        # elif not isinstance(coordinates, type(None)):
-    elif coordinates is not None:
-        geodetic = Geodetic(coordinates)
-        latitude = geodetic.latitude
-        longitude = geodetic.longitude
-    else:
-        raise TypeError(
-            "Provide coordinates in known coordinate frames or as latitude and longitude."
-        )
+    return v
 
-    return geoid.elevation(longitude, latitude)
+#def get(name: str, tag: str = "101") -> bytes:
+#    """Get a BLOB from the store."""
+#    # RK: provide proper link where topography data are stored.
+#    base = "https://github.com/grand-mother/store/releases/download"
+#    url = f"{base}/{tag}/{name}.gz"
+#    try:
+#        with urllib.request.urlopen(url) as f:
+#            return zlib.decompress(f.read(), wbits=31)
+#    except:
+#        raise Exception("Unable to load data.")
 
+def get_filename(latitude: Number = None, longitude: Number = None, data_source="Copernicus"):
+    # Range: [-90, 90] SN for latitude, [-180,180] WE for longitude.
+    # Availabe data: [-56,61] SN for latitude, [-179,179] for longitude.
+    longitude = (longitude + 180.0) % 360.0 - 180.0    # file system prefers [-180,180] range instead of [0,360].
+    ns = "s" if latitude < 0 else "n"
+    ew = "w" if longitude < 0 else "e"
 
-def update_data(coordinates=None, clear: bool = False, radius: float = None):
+    # Base integer value of longitude and latitude
+    lat_base = np.abs(np.floor(latitude))
+    lon_base = np.abs(np.floor(longitude))
+    
+    #if data_source.upper()=="NASA":
+    if data_source.upper()=="COPERNICUS":
+        if (longitude < -179) or (longitude > 179) or (latitude < -56) or (latitude > 61):
+            raise ValueError(f"Latitude must be between -56 and 61, and longitude must be between -179 and 179. \
+            Provided latitude is {latitude} and longitude is {longitude}.")
+
+        #return f"NASADEM_NC/NASADEM_NC_{ns}{lat_base:02.0f}{ew}{lon_base:03.0f}.nc"
+
+        #elif data_source.upper()=="COPERNICUS":
+        ns = ns.upper()
+        ew = ew.upper()
+        
+        return datadir / f"Copernicus_DSM_30_{ns}{lat_base:02.0f}{ew}{lon_base:03.0f}.tif"
+            
+def get_data(
+        latitude: float = None, 
+        longitude: float = None, 
+        filename: str = None):
     """
     Update the cache of topography data.
-    Data are stored in https://github.com/grand-mother/store/releases.
-    Locally saved as .../grand/data/topography/*.hgt
+    Download data from: https://portal.opentopography.org/raster?opentopoID=OTSDEM.032021.4326.3
+                        Imp: Manually select location with 0.001 off from the intended latitude and longitude tile.
+                        Ex: for a tile of latitude=[28,29] and longitude=[85,86], use [27.999, 29.001] and [84.999, 86.001].
+    Locally saved as .../grand/data/topography/Copernicus_DSM_30_N*E*.tif
+    Example: Copernicus_DSM_30_N28E085.tif ==> Latitude=[28,29]; longitude=[85,86]
     """
-    if clear:
-        for p in DATADIR.glob("**/*.*"):
-            p.unlink()
+    #import xarray as xr    # to read NASADEM...nc (netCDF4) files.
 
-    if coordinates is not None:
-        DATADIR.mkdir(exist_ok=True)
+    if filename is None:
+        filename = get_filename(latitude, longitude)
 
-        # Compute the bounding box
-        if isinstance(coordinates, (ECEF, Geodetic, GeodeticRepresentation, GRANDCS, LTP)):
-            pass
-        else:
-            raise TypeError(
-                type(coordinates),
-                "Coordinate must be in ECEF, Geodetic, GeodeticRepresentaion, GRANDCS or LTP.",
-            )
-
-        coordinates = Geodetic(coordinates)
-        latitude = coordinates.latitude
-        longitude = coordinates.longitude
-        height = coordinates.height
-        # latitude and longitude are stored as ndarray. Find minimum and maximum.
-        latitude = [min(latitude), max(latitude)]
-        longitude = [min(longitude), max(longitude)]
-        height = [min(height), max(height)]
-
-        # Extend by the radius, if any
-        if radius is not None:
-            for i in range(2):
-                # define a local LTP frame at a given latitude and longitude.
-                location = Geodetic(latitude=latitude[i], longitude=longitude[i], height=height[i])
-                c = LTP(location=location, orientation="ENU", magnetic=False)
-                basis = c.basis  # in ECEF frame
-                origin = c.location  # in ECEF frame
-
-                # Find the maximum latitude and longitude at radius distance from the LTP origin.
-                # 3 points defined at radius distance from the origin, one point on each axis.
-                # Max latitude = origin+radius towards N. Min latitude = origin-radius towards N.
-                # Max longitude = origin+radius towards E. Min longitude = origin-radius towards E.
-                delta = -1 * radius if not i else radius
-                ltp_E = np.array([delta, 0, 0])  # delta distance [m] towards E from origin.
-                ltp_N = np.array([0, delta, 0])  # delta distance [m] towards N from origin.
-                ltp_U = np.array([0, 0, delta])  # delta distance [m] towards U from origin.
-                arg = np.column_stack(
-                    (ltp_E, ltp_N, ltp_U)
-                )  # [[x1, x2, x3], [y1, y2, y3], [z1, z2, z3]]
-                # Transform all 3 points from local LTP to ECEF frame.
-                ecef = np.matmul(basis.T, arg) + origin
-                geod = Geodetic(ecef)
-                latitude[i] = min(geod.latitude) if not i else max(geod.latitude)
-                longitude[i] = min(geod.longitude) if not i else max(geod.longitude)
-                height[i] = min(geod.height) if not i else max(geod.height)
-
-        # Get the corresponding tiles
-        longitude = [int(np.floor(lon)) for lon in longitude]
-        latitude = [int(np.floor(lat)) for lat in latitude]
-
-        for lat in range(latitude[0], latitude[1] + 1):
-            for lon in range(longitude[0], longitude[1] + 1):
-                ns = "S" if lat < 0 else "N"
-                ew = "W" if lon < 0 else "E"
-                lat = -lat if lat < 0 else lat
-                lon = -lon if lon < 0 else lon
-
-                base = f"{ns}{lat:02.0f}{ew}{lon:03.0f}"
-                basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt" # .gz will be added in protocol.py
-                print("topography:", ns, lat, ew, lon, basename)
-                # path = DATADIR / basename
-                path = DATADIR / (base + ".hgt")
-                if not path.exists():
-                    print("Caching data for", path)
-                    try:
-                        data = store.get(
-                            basename
-                        )  # stored in github.com/grand-mother/store/releases.
-                    except store.InvalidBLOB:
-                        raise ValueError(
-                            f"missing data in GRAND repository for {basename}. Download it from https://search.earthdata.nasa.gov/search/granules?p=C1000000240-LPDAAC_ECS&pg[0][v]=f&pg[0][gsk]=-start_date&tl=1680158515.135!3!!"
-                        ) from None  # RK: what is this? and why?
-                    else:
-                        with path.open("wb") as f:
-                            f.write(data)
-
-                # ToDo: Add error message if failing to load topography data.
-
-    # Reset the topography proxy
-    global _default_topography
-    _default_topography = None
-
-def cachedir() -> Path:
-    """Get the location of the topography data cache."""
-    return DATADIR
-
-
-def datadir() -> Path:
-    """Get the location of the topography data cache."""
-    return DATADIR
-
-
-def model() -> str:
-    """Get the default model for topographic data."""
-    return _DEFAULT_MODEL
+    if "Copernicus" in str(filename):
+        # Open Copernicus topography file using rasterio
+        data = rasterio.open(filename)
+        
+    return data
 
 
 class Topography:
-    """Proxy to topography data."""
+    """
+    Proxy to topography data.
 
-    def __init__(self, path: Union[Path, str] = DATADIR) -> None:
-        # self._stack = _Stack(str(path))
-        self._stack = _Stack(path)
-        self._stepper: Optional[_Stepper] = None
-
+    To Run:
+    topo = Topography()
+    loc  = Geodetic(latitude=[...], longitude=[...], height=[...])
+    elev = topo.elevation(loc, reference='ellipsoid')
+    """
+    def __init__(self):
+        self.stored_data = {}
+        self.data = None       # data from the latest file
+        self.grid_lat = None   # latitude list from the latest file
+        self.grid_lon = None   # longitude list from the latest file
+        self.grid_hgt = None   # height list from the latest file
+        self.last_fname  = ""  # name of the latest file
+        
     def elevation(
-        self,
-        coordinates,
-        reference: Optional[str] = _default_reference,
+            self,
+            coordinates = None,
+            latitude = None,
+            longitude= None,
+            reference: str = "GEOID",  # options: 'GEOID', LOCAL', 'ELLIPSOID
     ):
         """Get the topography elevation, w.r.t. sea level, w.r.t the
         ellipsoid or in local coordinates. The default reference is
@@ -255,99 +135,169 @@ class Topography:
                     raise ValueError("not an LTP or GRANDCS frame")
                 elevation = self._local_elevation(coordinates)
             else:
-                elevation = self._global_elevation(coordinates, reference)
+                if (coordinates is not None) and isinstance(coordinates, (Geodetic, ECEF, LTP, GRANDCS)):
+                    geod_cs   = Geodetic(coordinates)
+                    latitude  = geod_cs.latitude
+                    longitude = geod_cs.longitude
+                elif (latitude is not None) and (longitude is not None):
+                    latitude  = latitude
+                    longitude = longitude
+                    
+                elevation = self._global_elevation(
+                    latitude  = latitude,
+                    longitude = longitude,
+                    reference = reference)
 
             if elevation.size == 1:
                 elevation = elevation[0]
 
             return elevation
         else:
-            # TODO: what doing if reference is None ?
-            raise ValueError
+            raise Exception(f"Provide a proper reference instead of {reference}. Allowed references are Geoid, Local, and Ellipsoid.")
 
-    @staticmethod
-    def _as_double_ptr(a):
-        a = np.require(a, float, ["CONTIGUOUS", "ALIGNED"])
-        return ffi.cast("double *", a.ctypes.data)
-
-    def _local_elevation(self, coordinates):
-        """Get the topography elevation in local coordinates, i.e. along the (Oz) axis."""
-        # Compute the x and y coordinate in local frame.
-        x = coordinates.x
-        y = coordinates.y
-        if not isinstance(x, np.ndarray):
-            x = np.array((x,))
-            y = np.array((y,))
-
-        # Return the topography elevation
-        n = x.size
-        elevation = np.zeros(n)
-        origin = coordinates.location
-        basis = (
-            coordinates.basis.T
-        )  # basis in coordinates.py and in lib... are transpose of each other.
-        geoid = _get_geoid()._map[0]
-        stack = self._stack._stack[0] if self._stack._stack else ffi.NULL
-
-        lib.grand_topography_local_elevation(
-            stack,
-            geoid,
-            self._as_double_ptr(origin),
-            self._as_double_ptr(basis),
-            self._as_double_ptr(x),
-            self._as_double_ptr(y),
-            self._as_double_ptr(elevation),
-            n,
-        )
-
-        return elevation
-
-    def _global_elevation(self, coordinates, reference: str):
-        """Get the topography elevation w.r.t. sea level or w.r.t. the
-        ellipsoid.
+    def _global_elevation(self, latitude, longitude, reference="GEOID"):
         """
+        Get the topography elevation w.r.t. mean sea level (geoid) or w.r.t. the ellipsoid.
+        Default reference is EGM2008 (geoid) for Copernicus data.
+        """
+        reference = reference.upper()
+        if reference=="ELLIPSOID":
+            # Instantiate EGM2008 to compute elevation wrt to WGS84 ellipsoid.
+            egm = EGM2008() # default EGM2008 file is used.
 
         # Compute the geodetic coordinates
-        geodetic = Geodetic(coordinates)
-        latitude = geodetic.latitude
-        longitude = geodetic.longitude
         if not isinstance(latitude, np.ndarray):
-            latitude = np.array((latitude,))
-            longitude = np.array((longitude,))
-
+            if isinstance(latitude, Number):
+                latitude  = np.array((latitude,))
+                longitude = np.array((longitude,))
+            elif isinstance(latitude, list):
+                latitude  = np.array(latitude)
+                longitude = np.array(longitude)
+                
         # Return the topography elevation
-        n = latitude.size
-        elevation = np.zeros(n)
-        if reference == "ELLIPSOID":
-            geoid = _get_geoid()._map[0]
-        else:
-            geoid = ffi.NULL
-        stack = self._stack._stack[0] if self._stack._stack else ffi.NULL
+        elevation = np.zeros(latitude.size)
 
-        lib.grand_topography_global_elevation(
-            stack,
-            geoid,
-            self._as_double_ptr(latitude),
-            self._as_double_ptr(longitude),
-            self._as_double_ptr(elevation),
-            n,
-        )
+        # RK: To Do: make this loop more efficient.
+        # Compute elevation at the given latitude and longitude.
+        for indx, lat in enumerate(latitude):
+            lon   = longitude[indx] 
+            fname = get_filename(lat, lon)
+            if fname not in self.stored_data.keys():
+                self.stored_data[fname] = get_data(filename=fname)
+
+            # Load new data only if the elevation file has changed.
+            if (fname!=self.last_fname):
+                self.data       = self.stored_data[fname]#.read(1)
+                self.height     = self.data.read(1)
+                self.last_fname = fname
+                
+            # indexing starts at upper left of the lon-lat tile.
+            i, j   = rowcol(self.data.transform, lon, lat, op=float) # returns location index as float (i=row, j=col)
+            i0, j0 = np.int32(np.floor(i)), np.int32(np.floor(j))
+            i1, j1 = i0+1, j0+1
+            di, dj = i-i0, j-j0   # fractional parts
+
+            # Get the four corner elevation values surrounding the provided latitude and longitude.
+            h00 = self.height[i0, j0]
+            h10 = self.height[i1, j0]
+            h01 = self.height[i0, j1]
+            h11 = self.height[i1, j1]
+
+            # Interpolate elevations given at position (i0, j0), (i1, j0), (i0, j1), and (i1, j1)
+            #    to get elevation at lat, lon. Copernicus provides elevation wrt EGM2008 geoid.
+            h = bilinear_interpolation(di, dj, h00, h10, h01, h11)
+            
+            if reference=="ELLIPSOID":
+                h += egm.geoid_undulation(lat, lon)  # h = H + N (ellipsoid = geoid + undulation)
+
+            elevation[indx] = h
 
         return elevation
 
-    def distance(
-        self,
-        position: Any,
-        direction: CartesianRepresentation,
-        maximum_distance: float = None,
-    ):
-        """Get the signed intersection distance with the topography."""
-        if self._stepper is None:
-            stepper = _Stepper()
-            stepper.add(self._stack)
-            stepper.geoid = _get_geoid()
-            self._stepper = stepper
+    def _local_elevation(self,
+        arg: Union[LTP, GRANDCS] = None, # local coordinates in LTP frame.
+        max_iterations: int = 5,
+        tolerance: float = 1e-3) -> float:
+        """
+        Compute ground elevation at a single point in local coordinates.
+        
+        Idea:
+            Find the latitude, longitude, and height whose projection onto the 
+            local frame's xy-plane equals the location's x and y coordinates.
+            The z coordinate wrt the local frame of the corresponding (lat, lon, height) 
+            is the required local elevation. 
+        Args:
+            arg: location in the LTP or GRANDCS frame
+            
+        Returns:
+            Elevation in meters (NaN if outside terrain grid)
+        """
+        if not isinstance(arg, (LTP, GRANDCS)):
+            raise TypeError(f"Provide input coordinates in LTP and GRANDCS coordinate system instead of {type(arg)}.")
 
+        # copy 'arg' to use in iteration.
+        # iterate until x and y components of tmp_arg and arg are close to each other.
+        tmp_arg   = LTP(
+            x=arg.x,
+            y=arg.y,
+            z=np.zeros(len(arg.x)), # Use coordinates of xy-plane of the LTP frame as the first guess.
+            frame=arg,
+         )  
+
+        # 
+        for _ in range(max_iterations):
+            # Get ground altitude for current guess
+            geod = Geodetic(tmp_arg, reference='Ellipsoid')
+            
+            # Get terrain elevation wrt ellipsoid
+            elevation = self._global_elevation(
+                latitude=geod.latitude, 
+                longitude=geod.longitude, 
+                reference='Ellipsoid')
+
+            # set height of the geod with the new elevation wrt ellipsoid
+            geod.height = elevation
+            
+            # Transform 'geod' into the corresponding local coordinates
+            ltp = LTP(geod, frame=arg) # use same frame of the input location.
+            
+            # Check for convergence
+            dx = arg.x - ltp.x
+            dy = arg.y - ltp.y
+
+            within_tolerance = (abs(dx) < tolerance) & (abs(dy) < tolerance)
+            if within_tolerance.all():
+                break
+            
+            # Update local coordinates if geoid projection is not close to the input LTP locations.
+            tmp_arg.x += dx
+            tmp_arg.y += dy
+            
+        return ltp.z
+    
+    def distance(
+            self,
+            position: Union[ECEF, Geodetic, LTP, GRANDCS],
+            direction: Union[CartesianRepresentation, ECEF],
+            max_distance: float = 100000, # 100 km
+            max_iteration: int = 10000,
+    ):
+        """
+        Compute distance along a particle trajectory where it hits the nearest ground/mountain.
+        Distance resolution is 10 cm along the particle trajectory.
+
+        Parameters
+        -----------
+        position: Union[ECEF, Geodetic, LTP, GRANDCS]
+                  Initial ECEF/cartesian position.
+        
+        direction: CartesianRepresentation in ECEF frame
+                  Propagation vector
+
+        maximum_distance: float in meter
+                 Maximum distance along the particle trajectory to find interaction point.
+        """
+        # Transform 
         position = ECEF(position)
         if isinstance(direction, (CartesianRepresentation, ECEF)):
             # TODO: Convert direction vector given in any known coordinate frame to ECEF frame.
@@ -355,44 +305,23 @@ class Topography:
             pass
         else:
             raise TypeError("Direction must be in CartesianRepresentation in ECEF frame.")
-
+        
         # Normalize the direction vector. Unit vector is required.
         norm = np.linalg.norm(direction)
         direction = direction / norm
-
-        dn = np.float64(maximum_distance).size if maximum_distance is not None else 1
-        n = max(position.x.size, direction.x.size, dn)
-
-        if (
-            ((direction.size > 1) and (direction.size < n))
-            or ((position.size > 1) and (position.size < n))
-            or ((dn > 1) and (dn < n))
-        ):
-            raise ValueError("incompatible size")
-
-        r = np.empty(3 * n)
-        v = np.empty(3 * n)
-        d = np.empty(n)
-
-        # r[start:stop:step] -> r[start::step]. Take every step-th value starting from start.
-        # l = [0,1,2,3,4,5]. l[::2] -> [0, 2, 4]. l[1::2] -> [1, 3, 5]
-        r[::3] = position.x
-        r[1::3] = position.y
-        r[2::3] = position.z
-        v[::3] = direction.x
-        v[1::3] = direction.y
-        v[2::3] = direction.z
-        d[:] = maximum_distance if maximum_distance is not None else 0
-
-        lib.grand_topography_distance(
-            self._stepper._stepper[0],
-            self._as_double_ptr(r),
-            self._as_double_ptr(v),
-            self._as_double_ptr(d),
-            n,
-        )
-
-        if d.size == 1:
-            d = d[0]
-
-        return d
+        
+        dist = 0
+        ds   = 0 # sum of ds is the distance travelled by the particle.
+        for _ in range(max_iteration):
+            pos_geod = Geodetic(position, reference='ellipsoid')
+            height   = pos_geod.height
+            elevtn   = self.elevation(pos_geod, reference='ellipsoid')
+            dist    += ds #distance along the trajectory
+            if height<elevtn: # break 'for' loop, if height is below elevation of the ground, aka hitting the ground.
+                break
+            
+            # adaptive step size. Min step size = 10cm or half of particle height - ground elevation.
+            ds = max(0.1, 0.5*abs(height-elevtn)) 
+            position += ds*direction # change position of a particle along its trajectory.
+            
+        return dist
