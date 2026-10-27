@@ -1,7 +1,7 @@
 asttokens==2.0.5
 attrs==21.4.0
 backcall==0.2.0
-black==21.12b0
+black==26.10.1
 cffi==1.15.0
 click==8.0.3
 cycler==0.11.0
