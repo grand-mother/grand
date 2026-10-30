@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-from grand import ECEF, Geodetic, LTP, topography
+from grand.geo.coordinates import ECEF, Geodetic, LTP
+from grand.geo.topography import Topography
 import matplotlib.pyplot as pl
 import numpy as np
 
@@ -15,7 +16,7 @@ origin = Geodetic(
 # web and cached which might take some time. Reducing the area results in less
 # data to be downloaded, i.e. speeding up this step
 radius = 2000  # m
-topography.update_data(origin, radius=radius)
+#topography.update_data(origin, radius=radius)
 
 
 # Generate a grid of local coordinates using numpy.meshgrid
@@ -33,7 +34,8 @@ coordinates = LTP(
 
 # Get the local ground elevation. Note that local coordinates naturally account
 # for the Earth curvature.
-zg = topography.elevation(coordinates, reference="local")
+topo = Topography()
+zg = topo.elevation(coordinates, reference="local")
 zg = zg.reshape(X.shape)
 
 # Plot the result using contour levels. The Earth curvature is clearly visible

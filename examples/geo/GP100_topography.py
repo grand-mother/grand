@@ -1,13 +1,16 @@
 #! /usr/bin/env python
-from grand import (
+from grand.geo.coordinates import (
     Coordinates,
     CartesianRepresentation,
     SphericalRepresentation,
     GeodeticRepresentation,
-    topography,
-)
-from grand import ECEF, Geodetic, GRANDCS, LTP
-from grand import Geomagnet
+    ECEF,
+    Geodetic, 
+    GRANDCS, 
+    LTP,
+    )
+from grand.geo.topography import Topography
+from grand.geo.geomagnet import Geomagnet
 from grids import (
     create_grid_univ,
 )  # GRAND_tools rep https://github.com/kumikokotera/GRAND_tools. Add GRAND_tools/grid_shape rep to PYTHONPATH
@@ -24,7 +27,8 @@ dunhuang = Geodetic(latitude=40.902317, longitude=94.054550, height=0)
 # web and cached which might take some time. Reducing the area results in less
 # data to be downloaded, i.e. speeding up this step
 radius = 1000  # m
-topography.update_data(dunhuang, radius=radius)
+#topography.update_data(dunhuang, radius=radius)
+topo = Topography()
 
 # Generate a grid of local coordinates using numpy.meshgrid
 x = np.linspace(-1 * radius, radius, 1001)
@@ -34,7 +38,7 @@ coordinates = GRANDCS(
     x=X.flatten(), y=Y.flatten(), z=np.zeros(X.size), location=dunhuang
 )  # CS: x = North, y = West
 # Get the local ground elevation. Note that local coordinates naturally account for the Earth curvature.
-zg = topography.elevation(
+zg = topo.elevation(
     coordinates, reference="local"
 )  # Altitude measured wrt cart ref centered on origin "location"
 zg = zg.reshape(X.shape)
@@ -68,7 +72,7 @@ det_cs = GRANDCS(
     location=dunhuang,
 )
 print("Nb of units:", len(det_cs.x))
-det_cs.z = topography.elevation(det_cs, reference="local")
+det_cs.z = topo.elevation(det_cs, reference="local")
 # Now go to geodetic
 det_geo = Geodetic(det_cs)
 
@@ -122,5 +126,5 @@ ax.scatter(det_cs.x / 1000, det_cs.y / 1000, det_cs.z)
 pl.xlabel("Northing (km)")
 pl.ylabel("Westing (km)")
 pl.title("Elevation wrt LTP (m)")
-
+pl.savefig('test.png')
 pl.show()

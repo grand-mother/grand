@@ -12,14 +12,9 @@ pi  = 3.14159265358979323846
 d2r = pi/180           # factor to convert angle from degree to radian
 r2d = 180/pi           # factor to convert angle from radian to degree
 
-# The default observation time if none is specified
+# Default values
 _default_obstime: Union[str, datetime.date] = datetime.date(2026, 12, 31)
-
-#DATADIR: Final = grand_get_path_root_pkg() + "/data/geomagnet"
 _datadir = path_grandlib_data("geomagnet")
-
-# The default geo-magnetic model, i.e. IGRF13.
-# Reference: https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html
 _default_model: str = "WMMHR"
 
 
@@ -64,39 +59,6 @@ def geodetic_to_geocentric(
 
     return longitude, lat_*r2d, r
 
-#def compute_enu(latitude, longitude):
-#    """
-#    Compute East, North, Up (ENU) unit vectors in ECEF frame given latitude and longitude.
-#
-#    Parameters:
-#    latitude (float): latitude in degrees
-#    longitude (float): longitude in degrees
-#
-#    Returns:
-#    tuple: (e, n, u) where each is a list of 3 components
-#    """
-#    # Convert degrees to radians
-#    lat = latitude * d2r   # latitude
-#    lon = longitude * d2r  # longitude
-#
-#    slat = np.sin(lat)
-#    clat = np.cos(lat)
-#    slon = np.sin(lon)
-#    clon = np.cos(lon)
-#
-#    # East vector
-#    e = [-slon, clon, 0.0]
-#
-#    # North vector
-#    n = [-clon * slat, -slon * slat, clat]
-#
-#    # Up vector
-#    u = [clon * clat, slon * clat, slat]
-#
-#    # return basis vector of ENU orientation
-#    #return np.vstack((e, n, u)).T
-#    return e, n, u
-
 def basis_vector(name, latitude, longitude, azimuth):
     tag = name[0].upper()
     if tag == "E":
@@ -118,26 +80,18 @@ def get_filename(model, epoch_year, latest_epoch):
     """
     Get filename based on input observation time and the geomagnetic model.
     """
-    #a          = 6371200 # geomagnetic reference radius. This 'a' is different than the global 'a'.
-    #obstime    = date_decimal(obstime)
-    #epoch_year = int(obstime - (obstime%5)) # obstime is in decimal year. Coefficients are updated every 5 years.
-    #if epoch_year%5 != 0:
-    #    raise ValueError("Epoch year must be a multiple of 5. Given epoch year is %s."%epoch_year)
-
     # Select coeffients file based on the observation time and geomagnetic model.
     model       = model.upper()
     #interpolate = False # interpolate coefficients for IGRF model with epoch year before 2025.
     # WMM high resolution model
     if model=="WMMHR":
         if epoch_year==latest_epoch:
-            #coeff_file = _datadir+"geomagnet/WMMHR%s.COF"%latest_epoch
             coeff_file = _datadir / f"WMMHR{latest_epoch}.COF"
         else:
             raise ValueError("Epoch year must be 2025 to use WMMHR. Given epoch year is %s."%epoch_year)
     # WMM model
     elif model=="WMM":
         if epoch_year>=2020:
-            #coeff_file = _datadir+"geomagnet/WMM%s.COF"%epoch_year
             coeff_file = _datadir / f"WMM{epoch_year}.COF"
         else:
             raise ValueError("Epoch year must be after 2020 to use WMM. Given epoch year is %s. \
@@ -146,19 +100,12 @@ def get_filename(model, epoch_year, latest_epoch):
     elif model=="IGRF":
         # Ignore data before 1945, assuming GRAND collaboration does not need it for any of its scientific projects.
         if epoch_year>=1945 and epoch_year<(latest_epoch-5): 
-            #coeff_file  = _datadir+"geomagnet/DGRF%s.COF"%epoch_year 
-            #coeff_file1 = _datadir+"geomagnet/DGRF%s.COF"%(epoch_year+5) 
             coeff_file  = _datadir / f"DGRF{epoch_year}.COF"
             coeff_file1 = _datadir / f"DGRF{epoch_year+5}.COF" 
-            #interpolate = True 
         elif epoch_year==latest_epoch-5: 
-            #coeff_file  = _datadir+"geomagnet/DGRF%s.COF"%epoch_year 
-            #coeff_file1 = _datadir+"geomagnet/IGRF%s.COF"%latest_epoch 
             coeff_file  = _datadir / f"DGRF{epoch_year}.COF"
             coeff_file1 = _datadir / f"IGRF{latest_epoch}.COF" 
-            #interpolate = True 
         elif epoch_year==latest_epoch: 
-            #coeff_file = _datadir+"geomagnet/IGRF%s.COF"%epoch_year 
             coeff_file = _datadir / f"IGRF{epoch_year}.COF" 
         else: 
             raise Exception("Input observation year (%s) is outside the range."%epoch_year) 
@@ -701,11 +648,15 @@ class Geomagnet:
     B.x
     B.y
     B.z
+    B.norm()
     B.declination
     B.inclination
     B.location
     B.to_ltp("NWU") # from "NED" to "NWU" orientation at each location
     B.to_grandcs()  # from given orientation to the GRANDCS.
+    B.parent.obstime
+    B.parent.model
+    B.parent.latest_epoch
     """
     def __init__(self,
         model: str = _default_model,
@@ -739,7 +690,6 @@ class Geomagnet:
         # Load coefficients for the given model and obstime.
         self._n_max, self._Gnm, self._Hnm, self._dGnm, self._dHnm = load_coefficients(coeff_file) # {Gnm, Hnm}.shape = (n_max+1, n_max+1)
         # linearly interpolate IGRF coefficients to compute dGnm and dHnm. Default values of dGnm and dHnm in IGRF model are all zeros for previous years.
-        #if interpolate:
         if model=="IGRF" and epoch_year<self.latest_epoch: # interpolate coefficients.
             n_max1, Gnm1, Hnm1, dGnm1, dHnm1 = load_coefficients(coeff_file1) # {Gnm, Hnm}.shape = (n_max+1, n_max+1)
             # make sure arrays are of the same size. Truncate or add trailing zeros to make the size of Gnm1 and Hnm1 equal to the size of Gnm and Hnm, respectively.
@@ -761,11 +711,11 @@ class Geomagnet:
         self._S     = get_S(self._n_max) 
 
     def field(self, 
-        longitude: Union[Number, list, np.ndarray] = None, 
+        location: Union[ECEF, Geodetic, LTP, GRANDCS] = None, 
+        longitude: Union[Number, list, np.ndarray] = None,
         latitude: Union[Number, list, np.ndarray]  = None, 
         height: Union[Number, list, np.ndarray]    = None, 
-        reference: Union["GEOID", "ELLIPSOID"]     = None,
-        location: Union[ECEF, Geodetic, LTP, GRANDCS] = None,
+        reference: Union["GEOID", "ELLIPSOID"]     = None, 
     ):
         """ 
         Based on WMM2025 report. 

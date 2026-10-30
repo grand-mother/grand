@@ -1,6 +1,5 @@
 from typing import Union
 import numpy as np
-import os
 from numbers import Number
 from numba import njit
 import rasterio
@@ -19,9 +18,10 @@ contact: Ramesh Koirala (rkoirala.astro@gmail.com)
 """
 datadir = path_grandlib_data("topography")
 
-def bilinear_interpolation(dx, dy, v00, v10, v01, v11):
+def _bilinear_interpolation(dx, dy, v00, v10, v01, v11):
     """
-    Linearly interpolate function to find value at (x,y). Values of the function at four corners surrounding (x,y) are given.
+    Function to linearly interpolate values to find a value at (x,y). 
+    Values of the function at four corners surrounding (x,y) are given.
     Four corners: (x0,y0), (x0,y1), (x1,y0), and (x1,y1)
     Values at corners: v00, v01, v10, and v11
     dx = x - x0
@@ -50,7 +50,7 @@ def bilinear_interpolation(dx, dy, v00, v10, v01, v11):
 #    except:
 #        raise Exception("Unable to load data.")
 
-def get_filename(latitude: Number = None, longitude: Number = None, data_source="Copernicus"):
+def _get_filename(latitude: Number = None, longitude: Number = None, data_source="Copernicus"):
     # Range: [-90, 90] SN for latitude, [-180,180] WE for longitude.
     # Availabe data: [-56,61] SN for latitude, [-179,179] for longitude.
     longitude = (longitude + 180.0) % 360.0 - 180.0    # file system prefers [-180,180] range instead of [0,360].
@@ -75,7 +75,7 @@ def get_filename(latitude: Number = None, longitude: Number = None, data_source=
         
         return datadir / f"Copernicus_DSM_30_{ns}{lat_base:02.0f}{ew}{lon_base:03.0f}.tif"
             
-def get_data(
+def _get_data(
         latitude: float = None, 
         longitude: float = None, 
         filename: str = None):
@@ -90,7 +90,7 @@ def get_data(
     #import xarray as xr    # to read NASADEM...nc (netCDF4) files.
 
     if filename is None:
-        filename = get_filename(latitude, longitude)
+        filename = _get_filename(latitude, longitude)
 
     if "Copernicus" in str(filename):
         # Open Copernicus topography file using rasterio
@@ -181,9 +181,9 @@ class Topography:
         # Compute elevation at the given latitude and longitude.
         for indx, lat in enumerate(latitude):
             lon   = longitude[indx] 
-            fname = get_filename(lat, lon)
+            fname = _get_filename(lat, lon)
             if fname not in self.stored_data.keys():
-                self.stored_data[fname] = get_data(filename=fname)
+                self.stored_data[fname] = _get_data(filename=fname)
 
             # Load new data only if the elevation file has changed.
             if (fname!=self.last_fname):
@@ -205,7 +205,7 @@ class Topography:
 
             # Interpolate elevations given at position (i0, j0), (i1, j0), (i0, j1), and (i1, j1)
             #    to get elevation at lat, lon. Copernicus provides elevation wrt EGM2008 geoid.
-            h = bilinear_interpolation(di, dj, h00, h10, h01, h11)
+            h = _bilinear_interpolation(di, dj, h00, h10, h01, h11)
             
             if reference=="ELLIPSOID":
                 h += egm.geoid_undulation(lat, lon)  # h = H + N (ellipsoid = geoid + undulation)
@@ -244,7 +244,6 @@ class Topography:
             frame=arg,
          )  
 
-        # 
         for _ in range(max_iterations):
             # Get ground altitude for current guess
             geod = Geodetic(tmp_arg, reference='Ellipsoid')
