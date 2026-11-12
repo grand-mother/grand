@@ -115,6 +115,7 @@ class Topography:
         self.grid_lon = None   # longitude list from the latest file
         self.grid_hgt = None   # height list from the latest file
         self.last_fname  = ""  # name of the latest file
+        self.egm = None
         
     def elevation(
             self,
@@ -163,7 +164,9 @@ class Topography:
         reference = reference.upper()
         if reference=="ELLIPSOID":
             # Instantiate EGM2008 to compute elevation wrt to WGS84 ellipsoid.
-            egm = EGM2008() # default EGM2008 file is used.
+            if self.egm == None:
+                self.egm = EGM2008() # default EGM2008 file is used.
+            egm = self.egm
 
         # Compute the geodetic coordinates
         if not isinstance(latitude, np.ndarray):
