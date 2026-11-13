@@ -156,66 +156,225 @@ class Topography:
         else:
             raise Exception(f"Provide a proper reference instead of {reference}. Allowed references are Geoid, Local, and Ellipsoid.")
 
+    # def _global_elevation(self, latitude, longitude, reference="GEOID"):
+    #     """
+    #     Get the topography elevation w.r.t. mean sea level (geoid) or w.r.t. the ellipsoid.
+    #     Default reference is EGM2008 (geoid) for Copernicus data.
+    #     """
+    #     reference = reference.upper()
+    #     if reference=="ELLIPSOID":
+    #         # Instantiate EGM2008 to compute elevation wrt to WGS84 ellipsoid.
+    #         if self.egm == None:
+    #             self.egm = EGM2008() # default EGM2008 file is used.
+    #         egm = self.egm
+
+    #     # Compute the geodetic coordinates
+    #     if not isinstance(latitude, np.ndarray):
+    #         if isinstance(latitude, Number):
+    #             latitude  = np.array((latitude,))
+    #             longitude = np.array((longitude,))
+    #         elif isinstance(latitude, list):
+    #             latitude  = np.array(latitude)
+    #             longitude = np.array(longitude)
+                
+    #     # Return the topography elevation
+    #     elevation = np.zeros(latitude.size)
+
+    #     # RK: To Do: make this loop more efficient.
+    #     # Compute elevation at the given latitude and longitude.
+    #     for indx, lat in enumerate(latitude):
+    #         lon   = longitude[indx] 
+    #         fname = _get_filename(lat, lon)
+    #         if fname not in self.stored_data.keys():
+    #             self.stored_data[fname] = _get_data(filename=fname)
+
+    #         # Load new data only if the elevation file has changed.
+    #         if (fname!=self.last_fname):
+    #             self.data       = self.stored_data[fname]#.read(1)
+    #             self.height     = self.data.read(1)
+    #             self.last_fname = fname
+                
+    #         # indexing starts at upper left of the lon-lat tile.
+    #         i, j   = rowcol(self.data.transform, lon, lat, op=float) # returns location index as float (i=row, j=col)
+    #         i0, j0 = np.int32(np.floor(i)), np.int32(np.floor(j))
+    #         i1, j1 = i0+1, j0+1
+    #         di, dj = i-i0, j-j0   # fractional parts
+    #         if j1 >= self.height.shape[1]:
+    #             print(f"Latitude={lat}, Longitude={lon}")
+    #             print(f"Tile={fname.name}")
+    #             print(f"i={i}, j={j}")
+    #             print(f"j0={j0}, j1={j1}")
+
+    #         # Get the four corner elevation values surrounding the provided latitude and longitude.
+    #         h00 = self.height[i0, j0]
+    #         h10 = self.height[i1, j0]
+    #         h01 = self.height[i0, j1]
+    #         h11 = self.height[i1, j1]
+
+    #         # Interpolate elevations given at position (i0, j0), (i1, j0), (i0, j1), and (i1, j1)
+    #         #    to get elevation at lat, lon. Copernicus provides elevation wrt EGM2008 geoid.
+    #         h = _bilinear_interpolation(di, dj, h00, h10, h01, h11)
+            
+    #         if reference=="ELLIPSOID":
+    #             h += egm.geoid_undulation(lat, lon)  # h = H + N (ellipsoid = geoid + undulation)
+
+    #         elevation[indx] = h
+
+    #     return elevation
+
+
+
     def _global_elevation(self, latitude, longitude, reference="GEOID"):
         """
-        Get the topography elevation w.r.t. mean sea level (geoid) or w.r.t. the ellipsoid.
-        Default reference is EGM2008 (geoid) for Copernicus data.
+        Get the topography elevation w.r.t. mean sea level (geoid)
+        or w.r.t. the WGS84 ellipsoid.
+
+        Handles bilinear interpolation across neighboring Copernicus tiles,
+        including tile boundaries and missing neighboring tiles.
         """
         reference = reference.upper()
-        if reference=="ELLIPSOID":
-            # Instantiate EGM2008 to compute elevation wrt to WGS84 ellipsoid.
-            if self.egm == None:
-                self.egm = EGM2008() # default EGM2008 file is used.
+
+        if reference not in ("GEOID", "ELLIPSOID"):
+            raise ValueError(f"Unknown reference: {reference}")
+
+        if reference == "ELLIPSOID":
+            if self.egm is None:
+                self.egm = EGM2008()
             egm = self.egm
 
-        # Compute the geodetic coordinates
-        if not isinstance(latitude, np.ndarray):
-            if isinstance(latitude, Number):
-                latitude  = np.array((latitude,))
-                longitude = np.array((longitude,))
-            elif isinstance(latitude, list):
-                latitude  = np.array(latitude)
-                longitude = np.array(longitude)
-                
-        # Return the topography elevation
+        # Convert coordinates to numpy arrays and broadcast them
+        latitude = np.atleast_1d(np.asarray(latitude, dtype=float))
+        longitude = np.atleast_1d(np.asarray(longitude, dtype=float))
+        latitude, longitude = np.broadcast_arrays(latitude, longitude)
+
+        latitude = latitude.ravel()
+        longitude = longitude.ravel()
+
         elevation = np.zeros(latitude.size)
 
-        # RK: To Do: make this loop more efficient.
-        # Compute elevation at the given latitude and longitude.
-        for indx, lat in enumerate(latitude):
-            lon   = longitude[indx] 
+        def is_valid_pixel(value, nodata):
+            """Check that a pixel contains a valid elevation."""
+            if np.ma.is_masked(value):
+                return False
+
+            value = float(value)
+
+            if not np.isfinite(value):
+                return False
+
+            if nodata is not None and np.isclose(value, nodata):
+                return False
+
+            return True
+
+        for indx, (lat, lon) in enumerate(zip(latitude, longitude)):
+
             fname = _get_filename(lat, lon)
-            if fname not in self.stored_data.keys():
+
+            # Load the current tile if necessary
+            if fname not in self.stored_data:
                 self.stored_data[fname] = _get_data(filename=fname)
 
-            # Load new data only if the elevation file has changed.
-            if (fname!=self.last_fname):
-                self.data       = self.stored_data[fname]#.read(1)
-                self.height     = self.data.read(1)
+            if fname != self.last_fname:
+                self.data = self.stored_data[fname]
+                self.height = self.data.read(1)
                 self.last_fname = fname
-                
-            # indexing starts at upper left of the lon-lat tile.
-            i, j   = rowcol(self.data.transform, lon, lat, op=float) # returns location index as float (i=row, j=col)
-            i0, j0 = np.int32(np.floor(i)), np.int32(np.floor(j))
-            i1, j1 = i0+1, j0+1
-            di, dj = i-i0, j-j0   # fractional parts
 
-            # Get the four corner elevation values surrounding the provided latitude and longitude.
-            h00 = self.height[i0, j0]
-            h10 = self.height[i1, j0]
-            h01 = self.height[i0, j1]
-            h11 = self.height[i1, j1]
+            base_transform = self.data.transform
 
-            # Interpolate elevations given at position (i0, j0), (i1, j0), (i0, j1), and (i1, j1)
-            #    to get elevation at lat, lon. Copernicus provides elevation wrt EGM2008 geoid.
+            # Fractional pixel coordinates in the current tile
+            i, j = rowcol(base_transform, lon, lat, op=float)
+
+            i0, j0 = int(np.floor(i)), int(np.floor(j))
+            i1, j1 = i0 + 1, j0 + 1
+
+            di, dj = i - i0, j - j0
+
+            def get_pixel(row, col):
+                """
+                Retrieve a pixel from the current tile or a neighboring tile.
+                Candidate tiles are checked using their actual raster bounds.
+                """
+
+                height, width = self.height.shape
+
+                # First, try the current tile
+                if 0 <= row < height and 0 <= col < width:
+                    value = self.height[row, col]
+
+                    if is_valid_pixel(value, self.data.nodata):
+                        return value
+
+                # Geographic coordinates of the requested pixel center
+                x, y = base_transform * (col + 0.5, row + 0.5)
+
+                # Search the 3x3 neighborhood of possible tiles.
+                # This also handles pixels just across tile boundaries.
+                lat0 = int(np.floor(y))
+                lon0 = int(np.floor(x))
+
+                candidate_tiles = []
+
+                # Try the original tile first
+                candidate_tiles.append(fname)
+
+                for lat_tile in (lat0, lat0 - 1, lat0 + 1):
+                    for lon_tile in (lon0, lon0 - 1, lon0 + 1):
+                        pixel_fname = _get_filename(lat_tile + 0.5, lon_tile + 0.5)
+
+                        if pixel_fname not in candidate_tiles:
+                            candidate_tiles.append(pixel_fname)
+
+                # Test each candidate using its own affine transform
+                for pixel_fname in candidate_tiles:
+
+                    # Skip tiles that are not available on disk
+                    if not pixel_fname.is_file():
+                        continue
+
+                    # Load the tile only once
+                    if pixel_fname not in self.stored_data:
+                        self.stored_data[pixel_fname] = _get_data(filename=pixel_fname)
+
+                    neighbor_data = self.stored_data[pixel_fname]
+
+                    ni, nj = rowcol(neighbor_data.transform, x, y, op=float)
+                    ni, nj = int(np.floor(ni)), int(np.floor(nj))
+
+                    neighbor_height, neighbor_width = neighbor_data.shape
+
+                    # Check whether the requested pixel belongs to this tile
+                    if not (0 <= ni < neighbor_height and 0 <= nj < neighbor_width):
+                        continue
+
+                    pixel = neighbor_data.read(1, window=((ni, ni + 1), (nj, nj + 1)))[0, 0]
+
+                    if is_valid_pixel(pixel, neighbor_data.nodata):
+                        return pixel
+
+                raise IndexError(
+                    f"No valid tile contains pixel at "
+                    f"longitude={x}, latitude={y}. "
+                    f"Candidate tiles: {candidate_tiles}"
+                )
+
+            # Retrieve the four pixels needed for bilinear interpolation
+            h00 = get_pixel(i0, j0)
+            h10 = get_pixel(i1, j0)
+            h01 = get_pixel(i0, j1)
+            h11 = get_pixel(i1, j1)
+
+            # Bilinear interpolation
             h = _bilinear_interpolation(di, dj, h00, h10, h01, h11)
-            
-            if reference=="ELLIPSOID":
-                h += egm.geoid_undulation(lat, lon)  # h = H + N (ellipsoid = geoid + undulation)
+
+            # Convert geoid elevation to ellipsoid elevation if necessary
+            if reference == "ELLIPSOID":
+                h += egm.geoid_undulation(lat, lon)
 
             elevation[indx] = h
 
         return elevation
+
 
     def _local_elevation(self,
         arg: Union[LTP, GRANDCS] = None, # local coordinates in LTP frame.
