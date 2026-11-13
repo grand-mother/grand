@@ -1,2 +1,0 @@
-entry,event_number,n_antennas,theta_pwf_rad,phi_pwf_rad,chi2_pwf_red,theta_swf_rad,phi_swf_rad,r_xmax_m,Xmax_gcm2,t_s,chi2_swf_red,use_prior,mu_xmax_gcm2,sigma_xmax_gcm2
-0,0,6,1.2030407063413133,5.8305164337706135,13.607845697506038,1.2036879383072012,5.8311674955749195,1999975.1780943633,0.0,-0.006665458859826613,10.244278938681079,False,,

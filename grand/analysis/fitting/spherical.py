@@ -69,7 +69,7 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
 
 
 def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=3000, seed=42, mu_xmax=None,
-sigma_xmax=None):
+sigma_xmax=None, x0=None):
     """
     Perform a SWF reconstruction using differential evolution minimization.
 
@@ -101,6 +101,9 @@ sigma_xmax=None):
     if (mu_xmax is None) != (sigma_xmax is None):
         raise ValueError("mu_xmax and sigma_xmax must be provided together")
 
+    if mu_xmax is not None and sigma is None:
+        raise ValueError("sigma must be provided when using the Xmax prior")
+    
     if sigma_xmax is not None and sigma_xmax <= 0:
         raise ValueError("sigma_xmax must be positive")
 
@@ -147,6 +150,9 @@ sigma_xmax=None):
     #     x0 = np.array(bounds, dtype=np.float64).mean(axis=1)
     #     # disp=True
     # )
+    
+    if x0 is None:
+        x0 = np.array(bounds, dtype=np.float64).mean(axis=1)
 
     result = differential_evolution(
         objective,
@@ -156,7 +162,7 @@ sigma_xmax=None):
         mutation=(0.5, 1),
         recombination=0.7,
         seed=seed,
-        x0 = np.array(bounds, dtype=np.float64).mean(axis=1)
+        x0 = x0
         # disp=True
     )
     
@@ -242,7 +248,6 @@ def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltit
 def compute_Xmax_grammage(theta, phi, r_xmax):
     """
     Compute atmospheric depth at the reconstructed SWF source.
-
     Returns Xmax in g/cm².
     """
 
@@ -267,8 +272,6 @@ def compute_Xmax_grammage(theta, phi, r_xmax):
 
     return phy.SlantDepth(X0, u)
 
-
-
 def Xmax_prior_loss(
     theta,
     phi,
@@ -292,3 +295,122 @@ def Xmax_prior_loss(
         return 1e6
 
     return ((Xmax - mu_xmax) / sigma_xmax)**2
+
+
+
+
+# Analytical prior on Xmax
+def recons_swf_analytic(
+    theta_pwf,
+    phi_pwf,
+    tants,
+    Xants,
+    sigma=5e-9,
+    mu_xmax=None,
+    sigma_xmax=None,
+    maxiter=500,
+    seed=42,
+):
+    """
+    SWF reconstruction with analytical emission time.
+
+    Optimize theta, phi and log10(r).
+    The emission time is calculated analytically.
+
+    Optional Gaussian prior on Xmax.
+    """
+
+    if sigma is None or sigma <= 0:
+        raise ValueError("A positive timing uncertainty is required")
+
+    if (mu_xmax is None) != (sigma_xmax is None):
+        raise ValueError("mu_xmax and sigma_xmax must be provided together")
+
+    if sigma_xmax is not None and sigma_xmax <= 0:
+        raise ValueError("sigma_xmax must be positive")
+
+    # Parameter bounds
+    angle_window = np.deg2rad(5)
+
+    theta_min = max(0.0, theta_pwf - angle_window)
+    theta_max = min(np.pi / 2, theta_pwf + angle_window)
+
+    if theta_min >= theta_max:
+        raise ValueError("No downward-going direction in the PWF window")
+
+    r_max = 2e6  # m
+
+    bounds = [
+        (theta_min, theta_max),
+        (phi_pwf - angle_window, phi_pwf + angle_window),
+        (np.log10(0.1), np.log10(r_max / 1e3)),
+    ]
+
+    # Calculate optimal emission time
+    def compute_t_s(theta, phi, r):
+
+        t_propagation = SWF_model(
+            theta, phi, r, 0.0, Xants
+        )
+
+        t_s = np.mean(tants - t_propagation)
+
+        t_s = np.clip(
+            t_s,
+            -r_max / cons.c_light,
+            0.0
+        )
+
+        return t_s, t_propagation
+
+    # Objective function
+    def objective(params):
+
+        theta, phi, log_r_km = params
+
+        r = 10**log_r_km * 1e3
+
+        t_s, t_propagation = compute_t_s(theta, phi, r)
+
+        residuals = tants - t_s - t_propagation
+
+        chi2 = np.sum((residuals / sigma)**2)
+
+        if mu_xmax is not None:
+            chi2 += Xmax_prior_loss(
+                theta, phi, r,
+                mu_xmax, sigma_xmax
+            )
+
+        return chi2
+
+    # Initial parameters
+    x0 = np.array([
+        theta_pwf,
+        phi_pwf,
+        np.log10(30),
+    ])
+
+    lower, upper = np.asarray(bounds).T
+    margin = 1e-8 * (upper - lower)
+    x0 = np.clip(x0, lower + margin, upper - margin)
+
+    # Minimization
+    result = differential_evolution(
+        objective,
+        bounds=bounds,
+        x0=x0,
+        popsize=10,
+        maxiter=maxiter,
+        tol=1e-6,
+        seed=seed,
+    )
+
+    # Reconstructed parameters
+    theta, phi, log_r_km = result.x
+
+    r = 10**log_r_km * 1e3
+
+    t_s, _ = compute_t_s(theta, phi, r)
+
+    return theta, phi, r, t_s
