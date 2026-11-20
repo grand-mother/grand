@@ -1,0 +1,14 @@
+{
+  "_doc": [
+    "The default GNN of each task, used when a script does not name one",
+    "(load_model(task); gnn_models in grand/analysis/example/config.py). A script can name",
+    "another: \"name/version\", \"name\" (its latest version) or a directory.",
+    "models_dir: null means <GRAND_DATA_PATH>/gnn (data/download_gnn_models.py);",
+    "a relative path is relative to this file. device: cpu, cuda or auto.",
+    "Another settings file can be chosen with $GRAND_GNN_SETTINGS."
+  ],
+  "direction": {"name": "pgnn_direction_xy", "version": "v0"},
+  "energy": {"name": "pgnn_energy_xy", "version": "v0"},
+  "models_dir": null,
+  "device": "cpu"
+}

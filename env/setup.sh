@@ -11,6 +11,9 @@ _setup_vs_code.py
 
 # download data model for GRAND 
 data/download_data_grand.py
+
+# GNN networks of grand.analysis.gnn; skips those not uploaded or already installed
+data/download_gnn_models.py
 #data/download_new_RFchain.py
 
 cd $call_path

@@ -1,0 +1,57 @@
+{
+  "_doc": [
+    "Defaults of a new GNN model card, applied when it is saved (model_store.save_model,",
+    "and the training repository). A saved GNN model card holds every value, so changing this",
+    "file changes the next networks, not the saved ones. Keys starting with '_' are comments.",
+    "normalisation: \"gnn_lib\" (GNN_lib's NormaliseLayer, as GNN_forPaper: features.NORMALISATIONS),",
+    "\"fit\" (fitted on the training graphs: features.fit_normalisation), or per feature",
+    "{\"scale\", \"power\", \"offset\"} of scale * sign(x) * |x|**power + offset."
+  ],
+  "inputs": {
+    "_doc": {
+      "channels": "polarizations whose peaks the network uses",
+      "node_features": "per antenna, in this order: names of features.NODE_FEATURES",
+      "graph_features": "per event: names of features.GRAPH_FEATURES (the plane-wave vector), or []",
+      "delta_t_wave_speed": "speed (m/s) of the plane wave for delta_t; null: c_light / n_atm",
+      "trigger": "antennas whose peak > n_sigma * noise_rms_per_channel * sqrt(len(channels)) (106 ADC on x, y); an event needs min_antennas",
+      "knn_k": "each antenna is linked to its knn_k nearest neighbors"
+    },
+    "channels": [
+      "x",
+      "y"
+    ],
+    "node_features": [
+      "pos_x",
+      "pos_y",
+      "pos_z",
+      "time",
+      "amplitude"
+    ],
+    "graph_features": [
+      "k_pwf_x",
+      "k_pwf_y",
+      "k_pwf_z"
+    ],
+    "delta_t_wave_speed": null,
+    "trigger": {
+      "n_sigma": 5.0,
+      "noise_rms_per_channel": 15.0,
+      "min_antennas": 5
+    },
+    "knn_k": 8
+  },
+  "normalisation": "gnn_lib",
+  "architecture": {
+    "_doc": "GNNScaleMDN: EdgeCNN, mean and max readout, a value head and a variance head",
+    "hidden": 256,
+    "n_graph_layers": 4,
+    "graph_out_channels": 256,
+    "norm": null,
+    "jk": null,
+    "dropout": 0.0
+  },
+  "energy_output": {
+    "_doc": "energy networks predict log(E / scale_eV)",
+    "scale_eV": 1e+17
+  }
+}

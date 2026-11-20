@@ -349,7 +349,9 @@ class TTreeScalarDesc:
             self.create_default(obj)
         # This is needed for default init as a field of an upper class
         if isinstance(value, TTreeScalarDesc):
-            value = getattr(obj, self.attrname)
+            # The default is already installed; assigning the array into its own
+            # scalar slot fails with NumPy 2 (fixed the same way on dev-next)
+            return
         inst = getattr(obj, self.attrname)
 
         inst[0] = value

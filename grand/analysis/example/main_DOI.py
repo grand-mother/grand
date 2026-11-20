@@ -11,6 +11,15 @@ import grand.analysis.geom as geom
 from grand.dataio import TShower, TRawVoltage
 import config as conf
 
+# GNN reconstruction (optional, config.use_gnn): same entries, *_gnn branches
+use_gnn = getattr(conf, "use_gnn", False)
+if use_gnn:
+    try:
+        from grand.analysis import gnn
+    except ImportError as error:        # torch / torch_geometric not installed
+        print(f"GNN reconstruction skipped: {error}")
+        use_gnn = False
+
 
 # ---------------------------------------------------------------
 # Function: read flagged events from text file
@@ -64,7 +73,22 @@ antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int)
 # ---------------------------------------------------------------
 # Initialize TShower object to store reconstructed events
 # ---------------------------------------------------------------
-trecons = TShower()  
+trecons = TShower()
+
+# ---------------------------------------------------------------
+# GNN networks, loaded once: conf.gnn_models, None meaning the default
+# of grand/analysis/gnn/settings.json (or $GRAND_GNN_SETTINGS)
+# ---------------------------------------------------------------
+if use_gnn:
+    gnn_models = getattr(conf, "gnn_models", {})
+    try:
+        gnn_direction_model = gnn.load_model("direction", gnn_models.get("direction"))
+        gnn_energy_model = gnn.load_model("energy", gnn_models.get("energy"))
+        print(gnn_direction_model)
+        print(gnn_energy_model)
+    except FileNotFoundError as error:  # networks not downloaded (data/download_gnn_models.py)
+        print(f"GNN reconstruction skipped: {error}")
+        use_gnn = False
 
 
 # ---------------------------------------------------------------
@@ -203,6 +227,36 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.energy_elm_voltage = energy_elm
 
     # ---------------------------------------------------------------
+    # Graph neural network (GNN) reconstruction
+    # Peaks with the same functions as above (grand.analysis.signals), on
+    # the channels the network was trained on (x, y by default): they are
+    # stored in peak_amps_gnn/peak_time_gnn, beside the x, y, z peaks above.
+    # The GNN fits its own plane wave on those peaks, as in its training.
+    # ---------------------------------------------------------------
+    if use_gnn:
+        peak_amps_gnn, peak_time_gnn = gnn.peaks(voltage_trace, t0_all, model=gnn_direction_model,
+                                                 source="data")
+        direction_gnn = gnn.recons_GNN(Xants, peak_time_gnn, peak_amps_gnn, model=gnn_direction_model)
+
+        if gnn_energy_model.inputs["channels"] == gnn_direction_model.inputs["channels"]:
+            energy_gnn = gnn.recons_energy_GNN(Xants, peak_time_gnn, peak_amps_gnn, model=gnn_energy_model)
+        else:
+            amps_e, times_e = gnn.peaks(voltage_trace, t0_all, model=gnn_energy_model, source="data")
+            energy_gnn = gnn.recons_energy_GNN(Xants, times_e, amps_e, model=gnn_energy_model)
+
+        # Store GNN results
+        trecons.peak_amps_gnn = peak_amps_gnn
+        trecons.peak_time_gnn = peak_time_gnn
+        trecons.du_count_gnn = direction_gnn.du_count
+        trecons.zenith_gnn = direction_gnn.zenith
+        trecons.azimuth_gnn = direction_gnn.azimuth
+        trecons.std_zenith_gnn = direction_gnn.std_zenith
+        trecons.std_azimuth_gnn = direction_gnn.std_azimuth
+        trecons.energy_em_gnn = energy_gnn.energy
+        trecons.std_energy_em_gnn = energy_gnn.std_energy
+        trecons.gnn_model = f"direction={gnn_direction_model.tag};energy={gnn_energy_model.tag}"
+
+    # ---------------------------------------------------------------
     # Fill the reconstruction tree for this event
     # ---------------------------------------------------------------
     trecons.fill()  
@@ -237,3 +291,10 @@ for ev_no, run_no in t_recons.get_list_of_events():
           f"amplitude model={t_recons.adf_amplitude},"
           f"l_ant={t_recons.distance_source_antenna}"
           )
+
+    if use_gnn:
+        print("__________________GNN__________________")
+        print(f"Event {ev_no} Run {run_no} ({t_recons.gnn_model}, {t_recons.du_count_gnn} antennas): "
+              f"zenith={np.rad2deg(t_recons.zenith_gnn)}±{np.rad2deg(t_recons.std_zenith_gnn)}, "
+              f"phi={np.rad2deg(t_recons.azimuth_gnn)}±{np.rad2deg(t_recons.std_azimuth_gnn)}, "
+              f"energy elm={t_recons.energy_em_gnn}±{t_recons.std_energy_em_gnn} eV")

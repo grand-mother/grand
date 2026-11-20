@@ -1079,5 +1079,27 @@ class TRecons(MotherEventTree):
     ## (Electromagnetic energy in eV, obtained directly from voltage data)
     energy_elm_voltage:  TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
+    # Graph neural network (GNN) reconstruction, grand.analysis.gnn
+    ## Each network reads the peaks of the channels its model card names, so they
+    ## are stored apart from peak_amps/peak_time (both from grand.analysis.signals)
+    ## Peak of the Hilbert envelope on the GNN's channels (in ADC counts), one per antenna in the order of Xants
+    peak_amps_gnn: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Time of that peak (in seconds), one per antenna in the order of Xants
+    peak_time_gnn: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Antennas the GNN used: those that pass its trigger (5 sigma of the noise by default)
+    du_count_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    ## Shower zenith and azimuth angles from the GNN (in radians); NaN if too few antennas
+    ## Coordinate system: NWU, origin at layout center, "coming from"
+    zenith_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    azimuth_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Standard deviations of zenith_gnn and azimuth_gnn (in radians): predicted variance plus ensemble spread
+    std_zenith_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    std_azimuth_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Electromagnetic energy from the GNN (in eV) and its standard deviation; NaN if too few antennas
+    energy_em_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    std_energy_em_gnn: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## The networks used, as task=name/version joined by ; (e.g. direction=pgnn_direction_xy/v0)
+    gnn_model: StdStringDesc = field(default=StdStringDesc(""))
+
 
    

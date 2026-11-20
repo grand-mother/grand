@@ -1,0 +1,4 @@
+# GNN networks downloaded by data/download_gnn_models.py into <GRAND_DATA_PATH>/gnn
+# <name>             <version>  <forge attachment id, "-" while not uploaded>
+pgnn_direction_xy    v0         -
+pgnn_energy_xy       v0         -

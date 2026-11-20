@@ -10,6 +10,16 @@ n_atm = 1.000136
 
 groundAltitude = 1231
 
+# Index of the x, y and z polarizations in a trace, for measured data and for
+# simulations.  The two differ, and either may change with the data format:
+# this is the one place to update.
+#   "data": measured traces (GP13/GP80 TRawVoltage.trace_ch, TADC), whose channel 0 is not connected;
+#   "sim": simulated traces (TVoltage, TADC and TEfield of the simulations), which hold x, y and z only.
+CHANNEL_INDEX = {
+    "data": {"x": 1, "y": 2, "z": 3},
+    "sim": {"x": 0, "y": 1, "z": 2},
+}
+
 coord_daq   = Geodetic(latitude=40.99746387, longitude=93.94868871, height=0) 
 B = Geomagnet(location=coord_daq)  # default model and obstime is used. Watch out X = EW!
 Bvec = [B.field.y[0], -B.field.x[0], B.field.z[0]] # Bvec_y < 0 because B_g pointing west by 0.6°
