@@ -1079,6 +1079,8 @@ class TRecons(MotherEventTree):
     chi2_swf_red: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Distance between the reconstructed Xsource and each antenna (in meters)
     distance_source_antenna:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Xmax from SWF (in g/cm²)
+    xmax_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
     # Angular Distribution Function (ADF)
     ## Shower zenith angle from ADF (in radians)
@@ -1104,10 +1106,10 @@ class TRecons(MotherEventTree):
     # Amplitude predicted by the ADF model at each antenna
     ## (in ADC counts or µV/m)
     adf_amplitude:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
-
+    ## Xmax from ADF (in g/cm²)
+    xmax_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## (Electromagnetic energy in eV, obtained directly from voltage data)
     energy_elm_voltage:  TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-
 
     ## Cramér-Rao (lower) bound (CRB)
     ## CRB of shower zenith angle from ADF (in radians)
@@ -1140,7 +1142,3 @@ class TRecons(MotherEventTree):
     # Background noise estimation
     background_chi2_red : TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     background_kappa : TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-
-    ## Whether the reconstructed event comes from simulation.
-    ## 0 = experimental data, 1 = simulation.
-    # is_simulation: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint8))
