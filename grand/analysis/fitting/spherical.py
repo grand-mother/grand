@@ -1,7 +1,7 @@
 import numpy as np
 import grand.analysis.physics as phy
 import grand.analysis.constants as cons
-from scipy.optimize import differential_evolution
+from scipy.optimize import differential_evolution, minimize
 from numba import njit
 
 kwd = {"fastmath": {"reassoc", "contract", "arcp"}}
@@ -245,10 +245,11 @@ def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltit
 # Add for regularisation
 # ----------------------------
 
-def compute_Xmax_grammage(theta, phi, r_xmax):
+def compute_Xmax_grammage(theta, phi, r_xmax, atm=None):
     """
     Compute atmospheric depth at the reconstructed SWF source.
     Returns Xmax in g/cm².
+    atm: atmosphere from phy.load_atmosphere() (None = Linsley).
     """
 
     X0 = compute_Xsource_cartesian_coords(
@@ -270,7 +271,7 @@ def compute_Xmax_grammage(theta, phi, r_xmax):
         )[0]
         u = X1 - Xground
 
-    return phy.SlantDepth(X0, u)
+    return phy.SlantDepth(X0, u, atm=atm)
 
 def Xmax_prior_loss(
     theta,
@@ -278,9 +279,11 @@ def Xmax_prior_loss(
     r_xmax,
     mu_xmax=750.,
     sigma_xmax=100.,
+    atm=None,
 ):
     """
     Gaussian prior on atmospheric Xmax.
+    atm: atmosphere from phy.load_atmosphere() (None = Linsley).
     """
 
     # Prior intended for downward-going showers
@@ -288,15 +291,13 @@ def Xmax_prior_loss(
         return 1e6
 
     Xmax = compute_Xmax_grammage(
-        theta, phi, r_xmax
+        theta, phi, r_xmax, atm=atm
     )
 
     if not np.isfinite(Xmax):
         return 1e6
 
     return ((Xmax - mu_xmax) / sigma_xmax)**2
-
-
 
 
 # Analytical prior on Xmax
@@ -310,6 +311,7 @@ def recons_swf_analytic(
     sigma_xmax=None,
     maxiter=500,
     seed=42,
+    atm=None,
 ):
     """
     SWF reconstruction with analytical emission time.
@@ -318,7 +320,11 @@ def recons_swf_analytic(
     The emission time is calculated analytically.
 
     Optional Gaussian prior on Xmax.
+    atm: atmosphere of the prior and of the atmospheric boundary,
+    from phy.load_atmosphere() (None = Linsley).
     """
+
+    h_top = phy.atmosphere_top(atm)
 
     if sigma is None or sigma <= 0:
         raise ValueError("A positive timing uncertainty is required")
@@ -363,12 +369,23 @@ def recons_swf_analytic(
 
         return t_s, t_propagation
 
+    # Source altitude above the spherical Earth (same definition as SlantDepth)
+    def source_altitude(theta, phi, r):
+
+        X = compute_Xsource_cartesian_coords(theta, phi, r)[0]
+
+        return np.sqrt(X[0]**2 + X[1]**2 + (X[2] + cons.earth_radius_m)**2) - cons.earth_radius_m
+
     # Objective function
     def objective(params):
 
         theta, phi, log_r_km = params
 
         r = 10**log_r_km * 1e3
+
+        # Source above the atmosphere: unphysical (flat prior plateau)
+        if source_altitude(theta, phi, r) >= h_top:
+            return 1e6
 
         t_s, t_propagation = compute_t_s(theta, phi, r)
 
@@ -379,7 +396,8 @@ def recons_swf_analytic(
         if mu_xmax is not None:
             chi2 += Xmax_prior_loss(
                 theta, phi, r,
-                mu_xmax, sigma_xmax
+                mu_xmax, sigma_xmax,
+                atm=atm,
             )
 
         return chi2
@@ -405,6 +423,33 @@ def recons_swf_analytic(
         tol=1e-6,
         seed=seed,
     )
+
+    # Local refinement from the physical start: DE can stall on the nearly flat
+    # prior plateau just below the top of the atmosphere
+    result_local = minimize(
+        objective,
+        x0,
+        method="Nelder-Mead",
+        bounds=bounds,
+        options={"xatol": 1e-6, "fatol": 1e-6, "maxiter": 4000},
+    )
+
+    # Keep the physically valid solution with the lowest objective
+    def is_physical(params):
+
+        theta, phi, log_r_km = params
+        r = 10**log_r_km * 1e3
+        xmax = compute_Xmax_grammage(theta, phi, r, atm=atm)
+
+        return source_altitude(theta, phi, r) < h_top and np.isfinite(xmax) and xmax > 0
+
+    candidates = [result] + ([result_local] if result_local.success else [])
+    candidates = [res for res in candidates if is_physical(res.x)]
+
+    if not candidates:
+        raise ValueError("SWF: no physical solution (source above the atmosphere or Xmax <= 0)")
+
+    result = min(candidates, key=lambda res: res.fun)
 
     # Reconstructed parameters
     theta, phi, log_r_km = result.x
