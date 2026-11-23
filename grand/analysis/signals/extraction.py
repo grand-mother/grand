@@ -55,14 +55,50 @@ def compute_t0(t_object):
     t0 = (np.array(t_object.du_seconds) - event_second) * 1e9 - event_nano + np.array(t_object.du_nanoseconds)
     return t0
 
-def compute_t0_sims(adc_tree):
+def compute_t0_sims(adc_tree, jitter=0.0, seed=71):
     """
-    Compute the initial time (t0) for each trace in nanoseconds for simulation data.
+    Compute the initial time of each simulated ADC trace.
+
+    Parameters
+    ----------
+    adc_tree : TADC
+        Simulation ADC tree (du_seconds, du_nanoseconds, run_number, event_number).
+    jitter : float, optional
+        Standard deviation of an additional Gaussian timing jitter, in ns
+        (default 0: no jitter). One independent draw per DU, rounded to the
+        2 ns sampling step. The ADC traces are not modified.
+    seed : int, optional
+        Extra entropy of the jitter generator, e.g. zlib.crc32(file name), so
+        that equal (run, event) numbers in different files get different draws.
+        The generator is np.random.default_rng([seed, run_number, event_number]):
+        the jitter is reproducible and the same N(0, 1) draws are used for
+        every jitter value.
+
+    Returns
+    -------
+    t0_ns : np.ndarray
+        Initial times in ns, relative to the earliest DU of the event.
     """
-    t0_ns = (
-        (np.asarray(adc_tree.du_seconds) - 200854920.0) * 1e9
-        + np.asarray(adc_tree.du_nanoseconds)
-    )
+    if jitter < 0:
+        raise ValueError(f"jitter must be >= 0 ns, got {jitter}")
+
+    seconds = np.asarray(adc_tree.du_seconds, dtype=np.int64)
+    nanoseconds = np.asarray(adc_tree.du_nanoseconds, dtype=np.float64)
+    if seconds.size == 0:
+        return np.zeros(0)
+
+    # Relative time (ns): integer seconds first, then float64 on small values only
+    t_ns = (seconds - seconds.min()).astype(np.float64) * 1e9 + nanoseconds
+    t0_ns = t_ns - t_ns.min()
+
+    if jitter > 0:
+        rng = np.random.default_rng(
+            [int(seed), int(adc_tree.run_number), int(adc_tree.event_number)]
+        )
+        z = rng.standard_normal(t0_ns.size)
+        # Gaussian timing jitter (ns), rounded to the 2 ns sampling step
+        t0_ns = t0_ns + np.round(jitter * z / 2) * 2
+
     return t0_ns
 
 def get_peak_time_efield(trace, t0, channels, dt_ns=2):
