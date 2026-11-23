@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import grand.analysis.constants as cons
 import math
@@ -108,8 +109,62 @@ def DensityAtAltitude(h):
     return b / c * np.exp(-h * 100. / c)
 
 
+# --------------------------------------
+# Tabulated atmospheres (alternative to the default Linsley model)
+# --------------------------------------
+# File name of each tabulated model, next to this module.
+# Columns: altitude a.s.l. [m], density [g/cm3], vertical depth [g/cm2].
+ATMOSPHERE_TABLES = {
+    "DunhuangFromChao": "atmosphere_DunhuangFromChao.txt",  # ZHAireS GP300 (DC2)
+}
+_loaded_atmospheres = {}
+
+
+def load_atmosphere(name="Linsley"):
+    """
+    Atmosphere used by SlantDepth: None for the default Linsley model, or the
+    (2, N) array [altitude (m), log(density in g/cm3)] of a tabulated model.
+    """
+    if name == "Linsley":
+        return None
+
+    if name not in ATMOSPHERE_TABLES:
+        raise ValueError(
+            f"Unknown atmosphere model {name!r}; "
+            f"available: Linsley, {', '.join(ATMOSPHERE_TABLES)}"
+        )
+
+    if name not in _loaded_atmospheres:
+        path = Path(__file__).parent / ATMOSPHERE_TABLES[name]
+        alt, rho, _ = np.loadtxt(path, unpack=True)
+        _loaded_atmospheres[name] = np.ascontiguousarray([alt, np.log(rho)])
+
+    return _loaded_atmospheres[name]
+
+
+def atmosphere_top(atm=None):
+    """Top of the atmosphere (m a.s.l.): density is 0 above it."""
+    return cons.h_top_atm if atm is None else float(atm[0, -1])
+
+
 @njit
-def SlantDepth(X0, u, nsteps=200):
+def DensityFromTable(h, atm):
+    """Density (g/cm3) at altitude h (m) from a tabulated atmosphere
+    (log-linear interpolation, 0 above the table top)."""
+    if h > atm[0, -1]:
+        return 0.
+    return np.exp(np.interp(h, atm[0], atm[1]))
+
+
+@njit
+def _density(h, atm):
+    if atm is None:
+        return DensityAtAltitude(h)
+    return DensityFromTable(h, atm)
+
+
+@njit
+def SlantDepth(X0, u, nsteps=200, atm=None):
     """
     Atmospheric depth from X0 to the top of the atmosphere.
 
@@ -121,6 +176,8 @@ def SlantDepth(X0, u, nsteps=200):
         Unit direction towards the top of the atmosphere.
     nsteps : int
         Number of integration steps.
+    atm : None or array (2, N)
+        Atmosphere from load_atmosphere(): None = Linsley (default).
 
     Returns
     -------
@@ -129,7 +186,10 @@ def SlantDepth(X0, u, nsteps=200):
     """
 
     R = cons.earth_radius_m
-    h_top = cons.h_top_atm
+    if atm is None:
+        h_top = cons.h_top_atm
+    else:
+        h_top = atm[0, -1]
 
     # Position relative to Earth's center
     qx = X0[0]
@@ -157,7 +217,7 @@ def SlantDepth(X0, u, nsteps=200):
     # Trapezoidal integration
     X = 0.
     s_prev = 0.
-    rho_prev = DensityAtAltitude(h0)
+    rho_prev = _density(h0, atm)
 
     for i in range(1, nsteps + 1):
 
@@ -169,7 +229,7 @@ def SlantDepth(X0, u, nsteps=200):
 
         h = np.sqrt(x**2 + y**2 + (z + R)**2) - R
 
-        rho = DensityAtAltitude(h)
+        rho = _density(h, atm)
 
         X += 0.5 * (rho_prev + rho) * (s - s_prev) * 100.
 
