@@ -35,7 +35,9 @@ def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAlt
     K = co.shower_direction_vector(theta, phi)
    
     asym_coeff = -0.003*np.rad2deg(theta)+0.220 # only for theta in [57°, 87°]
-    asym_div = np.sqrt(1. - np.dot(K,Bvec)**2)
+    Bnorm = np.linalg.norm(Bvec)
+
+    asym_div = np.sqrt(1. - np.dot(K, Bvec/Bnorm)**2)
     asym = asym_coeff/asym_div
 
     l_ant = an.distance_source_antenna(Xants, Xsource)
@@ -80,21 +82,28 @@ def ADF_loss(params, Aants, Xants, Xsource, uncertainty=0.075):
     return chi2
 
 
-def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
+def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource, retry_chi2_red=None,
+               retry_offsets_deg=((1.0, 0.0), (-1.0, 0.0), (0.0, 0.5), (0.0, -0.5))):
     """
     Fit the ADF parameters to measured antenna peak amplitudes.
-    
-    This function performs a chi² minimization using the ADF_loss function to 
-    reconstruct the best-fit shower parameters: direction (theta, phi), ADF width (delta_omega), 
+
+    This function performs a chi² minimization using the ADF_loss function to
+    reconstruct the best-fit shower parameters: direction (theta, phi), ADF width (delta_omega),
     and amplitude.
-    
+
     Inputs:
         theta_pwf : initial guess for shower zenith angle (rad)
         phi_pwf   : initial guess for shower azimuth angle (rad)
         Aants     : measured peak amplitudes at antennas (N,)
         Xants     : antenna positions (N,3)
         Xsource   : Xsource position (3,)
-    
+        retry_chi2_red    : conditional multistart (None: single fit, as before).
+                            The ADF chi² has secondary minima ~1 deg from the shower axis.
+                            If the first fit is invalid or chi²/(N-4) > retry_chi2_red, the fit
+                            is repeated from the PWF direction shifted by retry_offsets_deg
+                            (same bounds) and the valid fit with the lowest chi² is kept.
+        retry_offsets_deg : (dtheta, dphi) start offsets in degrees for the retries
+
     Returns:
         theta_adf     : reconstructed zenith angle (rad)
         phi_adf       : reconstructed azimuth angle (rad)
@@ -124,6 +133,24 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
         method="migrad",
         bounds=bounds
     )
+
+    # Conditional multistart: retry from shifted directions if the first fit is poor or invalid
+    if retry_chi2_red is not None:
+        ndof = max(len(Aants) - 4, 1)
+        if (not result.success) or result.fun / ndof > retry_chi2_red:
+            for dtheta, dphi in retry_offsets_deg:
+                start = params_in.copy()
+                start[0] += np.deg2rad(dtheta)
+                start[1] += np.deg2rad(dphi)
+                trial = minimize(
+                    ADF_loss,
+                    start,
+                    args=(Aants, Xants, Xsource),
+                    method="migrad",
+                    bounds=bounds
+                )
+                if trial.success and (trial.fun < result.fun or not result.success):
+                    result = trial
 
     # Extract best-fit parameters from minimization result
     theta_adf, phi_adf, delta_omega, amplitude = result.x
