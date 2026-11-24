@@ -1,13 +1,14 @@
 #!/usr/bin/python
 '''
-An example of storing traces to a file using root_trees.py
+An example of storing traces to a file using GRAND dataio
 '''
 
-import numpy as np
 import time
 import sys
-import ROOT
-from grand.dataio.root_trees import *
+import numpy as np
+import datetime
+
+from grand.dataio import TRun, TADC, TRawVoltage, TVoltage, TEfield, TShower
 
 # Check if a filename was provided on the command line
 if len(sys.argv) == 2 and sys.argv[1][-5:] == ".root":

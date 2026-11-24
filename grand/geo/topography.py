@@ -234,7 +234,8 @@ class Topography:
     """Proxy to topography data."""
 
     def __init__(self, path: Union[Path, str] = DATADIR) -> None:
-        self._stack = _Stack(str(path))
+        # self._stack = _Stack(str(path))
+        self._stack = _Stack(path)
         self._stepper: Optional[_Stepper] = None
 
     def elevation(

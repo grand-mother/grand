@@ -4,6 +4,9 @@
 Example script to compute voltage from electric-field using GRAND pipeline.
 """
 
+print("This script is not working at the moment. To check on how to convert Efield to Voltage, please check scripts/convert_efield2voltage.py")
+exit(0)
+
 from grand.basis.pipeline import Pipeline
 
 import grand.manage_log as mlg

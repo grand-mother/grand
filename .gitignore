@@ -70,3 +70,12 @@ docs/apidoc-only/sphinx/source/grand.*
 *.pyc
 sim2root/CoREASRawRoot/__pycache__/CorsikaInfoFuncs.cpython-310.pyc
 *.pyc
+/.env
+
+
+# Ignore mock inputs
+/grand/analysis/pipeline_nathan/mock_inputs
+/grand/analysis/pipeline_nathan/outputs
+
+.zig/
+/grand/analysis/swf_analysis/

@@ -1,0 +1,111 @@
+>>>>
+>>>> This is AIRES version 19.04.08 (22/Oct/2021)
+>>>> With ZHAireS version 1.0.30a (06/Aug/2021) extension
+>>>> (Compiled by tueros@cca001, date: 08/Mar/2023) **
+>>>> USER: tueros, HOST: ccwslurm0012, DATE: 29/Apr/2023
+>>>>
+
+> 29/Apr/2023 17:55:50. Displaying a summary of the input directives:
+
+>>>>
+>>>>          PARAMETERS AND OPTIONS IN EFFECT.
+>>>>
+>>>> "(D)" indicates that the corresponding default value is being used.
+>>>>
+
+                           Task Name: GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618
+
+     RUN CONTROL:
+             Total number of showers:          1
+     (D)             Showers per run:   Infinite
+                    Runs per process:         23
+                    CPU time per run:       2 hr
+
+     FILE NAMES:
+                            Log file: GP300_Xi_Sib_Prot....8_51.6_135.4_1618.lgf
+                    Binary dump file: GP300_Xi_Sib_Prot....8_51.6_135.4_1618.idf
+               Compressed data files: NONE
+                 Output summary file: GP300_Xi_Sib_Pr..._51.6_135.4_1618.sry    
+
+     BASIC PARAMETERS:
+                                Site: Xiaodushan
+                                      (Lat:  40.99 deg. Long:   93.94 deg.)
+                                Date: 26/Oct/2022
+
+                    Primary particle: Proton
+                      Primary energy: 3.7977 EeV
+                Primary zenith angle:    51.64 deg
+               Primary azimuth angle:   135.44 deg
+              Zero azimuth direction: Local magnetic north
+                     Thinning energy: 1.0000E-05 Relative
+     (D)          Injection altitude: 100.00 km (9.8698754E-04 g/cm2)
+                     Ground altitude: 1.2640 km (904.5084 g/cm2)
+           First obs. level altitude: 100.00 km (9.8698754E-04 g/cm2)
+            Last obs. level altitude: 1.2640 km (904.5084 g/cm2)
+          Obs. levels and depth step:        510     1.777 g/cm2
+                   Geomagnetic field: Intensity: 56.482 uT
+                                      I:   61.60 deg. D:    0.13 deg
+     (D)         Table energy limits: 10.000 MeV to 2.8483 EeV
+                 Table radial limits: 100.00 m  to 20.000 km
+
+     ADDITIONAL PARAMETERS:
+     (D)      Individual shower data: Brief
+               Cut energy for gammas: 1.0000 MeV
+                Cut energy for e+ e-: 1.0000 MeV
+     (D)      Cut energy for mu+ mu-: 10.000 MeV
+     (D)       Cut energy for mesons: 60.000 MeV
+     (D)     Cut energy for nucleons: 120.00 MeV
+         Initial primary propagation: On
+     (D)    Record special primaries: On
+     (D)            Resampling ratio: 10.00000
+              ZHAireS Radio Routines: On
+     (D)     Calculate Sum of Tracks: Off
+                        Fresnel Time: On
+                Time Domain Bin Size: 5.0000E-10 sec
+             Antenna Time Window Min: -3.1136E-07 sec
+             Antenna Time Window Max: 2.0000E-06 sec
+                Exp Distance To Xmax: 7.2501 km
+              Reduced ZHAireS Output: On
+            CoREAS compatible Output: On
+            Max. stat. weight factor: 6.0000000E-02
+                Gamma rough egy. cut: 1.0000 MeV
+                 e+e- rough egy. cut: 1.0000 MeV
+     (D)    Hadronic Mean Free Paths: SIBYLL23d
+     (D)            SIBYLL23d switch: On
+     (D)                FLUKA switch: Off
+
+     MISCELLANEOUS:
+            Seed of random generator: 0.763968531000
+                   Atmospheric model: DunhuangFromChao                          
+
+>>>>
+  
+    ZHAireS CONFIGURATION:
+  
+  
+      Refraction index at sea level:1.0003250
+  
+       Ignoring the emission from hadrons
+  
+       Ignoring the emission from discarded
+       low energy particles (for now, e+/-)
+  
+       Fresnel in the time domain ENABLED
+  
+        Antennas used for the Fresnel formalism
+        (with height expressed above sea level)
+        Antenna|      Label      |   X [m]   |    Y [m]   |    Z [m]   |    t0 [ns]
+           1    A14                    195.39     -1250.20      1237.20      2913.50
+           2    A21                   1061.49      -750.20      1217.20      3582.50
+           3    A27                   -670.61       249.80      1240.60     -1589.50
+           4    A28                   1061.49       249.80      1220.10      1822.00
+           5    A35                    195.39       749.80      1230.30      -812.50
+  
+      Time bin size:  0.50ns
+> 29/Apr/2023 17:55:50. Starting simulation of first shower.
+> 29/Apr/2023 18:16:00. End of run number 1.
+  CPU time for this run: 20 min 10.21 sec
+> 29/Apr/2023 18:16:00. Task completed.
+  Total number of showers: 1
+> 29/Apr/2023 18:16:00. Writing summary file.
+> 29/Apr/2023 18:16:00. End of processing.

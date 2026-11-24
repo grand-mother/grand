@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # An example of using DataFile for ROOT file reading
-import numpy as np
 import sys
-from grand.dataio.root_trees import *
+
+from grand.dataio.data_handling import DataFile
 
 # Need to provide a file to read
 if len(sys.argv)<2:

@@ -3,7 +3,7 @@ Basic storing and reading ROOT files
 
 This is the interface for accessing GRAND ROOT TTrees that (in its final future state) will not require the user (reader/writer of the TTrees) to have any knowledge of ROOT. It also will hide the internals from the data generator, so that the changes in the format are not concerning the user.
 
-The TTree interface classes are defined in the io/root_trees.py file.
+The TTree interface classes are defined in the grand/dataio/root_trees.py file.
 
 How to test
 -----------

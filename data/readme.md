@@ -13,7 +13,7 @@ Automatically loaded with env/setup.sh,
 
 # Notes about download script
 
-## How reload a GRAND model
+## How to reload a GRAND model
 
 * remove/change name of directory grand/data/model/detector
 * in directory grand/data, do 

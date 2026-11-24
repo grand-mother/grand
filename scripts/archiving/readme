@@ -1,0 +1,6 @@
+Automatic backup of raw files @ccin2p3 is provided using self submit job (archiver.bash).
+This job is launched once with the following command :
+
+sbatch -t 0-10:00 -J archive_2025-03 -n 1 --mem=8G -o /sps/grand/prod_grand/archiving/archiving-2025-03 --begin=2025-04-15T00:00:00 --mail-user=fleg@lpnhe.in2p3.fr --mail-type=START,END,FAIL,TIME_LIMIT,INVALID_DEPEND /pbs/home/p/prod_grand/softs/grand/scripts/archiving/archiver.bash
+
+so it will start on 2025-04-15T00:00:00 and resubmit itself for the next month.

@@ -7,9 +7,8 @@ RK TODO: implement techniques used in LP's execute_pipeline where output_trees
 @GRAND Collaboration, 2023
 """
 
-import numpy as np
+# import numpy as np
 from logging import getLogger
-import grand.dataio.root_trees as groot
 from dataclasses import dataclass
 
 logger = getLogger(__name__)

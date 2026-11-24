@@ -121,6 +121,26 @@ grand_quality_test_cov.bash
 ```
 to update coverage with correction.
 
+### How write a test function for GRANDLIB
+
+* In the directory `tests`
+* Create a file of test by module, just append test_ at the name of module
+    * module.py => test_module.py
+* Respect the GRANDLIB source tree (grand directory) to create your test file
+* Use pytest syntax to create your test
+
+[pytest documentation](https://docs.pytest.org/en/stable/)
+
+Summary:
+
+* name of test function starts by test_
+* check result with `assert`
+* for numerical test, we can use numpy function [allclose()](https://numpy.org/doc/stable/reference/generated/numpy.allclose.html#numpy-allclose) to compare two arrays.
+
+Example:
+
+* [tests/basis/signal](https://github.com/grand-mother/grand/blob/dev/tests/basis/test_signal.py)
+* [tests/basis/traces_events](https://github.com/grand-mother/grand/blob/dev/tests/basis/test_traces_event.py)
 
 ## Check type/annotation
 

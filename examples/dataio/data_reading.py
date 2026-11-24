@@ -2,9 +2,8 @@
 '''
 An example of reading data from a file
 '''
-import numpy as np
 import sys
-from grand.dataio.root_trees import *
+from grand.dataio import TADC, TEfield
 
 if len(sys.argv) < 2:
     tadccounts = TADC("stored_data.root")
@@ -49,6 +48,7 @@ print(
 print(tefield.event_number, tefield.du_seconds[0], tefield.trace[0][0], tadccounts.event_number)
 
 # Hard exit to avoid ROOT crash on defriending - not needed for ROOT 6.26.02 and above
+import ROOT
 if ROOT.gROOT.GetVersionInt() < 62602:
     import os
 

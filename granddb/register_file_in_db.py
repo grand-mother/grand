@@ -1,78 +1,30 @@
-# import sqlalchemy as sa
-# from sqlalchemy.orm import mapper, sessionmaker
-from sqlalchemy import create_engine
-from sshtunnel import SSHTunnelForwarder
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.inspection import inspect
-from sqlalchemy.dialects import postgresql
+import sys, os, getopt
+import grand.manage_log as mlg
+from granddb.datamanager import DataManager
+import argparse
+logger = mlg.get_logger_for_script(__name__)
 
-usr = "postgres"
-psw = "password"
-db = "granddb"
-srv = 'lpndocker01.in2p3.fr'
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-c", "--config", default="config.ini", help="Config file to use")
+argParser.add_argument("-r", "--repository", default="", help="Repository")
+argParser.add_argument('files', nargs='+', default=[], help='Files to register')
+args = argParser.parse_args()
 
-server = SSHTunnelForwarder(
-    ('lpnclaude.in2p3.fr', 22),
-    ssh_username="fleg",
-    ssh_pkey="/home/fleg/.ssh/id_rsa_decrypted",
-    remote_bind_address=(srv, 5432)
-)
-server.start()
-local_port = str(server.local_bind_port)
-# create an engine
-engine = create_engine('postgresql+psycopg2://' + usr + ':' + psw + '@' + '127.0.0.1:' + local_port + '/' + db)
-Base = automap_base()
-Base.prepare(engine, reflect=True)
-session = Session(engine)
-tables = {}
-for table in engine.table_names():
-    #if table not in ("file_location"):
-        print(table)
-        tables[table]=getattr(Base.classes, table)
-        #klass = getattr(Base.classes, table)
-        query = session.query(tables[table])
-        #query = session.query(Base.classes.table)
-        #query = session.query(Base.classes.repository)
-        res = query.all()
-        for resu in res:
-            # print(resu.repository.name)
-            print(resu.__dict__)
+# if config is given as absolute path, use it. If not then use path relative to script
+if args.config[0] == '/':
+    config_path = args.config
+else:
+    config_path = os.path.dirname(__file__)+"/"+args.config
 
-exit(0)
-Repository = Base.classes.repository
-Repository_access = Base.classes.repository_access
-Protocol = Base.classes.protocol
-Event = Base.classes.event
-Shower_type = Base.classes.shower_type
-
-# res = session.query(Repository).all()
-# for resu in res:
-#    print(resu.id_repository)
-
-# res = session.query(Repository_access).join(Protocol).all()
-# query = session.query(Repository_access, Repository).filter(Repository.id_repository == Repository_access.id_repository).filter(Repository_access.server_name == 'Gary')
-query = session.query(Repository_access, Repository, Protocol).join(Repository).join(Protocol)
-
-# res = session.query(Repository_access, Repository).filter(Repository.id_repository == Repository_access.id_repository).all()
-res = query.all()
-for resu in res:
-    # print(resu.repository.name)
-    print(resu.repository.__dict__)
-    print(resu.repository_access.__dict__)
-
-print(query.statement.compile(dialect=postgresql.dialect()))
-print(len(res))
-
-newproto = Protocol(id_protocol=None, name='http')
-session.add(newproto)
-session.commit()
-session.refresh(newproto)
-print("toto")
-print(newproto.id_protocol)
-# table = inspect(Repository)
-
-# for column in table.c:
-#    print(column.name)
-#    print(column.type)
-server.stop()
+dm = DataManager(config_path)
+if args.repository == '':
+    repo_name = None
+else:
+    repo_name = args.repository
+for file in args.files:
+    try:
+        logger.info(f'Register ${file}')
+        dm.register_file(localfile=file, dataset=None, repository=repo_name, again=True)
+    except Exception as e:
+        logger.error(f'Error when importing {file}. Skipping.')
+        logger.error(f'Error was {e}.')

@@ -45,26 +45,50 @@ conda activate <my_env>
 conda deactivate
 ```
 
-## Import GRANDLIB environnement for amd64 processor architecture
+## Import GRANDLIB environnement : grandenv_2509
+
+Based on ROOT version : 6.36.04
 
 Start by update your conda and create the GRANDLIB environnement with file conf defined in grand/env/conda 
 
 ```
 conda config --set channel_priority disabled
-conda env create -n grandlib --file grandlib_amd64.yml
-conda activate grandlib
+conda env create -f reqmt_grandenv_2509.yml
+conda activate grandenv_2509
 ```
 
+`reqmt_grandenv_2509.yml` is present in the directory of this readme.md . 
+In this requirement the library version are fixed with the aim that the entire GRAND community truly has an identical environment. This can cause an availability problem for certain distribution, in this case start to remove patch (last number), example
+
+`matplotlib=3.10`
+
+see if necessary minor (second number)
+
+`matplotlib=3`
+
+### Additionnal packages for data base
+
+if necessary, for specific data base activities.
+
+```
+pip install -r reqmt_db.txt
+```
+
+`reqmt_db.txt` is in grand/env/conda directory like `reqmt_grandenv_2509.yml`.
 
 
-Initialize GRANDLIB package and GULL/TURTLE compilation, in 
-the root package, first clone the package grand
+### Clone grand package and initialisation
+
+Then initialize GRANDLIB package and GULL/TURTLE compilation, this is where compatibility issues with ARM processors, like Apple's Mx, begin.
+
+In the root package, first clone the package grand
 
 ```
 git clone https://github.com/grand-mother/grand.git
 cd grand
 source env/setup.sh
 ```
+
 ### Compilation failed in other environment
 
 If you have already tried to compile the package in an incorrect environment you must clean the compilation files already produced to start from scratch with `make clean` in `grand/src` directory
@@ -84,4 +108,23 @@ grand_quality_test_cov.bash
 ```
 
 
-If you encounter a problem write a ticket [here](https://github.com/grand-mother/collaboration-issues/issues)
+## Creating a grandlib conda environement from scratch
+You can create a conda environement for grandlib using the following recipie :
+
+
+Choice a ROOT version available
+
+```
+conda create -c conda-forge --name grandenv_user root==6.xx.xx
+```
+
+Activate it 
+
+```
+conda activate grandenv_user
+```
+
+add your favorite package with conda install preferably. If you need to do a pip install, do it after all the conda installs, see 
+[Using Pip in a Conda Environment](https://www.anaconda.com/blog/using-pip-in-a-conda-environment)
+
+If you encounter a problem write a ticket [here](https://github.com/grand-mother/collaboration-issues/issues), you need to be connected on your github account.

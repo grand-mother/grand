@@ -1,0 +1,14 @@
+name: grandenv_2509
+channels:
+  - conda-forge
+dependencies:
+  - root=6.36.04
+  - scipy=1.16.1
+  - matplotlib=3.10.6
+  - h5py=3.14.0
+  - joblib=1.5.2
+  - asdf=4.5.0
+  - uproot=5.6.5
+  - astropy=7.1.0
+  - ipympl
+  

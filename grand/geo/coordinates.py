@@ -32,8 +32,12 @@ from . import turtle
 from grand import grand_get_path_root_pkg
 
 logger = getLogger(__name__)
-# add protection against casting complex to real
-warnings.filterwarnings(action="error", category=np.ComplexWarning)
+# add protection against casting complex to real. Need to try due to numpy versions incompatibilities
+try:
+    warnings.filterwarnings(action="error", category=np.ComplexWarning)
+# After numpy 1.25. In principle the np.ComplexWarning should still be accessible, but in 2.2.5 it isn't
+except:
+    warnings.filterwarnings(action="error", category=np.exceptions.ComplexWarning)
 
 DATADIR: Final = grand_get_path_root_pkg() + "/data"  # for geoid_undulation egm96.png file.
 
@@ -571,7 +575,9 @@ class Geodetic(GeodeticRepresentation):
     Longitude:	Angle east and west of the Prime Meridian. The Prime Meridian
                             is a north-south line that passes through Greenwich, UK.
                             +ve to the east of the Prime Meridian, -ve to the west.
-                            Range: -180 deg to +180 deg.
+                            Range: 0 deg to 360 deg positive or negative. 
+                            Note that coordinate transformation is possible for +ve 0 to 360 deg.
+                            So negative values are changed to positive by adding 360.
     Height:	Also called altitude or elevation, this represents the height above
                     the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
                     mathematical surface defined by a semi-major axis and a semi-minor axis.
@@ -702,6 +708,13 @@ class Geodetic(GeodeticRepresentation):
 
         if isinstance(latitude, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
+            # RK: +ve 0 to 360 were only accepted for coordinate transformation. 
+            #     Now both +ve and -ve values are accepted for longitudes.
+            if isinstance(latitude, Number):
+                longitude = 360+longitude if longitude<0 else longitude
+            else:
+                longitude[longitude < 0] += 360
+
             self.latitude = latitude
             self.longitude = longitude
             self.height = height

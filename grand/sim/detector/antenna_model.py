@@ -1,3 +1,11 @@
+# Modified by SN in April 2024, in order to include the models for the effective length of the antennas produced by the codes NEC and matlab from HOU group. 
+# The coresponding files are Light_GP300Antenna_nec_*_leff.npz and Light_GP300Antenna_mat_*_leff.npz for NEC and matlab respectively (* stands for the 3 arms X-NS, Y-EW and Z-vertical)
+# The default effective length model were produced using HFSS simulation code by Xidian group. 
+# The coresponding files of the default model are Light_GP300Antenna_EWarm_leff.npz, Light_GP300Antenna_SNarm_leff.npz and Light_GP300Antenna_Zarm_leff.npz.
+# For details on how these simulations were produced using the different codes and comparisons between different model (HFSS, NEC matlab) please refer to the documents and presentations 
+# posted in forge software forum https://forge.in2p3.fr/projects/software-forum/dmsf (for NEC and matlab) and https://forge.in2p3.fr/documents/1353, https://forge.in2p3.fr/documents/1354 for the HFSS simulations.
+# Tha availiable GP300 antenna models are 'GP300' (default produced by HFSS simulation package), 'GP300_nec' (produced by NEC simulation package), 'GP300_mat' (produced by matlab antenna package) and 'Horizon'.  
+
 from logging import getLogger
 
 from grand import grand_add_path_data
@@ -100,7 +108,7 @@ class AntennaModel:
     def __init__(self, du_type="GP300"):
 
         if du_type=="GP300":
-            logger.info(f"Loading GP300 antenna model ...")
+            logger.info(f"Loading GP300 antenna model produced by HFSS simulation package")
             
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_EWarm_leff.npz")
             self.leff_ew = tabulated_antenna_model(path_ant)
@@ -109,7 +117,28 @@ class AntennaModel:
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_Zarm_leff.npz")
             self.leff_z = tabulated_antenna_model(path_ant)
             
+        elif du_type=="GP300_nec":
+            logger.info(f"Loading GP300 antenna model produced by NEC simulation package")
+            
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Yarm_leff.npz")
+            self.leff_ew = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Xarm_leff.npz")
+            self.leff_sn = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Zarm_leff.npz")
+            self.leff_z = tabulated_antenna_model(path_ant)
+            
+        elif du_type=="GP300_mat":
+            logger.info(f"Loading GP300 antenna model produced by matlab antenna package")
+            
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Yarm_leff.npz")
+            self.leff_ew = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Xarm_leff.npz")
+            self.leff_sn = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Zarm_leff.npz")
+            self.leff_z = tabulated_antenna_model(path_ant)
+            
         elif du_type=='Horizon':
+            logger.info(f"Loading Horizon antenna model")
             path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
             self.leff_ew = tabulated_antenna_model(path_ant)
             path_ant = grand_add_path_data("detector/HorizonAntenna_SNarm_leff_loaded.npy")
