@@ -188,7 +188,8 @@ def make_graph(Xants, peak_time, peak_amps, inputs, sigma=None):
     dict or None
         ``x`` (node features, (n, F)), ``edge_index`` (2, E), ``x_graph``
         (graph features, (1, G)) and ``mask`` (antennas used, (N,)); None if
-        fewer than ``min_antennas`` antennas pass the trigger.
+        fewer than ``min_antennas`` antennas pass the trigger, or if the
+        plane-wave fit the features need fails (NaN).
     """
     Xants = np.asarray(Xants, dtype=float)
     peak_time = np.asarray(peak_time, dtype=float)
@@ -203,6 +204,8 @@ def make_graph(Xants, peak_time, peak_amps, inputs, sigma=None):
         from grand.analysis.fitting import PWF_semianalytical
         theta, phi = PWF_semianalytical(pos, time, c=cons.c_light, n=cons.n_atm)
         k = propagation_vector(theta, phi)
+        if not np.all(np.isfinite(k)):   # the plane-wave fit failed
+            return None
 
     pos = pos - pos.mean(axis=0)
     time = time - time.min()

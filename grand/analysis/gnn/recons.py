@@ -20,7 +20,7 @@ from grand.analysis.gnn.model_store import GNNEnsemble, load_model
 
 class GNNDirection(NamedTuple):
     """Result of recons_GNN."""
-    zenith: float  # radians, "coming from"; NaN if too few antennas
+    zenith: float  # radians, "coming from"; NaN if too few antennas or the plane-wave fit fails
     azimuth: float  # radians in [0, 2 pi), "coming from"
     std_zenith: float
     std_azimuth: float
@@ -29,7 +29,7 @@ class GNNDirection(NamedTuple):
 
 class GNNEnergy(NamedTuple):
     """Result of recons_energy_GNN."""
-    energy: float  # electromagnetic energy, eV; NaN if too few antennas
+    energy: float  # electromagnetic energy, eV; NaN if too few antennas or the plane-wave fit fails
     std_energy: float
     du_count: int
 
@@ -116,7 +116,7 @@ def recons_GNN(Xants, peak_time, peak_amps, model=None, sigma=None):
     -------
     GNNDirection
         (zenith, azimuth, std_zenith, std_azimuth, du_count); NaN angles if
-        too few antennas pass the trigger.
+        too few antennas pass the trigger or the plane-wave fit fails.
     """
     if not isinstance(model, GNNEnsemble):
         model = load_model("direction", model)
@@ -133,7 +133,7 @@ def recons_energy_GNN(Xants, peak_time, peak_amps, model=None, sigma=None):
     Returns
     -------
     GNNEnergy
-        (energy, std_energy, du_count); NaN energy if too few antennas pass the trigger.
+        (energy, std_energy, du_count); NaN energy if too few antennas pass the trigger or the plane-wave fit fails.
     """
     if not isinstance(model, GNNEnsemble):
         model = load_model("energy", model)

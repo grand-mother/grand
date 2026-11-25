@@ -191,6 +191,16 @@ def test_too_few_antennas_give_nan(settings, tmp_path):
     assert gnn.recons_GNN(Xants, t, a, model=lower).du_count == 12
 
 
+def test_a_failed_plane_wave_fit_gives_no_graph(monkeypatch):
+    import grand.analysis.fitting as fit
+
+    Xants, t, a = _plane_wave()
+    inputs = gnn.complete_gnn_model_card({"task": "direction"})["inputs"]
+    assert features.make_graph(Xants, t, a, inputs) is not None
+    monkeypatch.setattr(fit, "PWF_semianalytical", lambda *args, **kwargs: (np.nan, np.nan))
+    assert features.make_graph(Xants, t, a, inputs) is None             # a NaN graph would make the loss NaN
+
+
 def test_direction_from_k():
     theta, phi, sigma = 1.2, 4.0, 1e-3
     k = features.propagation_vector(theta, phi)
